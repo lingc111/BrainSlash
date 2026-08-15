@@ -1,0 +1,54 @@
+import { Color } from 'cc';
+
+export const UI_COLORS = {
+    background: new Color(0x17, 0x11, 0x2f, 0xff),
+    backgroundAccent: new Color(0x6f, 0x53, 0xfd, 0xff),
+    surface: new Color(0x25, 0x1b, 0x4a, 0xff),
+    surfaceRaised: new Color(0x30, 0x24, 0x5c, 0xff),
+    primary: new Color(0x55, 0xe6, 0xd2, 0xff),
+    primaryDeep: new Color(0x16, 0x9b, 0x89, 0xff),
+    outline: new Color(0xff, 0xfe, 0xff, 0xff),
+    depthShadow: new Color(0x0d, 0x08, 0x21, 0xff),
+    violet: new Color(0xa7, 0x7d, 0xfe, 0xff),
+    positive: new Color(0x70, 0xe8, 0x8b, 0xff),
+    danger: new Color(0xff, 0x4d, 0x6d, 0xff),
+    highlight: new Color(0xff, 0xd1, 0x66, 0xff),
+    textPrimary: new Color(0xf7, 0xfa, 0xff, 0xff),
+    textSecondary: new Color(0x9a, 0xa7, 0xc2, 0xff),
+} as const;
+
+export const UI_SPACING = {
+    xs: 8,
+    sm: 16,
+    md: 24,
+    lg: 32,
+} as const;
+
+export const UI_TYPE = {
+    h1: 64,
+    h2: 36,
+    body: 24,
+    caption: 18,
+} as const;
+
+export const UI_MOTION = {
+    press: 0.08,
+    pageTransition: 0.26,
+    cardEnter: 0.22,
+} as const;
+
+export const UI_SHAPE = {
+    cardRadius: 24,
+    buttonRadius: 22,
+    pillRadius: 32,
+    outlineWidth: 3,
+    depthOffset: 8,
+} as const;
+
+export const UI_LAYOUT = {
+    designWidth: 750,
+    designHeight: 1624,
+    horizontalMargin: 40,
+    bottomGestureInset: 64,
+    minimumTouchSize: 64,
+} as const;
