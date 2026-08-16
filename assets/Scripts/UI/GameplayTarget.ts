@@ -10,6 +10,7 @@ export interface GameplayTargetData {
     contentType: TargetContentType;
     text?: string;
     spriteFrame?: SpriteFrame;
+    skinSpriteFrame?: SpriteFrame;
     shape: TargetShape;
     value?: unknown;
     isBomb?: boolean;
@@ -72,10 +73,15 @@ export class GameplayTarget extends Component {
 
     public configure(data: GameplayTargetData): void {
         this.data = data;
-        this.node.removeAllChildren();
-        ui(this.node, this.radius * 2.3, this.radius * 2.3);
+        for (const child of [...this.node.children]) { child.removeFromParent(); child.destroy(); }
+        ui(this.node, this.radius * 2.8, this.radius * 2.8);
         if (data.isBomb) this.drawBomb();
         else this.drawTarget();
+    }
+
+    public applySkin(frame: SpriteFrame): void {
+        this.data.skinSpriteFrame = frame;
+        this.configure(this.data);
     }
 
     public segmentHit(a: Vec2, b: Vec2): boolean {
@@ -88,46 +94,55 @@ export class GameplayTarget extends Component {
     }
 
     private drawTarget(): void {
-        const contact = graphics(this.node, 'ContactShadow', this.radius * 2.45, this.radius * 2.45);
-        contact.node.setPosition(10, -13);
-        this.drawShape(contact, new Color(61, 48, 35, 34), new Color(61, 48, 35, 8), 3);
-        contact.node.setScale(1.04, 1.04, 1);
+        if (this.data.skinSpriteFrame) {
+            const skin = makeNode('PaperSkin', this.node, this.radius * 2.72, this.radius * 2.72).addComponent(Sprite);
+            skin.sizeMode = Sprite.SizeMode.CUSTOM;
+            skin.spriteFrame = this.data.skinSpriteFrame;
+            skin.node.getComponent(UITransform)?.setContentSize(this.radius * 2.72, this.radius * 2.72);
+        } else {
+            const contact = graphics(this.node, 'ContactShadow', this.radius * 2.45, this.radius * 2.45);
+            contact.node.setPosition(10, -13);
+            this.drawShape(contact, new Color(61, 48, 35, 34), new Color(61, 48, 35, 8), 3);
+            contact.node.setScale(1.04, 1.04, 1);
 
-        const shadow = graphics(this.node, 'PaperShadow', this.radius * 2.35, this.radius * 2.35);
-        shadow.node.setPosition(5, -7);
-        this.drawShape(shadow, new Color(75, 62, 45, 62), new Color(75, 62, 45, 18), 3);
+            const shadow = graphics(this.node, 'PaperShadow', this.radius * 2.35, this.radius * 2.35);
+            shadow.node.setPosition(5, -7);
+            this.drawShape(shadow, new Color(75, 62, 45, 62), new Color(75, 62, 45, 18), 3);
 
-        const thickness = graphics(this.node, 'PaperThickness', this.radius * 2.3, this.radius * 2.3);
-        thickness.node.setPosition(2, -3);
-        this.drawShape(thickness, new Color(224, 211, 181, 255), new Color(98, 83, 61, 150), 5);
+            const thickness = graphics(this.node, 'PaperThickness', this.radius * 2.3, this.radius * 2.3);
+            thickness.node.setPosition(2, -3);
+            this.drawShape(thickness, new Color(224, 211, 181, 255), new Color(98, 83, 61, 150), 5);
 
-        const edge = graphics(this.node, 'PaperEdge', this.radius * 2.3, this.radius * 2.3);
-        this.drawShape(edge, PAPER, INK, 4);
+            const edge = graphics(this.node, 'PaperEdge', this.radius * 2.3, this.radius * 2.3);
+            this.drawShape(edge, PAPER, INK, 4);
 
-        const shape = graphics(this.node, 'MarkerLayer', this.radius * 2.2, this.radius * 2.2);
-        shape.node.setScale(0.89, 0.89, 1);
-        shape.node.setPosition(-1, 2);
-        this.drawShape(shape, this.data.color, new Color(58, 54, 46, 210), 3);
+            const shape = graphics(this.node, 'MarkerLayer', this.radius * 2.2, this.radius * 2.2);
+            shape.node.setScale(0.89, 0.89, 1);
+            shape.node.setPosition(-1, 2);
+            this.drawShape(shape, this.data.color, new Color(58, 54, 46, 210), 3);
 
-        const fibers = graphics(this.node, 'PencilTexture', this.radius * 1.35, this.radius * 1.1);
-        fibers.node.setPosition(-1, 2);
-        fibers.strokeColor = new Color(58, 54, 46, 32);
-        fibers.lineWidth = 2;
-        const strokes = [
-            [-36, 23, 30, 20], [-43, 10, 39, 12], [-35, -4, 34, -1],
-            [-42, -18, 31, -15], [-25, -29, 24, -27],
-        ];
-        for (const stroke of strokes) {
-            fibers.moveTo(stroke[0], stroke[1]);
-            fibers.bezierCurveTo(stroke[0] + 15, stroke[1] + 2, stroke[2] - 12, stroke[3] - 2, stroke[2], stroke[3]);
+            const fibers = graphics(this.node, 'PencilTexture', this.radius * 1.35, this.radius * 1.1);
+            fibers.node.setPosition(-1, 2);
+            fibers.strokeColor = new Color(58, 54, 46, 32);
+            fibers.lineWidth = 2;
+            const strokes = [
+                [-36, 23, 30, 20], [-43, 10, 39, 12], [-35, -4, 34, -1],
+                [-42, -18, 31, -15], [-25, -29, 24, -27],
+            ];
+            for (const stroke of strokes) {
+                fibers.moveTo(stroke[0], stroke[1]);
+                fibers.bezierCurveTo(stroke[0] + 15, stroke[1] + 2, stroke[2] - 12, stroke[3] - 2, stroke[2], stroke[3]);
+            }
+            fibers.stroke();
+
+            const highlight = graphics(this.node, 'PaperHighlight', 92, 70);
+            highlight.node.setPosition(-10, 8);
+            highlight.strokeColor = new Color(255, 251, 232, 105);
+            highlight.lineWidth = 3;
+            highlight.moveTo(-29, 29); highlight.bezierCurveTo(-4, 34, 18, 31, 31, 24); highlight.stroke();
+
+
         }
-        fibers.stroke();
-
-        const highlight = graphics(this.node, 'PaperHighlight', 92, 70);
-        highlight.node.setPosition(-10, 8);
-        highlight.strokeColor = new Color(255, 251, 232, 105);
-        highlight.lineWidth = 3;
-        highlight.moveTo(-29, 29); highlight.bezierCurveTo(-4, 34, 18, 31, 31, 24); highlight.stroke();
 
         const root = makeNode('ContentRoot', this.node, this.radius * 1.3, this.radius * 1.3);
         root.setPosition(0, 1);
@@ -167,6 +182,13 @@ export class GameplayTarget extends Component {
     }
 
     private drawBomb(): void {
+        if (this.data.skinSpriteFrame) {
+            const skin = makeNode('BombSkin', this.node, this.radius * 2.78, this.radius * 2.78).addComponent(Sprite);
+            skin.sizeMode = Sprite.SizeMode.CUSTOM;
+            skin.spriteFrame = this.data.skinSpriteFrame;
+            skin.node.getComponent(UITransform)?.setContentSize(this.radius * 2.78, this.radius * 2.78);
+            return;
+        }
         const contact = graphics(this.node, 'ContactShadow', 184, 184);
         contact.node.setPosition(9, -13);
         contact.fillColor = new Color(62, 48, 35, 42); contact.strokeColor = new Color(62, 48, 35, 8); contact.lineWidth = 3;

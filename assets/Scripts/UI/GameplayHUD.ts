@@ -157,6 +157,7 @@ export class GameplayHUD extends Component {
         this.buildChaos(safeRoot);
         makeNode('BottomSafeArea', safeRoot, this.layoutWidth, 52).setPosition(0, -this.layoutHeight / 2 + 26);
         this.spawnTargets();
+        this.applyRandomTargetSkins();
         this.bindInput();
         this.refreshHUD();
     }
@@ -303,6 +304,32 @@ export class GameplayHUD extends Component {
             target.configure(item);
             const delay = index * 0.12;
             tween(node).delay(delay).repeatForever(tween().by(1.15 + index * 0.08, { position: new Vec3(0, 3 + index % 3, 0), angle: 1 }).by(1.15 + index * 0.08, { position: new Vec3(0, -3 - index % 3, 0), angle: -1 })).start();
+        });
+    }
+
+    private applyRandomTargetSkins(): void {
+        const skinNames = [
+            'blue_hexagon', 'blue_square', 'green_octagon', 'green_triangle', 'orange_circle',
+            'pink_diamond', 'purple_hexagon', 'red_trapezoid', 'yellow_circle',
+        ];
+        for (let i = skinNames.length - 1; i > 0; i--) {
+            const j = Math.floor(Math.random() * (i + 1));
+            [skinNames[i], skinNames[j]] = [skinNames[j], skinNames[i]];
+        }
+
+        const targets = this.targetContainer.children.filter((node) => node.name !== 'BombTarget');
+        targets.forEach((node, index) => {
+            const path = 'textures/gameplay/targets/' + skinNames[index] + '/spriteFrame';
+            resources.load(path, SpriteFrame, (error, frame) => {
+                const target = node.getComponent(GameplayTarget);
+                if (!error && target?.isValid) target.applySkin(frame);
+            });
+        });
+
+        const bombNode = this.targetContainer.getChildByName('BombTarget');
+        resources.load('textures/gameplay/targets/bomb/spriteFrame', SpriteFrame, (error, frame) => {
+            const bomb = bombNode?.getComponent(GameplayTarget);
+            if (!error && bomb?.isValid) bomb.applySkin(frame);
         });
     }
 
