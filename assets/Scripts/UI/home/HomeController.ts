@@ -9,7 +9,10 @@ import {
     Layers,
     Node,
     ResolutionPolicy,
+    resources,
     screen,
+    Sprite,
+    SpriteFrame,
     tween,
     Tween,
     UITransform,
@@ -157,6 +160,7 @@ export class HomeController extends Component {
 
     private buildView(): void {
         this.background = this.makeNode(this.node, 'Background', 0, 0, C.designWidth, C.designHeight);
+        this.attachPaperTexture(this.background, 'bg_graph_paper', true);
         this.safeArea = this.makeNode(this.node, 'SafeArea', 0, 0, C.designWidth, C.designHeight);
 
         this.header = this.buildHeader(this.safeArea);
@@ -201,7 +205,8 @@ export class HomeController extends Component {
         const paper = this.graphics(root, 'PaperBackground', 0, 0, 788, 490);
         this.drawIrregularPaper(paper, 780, 472, C.paperRaised, new Color(0x75, 0x70, 0x66, 0xb0), 2);
         this.drawPaperHoles(paper, -370, 150, 7, 50);
-        this.drawTape(root, 'RedTape', 0, 239, 250, 62, -1, C.red);
+        this.attachPaperTexture(paper.node, 'daily_paper');
+        this.drawTape(root, 'RedTape', 0, 239, 250, 62, -1, C.red, 'tape_red');
 
         const titleGroup = this.makeNode(root, 'TitleImagePlaceholder', -100, 104, 450, 162);
         this.label(titleGroup, 'AccentCharacter', '成', -176, 42, 92, 76, 58, C.red, 'center');
@@ -225,6 +230,7 @@ export class HomeController extends Component {
         const brush = this.graphics(start, 'BrushBackground', 0, 0, 520, 108);
         this.drawBrushStroke(brush, 510, 94, C.orange);
         this.drawPlayIcon(start, -108, 0, 42);
+        this.attachPaperTexture(brush.node, 'brush_orange');
         this.label(start, 'StartLabel', '拔刀', 40, 2, 250, 80, 56, C.ink, 'center');
         this.bindButton(start, this.onDailyChallengeClick.bind(this));
         return root;
@@ -237,6 +243,7 @@ export class HomeController extends Component {
         const paper = this.graphics(root, 'YellowPaper', 0, 0, 798, 180);
         this.drawRibbon(paper, 790, 170, C.yellow);
 
+        this.attachPaperTexture(paper.node, 'brawl_yellow_paper');
         this.drawDashedCutLine(root, -292, 44, 584);
         this.drawScissors(root, 0, 46, 64);
         this.label(root, 'BrawlLabel', '60秒  乱斗', 0, -30, 650, 92, 62, C.ink, 'center');
@@ -253,6 +260,7 @@ export class HomeController extends Component {
         const pink = this.graphics(reverse, 'Paper', 0, 0, 334, 270);
         this.drawStickyNote(pink, 328, 264, C.pink);
         this.drawTape(reverse, 'Tape', -55, 137, 120, 38, 2);
+        this.attachPaperTexture(pink.node, 'sticky_pink');
         this.drawReverseFace(reverse, 0, 58, 68);
         this.label(reverse, 'TypeLabel', '好友挑战', 0, -32, 250, 40, 27, C.ink, 'center');
         this.label(reverse, 'TitleLabel', '反向日', 0, -88, 260, 64, 46, C.ink, 'center');
@@ -266,6 +274,7 @@ export class HomeController extends Component {
         const polaroid = this.graphics(flag, 'Polaroid', 0, 0, 334, 278);
         this.drawPolaroid(polaroid, 326, 270, C.paperRaised, true);
         this.drawThumbtack(flag, 72, 135);
+        this.attachPaperTexture(polaroid.node, 'polaroid_paper');
         this.drawGlobe(flag, 0, 54, 72);
         this.label(flag, 'TypeLabel', '限时活动', 0, -44, 250, 38, 27, C.ink, 'center');
         this.label(flag, 'TitleLabel', '国旗猎人', 0, -96, 280, 58, 43, C.blue, 'center');
@@ -330,6 +339,8 @@ export class HomeController extends Component {
         this.node.getComponent(UITransform)?.setContentSize(visible.width, visible.height);
         this.background.getComponent(UITransform)?.setContentSize(visible.width, visible.height);
         this.safeArea.getComponent(UITransform)?.setContentSize(visible.width, visible.height);
+        this.background.getChildByName('TextureSprite')
+            ?.getComponent(UITransform)?.setContentSize(visible.width, visible.height);
         this.redrawBackground(visible.width, visible.height);
 
         const extraHeight = Math.max(0, visible.height - C.designHeight);
@@ -453,6 +464,34 @@ export class HomeController extends Component {
         const transform = node.addComponent(UITransform);
         transform.setContentSize(width, height);
         return node;
+    }
+
+    private attachPaperTexture(parent: Node, assetName: string, tiled = false): void {
+        const parentTransform = parent.getComponent(UITransform);
+        if (!parentTransform) return;
+
+        const visual = this.makeNode(
+            parent,
+            'TextureSprite',
+            0,
+            0,
+            parentTransform.contentSize.width,
+            parentTransform.contentSize.height,
+        );
+        const sprite = visual.addComponent(Sprite);
+        sprite.sizeMode = Sprite.SizeMode.CUSTOM;
+        sprite.type = tiled ? Sprite.Type.TILED : Sprite.Type.SIMPLE;
+
+        resources.load(`textures/home/paper/${assetName}/spriteFrame`, SpriteFrame, (error, frame) => {
+            if (error || !frame || !visual.isValid) {
+                console.warn(`[Home] Paper texture failed to load: ${assetName}`, error);
+                if (visual.isValid) visual.destroy();
+                return;
+            }
+            sprite.spriteFrame = frame;
+            const fallback = parent.getComponent(Graphics);
+            if (fallback) fallback.enabled = false;
+        });
     }
 
     private graphics(parent: Node, name: string, x: number, y: number, width: number, height: number): Graphics {
@@ -588,6 +627,7 @@ export class HomeController extends Component {
         height: number,
         rotation: number,
         color = C.tape,
+        assetName = 'tape_beige',
     ): Node {
         const tape = this.makeNode(parent, name, x, y, width, height);
         tape.setRotationFromEuler(0, 0, rotation);
@@ -602,6 +642,7 @@ export class HomeController extends Component {
         g.moveTo(-width * 0.42, height * 0.2);
         g.lineTo(width * 0.38, height * 0.12);
         g.stroke();
+        this.attachPaperTexture(tape, assetName);
         return tape;
     }
 
