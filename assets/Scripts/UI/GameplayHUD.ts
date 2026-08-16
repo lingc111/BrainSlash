@@ -380,9 +380,8 @@ export class GameplayHUD extends Component {
 
     private touchPoint(event: EventTouch): Vec2 {
         const location = event.getUILocation();
-        const world = new Vec3(location.x, location.y, 0);
-        const local = this.gameplayLayer.getComponent(UITransform)!.convertToNodeSpaceAR(world);
-        return new Vec2(local.x, local.y);
+        const visible = view.getVisibleSize();
+        return new Vec2(location.x - visible.width * 0.5, location.y - visible.height * 0.5);
     }
 
     private drawTrail(alpha: number): void {
