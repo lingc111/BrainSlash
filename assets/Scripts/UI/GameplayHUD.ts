@@ -1,7 +1,7 @@
 import {
-    _decorator, Color, Component, EventTouch, Graphics, Label, Node,
+    _decorator, Color, Component, EventTouch, Graphics, Label, Node, NodePool,
     ResolutionPolicy, Sprite, SpriteFrame, tween, UIOpacity, UITransform,
-    Vec2, Vec3, view, resources,
+    Tween, Vec2, Vec3, view, resources,
 } from 'cc';
 import { EDITOR } from 'cc/env';
 import { GameplayTarget, GameplayTargetData, TargetContentType } from './GameplayTarget';
@@ -18,6 +18,12 @@ export interface GameplayHUDState {
 
 
 type LayoutPoint = { x: number; y: number };
+
+const SLASH_EFFECT_KEYS = [
+    'blue_square', 'bomb', 'green_octagon', 'green_triangle', 'orange_circle',
+    'pink_diamond', 'purple_hexagon', 'red_trapezoid', 'yellow_circle',
+] as const;
+type SlashEffectKey = typeof SLASH_EFFECT_KEYS[number];
 
 const INK = new Color(45, 43, 39, 255);
 const PAPER = new Color(255, 250, 236, 255);
@@ -87,6 +93,9 @@ export class GameplayHUD extends Component {
     private lifeValue!: Label;
     private chaosValue!: Label;
     private touchPoints: Vec2[] = [];
+    private readonly targetSlashEffects = new Map<Node, SlashEffectKey>();
+    private readonly slashFrames = new Map<SlashEffectKey, SpriteFrame>();
+    private readonly slashEffectPool = new NodePool();
     private trailAge = 1;
     private started = false;
     private elapsed = 0;
@@ -103,6 +112,7 @@ export class GameplayHUD extends Component {
         this.node.off(Node.EventType.TOUCH_MOVE, this.onTouchMove, this);
         this.node.off(Node.EventType.TOUCH_END, this.onTouchEnd, this);
         this.node.off(Node.EventType.TOUCH_CANCEL, this.onTouchEnd, this);
+        this.slashEffectPool.clear();
     }
 
     protected update(dt: number): void {
@@ -151,6 +161,9 @@ export class GameplayHUD extends Component {
         makeNode('HitEffectLayer', this.gameplayLayer, this.layoutWidth, this.layoutHeight);
         makeNode('FragmentLayer', this.gameplayLayer, this.layoutWidth, this.layoutHeight);
         makeNode('FloatingTextLayer', this.gameplayLayer, this.layoutWidth, this.layoutHeight);
+
+        this.targetSlashEffects.clear();
+        this.preloadSlashEffects();
 
         const hud = makeNode('HUDLayer', safeRoot, this.layoutWidth, this.layoutHeight);
         this.buildHUD(hud);
@@ -309,7 +322,7 @@ export class GameplayHUD extends Component {
 
     private applyRandomTargetSkins(): void {
         const skinNames = [
-            'blue_hexagon', 'blue_square', 'green_octagon', 'green_triangle', 'orange_circle',
+            'blue_square', 'green_octagon', 'green_triangle', 'orange_circle',
             'pink_diamond', 'purple_hexagon', 'red_trapezoid', 'yellow_circle',
         ];
         for (let i = skinNames.length - 1; i > 0; i--) {
@@ -319,7 +332,9 @@ export class GameplayHUD extends Component {
 
         const targets = this.targetContainer.children.filter((node) => node.name !== 'BombTarget');
         targets.forEach((node, index) => {
-            const path = 'textures/gameplay/targets/' + skinNames[index] + '/spriteFrame';
+            const skinName = skinNames[index] as SlashEffectKey;
+            this.targetSlashEffects.set(node, skinName);
+            const path = 'textures/gameplay/targets/' + skinName + '/spriteFrame';
             resources.load(path, SpriteFrame, (error, frame) => {
                 const target = node.getComponent(GameplayTarget);
                 if (!error && target?.isValid) target.applySkin(frame);
@@ -327,6 +342,7 @@ export class GameplayHUD extends Component {
         });
 
         const bombNode = this.targetContainer.getChildByName('BombTarget');
+        if (bombNode) this.targetSlashEffects.set(bombNode, 'bomb');
         resources.load('textures/gameplay/targets/bomb/spriteFrame', SpriteFrame, (error, frame) => {
             const bomb = bombNode?.getComponent(GameplayTarget);
             if (!error && bomb?.isValid) bomb.applySkin(frame);
@@ -391,7 +407,7 @@ export class GameplayHUD extends Component {
             const target = node.getComponent(GameplayTarget);
             if (!target || target.hit || !target.segmentHit(a, b)) continue;
             target.hit = true;
-            if (target.data.isBomb || !this.isCorrect(target.data.value)) this.wrongHit(target);
+            if (target.data.isBomb || !this.isCorrect(target.data.value)) this.wrongHit(target, a, b);
             else this.correctHit(target, a, b);
         }
     }
@@ -406,12 +422,12 @@ export class GameplayHUD extends Component {
         this.state.combo += 1;
         this.refreshHUD();
         tween(this.comboValue.node).to(0.1, { scale: new Vec3(1.12, 1.12, 1) }).to(0.1, { scale: Vec3.ONE }).start();
-        this.paperSplit(target.node, a, b);
+        this.playSlashEffect(target, a, b);
         this.floatingText(target.node.position, '+1', GREEN);
         this.scheduleOnce(() => this.respawn(target), 0.28);
     }
 
-    private wrongHit(target: GameplayTarget): void {
+    private wrongHit(target: GameplayTarget, a: Vec2, b: Vec2): void {
         this.state.combo = 0;
         this.state.life = Math.max(0, this.state.life - 1);
         this.refreshHUD();
@@ -423,30 +439,78 @@ export class GameplayHUD extends Component {
         tween(opacity).to(0.24, { opacity: 0 }).call(() => ring.node.destroy()).start();
         const wxApi = (globalThis as { wx?: { vibrateShort?: (options?: object) => void } }).wx;
         wxApi?.vibrateShort?.({ type: 'light' });
-        this.scheduleOnce(() => { target.hit = false; }, 0.28);
+        this.playSlashEffect(target, a, b);
+        this.scheduleOnce(() => this.respawn(target), 0.28);
     }
 
-    private paperSplit(node: Node, a: Vec2, b: Vec2): void {
-        const fragments = this.gameplayLayer.getChildByName('FragmentLayer')!;
-        const direction = b.clone().subtract(a).normalize();
-        const normal = new Vec2(-direction.y, direction.x);
-        node.active = false;
-        for (const sign of [-1, 1]) {
-            const half = graphics(fragments, `PaperHalf_${sign}`, 105, 76);
-            half.node.setPosition(node.position);
-            half.node.angle = node.angle + sign * 3;
-            polygon(half, [new Vec2(-48, -33), new Vec2(49, -30), new Vec2(44, 30), new Vec2(-45, 34)], PAPER, INK, 3);
-            const destination = new Vec3(node.position.x + normal.x * sign * 55, node.position.y + normal.y * sign * 55 - 18, 0);
-            const opacity = half.node.addComponent(UIOpacity);
-            tween(half.node).to(0.24, { position: destination, angle: half.node.angle + sign * 10 }).start();
-            tween(opacity).delay(0.1).to(0.14, { opacity: 0 }).call(() => half.node.destroy()).start();
+    private preloadSlashEffects(): void {
+        for (const key of SLASH_EFFECT_KEYS) {
+            if (this.slashFrames.has(key)) continue;
+            resources.load(`textures/gameplay/effects/slash/${key}_slash/spriteFrame`, SpriteFrame, (error, frame) => {
+                if (!error && frame?.isValid) this.slashFrames.set(key, frame);
+            });
         }
+    }
+
+    private playSlashEffect(target: GameplayTarget, a: Vec2, b: Vec2): void {
+        const key = this.targetSlashEffects.get(target.node);
+        const frame = key ? this.slashFrames.get(key) : undefined;
+        target.node.active = false;
+        if (!frame) {
+            this.playFallbackBurst(target.node.position);
+            return;
+        }
+
+        const layer = this.gameplayLayer.getChildByName('HitEffectLayer')!;
+        const effectNode = this.slashEffectPool.size() > 0
+            ? this.slashEffectPool.get()!
+            : makeNode('SlashBurst', layer, 310, 310);
+        if (!effectNode.parent) layer.addChild(effectNode);
+        effectNode.name = `SlashBurst_${key}`;
+        effectNode.active = true;
+        effectNode.setPosition(target.node.position);
+        effectNode.setScale(0.76, 0.76, 1);
+        const direction = b.clone().subtract(a);
+        effectNode.angle = Math.atan2(direction.y, direction.x) * 180 / Math.PI - 45;
+
+        const transform = effectNode.getComponent(UITransform) ?? effectNode.addComponent(UITransform);
+        transform.setContentSize(310, 310);
+        const sprite = effectNode.getComponent(Sprite) ?? effectNode.addComponent(Sprite);
+        sprite.sizeMode = Sprite.SizeMode.CUSTOM;
+        sprite.spriteFrame = frame;
+        const opacity = effectNode.getComponent(UIOpacity) ?? effectNode.addComponent(UIOpacity);
+        opacity.opacity = 255;
+        Tween.stopAllByTarget(effectNode);
+        Tween.stopAllByTarget(opacity);
+        tween(effectNode)
+            .to(0.06, { scale: new Vec3(1.02, 1.02, 1) }, { easing: 'backOut' })
+            .to(0.16, { scale: new Vec3(1.10, 1.10, 1) }, { easing: 'quadOut' })
+            .start();
+        tween(opacity)
+            .delay(0.08)
+            .to(0.14, { opacity: 0 }, { easing: 'quadIn' })
+            .call(() => {
+                if (effectNode.isValid) this.slashEffectPool.put(effectNode);
+            })
+            .start();
+    }
+
+    private playFallbackBurst(position: Readonly<Vec3>): void {
+        const layer = this.gameplayLayer.getChildByName('HitEffectLayer')!;
         for (let i = 0; i < 4; i++) {
-            const bit = graphics(this.gameplayLayer.getChildByName('HitEffectLayer')!, `PaperBit_${i}`, 14, 14);
-            bit.node.setPosition(node.position);
-            bit.fillColor = i % 2 ? YELLOW : PAPER; bit.rect(-5, -5, 10, 10); bit.fill();
+            const bit = graphics(layer, `FallbackPaperBit_${i}`, 14, 14);
+            bit.node.setPosition(position);
+            bit.fillColor = i % 2 ? YELLOW : PAPER;
+            bit.rect(-5, -5, 10, 10);
+            bit.fill();
             const angle = i * Math.PI / 2 + 0.35;
-            tween(bit.node).to(0.22, { position: new Vec3(node.position.x + Math.cos(angle) * 65, node.position.y + Math.sin(angle) * 65, 0), angle: 45 + i * 25 }).call(() => bit.node.destroy()).start();
+            tween(bit.node)
+                .to(0.18, {
+                    position: new Vec3(position.x + Math.cos(angle) * 55, position.y + Math.sin(angle) * 55, 0),
+                    angle: 45 + i * 25,
+                })
+                .call(() => bit.node.destroy())
+                .start();
         }
     }
 
