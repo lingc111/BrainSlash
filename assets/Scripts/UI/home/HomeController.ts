@@ -182,7 +182,7 @@ export class HomeController extends Component {
 
     private buildView(): void {
         this.background = this.makeNode(this.node, 'Background', 0, 0, C.designWidth, C.designHeight);
-        this.attachPaperTexture(this.background, 'bg_graph_paper', true);
+        this.attachResourceTexture(this.background, 'textures/common/background_paper/spriteFrame', false, true);
         this.safeArea = this.makeNode(this.node, 'SafeArea', 0, 0, C.designWidth, C.designHeight);
 
         this.header = this.buildHeader(this.safeArea);
@@ -363,8 +363,8 @@ export class HomeController extends Component {
         this.node.getComponent(UITransform)?.setContentSize(visible.width, visible.height);
         this.background.getComponent(UITransform)?.setContentSize(visible.width, visible.height);
         this.safeArea.getComponent(UITransform)?.setContentSize(visible.width, visible.height);
-        this.background.getChildByName('TextureSprite')
-            ?.getComponent(UITransform)?.setContentSize(visible.width, visible.height);
+        const backgroundTexture = this.background.getChildByName('TextureSprite');
+        if (backgroundTexture) this.resizeCoverTexture(backgroundTexture, visible.width, visible.height);
         this.redrawBackground(visible.width, visible.height);
 
         const extraHeight = Math.max(0, visible.height - C.designHeight);
@@ -532,6 +532,10 @@ export class HomeController extends Component {
     }
 
     private attachPaperTexture(parent: Node, assetName: string, tiled = false): void {
+        this.attachResourceTexture(parent, `textures/home/paper/${assetName}/spriteFrame`, tiled);
+    }
+
+    private attachResourceTexture(parent: Node, resourcePath: string, tiled = false, cover = false): void {
         const parentTransform = parent.getComponent(UITransform);
         if (!parentTransform) return;
 
@@ -547,16 +551,26 @@ export class HomeController extends Component {
         sprite.sizeMode = Sprite.SizeMode.CUSTOM;
         sprite.type = tiled ? Sprite.Type.TILED : Sprite.Type.SIMPLE;
 
-        resources.load(`textures/home/paper/${assetName}/spriteFrame`, SpriteFrame, (error, frame) => {
+        resources.load(resourcePath, SpriteFrame, (error, frame) => {
             if (error || !frame || !visual.isValid) {
-                console.warn(`[Home] Paper texture failed to load: ${assetName}`, error);
+                console.warn(`[Home] Paper texture failed to load: ${resourcePath}`, error);
                 if (visual.isValid) visual.destroy();
                 return;
             }
             sprite.spriteFrame = frame;
+            if (cover) this.resizeCoverTexture(visual, parentTransform.contentSize.width, parentTransform.contentSize.height);
             const fallback = parent.getComponent(Graphics);
             if (fallback) fallback.enabled = false;
         });
+    }
+
+    private resizeCoverTexture(visual: Node, width: number, height: number): void {
+        const transform = visual.getComponent(UITransform);
+        const frame = visual.getComponent(Sprite)?.spriteFrame;
+        if (!transform || !frame) { transform?.setContentSize(width, height); return; }
+        const source = frame.originalSize;
+        const scale = Math.max(width / Math.max(1, source.width), height / Math.max(1, source.height));
+        transform.setContentSize(source.width * scale, source.height * scale);
     }
 
     private graphics(parent: Node, name: string, x: number, y: number, width: number, height: number): Graphics {

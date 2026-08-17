@@ -69,7 +69,7 @@ export class GameplayMVP extends Component {
     public rebuildStaticView():void {
         for(const c of [...this.node.children]){c.removeFromParent();c.destroy();}
         ui(this.node,DESIGN_WIDTH,DESIGN_HEIGHT);
-        const bg=image(this.node,'Background',DESIGN_WIDTH,DESIGN_HEIGHT);resources.load('textures/home/paper/bg_graph_paper/spriteFrame',SpriteFrame,(e,f)=>{if(!e&&bg.isValid)bg.spriteFrame=f;});
+        const bg=image(this.node,'Background',DESIGN_WIDTH,DESIGN_HEIGHT);resources.load('textures/common/background_paper/spriteFrame',SpriteFrame,(e,f)=>{if(!e&&bg.isValid)bg.spriteFrame=f;});
         node('TargetContainer',this.node,DESIGN_WIDTH,DESIGN_HEIGHT);gfx(this.node,'SlashTrail',DESIGN_WIDTH,DESIGN_HEIGHT);node('HitEffects',this.node,DESIGN_WIDTH,DESIGN_HEIGHT);node('FloatingText',this.node,DESIGN_WIDTH,DESIGN_HEIGHT);
         const y=DESIGN_HEIGHT/2-150;const score=text(this.node,'Score','0',30);score.node.setPosition(-DESIGN_WIDTH/2+85,y);const combo=text(this.node,'Combo','0 COMBO',27,RED);combo.node.setPosition(-DESIGN_WIDTH/2+110,y-48);
         const prompt=text(this.node,'Prompt','准备斩击',44);prompt.node.setPosition(0,y);const rule=text(this.node,'Rule','标准',25,PAPER);rule.node.setPosition(0,y-55);const badge=image(rule.node,'Badge',210,45);badge.node.setSiblingIndex(0);badge.color=BLUE;resources.load('textures/home/paper/daily_paper/spriteFrame',SpriteFrame,(e,f)=>{if(!e&&badge.isValid)badge.spriteFrame=f;});
@@ -80,6 +80,7 @@ export class GameplayMVP extends Component {
         const required=(name:string):Node=>{const found=this.node.getChildByName(name);if(!found)throw new Error(`[GameplayMVP] Gameplay.scene 缺少静态节点 ${name}，请在编辑器中重建并保存静态布局。`);return found;};
         const requiredLabel=(name:string):Label=>{const found=required(name).getComponent(Label);if(!found)throw new Error(`[GameplayMVP] 静态节点 ${name} 缺少 Label 组件。`);return found;};
         const background=required('Background').getComponent(Sprite);if(!background)throw new Error('[GameplayMVP] 静态节点 Background 缺少 Sprite 组件。');
+        resources.load('textures/common/background_paper/spriteFrame',SpriteFrame,(e,f)=>{if(!e&&background.isValid)background.spriteFrame=f;});
         this.targets=required('TargetContainer');const trailNode=required('SlashTrail');const trail=trailNode.getComponent(Graphics);if(!trail)throw new Error('[GameplayMVP] 静态节点 SlashTrail 缺少 Graphics 组件。');this.trail=trail;
         this.effects=required('HitEffects');this.floats=required('FloatingText');this.score=requiredLabel('Score');this.combo=requiredLabel('Combo');this.prompt=requiredLabel('Prompt');this.rule=requiredLabel('Rule');this.timer=requiredLabel('Timer');this.life=requiredLabel('Life');
         this.buildHandDrawnChrome();
@@ -88,7 +89,7 @@ export class GameplayMVP extends Component {
         for(const key of [...SKINS,'bomb'] as EffectKey[])resources.load(`textures/gameplay/effects/slash/${key}_slash/spriteFrame`,SpriteFrame,(e,f)=>{if(!e&&f?.isValid)this.frames.set(key,f);});
     }
     private applyVisibleLayout():void{const background=this.node.getChildByName('Background')?.getComponent(Sprite);if(!background||!this.score)return;const v=view.getVisibleSize();ui(this.node,v.width,v.height);for(const layer of [background.node,this.targets,this.trail.node,this.effects,this.floats])ui(layer,v.width,v.height);this.layoutStaticHud(v.width,v.height);this.layoutHandDrawnChrome(v.width,v.height);}
-    private layoutStaticHud(width:number,height:number):void{const y=height/2-150;this.score.node.active=false;this.combo.node.active=true;this.combo.fontSize=44;this.combo.lineHeight=53;this.combo.color=INK;this.combo.node.setPosition(-width/2+96,y+3);this.prompt.node.setPosition(0,y);this.rule.node.setPosition(0,y-55);this.timer.node.setPosition(width/2-85,y);this.life.node.active=false;}
+    private layoutStaticHud(width:number,height:number):void{const y=height/2-150;this.score.node.active=false;this.combo.node.active=true;this.combo.fontSize=44;this.combo.lineHeight=53;this.combo.color=INK;this.combo.node.setPosition(-width/2+96,y+3);this.prompt.node.setPosition(0,y);this.rule.node.setPosition(0,y-55);this.timer.node.setPosition(width/2-68,y+4);this.life.node.active=false;}
     private buildHandDrawnChrome():void{
         for(const name of ['HandDrawnChrome','HandDrawnFrameLayer']){const old=this.node.getChildByName(name);if(old){old.removeFromParent();old.destroy();}}
         this.lifeHearts.length=0;this.renderedLife=-1;
@@ -98,30 +99,20 @@ export class GameplayMVP extends Component {
         const chrome=node('HandDrawnChrome',this.node,DESIGN_WIDTH,DESIGN_HEIGHT);this.handDrawnChrome=chrome;
         const scoreIndex=this.node.getChildByName('Score')?.getSiblingIndex()??this.node.children.length;chrome.setSiblingIndex(scoreIndex);
         this.makeComboCard(chrome);
-        this.makePaperCard(chrome,'PromptPaperCard',300,164,.4,true);
-        const timerCard=this.makePaperCard(chrome,'TimerPaperCard',176,150,1.1);this.makeLifeHearts(timerCard);
+        this.makeArtworkCard(chrome,'PromptPaperCard','gameplay_mid_title',306,230);
+        const timerCard=this.makeArtworkCard(chrome,'TimerPaperCard','gameplay_time',176,176,1.1);this.makeLifeHearts(timerCard);
     }
     private makeComboCard(parent:Node):Node{
         const card=node('ComboPaperCard',parent,164,212);card.angle=-1.2;const artwork=image(card,'ComboArtwork',164,212);
         resources.load('textures/gameplay/ui/combo/spriteFrame',SpriteFrame,(e,f)=>{if(!e&&artwork.isValid)artwork.spriteFrame=f;});return card;
     }
+    private makeArtworkCard(parent:Node,name:string,assetName:string,width:number,height:number,angle=0):Node{
+        const card=node(name,parent,width,height);card.angle=angle;const artwork=image(card,'Artwork',width,height);
+        resources.load(`textures/gameplay/ui/${assetName}/spriteFrame`,SpriteFrame,(e,f)=>{if(!e&&artwork.isValid)artwork.spriteFrame=f;});return card;
+    }
     private makeLifeHearts(parent:Node):void{
         for(let i=0;i<3;i++){const cell=node(`LifeHeart_${i}`,parent,44,42);cell.setPosition((i-1)*44,-42);const mask=cell.addComponent(Mask);mask.type=Mask.Type.GRAPHICS_RECT;const heart=image(cell,'Artwork',132,42);heart.node.setPosition((1-i)*44,0);this.lifeHearts.push(heart);}
         resources.load('textures/gameplay/ui/life_heart/spriteFrame',SpriteFrame,(e,f)=>{if(e)return;for(const heart of this.lifeHearts)if(heart.isValid)heart.spriteFrame=f;});
-    }
-    private makePaperCard(parent:Node,name:string,width:number,height:number,angle:number,withTape=false):Node{
-        const card=node(name,parent,width+28,height+30);card.angle=angle;
-        const shadow=gfx(card,'PaperShadow',width+18,height+20);shadow.node.setPosition(8,-10);this.drawRoughPaper(shadow,width,height,new Color(60,48,36,58),new Color(60,48,36,20),2);
-        const base=gfx(card,'PaperBase',width+8,height+8);this.drawRoughPaper(base,width,height,new Color(250,243,224,255),new Color(122,105,80,52),1.5);
-        const paper=image(card,'PaperTexture',width,height);paper.color=new Color(255,250,236,255);resources.load('textures/home/paper/daily_paper/spriteFrame',SpriteFrame,(e,f)=>{if(!e&&paper.isValid)paper.spriteFrame=f;});
-        const outline=gfx(card,'HandDrawnOutline',width+8,height+8);this.drawRoughPaper(outline,width,height,new Color(255,255,255,0),new Color(66,59,49,125),2.2);
-        const marker=gfx(card,'MarkerUnderline',Math.max(80,width*.56),12);marker.node.setPosition(0,-height*.28);marker.strokeColor=RED;marker.lineWidth=3;marker.lineCap=Graphics.LineCap.ROUND;marker.moveTo(-width*.26,1);marker.bezierCurveTo(-width*.08,-2,width*.08,3,width*.27,0);marker.stroke();marker.moveTo(-width*.22,-3);marker.bezierCurveTo(-width*.06,-5,width*.1,-1,width*.24,-4);marker.stroke();
-        if(withTape){const tape=gfx(card,'RedTape',128,38);tape.node.setPosition(0,height/2+3);tape.fillColor=new Color(194,61,47,220);tape.strokeColor=new Color(137,43,34,120);tape.lineWidth=2;tape.moveTo(-64,-16);tape.lineTo(-59,17);tape.lineTo(62,14);tape.lineTo(65,-17);tape.close();tape.fill();tape.stroke();}
-        return card;
-    }
-    private drawRoughPaper(g:Graphics,width:number,height:number,fill:Color,stroke:Color,lineWidth:number):void{
-        const w=width/2,h=height/2;g.clear();g.fillColor=fill;g.strokeColor=stroke;g.lineWidth=lineWidth;g.lineJoin=Graphics.LineJoin.ROUND;
-        g.moveTo(-w+3,-h+1);g.lineTo(-w-1,-h*.25);g.lineTo(-w+2,h-3);g.lineTo(-w*.25,h+2);g.lineTo(w-4,h-1);g.lineTo(w+1,h*.18);g.lineTo(w-2,-h+3);g.lineTo(w*.18,-h-2);g.close();if(fill.a>0)g.fill();if(stroke.a>0)g.stroke();
     }
     private layoutHandDrawnChrome(width:number,height:number):void{
         const chrome=this.handDrawnChrome;if(!chrome?.isValid)return;ui(chrome,width,height);const hudY=height/2-168;
