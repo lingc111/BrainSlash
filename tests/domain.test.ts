@@ -45,10 +45,16 @@ test('session applies a question result only once', () => {
 
 test('1000 seeds generate only valid questions and repeat exactly', () => {
     for (let i = 0; i < 1000; i++) {
-        const seed = `regression-${i}`, elapsed = (i * 137) % 59_000, stage = difficultyAt(elapsed).stage;
-        const first = new QuestionGenerator(new SeededRng(seed), GAMEPLAY_CONFIG).next(elapsed, stage);
-        const second = new QuestionGenerator(new SeededRng(seed), GAMEPLAY_CONFIG).next(elapsed, stage);
-        assert.deepEqual(first, second);
-        assert.deepEqual(validateQuestion(first, evaluateRules(first)), []);
+        const seed = `regression-${i}`;
+        const firstGenerator = new QuestionGenerator(new SeededRng(seed), GAMEPLAY_CONFIG);
+        const secondGenerator = new QuestionGenerator(new SeededRng(seed), GAMEPLAY_CONFIG);
+        for (let questionIndex = 0; questionIndex < 18; questionIndex++) {
+            const elapsed = (i * 137 + questionIndex * 3_271) % 59_000;
+            const stage = difficultyAt(elapsed).stage;
+            const first = firstGenerator.next(elapsed, stage);
+            const second = secondGenerator.next(elapsed, stage);
+            assert.deepEqual(first, second);
+            assert.deepEqual(validateQuestion(first, evaluateRules(first)), []);
+        }
     }
 });

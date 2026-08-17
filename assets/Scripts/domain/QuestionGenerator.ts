@@ -11,6 +11,11 @@ export class QuestionGenerator {
     private index = 0;
     public constructor(private readonly rng: SeededRng, private readonly config: GameplayConfig) {}
 
+    private includeAnswer<T>(answer: T, candidates: T[], count: number): T[] {
+        const distractors = this.rng.shuffle(candidates.filter((candidate) => candidate !== answer));
+        return this.rng.shuffle([answer, ...distractors.slice(0, Math.max(0, count - 1))]);
+    }
+
     public next(elapsedMs: number, stage: Stage): QuestionInstance {
         for (let attempt = 0; attempt < 8; attempt++) {
             const question = this.generate(elapsedMs, stage);
@@ -45,7 +50,7 @@ export class QuestionGenerator {
 
     private addition(elapsedMs: number, stage: Stage): QuestionInstance {
         const a = this.rng.int(2, 9 + stage * 4), b = this.rng.int(2, 9 + stage * 4), answer = a + b;
-        const values = this.rng.shuffle([answer, answer - 1, answer + 1, answer + 2]).slice(0, stage + 3);
+        const values = this.includeAnswer(answer, [answer - 1, answer + 1, answer + 2], stage + 3);
         const targets: TargetSpec[] = values.map((value, i) => ({ id: `a${i}`, text: String(value), value }));
         const bomb = elapsedMs >= 15_000 && this.rng.next() < 0.3;
         if (bomb && targets.length < 6) targets.push({ id: 'bomb', text: '爆', isBomb: true });
@@ -63,37 +68,37 @@ export class QuestionGenerator {
 
     private direction(stage: Stage): QuestionInstance {
         const arrows = ['←', '↑', '→', '↓'], wanted = this.rng.pick(arrows);
-        const targets = this.rng.shuffle(arrows).slice(0, stage + 3).map((text, i) => ({ id: `d${i}`, text, value: text }));
+        const targets = this.includeAnswer(wanted, arrows, stage + 3).map((text, i) => ({ id: `d${i}`, text, value: text }));
         return this.make('direction', 'vision', `斩 ${wanted}`, targets, [targets.find((t) => t.value === wanted)!.id], ['standard'], stage);
     }
 
     private stroop(elapsedMs: number, stage: Stage): QuestionInstance {
         const wanted = this.rng.pick(COLOR_WORDS);
-        const targets = this.rng.shuffle(COLOR_WORDS).slice(0, stage + 3).map((color, i) => ({ id: `s${i}`, text: COLOR_WORDS[(i + 1) % COLOR_WORDS.length], colorName: color, value: color }));
+        const targets = this.includeAnswer(wanted, COLOR_WORDS, stage + 3).map((color, i) => ({ id: `s${i}`, text: COLOR_WORDS[(i + 1) % COLOR_WORDS.length], colorName: color, value: color }));
         return this.make('stroop', 'vision', `斩字体颜色·${wanted}`, targets, [targets.find((t) => t.value === wanted)!.id], elapsedMs >= 15_000 ? ['stroop'] : ['standard'], stage);
     }
 
     private vocabulary(stage: Stage): QuestionInstance {
         const words = [{ en: 'CAT', zh: '猫' }, { en: 'SUN', zh: '太阳' }, { en: 'RED', zh: '红色' }, { en: 'RUN', zh: '跑' }], wanted = this.rng.pick(words);
-        const targets = this.rng.shuffle(words).slice(0, stage + 3).map((word, i) => ({ id: `w${i}`, text: word.zh, value: word.en }));
+        const targets = this.includeAnswer(wanted, words, stage + 3).map((word, i) => ({ id: `w${i}`, text: word.zh, value: word.en }));
         return this.make('word', 'english', `${wanted.en} 是？`, targets, [targets.find((t) => t.value === wanted.en)!.id], ['standard'], stage);
     }
 
     private hanzi(stage: Stage): QuestionInstance {
         const entries = [{ prompt: '画龙点□', answer: '睛', wrong: ['晴', '情', '精'] }, { prompt: '一心一□', answer: '意', wrong: ['亿', '忆', '议'] }, { prompt: '四面八□', answer: '方', wrong: ['芳', '房', '放'] }], entry = this.rng.pick(entries);
-        const values = this.rng.shuffle([entry.answer, ...entry.wrong]).slice(0, stage + 3), targets = values.map((value, i) => ({ id: `h${i}`, text: value, value }));
+        const values = this.includeAnswer(entry.answer, entry.wrong, stage + 3), targets = values.map((value, i) => ({ id: `h${i}`, text: value, value }));
         return this.make('hanzi', 'hanzi', entry.prompt, targets, [targets.find((t) => t.value === entry.answer)!.id], ['standard'], stage);
     }
 
     private geography(stage: Stage): QuestionInstance {
         const entries = [{ prompt: '中国首都', answer: '北京', wrong: ['上海', '广州', '成都'] }, { prompt: '日本首都', answer: '东京', wrong: ['大阪', '首尔', '曼谷'] }, { prompt: '法国首都', answer: '巴黎', wrong: ['伦敦', '罗马', '柏林'] }], entry = this.rng.pick(entries);
-        const values = this.rng.shuffle([entry.answer, ...entry.wrong]).slice(0, stage + 3), targets = values.map((value, i) => ({ id: `g${i}`, text: value, value }));
+        const values = this.includeAnswer(entry.answer, entry.wrong, stage + 3), targets = values.map((value, i) => ({ id: `g${i}`, text: value, value }));
         return this.make('geo', 'geography', entry.prompt, targets, [targets.find((t) => t.value === entry.answer)!.id], ['standard'], stage);
     }
 
     private life(stage: Stage): QuestionInstance {
         const entries = [{ prompt: '雨天防雨', answer: '雨伞', wrong: ['牙刷', '剪刀', '枕头'] }, { prompt: '照亮黑暗', answer: '手电', wrong: ['尺子', '杯子', '毛巾'] }, { prompt: '测量长度', answer: '尺子', wrong: ['盘子', '钥匙', '帽子'] }], entry = this.rng.pick(entries);
-        const values = this.rng.shuffle([entry.answer, ...entry.wrong]).slice(0, stage + 3), targets = values.map((value, i) => ({ id: `l${i}`, text: value, value }));
+        const values = this.includeAnswer(entry.answer, entry.wrong, stage + 3), targets = values.map((value, i) => ({ id: `l${i}`, text: value, value }));
         return this.make('life', 'life', entry.prompt, targets, [targets.find((t) => t.value === entry.answer)!.id], ['standard'], stage);
     }
 }
