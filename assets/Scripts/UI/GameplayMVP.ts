@@ -15,12 +15,14 @@ const INK = new Color(45,43,39,255), PAPER = new Color(255,250,236,255), RED = n
 const COLORS = [YELLOW,GREEN,BLUE,new Color(137,111,158,255),new Color(207,132,70,255)];
 const SKINS = ['blue_square','green_octagon','green_triangle','orange_circle','pink_diamond','purple_hexagon','red_trapezoid','yellow_circle'] as const;
 const DESIGN_WIDTH = 750, DESIGN_HEIGHT = 1624;
+const FRAME_TOP_INSET = 292, FRAME_BOTTOM_INSET = 12, TARGET_VISUAL_RADIUS = 132;
 type EffectKey = typeof SKINS[number] | 'bomb';
 interface TargetMotion {
     node: Node;
     startX: number;
     targetX: number;
     startY: number;
+    ceilingY: number;
     groundY: number;
     delay: number;
     duration: number;
@@ -117,7 +119,7 @@ export class GameplayMVP extends Component {
         chrome.getChildByName('PromptPaperCard')?.setPosition(0,hudY-2);
         chrome.getChildByName('TimerPaperCard')?.setPosition(width/2-96,hudY);
         const frame=this.handDrawnFrame;if(!frame?.isValid)return;const frameLayer=frame.node.parent;if(frameLayer)ui(frameLayer,width,height);
-        const frameTop=height/2-292,frameBottom=-height/2+110,frameWidth=width-38,frameHeight=frameTop-frameBottom;ui(frame.node,frameWidth,frameHeight);frame.node.setPosition(0,(frameTop+frameBottom)/2);this.drawHandDrawnFrame(frame,frameWidth,frameHeight);
+        const frameTop=height/2-FRAME_TOP_INSET,frameBottom=-height/2+FRAME_BOTTOM_INSET,frameWidth=width-38,frameHeight=frameTop-frameBottom;ui(frame.node,frameWidth,frameHeight);frame.node.setPosition(0,(frameTop+frameBottom)/2);this.drawHandDrawnFrame(frame,frameWidth,frameHeight);
     }
     private drawHandDrawnFrame(g:Graphics,width:number,height:number):void{
         const w=width/2,h=height/2;g.clear();g.strokeColor=new Color(196,57,43,235);g.lineWidth=4;g.lineCap=Graphics.LineCap.ROUND;g.lineJoin=Graphics.LineJoin.ROUND;
@@ -133,12 +135,12 @@ export class GameplayMVP extends Component {
         const positions=this.layout(this.question.targets.length),skins=this.visual.shuffle(SKINS);this.question.targets.forEach((s,i)=>this.createTarget(s,positions[i],skins[i%skins.length],i));this.refresh();
     }
     private createTarget(spec:TargetSpec,pos:Vec3,skin:typeof SKINS[number],i:number):void {
-        const n=node(spec.isBomb?'BombTarget':`Target_${spec.id}`,this.targets,168,168);const v=view.getVisibleSize(),side=pos.x<0?-1:pos.x>0?1:i%2===0?-1:1,row=Math.max(0,pos.z),groundY=-v.height/2-110-row*220,startY=pos.y,delay=(i%3)*.12+row*.08,baseDuration=(this.question?.timeLimitMs??3000)/1000,duration=Math.max(.9,baseDuration-delay),apexTime=duration*.28,gravity=(groundY-startY)/(.5*duration*duration-apexTime*duration),velocityY=-gravity*apexTime,baseAngle=[-12,10,-8,14,-6,8][i]??0;
+        const n=node(spec.isBomb?'BombTarget':`Target_${spec.id}`,this.targets,168,168);const v=view.getVisibleSize(),side=pos.x<0?-1:pos.x>0?1:i%2===0?-1:1,row=Math.max(0,pos.z),groundY=-v.height/2-TARGET_VISUAL_RADIUS-8-row*220,startY=pos.y,delay=(i%3)*.12+row*.08,baseDuration=(this.question?.timeLimitMs??3000)/1000,duration=Math.max(.9,baseDuration-delay),maxApexY=v.height/2-FRAME_TOP_INSET-TARGET_VISUAL_RADIUS-8,apexY=Math.max(startY+24,Math.min(maxApexY,startY+v.height*.105)),arcRatio=Math.sqrt(Math.max(1,apexY-startY)/Math.max(1,apexY-groundY)),apexTime=duration*arcRatio/(1+arcRatio),gravity=2*(startY-apexY)/(apexTime*apexTime),velocityY=-gravity*apexTime,baseAngle=[-12,10,-8,14,-6,8][i]??0;
         n.setPosition(side*(v.width/2+110),startY);n.setScale(.68,.68,1);n.angle=baseAngle;
         const wordColors:Record<string,Color>={红:RED,蓝:BLUE,绿:GREEN,黄:YELLOW};
         const data:GameplayTargetData={id:spec.id,contentType:TargetContentType.TEXT,text:spec.text,value:spec.value,shape:(['roundedSquare','triangle','hexagon','circle','pentagon'] as TargetShape[])[i%5],isBomb:spec.isBomb,color:COLORS[i%COLORS.length],contentColor:spec.colorName?wordColors[spec.colorName]:undefined};const target=n.addComponent(GameplayTarget);target.configure(data);
         const key:EffectKey=spec.isBomb?'bomb':skin;this.effectByNode.set(n,key);resources.load(`textures/gameplay/targets/${key}/spriteFrame`,SpriteFrame,(e,f)=>{if(!e&&n.isValid&&n.active)target.applySkin(f);});
-        this.motions.push({node:n,startX:n.position.x,targetX:pos.x,startY,groundY,delay,duration,velocityY,gravity,baseAngle,spin:side*(70+this.visual.int(0,45)),phase:this.visual.next()*Math.PI*2});
+        this.motions.push({node:n,startX:n.position.x,targetX:pos.x,startY,ceilingY:maxApexY,groundY,delay,duration,velocityY,gravity,baseAngle,spin:side*(70+this.visual.int(0,45)),phase:this.visual.next()*Math.PI*2});
         tween(n).delay(delay).to(.18,{scale:new Vec3(1.12,1.12,1)},{easing:'backOut'}).to(.16,{scale:Vec3.ONE},{easing:'quadOut'}).start();
     }
     private layout(count:number):Vec3[]{const v=view.getVisibleSize(),columns=Math.min(3,count),result:Vec3[]=[];for(let i=0;i<count;i++){const row=Math.floor(i/columns),column=i%columns,rowCount=Math.min(columns,count-row*columns),x=(column-(rowCount-1)/2)*230,y=v.height*.16-row*220;result.push(new Vec3(x,y,row));}return result;}
@@ -169,7 +171,7 @@ export class GameplayMVP extends Component {
             const t=Math.min(local,motion.duration),entry=Math.min(1,t/Math.min(.58,motion.duration*.3)),ease=1-Math.pow(1-entry,3);
             const x=motion.startX+(motion.targetX-motion.startX)*ease+Math.sin(t*2.4+motion.phase)*8*entry;
             const y=motion.startY+motion.velocityY*t+.5*motion.gravity*t*t;
-            motion.node.setPosition(x,Math.max(motion.groundY,y));motion.node.angle=motion.baseAngle+motion.spin*t;
+            motion.node.setPosition(x,Math.min(motion.ceilingY,Math.max(motion.groundY,y)));motion.node.angle=motion.baseAngle+motion.spin*t;
             if(local>=motion.duration)landed=true;
         }
         return landed;
