@@ -1,4 +1,4 @@
-import { _decorator, Button, Color, Component, director, EventTouch, game, Game, Graphics, Label, Node, NodePool, ResolutionPolicy, resources, screen, Sprite, SpriteFrame, tween, Tween, UIOpacity, UITransform, Vec2, Vec3, view } from 'cc';
+import { _decorator, Button, Color, Component, director, EventTouch, game, Game, Graphics, Label, Mask, Node, NodePool, ResolutionPolicy, resources, screen, Sprite, SpriteFrame, tween, Tween, UIOpacity, UITransform, Vec2, Vec3, view } from 'cc';
 import { AppRuntime } from '../app/AppRuntime';
 import { GAMEPLAY_CONFIG } from '../configs/GameConfig';
 import { difficultyAt } from '../domain/DifficultyDirector';
@@ -45,6 +45,7 @@ export class GameplayMVP extends Component {
     private targets!:Node; private effects!:Node; private floats!:Node; private trail!:Graphics;
     private score!:Label; private combo!:Label; private prompt!:Label; private rule!:Label; private timer!:Label; private life!:Label;
     private handDrawnChrome:Node|null=null; private handDrawnFrame:Graphics|null=null;
+    private readonly lifeHearts:Sprite[]=[]; private renderedLife=-1;
     private points:Vec2[]=[]; private trailAge=1; private finished=false; private reverseFrame:Node|null=null;
     private paused=false;
     private tutorialRule:RuleId|null=null;
@@ -87,17 +88,26 @@ export class GameplayMVP extends Component {
         for(const key of [...SKINS,'bomb'] as EffectKey[])resources.load(`textures/gameplay/effects/slash/${key}_slash/spriteFrame`,SpriteFrame,(e,f)=>{if(!e&&f?.isValid)this.frames.set(key,f);});
     }
     private applyVisibleLayout():void{const background=this.node.getChildByName('Background')?.getComponent(Sprite);if(!background||!this.score)return;const v=view.getVisibleSize();ui(this.node,v.width,v.height);for(const layer of [background.node,this.targets,this.trail.node,this.effects,this.floats])ui(layer,v.width,v.height);this.layoutStaticHud(v.width,v.height);this.layoutHandDrawnChrome(v.width,v.height);}
-    private layoutStaticHud(width:number,height:number):void{const y=height/2-150;this.score.node.setPosition(-width/2+85,y);this.combo.node.setPosition(-width/2+110,y-48);this.prompt.node.setPosition(0,y);this.rule.node.setPosition(0,y-55);this.timer.node.setPosition(width/2-85,y);this.life.node.setPosition(width/2-85,y-48);}
+    private layoutStaticHud(width:number,height:number):void{const y=height/2-150;this.score.node.active=false;this.combo.node.active=true;this.combo.fontSize=44;this.combo.lineHeight=53;this.combo.color=INK;this.combo.node.setPosition(-width/2+96,y+3);this.prompt.node.setPosition(0,y);this.rule.node.setPosition(0,y-55);this.timer.node.setPosition(width/2-85,y);this.life.node.active=false;}
     private buildHandDrawnChrome():void{
         for(const name of ['HandDrawnChrome','HandDrawnFrameLayer']){const old=this.node.getChildByName(name);if(old){old.removeFromParent();old.destroy();}}
+        this.lifeHearts.length=0;this.renderedLife=-1;
         const frameLayer=node('HandDrawnFrameLayer',this.node,DESIGN_WIDTH,DESIGN_HEIGHT);
         const targetIndex=this.node.getChildByName('TargetContainer')?.getSiblingIndex()??1;frameLayer.setSiblingIndex(targetIndex);
         this.handDrawnFrame=gfx(frameLayer,'GameplayHandDrawnFrame',DESIGN_WIDTH-38,DESIGN_HEIGHT-330);
         const chrome=node('HandDrawnChrome',this.node,DESIGN_WIDTH,DESIGN_HEIGHT);this.handDrawnChrome=chrome;
         const scoreIndex=this.node.getChildByName('Score')?.getSiblingIndex()??this.node.children.length;chrome.setSiblingIndex(scoreIndex);
-        this.makePaperCard(chrome,'ComboPaperCard',176,150,-1.2);
+        this.makeComboCard(chrome);
         this.makePaperCard(chrome,'PromptPaperCard',300,164,.4,true);
-        this.makePaperCard(chrome,'TimerPaperCard',176,150,1.1);
+        const timerCard=this.makePaperCard(chrome,'TimerPaperCard',176,150,1.1);this.makeLifeHearts(timerCard);
+    }
+    private makeComboCard(parent:Node):Node{
+        const card=node('ComboPaperCard',parent,164,212);card.angle=-1.2;const artwork=image(card,'ComboArtwork',164,212);
+        resources.load('textures/gameplay/ui/combo/spriteFrame',SpriteFrame,(e,f)=>{if(!e&&artwork.isValid)artwork.spriteFrame=f;});return card;
+    }
+    private makeLifeHearts(parent:Node):void{
+        for(let i=0;i<3;i++){const cell=node(`LifeHeart_${i}`,parent,44,42);cell.setPosition((i-1)*44,-42);const mask=cell.addComponent(Mask);mask.type=Mask.Type.GRAPHICS_RECT;const heart=image(cell,'Artwork',132,42);heart.node.setPosition((1-i)*44,0);this.lifeHearts.push(heart);}
+        resources.load('textures/gameplay/ui/life_heart/spriteFrame',SpriteFrame,(e,f)=>{if(e)return;for(const heart of this.lifeHearts)if(heart.isValid)heart.spriteFrame=f;});
     }
     private makePaperCard(parent:Node,name:string,width:number,height:number,angle:number,withTape=false):Node{
         const card=node(name,parent,width+28,height+30);card.angle=angle;
@@ -155,7 +165,12 @@ export class GameplayMVP extends Component {
     private finish():void{if(this.finished)return;this.finished=true;const s=this.session.state,total=s.correctCount+s.errorCount;const r:GameResult={entry:this.session.entry,score:s.score,maxCombo:s.maxCombo,correctCount:s.correctCount,errorCount:s.errorCount,accuracy:total?s.correctCount/total:0,bestReactionMs:s.bestReactionMs,isNewRecord:false};AppRuntime.finish(r);this.result(AppRuntime.result!);}
     private result(r:GameResult):void{const v=view.getVisibleSize(),o=node('ResultOverlay',this.node,v.width,v.height),g=gfx(o,'Shade',v.width,v.height);g.fillColor=new Color(35,31,27,240);g.rect(-v.width/2,-v.height/2,v.width,v.height);g.fill();text(o,'Title',r.isNewRecord?'NEW RECORD!':'本局完成',52,YELLOW).node.setPosition(0,340);text(o,'Score',String(r.score),92,PAPER).node.setPosition(0,220);text(o,'Stats',`最高 COMBO ${r.maxCombo}   正确率 ${Math.round(r.accuracy*100)}%`,27,PAPER).node.setPosition(0,90);this.button(o,'再来一局',-70,()=>AppRuntime.replay());this.button(o,'挑战好友',-185,()=>AppRuntime.share());this.button(o,'返回首页',-300,()=>AppRuntime.home());}
     private button(p:Node,value:string,y:number,fn:()=>void):void{const n=node(`Button_${value}`,p,390,82),g=n.addComponent(Graphics);g.fillColor=value==='再来一局'?YELLOW:PAPER;g.strokeColor=INK;g.lineWidth=4;g.roundRect(-195,-41,390,82,16);g.fill();g.stroke();text(n,'Label',value,31);n.setPosition(0,y);n.addComponent(Button);n.on(Node.EventType.TOUCH_END,fn);}
-    private refresh():void{if(!this.score)return;const s=this.session.state;this.score.string=String(s.score);this.combo.string=`${s.combo} COMBO`;this.timer.string=`${Math.ceil(s.remainingMs/1000)}s`;this.life.string=Array.from({length:3},(_,i)=>i<s.life?'♥':'♡').join(' ');}
+    private refresh():void{if(!this.score)return;const s=this.session.state;this.score.string=String(s.score);this.combo.string=String(s.combo);this.timer.string=`${Math.ceil(s.remainingMs/1000)}s`;this.updateLifeHearts(s.life);}
+    private updateLifeHearts(life:number):void{
+        if(life===this.renderedLife)return;const previous=this.renderedLife,lit=new Color(255,255,255,255),off=new Color(92,88,82,125);
+        this.lifeHearts.forEach((heart,i)=>{Tween.stopAllByTarget(heart.node);heart.node.setScale(Vec3.ONE);const alive=i<life;if(previous>=0&&!alive&&i<previous){heart.color=lit;tween(heart.node).to(.09,{scale:new Vec3(.78,.78,1)}).call(()=>{if(heart.isValid)heart.color=off;}).to(.14,{scale:Vec3.ONE},{easing:'backOut'}).start();}else heart.color=alive?lit:off;});
+        this.renderedLife=life;
+    }
     private drawTrail(alpha:number):void{this.trail.clear();if(this.points.length<2||alpha<=0)return;for(const [w,c] of [[16,new Color(148,187,199,Math.round(95*alpha))],[8,new Color(255,253,241,Math.round(235*alpha))]] as [number,Color][]){this.trail.lineCap=Graphics.LineCap.ROUND;this.trail.lineJoin=Graphics.LineJoin.ROUND;this.trail.lineWidth=w;this.trail.strokeColor=c;this.trail.moveTo(this.points[0].x,this.points[0].y);for(let i=1;i<this.points.length;i++)this.trail.lineTo(this.points[i].x,this.points[i].y);this.trail.stroke();}}
     private showReverse(active:boolean):void{this.reverseFrame?.destroy();this.reverseFrame=null;if(!active)return;const v=view.getVisibleSize(),g=gfx(this.node,'ReverseFrame',v.width-24,v.height-28);g.strokeColor=new Color(174,69,61,170);g.lineWidth=8;g.rect(-v.width/2+12,-v.height/2+14,v.width-24,v.height-28);g.stroke();this.reverseFrame=g.node;}
     private error(pos:Readonly<Vec3>):void{const g=gfx(this.effects,'ErrorRing',190,190);g.node.setPosition(pos);g.strokeColor=RED;g.lineWidth=12;g.circle(0,0,80);g.stroke();const o=g.node.addComponent(UIOpacity);tween(o).to(.24,{opacity:0}).call(()=>g.node.destroy()).start();}

@@ -1,0 +1,134 @@
+{
+  "ver": "1.0.27",
+  "importer": "image",
+  "imported": true,
+  "uuid": "a2fdcc13-2961-40fc-927d-15dfc6fd9d39",
+  "files": [
+    ".json",
+    ".png"
+  ],
+  "subMetas": {
+    "6c48a": {
+      "importer": "texture",
+      "uuid": "a2fdcc13-2961-40fc-927d-15dfc6fd9d39@6c48a",
+      "displayName": "life_heart",
+      "id": "6c48a",
+      "name": "texture",
+      "userData": {
+        "wrapModeS": "clamp-to-edge",
+        "wrapModeT": "clamp-to-edge",
+        "imageUuidOrDatabaseUri": "a2fdcc13-2961-40fc-927d-15dfc6fd9d39",
+        "isUuid": true,
+        "visible": false,
+        "minfilter": "linear",
+        "magfilter": "linear",
+        "mipfilter": "none",
+        "anisotropy": 0
+      },
+      "ver": "1.0.22",
+      "imported": true,
+      "files": [
+        ".json"
+      ],
+      "subMetas": {}
+    },
+    "f9941": {
+      "importer": "sprite-frame",
+      "uuid": "a2fdcc13-2961-40fc-927d-15dfc6fd9d39@f9941",
+      "displayName": "life_heart",
+      "id": "f9941",
+      "name": "spriteFrame",
+      "userData": {
+        "trimThreshold": 1,
+        "rotated": false,
+        "offsetX": 36.5,
+        "offsetY": 8.5,
+        "trimX": 89,
+        "trimY": 23,
+        "width": 2067,
+        "height": 661,
+        "rawWidth": 2172,
+        "rawHeight": 724,
+        "borderTop": 0,
+        "borderBottom": 0,
+        "borderLeft": 0,
+        "borderRight": 0,
+        "packable": true,
+        "pixelsToUnit": 100,
+        "pivotX": 0.5,
+        "pivotY": 0.5,
+        "meshType": 0,
+        "vertices": {
+          "rawPosition": [
+            -1033.5,
+            -330.5,
+            0,
+            1033.5,
+            -330.5,
+            0,
+            -1033.5,
+            330.5,
+            0,
+            1033.5,
+            330.5,
+            0
+          ],
+          "indexes": [
+            0,
+            1,
+            2,
+            2,
+            1,
+            3
+          ],
+          "uv": [
+            89,
+            701,
+            2156,
+            701,
+            89,
+            40,
+            2156,
+            40
+          ],
+          "nuv": [
+            0.040976058931860036,
+            0.055248618784530384,
+            0.992633517495396,
+            0.055248618784530384,
+            0.040976058931860036,
+            0.9682320441988951,
+            0.992633517495396,
+            0.9682320441988951
+          ],
+          "minPos": [
+            -1033.5,
+            -330.5,
+            0
+          ],
+          "maxPos": [
+            1033.5,
+            330.5,
+            0
+          ]
+        },
+        "isUuid": true,
+        "imageUuidOrDatabaseUri": "a2fdcc13-2961-40fc-927d-15dfc6fd9d39@6c48a",
+        "atlasUuid": "",
+        "trimType": "auto"
+      },
+      "ver": "1.0.12",
+      "imported": true,
+      "files": [
+        ".json"
+      ],
+      "subMetas": {}
+    }
+  },
+  "userData": {
+    "type": "sprite-frame",
+    "fixAlphaTransparencyArtifacts": false,
+    "hasAlpha": true,
+    "redirect": "a2fdcc13-2961-40fc-927d-15dfc6fd9d39@6c48a"
+  }
+}
