@@ -42,7 +42,7 @@ export class GameplayMVP extends Component {
     private question:QuestionInstance|null=null; private constraint:ActionConstraint|null=null; private gesture:GestureResolver|null=null;
     private targets!:Node; private effects!:Node; private floats!:Node; private trail!:Graphics;
     private score!:Label; private combo!:Label; private prompt!:Label; private rule!:Label; private timer!:Label; private life!:Label;
-    private handDrawnChrome:Node|null=null;
+    private handDrawnChrome:Node|null=null; private handDrawnFrame:Graphics|null=null;
     private points:Vec2[]=[]; private trailAge=1; private finished=false; private reverseFrame:Node|null=null;
     private paused=false;
     private tutorialRule:RuleId|null=null;
@@ -87,13 +87,15 @@ export class GameplayMVP extends Component {
     private applyVisibleLayout():void{const background=this.node.getChildByName('Background')?.getComponent(Sprite);if(!background||!this.score)return;const v=view.getVisibleSize();ui(this.node,v.width,v.height);for(const layer of [background.node,this.targets,this.trail.node,this.effects,this.floats])ui(layer,v.width,v.height);this.layoutStaticHud(v.width,v.height);this.layoutHandDrawnChrome(v.width,v.height);}
     private layoutStaticHud(width:number,height:number):void{const y=height/2-150;this.score.node.setPosition(-width/2+85,y);this.combo.node.setPosition(-width/2+110,y-48);this.prompt.node.setPosition(0,y);this.rule.node.setPosition(0,y-55);this.timer.node.setPosition(width/2-85,y);this.life.node.setPosition(width/2-85,y-48);}
     private buildHandDrawnChrome():void{
-        this.node.getChildByName('HandDrawnChrome')?.destroy();
+        for(const name of ['HandDrawnChrome','HandDrawnFrameLayer']){const old=this.node.getChildByName(name);if(old){old.removeFromParent();old.destroy();}}
+        const frameLayer=node('HandDrawnFrameLayer',this.node,DESIGN_WIDTH,DESIGN_HEIGHT);
+        const targetIndex=this.node.getChildByName('TargetContainer')?.getSiblingIndex()??1;frameLayer.setSiblingIndex(targetIndex);
+        this.handDrawnFrame=gfx(frameLayer,'GameplayHandDrawnFrame',DESIGN_WIDTH-38,DESIGN_HEIGHT-330);
         const chrome=node('HandDrawnChrome',this.node,DESIGN_WIDTH,DESIGN_HEIGHT);this.handDrawnChrome=chrome;
         const scoreIndex=this.node.getChildByName('Score')?.getSiblingIndex()??this.node.children.length;chrome.setSiblingIndex(scoreIndex);
         this.makePaperCard(chrome,'ComboPaperCard',176,150,-1.2);
         this.makePaperCard(chrome,'PromptPaperCard',300,164,.4,true);
         this.makePaperCard(chrome,'TimerPaperCard',176,150,1.1);
-        gfx(chrome,'GameplayHandDrawnFrame',DESIGN_WIDTH-38,DESIGN_HEIGHT-330);
     }
     private makePaperCard(parent:Node,name:string,width:number,height:number,angle:number,withTape=false):Node{
         const card=node(name,parent,width+28,height+30);card.angle=angle;
@@ -114,7 +116,7 @@ export class GameplayMVP extends Component {
         chrome.getChildByName('ComboPaperCard')?.setPosition(-width/2+96,hudY);
         chrome.getChildByName('PromptPaperCard')?.setPosition(0,hudY-2);
         chrome.getChildByName('TimerPaperCard')?.setPosition(width/2-96,hudY);
-        const frame=chrome.getChildByName('GameplayHandDrawnFrame')?.getComponent(Graphics);if(!frame)return;
+        const frame=this.handDrawnFrame;if(!frame?.isValid)return;const frameLayer=frame.node.parent;if(frameLayer)ui(frameLayer,width,height);
         const frameTop=height/2-292,frameBottom=-height/2+110,frameWidth=width-38,frameHeight=frameTop-frameBottom;ui(frame.node,frameWidth,frameHeight);frame.node.setPosition(0,(frameTop+frameBottom)/2);this.drawHandDrawnFrame(frame,frameWidth,frameHeight);
     }
     private drawHandDrawnFrame(g:Graphics,width:number,height:number):void{
