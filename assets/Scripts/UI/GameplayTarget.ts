@@ -96,10 +96,7 @@ export class GameplayTarget extends Component {
 
     private drawTarget(): void {
         if (this.data.skinSpriteFrame) {
-            const skin = makeNode('PaperSkin', this.node, this.radius * 2.72, this.radius * 2.72).addComponent(Sprite);
-            skin.sizeMode = Sprite.SizeMode.CUSTOM;
-            skin.spriteFrame = this.data.skinSpriteFrame;
-            skin.node.getComponent(UITransform)?.setContentSize(this.radius * 2.72, this.radius * 2.72);
+            this.drawNormalizedSkin('PaperSkin', this.data.skinSpriteFrame);
         } else {
             const contact = graphics(this.node, 'ContactShadow', this.radius * 2.45, this.radius * 2.45);
             contact.node.setPosition(10, -13);
@@ -184,10 +181,7 @@ export class GameplayTarget extends Component {
 
     private drawBomb(): void {
         if (this.data.skinSpriteFrame) {
-            const skin = makeNode('BombSkin', this.node, this.radius * 2.78, this.radius * 2.78).addComponent(Sprite);
-            skin.sizeMode = Sprite.SizeMode.CUSTOM;
-            skin.spriteFrame = this.data.skinSpriteFrame;
-            skin.node.getComponent(UITransform)?.setContentSize(this.radius * 2.78, this.radius * 2.78);
+            this.drawNormalizedSkin('BombSkin', this.data.skinSpriteFrame);
             return;
         }
         const contact = graphics(this.node, 'ContactShadow', 184, 184);
@@ -214,5 +208,17 @@ export class GameplayTarget extends Component {
         bomb.circle(-18, 5, 9); bomb.circle(18, 5, 9); bomb.fill();
         bomb.strokeColor = PAPER; bomb.lineWidth = 7;
         bomb.moveTo(-19, -25); bomb.lineTo(19, -25); bomb.moveTo(-10, -34); bomb.lineTo(-10, -17); bomb.moveTo(10, -34); bomb.lineTo(10, -17); bomb.stroke();
+    }
+
+    private drawNormalizedSkin(name: string, frame: SpriteFrame): Sprite {
+        const original = frame.originalSize;
+        const rect = frame.rect;
+        const targetExtent = this.radius * 2.64;
+        const pixelScale = targetExtent / Math.max(1, rect.width, rect.height);
+        const skin = makeNode(name, this.node, original.width * pixelScale, original.height * pixelScale).addComponent(Sprite);
+        skin.sizeMode = Sprite.SizeMode.CUSTOM;
+        skin.spriteFrame = frame;
+        skin.node.setPosition(-frame.offset.x * pixelScale, -frame.offset.y * pixelScale);
+        return skin;
     }
 }
