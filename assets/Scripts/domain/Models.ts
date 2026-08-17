@@ -11,7 +11,7 @@ export interface QuestionInstance {
     baseCorrectTargetIds: string[]; orderedTargetIds?: string[]; activeRules: RuleId[];
     timeLimitMs: number; tutorialSafe: boolean;
 }
-export interface ActionConstraint { requiredTargetIds: string[]; forbiddenTargetIds: string[]; ordered: boolean; allowExtraHits: boolean; }
+export interface ActionConstraint { requiredTargetIds: string[]; forbiddenTargetIds: string[]; matchMode: 'any' | 'all'; ordered: boolean; allowExtraHits: boolean; }
 export interface GameSessionState {
     sessionId: string; seed: string; mode: GameMode; contentVersion: string;
     elapsedMs: number; remainingMs: number; life: number; score: number; combo: number; maxCombo: number;

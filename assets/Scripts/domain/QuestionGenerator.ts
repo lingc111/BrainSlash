@@ -45,7 +45,8 @@ export class QuestionGenerator {
         const values = this.rng.shuffle([2, 3, 6, 9, 12]).slice(0, stage + 3);
         const targets = values.map((value, i) => ({ id: `n${i}`, text: String(value), value }));
         const reverse = elapsedMs >= 15_000 && this.rng.next() < 0.25;
-        return this.make('parity', 'math', reverse ? '反向·斩奇数' : '斩偶数', targets, targets.filter((t) => Number(t.value) % 2 === 0).map((t) => t.id), reverse ? ['reverse'] : stage === 0 ? ['standard'] : ['multi'], stage);
+        const multi = !reverse && stage > 0;
+        return this.make('parity', 'math', reverse ? '反向·斩奇数' : multi ? '斩出全部偶数' : '斩偶数', targets, targets.filter((t) => Number(t.value) % 2 === 0).map((t) => t.id), reverse ? ['reverse'] : multi ? ['multi'] : ['standard'], stage);
     }
 
     private addition(elapsedMs: number, stage: Stage): QuestionInstance {

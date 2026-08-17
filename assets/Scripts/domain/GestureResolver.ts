@@ -10,10 +10,15 @@ export class GestureResolver {
         if (this.constraint.forbiddenTargetIds.includes(targetId)) return { status: 'failure', kind: 'bomb' };
         if (!this.constraint.requiredTargetIds.includes(targetId) && !this.constraint.allowExtraHits) return { status: 'failure', kind: 'wrong' };
         if (this.constraint.ordered && targetId !== this.constraint.requiredTargetIds[this.hits.length - 1]) return { status: 'failure', kind: 'orderError' };
-        return this.constraint.requiredTargetIds.every((id) => this.seen.has(id)) ? { status: 'success' } : { status: 'continue' };
+        return this.isComplete() ? { status: 'success' } : { status: 'continue' };
     }
     public end(): GestureProgress {
-        return this.constraint.requiredTargetIds.every((id) => this.seen.has(id)) ? { status: 'success' } : { status: 'failure', kind: 'miss' };
+        return this.isComplete() ? { status: 'success' } : { status: 'failure', kind: 'miss' };
     }
     public hasHits(): boolean { return this.hits.length > 0; }
+    private isComplete(): boolean {
+        return this.constraint.matchMode === 'any'
+            ? this.constraint.requiredTargetIds.some((id) => this.seen.has(id))
+            : this.constraint.requiredTargetIds.every((id) => this.seen.has(id));
+    }
 }

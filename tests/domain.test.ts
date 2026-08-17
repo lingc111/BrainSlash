@@ -28,14 +28,32 @@ test('reverse never turns a bomb into a required target', () => {
 });
 
 test('order and multi gestures resolve once and reject incomplete strokes', () => {
-    const ordered = new GestureResolver({ requiredTargetIds: ['a', 'b'], forbiddenTargetIds: [], ordered: true, allowExtraHits: false });
+    const ordered = new GestureResolver({ requiredTargetIds: ['a', 'b'], forbiddenTargetIds: [], matchMode: 'all', ordered: true, allowExtraHits: false });
     assert.equal(ordered.hit('a').status, 'continue');
     assert.equal(ordered.hit('b').status, 'success');
-    const incomplete = new GestureResolver({ requiredTargetIds: ['a', 'b'], forbiddenTargetIds: [], ordered: false, allowExtraHits: false });
+    const incomplete = new GestureResolver({ requiredTargetIds: ['a', 'b'], forbiddenTargetIds: [], matchMode: 'all', ordered: false, allowExtraHits: false });
     incomplete.hit('a');
     assert.deepEqual(incomplete.end(), { status: 'failure', kind: 'miss' });
-    const empty = new GestureResolver({ requiredTargetIds: ['a'], forbiddenTargetIds: [], ordered: false, allowExtraHits: false });
+    const empty = new GestureResolver({ requiredTargetIds: ['a'], forbiddenTargetIds: [], matchMode: 'any', ordered: false, allowExtraHits: false });
     assert.equal(empty.hasHits(), false);
+});
+
+test('standard parity accepts either even while multi parity requires all evens', () => {
+    const base: QuestionInstance = {
+        id: 'parity', theme: 'math', prompt: { text: '斩偶数' },
+        targets: [{ id: '6', text: '6', value: 6 }, { id: '12', text: '12', value: 12 }, { id: '13', text: '13', value: 13 }],
+        baseCorrectTargetIds: ['6', '12'], activeRules: ['standard'], timeLimitMs: 3000, tutorialSafe: false,
+    };
+    const standard = evaluateRules(base);
+    assert.equal(standard.matchMode, 'any');
+    assert.equal(new GestureResolver(standard).hit('6').status, 'success');
+    assert.equal(new GestureResolver(standard).hit('12').status, 'success');
+
+    const multi = evaluateRules({ ...base, prompt: { text: '斩出全部偶数' }, activeRules: ['multi'] });
+    assert.equal(multi.matchMode, 'all');
+    const gesture = new GestureResolver(multi);
+    assert.equal(gesture.hit('6').status, 'continue');
+    assert.equal(gesture.hit('12').status, 'success');
 });
 
 test('session applies a question result only once', () => {
