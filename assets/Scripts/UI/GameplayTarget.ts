@@ -15,6 +15,7 @@ export interface GameplayTargetData {
     value?: unknown;
     isBomb?: boolean;
     color: Color;
+    contentColor?: Color;
 }
 
 const INK = new Color(45, 43, 39, 255);
@@ -150,7 +151,7 @@ export class GameplayTarget extends Component {
             const image = makeNode('ImageContent', root, this.radius, this.radius).addComponent(Sprite);
             image.spriteFrame = this.data.spriteFrame;
         } else {
-            const content = label(root, this.data.contentType === TargetContentType.ICON ? 'IconContent' : 'TextContent', this.data.text ?? '', this.data.text && this.data.text.length > 2 ? 38 : 52);
+            const content = label(root, this.data.contentType === TargetContentType.ICON ? 'IconContent' : 'TextContent', this.data.text ?? '', this.data.text && this.data.text.length > 2 ? 38 : 52, this.data.contentColor ?? INK);
             content.isBold = true;
         }
     }

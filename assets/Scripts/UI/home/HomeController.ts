@@ -22,6 +22,7 @@ import {
 import { HOME_HAND_DRAWN as C } from '../DesignTokens';
 import { CountdownTimer } from './CountdownTimer';
 import { createMockHomeViewData, HomeViewData } from './HomeViewData';
+import { AppRuntime } from '../../app/AppRuntime';
 
 const { ccclass } = _decorator;
 
@@ -49,6 +50,7 @@ export class HomeController extends Component {
     private eventArea: Node | null = null;
     private rankProgress: Node | null = null;
     private bottomNavigation: Node | null = null;
+    private settingsModal: Node | null = null;
 
     private levelLabel: Label | null = null;
     private energyLabel: Label | null = null;
@@ -60,6 +62,18 @@ export class HomeController extends Component {
     private readonly handleResize = (): void => this.applyLayout();
 
     protected onLoad(): void {
+        AppRuntime.initialize();
+        const save = AppRuntime.save.snapshot();
+        this.data = {
+            ...createMockHomeViewData(),
+            level: save.player.level,
+            rankName: save.player.bestScore > 0 ? `最高 ${save.player.bestScore}` : '新手',
+            rankProgress: save.player.xp % 500,
+            rankProgressMax: 500,
+            friendMessage: AppRuntime.entry.mode === 'friendChallenge'
+                ? `好友目标 ${AppRuntime.entry.targetScore ?? 0} 分`
+                : '一刀开局，挑战最高分！',
+        };
         // Preview and device must share one coordinate system; otherwise the
         // legacy 750-wide scene camera crops the 941-wide hand-drawn layout.
         view.setDesignResolutionSize(C.designWidth, C.designHeight, ResolutionPolicy.SHOW_ALL);
@@ -95,7 +109,7 @@ export class HomeController extends Component {
 
     protected onDestroy(): void {
         this.countdown.stop();
-        Tween.stopAllByTarget(this.dailyChallenge);
+        if (this.dailyChallenge) Tween.stopAllByTarget(this.dailyChallenge);
     }
 
     public refresh(data: HomeViewData): void {
@@ -121,12 +135,12 @@ export class HomeController extends Component {
 
     public onDailyChallengeClick(): void {
         this.pulseHaptic();
-        console.log('[Home] Daily challenge: 成语斩·百词破晓');
+        AppRuntime.start('daily');
     }
 
     public onBrawlClick(): void {
         this.pulseHaptic();
-        console.log('[Home] 60-second brawl');
+        AppRuntime.start(AppRuntime.entry.mode === 'friendChallenge' ? 'friendChallenge' : 'brawl60');
     }
 
     public onReverseDayClick(): void {
@@ -150,7 +164,7 @@ export class HomeController extends Component {
     }
 
     public onProfileClick(): void {
-        console.log('[Home] Profile');
+        this.toggleSettings();
     }
 
     public onChallengeExpired(): void {
@@ -454,6 +468,47 @@ export class HomeController extends Component {
                 )
                 .start();
         }
+    }
+
+    private toggleSettings(): void {
+        if (this.settingsModal?.isValid) {
+            this.settingsModal.destroy();
+            this.settingsModal = null;
+            return;
+        }
+        const modal = this.makeNode(this.node, 'SettingsModal', 0, 0, C.designWidth, C.designHeight);
+        this.settingsModal = modal;
+        const shade = modal.addComponent(Graphics);
+        shade.fillColor = new Color(31, 29, 25, 170);
+        shade.rect(-C.designWidth / 2, -C.designHeight / 2, C.designWidth, C.designHeight);
+        shade.fill();
+        const panel = this.graphics(modal, 'SettingsPaper', 0, 0, 650, 700);
+        this.drawIrregularPaper(panel, 650, 700, C.paperRaised, C.ink, 5);
+        this.label(modal, 'SettingsTitle', '设置', 0, 265, 400, 72, 45, C.ink, 'center');
+        const addToggle = (name: string, y: number, read: () => boolean, write: (value: boolean) => void): void => {
+            const row = this.makeNode(modal, `Setting_${name}`, 0, y, 500, 74);
+            const g = row.addComponent(Graphics);
+            g.fillColor = C.paper; g.strokeColor = C.ink; g.lineWidth = 3;
+            g.roundRect(-250, -37, 500, 74, 12); g.fill(); g.stroke();
+            const value = this.label(row, 'Value', '', 0, 0, 450, 60, 28, C.ink, 'center');
+            const refresh = (): void => { value.string = `${name}　${read() ? '开' : '关'}`; };
+            refresh();
+            this.bindButton(row, () => { write(!read()); refresh(); this.pulseHaptic(); });
+        };
+        addToggle('音乐', 150, () => AppRuntime.save.snapshot().settings.music, (value) => AppRuntime.save.updateSettings({ music: value }));
+        addToggle('音效', 55, () => AppRuntime.save.snapshot().settings.sfx, (value) => { AppRuntime.save.updateSettings({ sfx: value }); AppRuntime.audio.enabled = value; });
+        addToggle('震动', -40, () => AppRuntime.save.snapshot().settings.vibration, (value) => AppRuntime.save.updateSettings({ vibration: value }));
+        const quality = this.makeNode(modal, 'Setting_Quality', 0, -135, 500, 74);
+        const qualityG = quality.addComponent(Graphics); qualityG.fillColor = C.paper; qualityG.strokeColor = C.ink; qualityG.lineWidth = 3; qualityG.roundRect(-250, -37, 500, 74, 12); qualityG.fill(); qualityG.stroke();
+        const qualityLabel = this.label(quality, 'Value', '', 0, 0, 450, 60, 28, C.ink, 'center');
+        const qualities = ['auto', 'low', 'medium', 'high'] as const;
+        const refreshQuality = (): void => { qualityLabel.string = `画质　${AppRuntime.save.snapshot().settings.quality.toUpperCase()}`; };
+        refreshQuality();
+        this.bindButton(quality, () => { const current = AppRuntime.save.snapshot().settings.quality; AppRuntime.save.updateSettings({ quality: qualities[(qualities.indexOf(current) + 1) % qualities.length] }); refreshQuality(); });
+        const close = this.makeNode(modal, 'CloseSettings', 0, -260, 300, 76);
+        const closeG = close.addComponent(Graphics); closeG.fillColor = C.yellow; closeG.strokeColor = C.ink; closeG.lineWidth = 4; closeG.roundRect(-150, -38, 300, 76, 14); closeG.fill(); closeG.stroke();
+        this.label(close, 'Label', '完成', 0, 0, 260, 60, 30, C.ink, 'center');
+        this.bindButton(close, () => this.toggleSettings());
     }
 
     private makeNode(parent: Node, name: string, x: number, y: number, width: number, height: number): Node {

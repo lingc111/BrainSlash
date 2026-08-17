@@ -5,6 +5,7 @@ import {
 } from 'cc';
 import { EDITOR } from 'cc/env';
 import { GameplayTarget, GameplayTargetData, TargetContentType } from './GameplayTarget';
+import { GameplayMVP } from './GameplayMVP';
 
 const { ccclass, executeInEditMode } = _decorator;
 
@@ -84,14 +85,12 @@ function polygon(g: Graphics, points: Vec2[], fill: Color, stroke = INK, width =
 export class GameplayHUD extends Component {
     private state: GameplayHUDState = { combo: 17, remainingTime: 15, life: 3, maxLife: 3, instruction: '斩偶数' };
     private reverse = true;
-    private chaos = 0.78;
     private gameplayLayer!: Node;
     private targetContainer!: Node;
     private trail!: Graphics;
     private comboValue!: Label;
     private timerValue!: Label;
     private lifeValue!: Label;
-    private chaosValue!: Label;
     private touchPoints: Vec2[] = [];
     private readonly targetSlashEffects = new Map<Node, SlashEffectKey>();
     private readonly slashFrames = new Map<SlashEffectKey, SpriteFrame>();
@@ -103,6 +102,11 @@ export class GameplayHUD extends Component {
     private layoutHeight = 1624;
 
     protected onLoad(): void {
+        if (!EDITOR) {
+            this.enabled = false;
+            if (!this.getComponent(GameplayMVP)) this.node.addComponent(GameplayMVP);
+            return;
+        }
         if (!EDITOR) view.setDesignResolutionSize(750, 1624, ResolutionPolicy.SHOW_ALL);
         this.rebuildGameplay();
     }
@@ -167,7 +171,6 @@ export class GameplayHUD extends Component {
 
         const hud = makeNode('HUDLayer', safeRoot, this.layoutWidth, this.layoutHeight);
         this.buildHUD(hud);
-        this.buildChaos(safeRoot);
         makeNode('BottomSafeArea', safeRoot, this.layoutWidth, 52).setPosition(0, -this.layoutHeight / 2 + 26);
         this.spawnTargets();
         this.applyRandomTargetSkins();
@@ -261,38 +264,11 @@ export class GameplayHUD extends Component {
         tween(opacity).repeatForever(tween().to(0.6, { opacity: 178 }).to(0.6, { opacity: 145 })).start();
     }
 
-    private buildChaos(root: Node): void {
-        const chaos = makeNode('ChaosLayer', root, 610, 138);
-        chaos.setPosition(0, -this.layoutHeight / 2 + this.getBottomInset() + 82);
-        this.paperShadow(chaos, 'PaperShadow', 584, 106, 9, -10, 0.8);
-        const backing = this.addTexture(chaos, 'BackingPaper', 'textures/home/paper/daily_paper/spriteFrame', 584, 106);
-        backing.color = new Color(228, 214, 180, 255); backing.node.setPosition(6, -6); backing.node.angle = 0.8;
-        const paper = this.addTexture(chaos, 'ChaosPaper', 'textures/home/paper/brawl_yellow_paper/spriteFrame', 590, 112);
-        paper.node.setPosition(-2, 2); paper.node.angle = -0.5;
-        label(chaos, 'ChaosLabel', 'CHAOS', 25).node.setPosition(-238, 27);
-        this.chaosValue = label(chaos, 'ChaosValue', '78%', 25).getComponent(Label)!;
-        this.chaosValue.node.setPosition(238, 27);
-        const cells = makeNode('ChaosCells', chaos, 430, 36);
-        cells.setPosition(0, -23);
-        for (let i = 0; i < 12; i++) {
-            const cellShadow = graphics(cells, 'ChaosCellShadow_' + (i + 1), 28, 27);
-            cellShadow.node.setPosition((i - 5.5) * 34 + 2, -3);
-            cellShadow.fillColor = new Color(70, 55, 38, 48); cellShadow.roundRect(-13, -12, 26, 24, 3); cellShadow.fill();
-            const g = graphics(cells, 'ChaosCell_' + (i + 1), 28, 27);
-            g.node.setPosition((i - 5.5) * 34, 0);
-            const active = i < Math.round(this.chaos * 12);
-            const color = i < 5 ? GREEN : i < 9 ? YELLOW : ORANGE;
-            g.fillColor = active ? color : new Color(235, 225, 201, 255);
-            g.strokeColor = INK; g.lineWidth = 2;
-            g.roundRect(-13, -12, 26, 24, 3); g.fill(); g.stroke();
-        }
-    }
-
     private spawnTargets(): void {
         const topHudBottom = this.layoutHeight / 2 - this.getTopInset() - 270;
-        const chaosTop = -this.layoutHeight / 2 + this.getBottomInset() + 170;
-        const areaHeight = topHudBottom - chaosTop;
-        const centerY = (topHudBottom + chaosTop) / 2;
+        const gameplayBottom = -this.layoutHeight / 2 + this.getBottomInset() + 90;
+        const areaHeight = topHudBottom - gameplayBottom;
+        const centerY = (topHudBottom + gameplayBottom) / 2;
         const positions: LayoutPoint[] = [
             { x: 0, y: centerY + areaHeight * 0.34 },
             { x: -205, y: centerY + areaHeight * 0.12 },
@@ -325,11 +301,6 @@ export class GameplayHUD extends Component {
             'blue_square', 'green_octagon', 'green_triangle', 'orange_circle',
             'pink_diamond', 'purple_hexagon', 'red_trapezoid', 'yellow_circle',
         ];
-        for (let i = skinNames.length - 1; i > 0; i--) {
-            const j = Math.floor(Math.random() * (i + 1));
-            [skinNames[i], skinNames[j]] = [skinNames[j], skinNames[i]];
-        }
-
         const targets = this.targetContainer.children.filter((node) => node.name !== 'BombTarget');
         targets.forEach((node, index) => {
             const skinName = skinNames[index] as SlashEffectKey;
@@ -533,7 +504,6 @@ export class GameplayHUD extends Component {
         if (this.comboValue) this.comboValue.string = String(this.state.combo);
         if (this.timerValue) this.timerValue.string = `${Math.ceil(this.state.remainingTime)}s`;
         if (this.lifeValue) this.lifeValue.string = Array.from({ length: this.state.maxLife }, (_, i) => i < this.state.life ? '♥' : '♡').join(' ');
-        if (this.chaosValue) this.chaosValue.string = `${Math.round(this.chaos * 100)}%`;
     }
 
     private addTexture(parent: Node, name: string, path: string, width: number, height: number): Sprite {

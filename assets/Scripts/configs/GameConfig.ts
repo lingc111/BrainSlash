@@ -1,0 +1,20 @@
+import type { RuleId } from '../domain/Models';
+export interface GameplayConfig {
+    durationMs: number; readyMs: number; maxLife: number; masterWindowMs: number;
+    baseScore: number; masterBonus: number; ruleMultiplierStep: number; questionTimeMs: [number, number, number];
+}
+export const CONTENT_VERSION = '1.0.0-mvp';
+export const GAMEPLAY_CONFIG: GameplayConfig = {
+    durationMs: 60_000, readyMs: 600, maxLife: 3, masterWindowMs: 650,
+    baseScore: 100, masterBonus: 50, ruleMultiplierStep: 0.25, questionTimeMs: [3000, 2500, 2100],
+};
+export const RULE_PAIR_WHITELIST: readonly string[] = [
+    'bomb+multi', 'bomb+order', 'bomb+reverse', 'bomb+stroop',
+    'multi+reverse', 'multi+stroop', 'order+reverse', 'order+stroop',
+];
+export function validateRuleSet(rules: readonly RuleId[]): boolean {
+    const complex = rules.filter((rule) => rule !== 'standard');
+    if (complex.length <= 1) return true;
+    if (complex.length > 2) return false;
+    return RULE_PAIR_WHITELIST.includes([...complex].sort().join('+'));
+}

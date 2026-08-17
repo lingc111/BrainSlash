@@ -15,9 +15,6 @@ export class GameplayScreenAdapter extends Component {
     @property(Node)
     public topHud: Node | null = null;
 
-    @property(Node)
-    public chaosBar: Node | null = null;
-
     @property
     public bottomGestureInset = 64;
 
@@ -42,17 +39,6 @@ export class GameplayScreenAdapter extends Component {
         this.resizeLayer(this.background, visible.width, visible.height);
         this.resizeLayer(this.dangerFrame, visible.width, visible.height);
         this.resizeDangerFrame(visible.width, visible.height);
-
-        if (this.chaosBar) {
-            const transform = this.chaosBar.getComponent(UITransform);
-            if (transform) {
-                this.chaosBar.setPosition(
-                    0,
-                    -visible.height * 0.5 + this.bottomGestureInset + transform.height * 0.5,
-                    this.chaosBar.position.z,
-                );
-            }
-        }
 
         this.topHud?.getComponent(WechatSafeArea)?.applyTopSafeArea();
     };
