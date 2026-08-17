@@ -123,8 +123,8 @@ export class GameplayMVP extends Component {
     }
     private drawHandDrawnFrame(g:Graphics,width:number,height:number):void{
         const w=width/2,h=height/2;g.clear();g.strokeColor=new Color(196,57,43,235);g.lineWidth=4;g.lineCap=Graphics.LineCap.ROUND;g.lineJoin=Graphics.LineJoin.ROUND;
-        g.moveTo(-w+7,-h+5);g.bezierCurveTo(-w+1,-h*.25,-w+4,h*.45,-w+8,h-7);g.bezierCurveTo(-w*.35,h+2,w*.38,h-2,w-8,h-5);g.bezierCurveTo(w+1,h*.3,w-3,-h*.4,w-6,-h+7);g.bezierCurveTo(w*.35,-h-1,-w*.4,-h+2,-w+7,-h+5);g.stroke();
-        g.strokeColor=new Color(166,48,37,155);g.lineWidth=2;g.moveTo(-w+12,-h+10);g.bezierCurveTo(-w+8,-h*.18,-w+10,h*.48,-w+13,h-12);g.bezierCurveTo(-w*.28,h-5,w*.42,h-7,w-13,h-10);g.bezierCurveTo(w-7,h*.25,w-9,-h*.48,w-11,-h+12);g.bezierCurveTo(w*.28,-h+5,-w*.38,-h+7,-w+12,-h+10);g.stroke();
+        g.moveTo(-w+7,-h+5);g.bezierCurveTo(-w+1,-h*.25,-w+4,h*.45,-w+8,h-7);g.bezierCurveTo(-w*.35,h+2,w*.38,h-2,w-8,h-5);g.bezierCurveTo(w+1,h*.3,w-3,-h*.4,w-6,-h+7);g.stroke();
+        g.strokeColor=new Color(166,48,37,155);g.lineWidth=2;g.moveTo(-w+12,-h+10);g.bezierCurveTo(-w+8,-h*.18,-w+10,h*.48,-w+13,h-12);g.bezierCurveTo(-w*.28,h-5,w*.42,h-7,w-13,h-10);g.bezierCurveTo(w-7,h*.25,w-9,-h*.48,w-11,-h+12);g.stroke();
     }
     private spawn():void {
         if(this.session.state.phase!=='playing')return;for(const c of [...this.targets.children]){c.removeFromParent();c.destroy();}this.effectByNode.clear();this.motions.length=0;this.gesture=null;
