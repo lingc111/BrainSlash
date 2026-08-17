@@ -16,6 +16,20 @@ const COLORS = [YELLOW,GREEN,BLUE,new Color(137,111,158,255),new Color(207,132,7
 const SKINS = ['blue_square','green_octagon','green_triangle','orange_circle','pink_diamond','purple_hexagon','red_trapezoid','yellow_circle'] as const;
 const DESIGN_WIDTH = 750, DESIGN_HEIGHT = 1624;
 type EffectKey = typeof SKINS[number] | 'bomb';
+interface TargetMotion {
+    node: Node;
+    startX: number;
+    targetX: number;
+    startY: number;
+    groundY: number;
+    delay: number;
+    duration: number;
+    velocityY: number;
+    gravity: number;
+    baseAngle: number;
+    spin: number;
+    phase: number;
+}
 function ui(n:Node,w:number,h:number):UITransform { const t=n.getComponent(UITransform)??n.addComponent(UITransform); t.setContentSize(w,h); t.setAnchorPoint(.5,.5); return t; }
 function node(name:string,parent:Node,w=0,h=0):Node { const n=new Node(name); parent.addChild(n); ui(n,w,h); return n; }
 function text(parent:Node,name:string,value:string,size:number,color=INK):Label { const l=node(name,parent,Math.max(100,value.length*size*1.25),size*1.5).addComponent(Label); l.string=value;l.fontSize=size;l.lineHeight=size*1.2;l.color=color;l.horizontalAlign=Label.HorizontalAlign.CENTER;l.verticalAlign=Label.VerticalAlign.CENTER;l.enableWrapText=false;return l; }
@@ -33,6 +47,7 @@ export class GameplayMVP extends Component {
     private tutorialRule:RuleId|null=null;
     private readonly handleResize=():void=>this.applyVisibleLayout();
     private readonly effectByNode=new Map<Node,EffectKey>(); private readonly frames=new Map<EffectKey,SpriteFrame>(); private readonly pool=new NodePool();
+    private readonly motions:TargetMotion[]=[];
     protected onLoad():void {
         view.setDesignResolutionSize(DESIGN_WIDTH,DESIGN_HEIGHT,ResolutionPolicy.SHOW_ALL);
         const editorPreview=this.node.getChildByName('TargetContainer')?.getChildByName('EditorPreviewTargets');if(editorPreview){editorPreview.active=false;editorPreview.destroy();}
@@ -44,7 +59,7 @@ export class GameplayMVP extends Component {
     protected onDestroy():void { screen.off('window-resize',this.handleResize,this);game.off(Game.EVENT_HIDE,this.onHide,this);game.off(Game.EVENT_SHOW,this.onShow,this);this.node.off(Node.EventType.TOUCH_START,this.startTouch,this);this.node.off(Node.EventType.TOUCH_MOVE,this.moveTouch,this);this.node.off(Node.EventType.TOUCH_END,this.endTouch,this);this.node.off(Node.EventType.TOUCH_CANCEL,this.endTouch,this);this.pool.clear(); }
     protected update(dt:number):void {
         if(this.finished||this.paused)return; this.session.tick(dt*1000);
-        if(this.session.state.phase==='playing'&&this.question&&!this.session.isQuestionResolved()&&this.session.questionElapsedMs()>=this.question.timeLimitMs)this.fail('miss');
+        if(this.session.state.phase==='playing'&&this.question&&!this.session.isQuestionResolved()&&this.updateTargetMotions())this.fail('miss');
         if(this.session.state.phase==='finished')this.finish(); this.refresh(); this.trailAge+=dt;if(this.trailAge<.14)this.drawTrail(1-this.trailAge/.14);else this.trail.clear();
     }
     public rebuildStaticView():void {
@@ -69,7 +84,7 @@ export class GameplayMVP extends Component {
     private applyVisibleLayout():void{const background=this.node.getChildByName('Background')?.getComponent(Sprite);if(!background||!this.score)return;const v=view.getVisibleSize();ui(this.node,v.width,v.height);for(const layer of [background.node,this.targets,this.trail.node,this.effects,this.floats])ui(layer,v.width,v.height);this.layoutStaticHud(v.width,v.height);}
     private layoutStaticHud(width:number,height:number):void{const y=height/2-150;this.score.node.setPosition(-width/2+85,y);this.combo.node.setPosition(-width/2+110,y-48);this.prompt.node.setPosition(0,y);this.rule.node.setPosition(0,y-55);this.timer.node.setPosition(width/2-85,y);this.life.node.setPosition(width/2-85,y-48);}
     private spawn():void {
-        if(this.session.state.phase!=='playing')return;for(const c of [...this.targets.children]){c.removeFromParent();c.destroy();}this.effectByNode.clear();this.gesture=null;
+        if(this.session.state.phase!=='playing')return;for(const c of [...this.targets.children]){c.removeFromParent();c.destroy();}this.effectByNode.clear();this.motions.length=0;this.gesture=null;
         const d=difficultyAt(this.session.state.elapsedMs);this.question=this.generator.next(this.session.state.elapsedMs,d.stage);this.constraint=evaluateRules(this.question);
         const learned=AppRuntime.save.snapshot().tutorials;this.tutorialRule=this.question.activeRules.find(r=>r!=='standard'&&!learned[r])??null;this.question.tutorialSafe=!!this.tutorialRule;
         this.session.beginQuestion();this.prompt.string=`${this.tutorialRule?'教学·':''}${this.question.prompt.text}`;
@@ -77,16 +92,18 @@ export class GameplayMVP extends Component {
         const positions=this.layout(this.question.targets.length),skins=this.visual.shuffle(SKINS);this.question.targets.forEach((s,i)=>this.createTarget(s,positions[i],skins[i%skins.length],i));this.refresh();
     }
     private createTarget(spec:TargetSpec,pos:Vec3,skin:typeof SKINS[number],i:number):void {
-        const n=node(spec.isBomb?'BombTarget':`Target_${spec.id}`,this.targets,168,168);n.setPosition(pos);n.angle=[-3,2,-2,3,-1,2][i]??0;
+        const n=node(spec.isBomb?'BombTarget':`Target_${spec.id}`,this.targets,168,168);const v=view.getVisibleSize(),side=i%2===0?-1:1,groundY=-v.height/2+145,startY=groundY+95+(i%3)*18,delay=i*.07,duration=Math.max(.9,(this.question?.timeLimitMs??3000)/1000-delay),gravity=-8*520/(duration*duration),velocityY=(groundY-startY-.5*gravity*duration*duration)/duration,baseAngle=[-12,10,-8,14,-6,8][i]??0;
+        n.setPosition(side*(v.width/2+110),startY);n.setScale(.68,.68,1);n.angle=baseAngle;
         const wordColors:Record<string,Color>={红:RED,蓝:BLUE,绿:GREEN,黄:YELLOW};
         const data:GameplayTargetData={id:spec.id,contentType:TargetContentType.TEXT,text:spec.text,value:spec.value,shape:(['roundedSquare','triangle','hexagon','circle','pentagon'] as TargetShape[])[i%5],isBomb:spec.isBomb,color:COLORS[i%COLORS.length],contentColor:spec.colorName?wordColors[spec.colorName]:undefined};const target=n.addComponent(GameplayTarget);target.configure(data);
         const key:EffectKey=spec.isBomb?'bomb':skin;this.effectByNode.set(n,key);resources.load(`textures/gameplay/targets/${key}/spriteFrame`,SpriteFrame,(e,f)=>{if(!e&&n.isValid&&n.active)target.applySkin(f);});
-        tween(n).repeatForever(tween().by(1+i*.06,{position:new Vec3(0,5+i%3,0),angle:1}).by(1+i*.06,{position:new Vec3(0,-5-i%3,0),angle:-1})).start();
+        this.motions.push({node:n,startX:n.position.x,targetX:pos.x,startY,groundY,delay,duration,velocityY,gravity,baseAngle,spin:side*(70+this.visual.int(0,45)),phase:this.visual.next()*Math.PI*2});
+        tween(n).delay(delay).to(.18,{scale:new Vec3(1.12,1.12,1)},{easing:'backOut'}).to(.16,{scale:Vec3.ONE},{easing:'quadOut'}).start();
     }
     private layout(count:number):Vec3[]{const v=view.getVisibleSize(),top=v.height/2-360,bottom=-v.height/2+180,result:Vec3[]=[];for(let i=0;i<count;i++){const row=Math.floor(i/2),rows=Math.ceil(count/2),single=count%2===1&&i===count-1;result.push(new Vec3(single?0:(i%2?185:-185),top-(top-bottom)*(row/Math.max(1,rows-1)),0));}return result;}
     private startTouch(e:EventTouch):void{if(this.paused||this.session.state.phase!=='playing'||!this.constraint)return;this.gesture=new GestureResolver(this.constraint);this.points=[this.point(e)];this.trailAge=0;}
     private moveTouch(e:EventTouch):void{if(!this.gesture||this.session.state.phase!=='playing')return;const p=this.point(e),a=this.points[this.points.length-1];if(!a||Vec2.distance(a,p)<4)return;this.points.push(p);if(this.points.length>18)this.points.shift();this.sweep(a,p);this.trailAge=0;this.drawTrail(1);}
-    private endTouch():void{if(this.gesture&&this.session.state.phase==='playing')this.progress(this.gesture.end(),null);this.gesture=null;this.trailAge=0;}
+    private endTouch():void{if(this.gesture&&this.gesture.hasHits()&&this.session.state.phase==='playing')this.progress(this.gesture.end(),null);this.gesture=null;this.trailAge=0;}
     private point(e:EventTouch):Vec2{const p=e.getUILocation(),v=view.getVisibleSize();return new Vec2(p.x-v.width/2,p.y-v.height/2);}
     private sweep(a:Vec2,b:Vec2):void{if(!this.gesture)return;for(const n of [...this.targets.children]){const t=n.getComponent(GameplayTarget);if(!t||t.hit||!t.segmentHit(a,b))continue;t.hit=true;const p=this.gesture.hit(t.data.id);this.slash(t,a,b);this.progress(p,t);if(p.status!=='continue')break;}}
     private progress(p:GestureProgress,t:GameplayTarget|null):void{if(p.status==='success')this.success(t);else if(p.status==='failure')this.fail(p.kind,t);}
@@ -101,6 +118,21 @@ export class GameplayMVP extends Component {
     private error(pos:Readonly<Vec3>):void{const g=gfx(this.effects,'ErrorRing',190,190);g.node.setPosition(pos);g.strokeColor=RED;g.lineWidth=12;g.circle(0,0,80);g.stroke();const o=g.node.addComponent(UIOpacity);tween(o).to(.24,{opacity:0}).call(()=>g.node.destroy()).start();}
     private float(pos:Readonly<Vec3>,value:string,color:Color):void{const l=text(this.floats,'Float',value,32,color);l.node.setPosition(pos.x,pos.y+44);const o=l.node.addComponent(UIOpacity);tween(l.node).to(.24,{position:new Vec3(pos.x,pos.y+95,0)}).start();tween(o).delay(.08).to(.16,{opacity:0}).call(()=>l.node.destroy()).start();}
     private slash(t:GameplayTarget,a:Vec2,b:Vec2):void{const key=this.effectByNode.get(t.node),frame=key?this.frames.get(key):undefined,pos=t.node.position.clone();t.node.active=false;if(!frame){this.float(pos,'✦',YELLOW);return;}const n=this.pool.size()?this.pool.get()!:node('SlashBurst',this.effects,310,310);if(!n.parent)this.effects.addChild(n);n.active=true;n.setPosition(pos);n.setScale(.76,.76,1);const d=b.clone().subtract(a);n.angle=Math.atan2(d.y,d.x)*180/Math.PI-45;const s=n.getComponent(Sprite)??n.addComponent(Sprite);s.sizeMode=Sprite.SizeMode.CUSTOM;s.spriteFrame=frame;const o=n.getComponent(UIOpacity)??n.addComponent(UIOpacity);o.opacity=255;Tween.stopAllByTarget(n);Tween.stopAllByTarget(o);tween(n).to(.06,{scale:new Vec3(1.02,1.02,1)}).to(.16,{scale:new Vec3(1.1,1.1,1)}).start();tween(o).delay(.08).to(.14,{opacity:0}).call(()=>{if(n.isValid)this.pool.put(n);}).start();}
+    private updateTargetMotions():boolean{
+        const elapsed=this.session.questionElapsedMs()/1000;
+        let landed=false;
+        for(const motion of this.motions){
+            if(!motion.node.isValid)continue;
+            const local=elapsed-motion.delay;
+            if(local<0){motion.node.setPosition(motion.startX,motion.startY);continue;}
+            const t=Math.min(local,motion.duration),entry=Math.min(1,t/Math.min(.58,motion.duration*.3)),ease=1-Math.pow(1-entry,3);
+            const x=motion.startX+(motion.targetX-motion.startX)*ease+Math.sin(t*2.4+motion.phase)*8*entry;
+            const y=motion.startY+motion.velocityY*t+.5*motion.gravity*t*t;
+            motion.node.setPosition(x,Math.max(motion.groundY,y));motion.node.angle=motion.baseAngle+motion.spin*t;
+            if(local>=motion.duration)landed=true;
+        }
+        return landed;
+    }
     private onHide():void{if(this.finished)return;this.paused=true;this.gesture=null;director.pause();}
     private onShow():void{if(this.finished)return;director.resume();this.paused=true;const ready=text(this.node,'ResumeReady','READY',68,RED);this.scheduleOnce(()=>{ready.node.destroy();this.paused=false;},GAMEPLAY_CONFIG.readyMs/1000);}
 }

@@ -15,4 +15,5 @@ export class GestureResolver {
     public end(): GestureProgress {
         return this.constraint.requiredTargetIds.every((id) => this.seen.has(id)) ? { status: 'success' } : { status: 'failure', kind: 'miss' };
     }
+    public hasHits(): boolean { return this.hits.length > 0; }
 }

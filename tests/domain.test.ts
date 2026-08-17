@@ -34,6 +34,8 @@ test('order and multi gestures resolve once and reject incomplete strokes', () =
     const incomplete = new GestureResolver({ requiredTargetIds: ['a', 'b'], forbiddenTargetIds: [], ordered: false, allowExtraHits: false });
     incomplete.hit('a');
     assert.deepEqual(incomplete.end(), { status: 'failure', kind: 'miss' });
+    const empty = new GestureResolver({ requiredTargetIds: ['a'], forbiddenTargetIds: [], ordered: false, allowExtraHits: false });
+    assert.equal(empty.hasHits(), false);
 });
 
 test('session applies a question result only once', () => {
