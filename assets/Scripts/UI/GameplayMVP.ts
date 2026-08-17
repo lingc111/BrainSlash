@@ -1,4 +1,4 @@
-import { _decorator, Button, Color, Component, director, EventTouch, game, Game, Graphics, Label, Node, NodePool, resources, Sprite, SpriteFrame, tween, Tween, UIOpacity, UITransform, Vec2, Vec3, view } from 'cc';
+import { _decorator, Button, Color, Component, director, EventTouch, game, Game, Graphics, Label, Node, NodePool, ResolutionPolicy, resources, screen, Sprite, SpriteFrame, tween, Tween, UIOpacity, UITransform, Vec2, Vec3, view } from 'cc';
 import { AppRuntime } from '../app/AppRuntime';
 import { GAMEPLAY_CONFIG } from '../configs/GameConfig';
 import { difficultyAt } from '../domain/DifficultyDirector';
@@ -14,11 +14,13 @@ const { ccclass } = _decorator;
 const INK = new Color(45,43,39,255), PAPER = new Color(255,250,236,255), RED = new Color(174,69,61,255), GREEN = new Color(109,152,106,255), BLUE = new Color(91,133,156,255), YELLOW = new Color(226,184,67,255);
 const COLORS = [YELLOW,GREEN,BLUE,new Color(137,111,158,255),new Color(207,132,70,255)];
 const SKINS = ['blue_square','green_octagon','green_triangle','orange_circle','pink_diamond','purple_hexagon','red_trapezoid','yellow_circle'] as const;
+const DESIGN_WIDTH = 750, DESIGN_HEIGHT = 1624;
 type EffectKey = typeof SKINS[number] | 'bomb';
 function ui(n:Node,w:number,h:number):UITransform { const t=n.getComponent(UITransform)??n.addComponent(UITransform); t.setContentSize(w,h); t.setAnchorPoint(.5,.5); return t; }
 function node(name:string,parent:Node,w=0,h=0):Node { const n=new Node(name); parent.addChild(n); ui(n,w,h); return n; }
 function text(parent:Node,name:string,value:string,size:number,color=INK):Label { const l=node(name,parent,Math.max(100,value.length*size*1.25),size*1.5).addComponent(Label); l.string=value;l.fontSize=size;l.lineHeight=size*1.2;l.color=color;l.horizontalAlign=Label.HorizontalAlign.CENTER;l.verticalAlign=Label.VerticalAlign.CENTER;l.enableWrapText=false;return l; }
 function gfx(parent:Node,name:string,w:number,h:number):Graphics { return node(name,parent,w,h).addComponent(Graphics); }
+function image(parent:Node,name:string,w:number,h:number):Sprite { const s=node(name,parent,w,h).addComponent(Sprite);s.sizeMode=Sprite.SizeMode.CUSTOM;return s; }
 
 @ccclass('GameplayMVP')
 export class GameplayMVP extends Component {
@@ -29,29 +31,43 @@ export class GameplayMVP extends Component {
     private points:Vec2[]=[]; private trailAge=1; private finished=false; private reverseFrame:Node|null=null;
     private paused=false;
     private tutorialRule:RuleId|null=null;
+    private readonly handleResize=():void=>this.applyVisibleLayout();
     private readonly effectByNode=new Map<Node,EffectKey>(); private readonly frames=new Map<EffectKey,SpriteFrame>(); private readonly pool=new NodePool();
     protected onLoad():void {
+        view.setDesignResolutionSize(DESIGN_WIDTH,DESIGN_HEIGHT,ResolutionPolicy.SHOW_ALL);
+        const editorPreview=this.node.getChildByName('TargetContainer')?.getChildByName('EditorPreviewTargets');if(editorPreview){editorPreview.active=false;editorPreview.destroy();}
         AppRuntime.initialize(); this.session=new GameSession(AppRuntime.entry,GAMEPLAY_CONFIG);
         this.generator=new QuestionGenerator(new SeededRng(`${AppRuntime.entry.seed}:gameplay`),GAMEPLAY_CONFIG); this.visual=new SeededRng(`${AppRuntime.entry.seed}:visual`);
-        this.build(); game.on(Game.EVENT_HIDE,this.onHide,this);game.on(Game.EVENT_SHOW,this.onShow,this);
+        this.bindStaticView();screen.on('window-resize',this.handleResize,this);game.on(Game.EVENT_HIDE,this.onHide,this);game.on(Game.EVENT_SHOW,this.onShow,this);this.scheduleOnce(this.handleResize,0);
         this.scheduleOnce(()=>{this.node.getChildByName('Ready')?.destroy();this.session.start();this.spawn();},GAMEPLAY_CONFIG.readyMs/1000);
     }
-    protected onDestroy():void { game.off(Game.EVENT_HIDE,this.onHide,this);game.off(Game.EVENT_SHOW,this.onShow,this);this.node.off(Node.EventType.TOUCH_START,this.startTouch,this);this.node.off(Node.EventType.TOUCH_MOVE,this.moveTouch,this);this.node.off(Node.EventType.TOUCH_END,this.endTouch,this);this.node.off(Node.EventType.TOUCH_CANCEL,this.endTouch,this);this.pool.clear(); }
+    protected onDestroy():void { screen.off('window-resize',this.handleResize,this);game.off(Game.EVENT_HIDE,this.onHide,this);game.off(Game.EVENT_SHOW,this.onShow,this);this.node.off(Node.EventType.TOUCH_START,this.startTouch,this);this.node.off(Node.EventType.TOUCH_MOVE,this.moveTouch,this);this.node.off(Node.EventType.TOUCH_END,this.endTouch,this);this.node.off(Node.EventType.TOUCH_CANCEL,this.endTouch,this);this.pool.clear(); }
     protected update(dt:number):void {
         if(this.finished||this.paused)return; this.session.tick(dt*1000);
         if(this.session.state.phase==='playing'&&this.question&&!this.session.isQuestionResolved()&&this.session.questionElapsedMs()>=this.question.timeLimitMs)this.fail('miss');
         if(this.session.state.phase==='finished')this.finish(); this.refresh(); this.trailAge+=dt;if(this.trailAge<.14)this.drawTrail(1-this.trailAge/.14);else this.trail.clear();
     }
-    private build():void {
-        for(const c of [...this.node.children]){c.removeFromParent();c.destroy();} const v=view.getVisibleSize();ui(this.node,v.width,v.height);
-        const bg=gfx(this.node,'Background',v.width,v.height);bg.fillColor=new Color(246,239,218,255);bg.rect(-v.width/2,-v.height/2,v.width,v.height);bg.fill();
-        this.targets=node('TargetContainer',this.node,v.width,v.height);this.trail=gfx(this.node,'SlashTrail',v.width,v.height);this.effects=node('HitEffects',this.node,v.width,v.height);this.floats=node('FloatingText',this.node,v.width,v.height);
-        const y=v.height/2-150;this.score=text(this.node,'Score','0',30);this.score.node.setPosition(-v.width/2+85,y);this.combo=text(this.node,'Combo','0 COMBO',27,RED);this.combo.node.setPosition(-v.width/2+110,y-48);
-        this.prompt=text(this.node,'Prompt','准备斩击',44);this.prompt.node.setPosition(0,y);this.rule=text(this.node,'Rule','标准',25,PAPER);this.rule.node.setPosition(0,y-55);const badge=gfx(this.rule.node,'Badge',210,45);badge.node.setSiblingIndex(0);badge.fillColor=BLUE;badge.roundRect(-105,-22,210,44,10);badge.fill();
-        this.timer=text(this.node,'Timer','60s',38);this.timer.node.setPosition(v.width/2-85,y);this.life=text(this.node,'Life','♥ ♥ ♥',26,RED);this.life.node.setPosition(v.width/2-85,y-48);text(this.node,'Ready','READY',68,RED);
+    public rebuildStaticView():void {
+        for(const c of [...this.node.children]){c.removeFromParent();c.destroy();}
+        ui(this.node,DESIGN_WIDTH,DESIGN_HEIGHT);
+        const bg=image(this.node,'Background',DESIGN_WIDTH,DESIGN_HEIGHT);resources.load('textures/home/paper/bg_graph_paper/spriteFrame',SpriteFrame,(e,f)=>{if(!e&&bg.isValid)bg.spriteFrame=f;});
+        node('TargetContainer',this.node,DESIGN_WIDTH,DESIGN_HEIGHT);gfx(this.node,'SlashTrail',DESIGN_WIDTH,DESIGN_HEIGHT);node('HitEffects',this.node,DESIGN_WIDTH,DESIGN_HEIGHT);node('FloatingText',this.node,DESIGN_WIDTH,DESIGN_HEIGHT);
+        const y=DESIGN_HEIGHT/2-150;const score=text(this.node,'Score','0',30);score.node.setPosition(-DESIGN_WIDTH/2+85,y);const combo=text(this.node,'Combo','0 COMBO',27,RED);combo.node.setPosition(-DESIGN_WIDTH/2+110,y-48);
+        const prompt=text(this.node,'Prompt','准备斩击',44);prompt.node.setPosition(0,y);const rule=text(this.node,'Rule','标准',25,PAPER);rule.node.setPosition(0,y-55);const badge=image(rule.node,'Badge',210,45);badge.node.setSiblingIndex(0);badge.color=BLUE;resources.load('textures/home/paper/daily_paper/spriteFrame',SpriteFrame,(e,f)=>{if(!e&&badge.isValid)badge.spriteFrame=f;});
+        const timer=text(this.node,'Timer','60s',38);timer.node.setPosition(DESIGN_WIDTH/2-85,y);const life=text(this.node,'Life','♥ ♥ ♥',26,RED);life.node.setPosition(DESIGN_WIDTH/2-85,y-48);text(this.node,'Ready','READY',68,RED);
+    }
+    private bindStaticView():void {
+        const required=(name:string):Node=>{const found=this.node.getChildByName(name);if(!found)throw new Error(`[GameplayMVP] Gameplay.scene 缺少静态节点 ${name}，请在编辑器中重建并保存静态布局。`);return found;};
+        const requiredLabel=(name:string):Label=>{const found=required(name).getComponent(Label);if(!found)throw new Error(`[GameplayMVP] 静态节点 ${name} 缺少 Label 组件。`);return found;};
+        const background=required('Background').getComponent(Sprite);if(!background)throw new Error('[GameplayMVP] 静态节点 Background 缺少 Sprite 组件。');
+        this.targets=required('TargetContainer');const trailNode=required('SlashTrail');const trail=trailNode.getComponent(Graphics);if(!trail)throw new Error('[GameplayMVP] 静态节点 SlashTrail 缺少 Graphics 组件。');this.trail=trail;
+        this.effects=required('HitEffects');this.floats=required('FloatingText');this.score=requiredLabel('Score');this.combo=requiredLabel('Combo');this.prompt=requiredLabel('Prompt');this.rule=requiredLabel('Rule');this.timer=requiredLabel('Timer');this.life=requiredLabel('Life');
+        this.applyVisibleLayout();
         this.node.on(Node.EventType.TOUCH_START,this.startTouch,this);this.node.on(Node.EventType.TOUCH_MOVE,this.moveTouch,this);this.node.on(Node.EventType.TOUCH_END,this.endTouch,this);this.node.on(Node.EventType.TOUCH_CANCEL,this.endTouch,this);
         for(const key of [...SKINS,'bomb'] as EffectKey[])resources.load(`textures/gameplay/effects/slash/${key}_slash/spriteFrame`,SpriteFrame,(e,f)=>{if(!e&&f?.isValid)this.frames.set(key,f);});
     }
+    private applyVisibleLayout():void{const background=this.node.getChildByName('Background')?.getComponent(Sprite);if(!background||!this.score)return;const v=view.getVisibleSize();ui(this.node,v.width,v.height);for(const layer of [background.node,this.targets,this.trail.node,this.effects,this.floats])ui(layer,v.width,v.height);this.layoutStaticHud(v.width,v.height);}
+    private layoutStaticHud(width:number,height:number):void{const y=height/2-150;this.score.node.setPosition(-width/2+85,y);this.combo.node.setPosition(-width/2+110,y-48);this.prompt.node.setPosition(0,y);this.rule.node.setPosition(0,y-55);this.timer.node.setPosition(width/2-85,y);this.life.node.setPosition(width/2-85,y-48);}
     private spawn():void {
         if(this.session.state.phase!=='playing')return;for(const c of [...this.targets.children]){c.removeFromParent();c.destroy();}this.effectByNode.clear();this.gesture=null;
         const d=difficultyAt(this.session.state.elapsedMs);this.question=this.generator.next(this.session.state.elapsedMs,d.stage);this.constraint=evaluateRules(this.question);

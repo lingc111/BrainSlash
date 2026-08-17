@@ -19,12 +19,13 @@ import {
     Vec3,
     view,
 } from 'cc';
+import { EDITOR } from 'cc/env';
 import { HOME_HAND_DRAWN as C } from '../DesignTokens';
 import { CountdownTimer } from './CountdownTimer';
 import { createMockHomeViewData, HomeViewData } from './HomeViewData';
 import { AppRuntime } from '../../app/AppRuntime';
 
-const { ccclass } = _decorator;
+const { ccclass, executeInEditMode } = _decorator;
 
 type WechatApi = {
     getSystemInfoSync?: () => {
@@ -38,6 +39,7 @@ type WechatApi = {
 type Point = readonly [number, number];
 
 @ccclass('HomeController')
+@executeInEditMode(true)
 export class HomeController extends Component {
     private data: HomeViewData = createMockHomeViewData();
     private readonly countdown = new CountdownTimer();
@@ -62,18 +64,20 @@ export class HomeController extends Component {
     private readonly handleResize = (): void => this.applyLayout();
 
     protected onLoad(): void {
-        AppRuntime.initialize();
-        const save = AppRuntime.save.snapshot();
-        this.data = {
-            ...createMockHomeViewData(),
-            level: save.player.level,
-            rankName: save.player.bestScore > 0 ? `最高 ${save.player.bestScore}` : '新手',
-            rankProgress: save.player.xp % 500,
-            rankProgressMax: 500,
-            friendMessage: AppRuntime.entry.mode === 'friendChallenge'
-                ? `好友目标 ${AppRuntime.entry.targetScore ?? 0} 分`
-                : '一刀开局，挑战最高分！',
-        };
+        if (!EDITOR) {
+            AppRuntime.initialize();
+            const save = AppRuntime.save.snapshot();
+            this.data = {
+                ...createMockHomeViewData(),
+                level: save.player.level,
+                rankName: save.player.bestScore > 0 ? `最高 ${save.player.bestScore}` : '新手',
+                rankProgress: save.player.xp % 500,
+                rankProgressMax: 500,
+                friendMessage: AppRuntime.entry.mode === 'friendChallenge'
+                    ? `好友目标 ${AppRuntime.entry.targetScore ?? 0} 分`
+                    : '一刀开局，挑战最高分！',
+            };
+        }
         // Preview and device must share one coordinate system; otherwise the
         // legacy 750-wide scene camera crops the 941-wide hand-drawn layout.
         view.setDesignResolutionSize(C.designWidth, C.designHeight, ResolutionPolicy.SHOW_ALL);
@@ -90,6 +94,10 @@ export class HomeController extends Component {
     }
 
     protected onEnable(): void {
+        if (EDITOR) {
+            this.applyLayout();
+            return;
+        }
         screen.on('window-resize', this.handleResize, this);
         this.applyLayout();
         this.scheduleOnce(this.applyLayout, 0);
@@ -122,7 +130,7 @@ export class HomeController extends Component {
         }
         this.refreshProgressCells();
 
-        if (this.enabled && this.node.activeInHierarchy) {
+        if (!EDITOR && this.enabled && this.node.activeInHierarchy) {
             this.countdown.start(
                 data.challengeEndTime,
                 (formatted) => {
@@ -185,7 +193,7 @@ export class HomeController extends Component {
         this.bottomNavigation = this.buildBottomNavigation(this.safeArea);
 
         this.applyLayout();
-        this.startIdleMotion();
+        if (!EDITOR) this.startIdleMotion();
     }
 
     private buildHeader(parent: Node): Node {
@@ -341,7 +349,9 @@ export class HomeController extends Component {
     private applyLayout = (): void => {
         if (!this.background || !this.safeArea) return;
 
-        const frame = view.getFrameSize();
+        const frame = EDITOR
+            ? { width: C.designWidth, height: C.designHeight }
+            : view.getFrameSize();
         const designAspect = C.designWidth / C.designHeight;
         const frameAspect = frame.height > 0 ? frame.width / frame.height : designAspect;
         const visible = frameAspect < designAspect
