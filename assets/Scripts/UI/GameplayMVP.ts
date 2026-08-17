@@ -42,6 +42,7 @@ export class GameplayMVP extends Component {
     private question:QuestionInstance|null=null; private constraint:ActionConstraint|null=null; private gesture:GestureResolver|null=null;
     private targets!:Node; private effects!:Node; private floats!:Node; private trail!:Graphics;
     private score!:Label; private combo!:Label; private prompt!:Label; private rule!:Label; private timer!:Label; private life!:Label;
+    private handDrawnChrome:Node|null=null;
     private points:Vec2[]=[]; private trailAge=1; private finished=false; private reverseFrame:Node|null=null;
     private paused=false;
     private tutorialRule:RuleId|null=null;
@@ -70,6 +71,7 @@ export class GameplayMVP extends Component {
         const y=DESIGN_HEIGHT/2-150;const score=text(this.node,'Score','0',30);score.node.setPosition(-DESIGN_WIDTH/2+85,y);const combo=text(this.node,'Combo','0 COMBO',27,RED);combo.node.setPosition(-DESIGN_WIDTH/2+110,y-48);
         const prompt=text(this.node,'Prompt','准备斩击',44);prompt.node.setPosition(0,y);const rule=text(this.node,'Rule','标准',25,PAPER);rule.node.setPosition(0,y-55);const badge=image(rule.node,'Badge',210,45);badge.node.setSiblingIndex(0);badge.color=BLUE;resources.load('textures/home/paper/daily_paper/spriteFrame',SpriteFrame,(e,f)=>{if(!e&&badge.isValid)badge.spriteFrame=f;});
         const timer=text(this.node,'Timer','60s',38);timer.node.setPosition(DESIGN_WIDTH/2-85,y);const life=text(this.node,'Life','♥ ♥ ♥',26,RED);life.node.setPosition(DESIGN_WIDTH/2-85,y-48);text(this.node,'Ready','READY',68,RED);
+        this.buildHandDrawnChrome();this.layoutHandDrawnChrome(DESIGN_WIDTH,DESIGN_HEIGHT);
     }
     private bindStaticView():void {
         const required=(name:string):Node=>{const found=this.node.getChildByName(name);if(!found)throw new Error(`[GameplayMVP] Gameplay.scene 缺少静态节点 ${name}，请在编辑器中重建并保存静态布局。`);return found;};
@@ -77,12 +79,49 @@ export class GameplayMVP extends Component {
         const background=required('Background').getComponent(Sprite);if(!background)throw new Error('[GameplayMVP] 静态节点 Background 缺少 Sprite 组件。');
         this.targets=required('TargetContainer');const trailNode=required('SlashTrail');const trail=trailNode.getComponent(Graphics);if(!trail)throw new Error('[GameplayMVP] 静态节点 SlashTrail 缺少 Graphics 组件。');this.trail=trail;
         this.effects=required('HitEffects');this.floats=required('FloatingText');this.score=requiredLabel('Score');this.combo=requiredLabel('Combo');this.prompt=requiredLabel('Prompt');this.rule=requiredLabel('Rule');this.timer=requiredLabel('Timer');this.life=requiredLabel('Life');
+        this.buildHandDrawnChrome();
         this.applyVisibleLayout();
         this.node.on(Node.EventType.TOUCH_START,this.startTouch,this);this.node.on(Node.EventType.TOUCH_MOVE,this.moveTouch,this);this.node.on(Node.EventType.TOUCH_END,this.endTouch,this);this.node.on(Node.EventType.TOUCH_CANCEL,this.endTouch,this);
         for(const key of [...SKINS,'bomb'] as EffectKey[])resources.load(`textures/gameplay/effects/slash/${key}_slash/spriteFrame`,SpriteFrame,(e,f)=>{if(!e&&f?.isValid)this.frames.set(key,f);});
     }
-    private applyVisibleLayout():void{const background=this.node.getChildByName('Background')?.getComponent(Sprite);if(!background||!this.score)return;const v=view.getVisibleSize();ui(this.node,v.width,v.height);for(const layer of [background.node,this.targets,this.trail.node,this.effects,this.floats])ui(layer,v.width,v.height);this.layoutStaticHud(v.width,v.height);}
+    private applyVisibleLayout():void{const background=this.node.getChildByName('Background')?.getComponent(Sprite);if(!background||!this.score)return;const v=view.getVisibleSize();ui(this.node,v.width,v.height);for(const layer of [background.node,this.targets,this.trail.node,this.effects,this.floats])ui(layer,v.width,v.height);this.layoutStaticHud(v.width,v.height);this.layoutHandDrawnChrome(v.width,v.height);}
     private layoutStaticHud(width:number,height:number):void{const y=height/2-150;this.score.node.setPosition(-width/2+85,y);this.combo.node.setPosition(-width/2+110,y-48);this.prompt.node.setPosition(0,y);this.rule.node.setPosition(0,y-55);this.timer.node.setPosition(width/2-85,y);this.life.node.setPosition(width/2-85,y-48);}
+    private buildHandDrawnChrome():void{
+        this.node.getChildByName('HandDrawnChrome')?.destroy();
+        const chrome=node('HandDrawnChrome',this.node,DESIGN_WIDTH,DESIGN_HEIGHT);this.handDrawnChrome=chrome;
+        const scoreIndex=this.node.getChildByName('Score')?.getSiblingIndex()??this.node.children.length;chrome.setSiblingIndex(scoreIndex);
+        this.makePaperCard(chrome,'ComboPaperCard',176,150,-1.2);
+        this.makePaperCard(chrome,'PromptPaperCard',300,164,.4,true);
+        this.makePaperCard(chrome,'TimerPaperCard',176,150,1.1);
+        gfx(chrome,'GameplayHandDrawnFrame',DESIGN_WIDTH-38,DESIGN_HEIGHT-330);
+    }
+    private makePaperCard(parent:Node,name:string,width:number,height:number,angle:number,withTape=false):Node{
+        const card=node(name,parent,width+28,height+30);card.angle=angle;
+        const shadow=gfx(card,'PaperShadow',width+18,height+20);shadow.node.setPosition(8,-10);this.drawRoughPaper(shadow,width,height,new Color(60,48,36,58),new Color(60,48,36,20),2);
+        const base=gfx(card,'PaperBase',width+8,height+8);this.drawRoughPaper(base,width,height,new Color(250,243,224,255),new Color(122,105,80,52),1.5);
+        const paper=image(card,'PaperTexture',width,height);paper.color=new Color(255,250,236,255);resources.load('textures/home/paper/daily_paper/spriteFrame',SpriteFrame,(e,f)=>{if(!e&&paper.isValid)paper.spriteFrame=f;});
+        const outline=gfx(card,'HandDrawnOutline',width+8,height+8);this.drawRoughPaper(outline,width,height,new Color(255,255,255,0),new Color(66,59,49,125),2.2);
+        const marker=gfx(card,'MarkerUnderline',Math.max(80,width*.56),12);marker.node.setPosition(0,-height*.28);marker.strokeColor=RED;marker.lineWidth=3;marker.lineCap=Graphics.LineCap.ROUND;marker.moveTo(-width*.26,1);marker.bezierCurveTo(-width*.08,-2,width*.08,3,width*.27,0);marker.stroke();marker.moveTo(-width*.22,-3);marker.bezierCurveTo(-width*.06,-5,width*.1,-1,width*.24,-4);marker.stroke();
+        if(withTape){const tape=gfx(card,'RedTape',128,38);tape.node.setPosition(0,height/2+3);tape.fillColor=new Color(194,61,47,220);tape.strokeColor=new Color(137,43,34,120);tape.lineWidth=2;tape.moveTo(-64,-16);tape.lineTo(-59,17);tape.lineTo(62,14);tape.lineTo(65,-17);tape.close();tape.fill();tape.stroke();}
+        return card;
+    }
+    private drawRoughPaper(g:Graphics,width:number,height:number,fill:Color,stroke:Color,lineWidth:number):void{
+        const w=width/2,h=height/2;g.clear();g.fillColor=fill;g.strokeColor=stroke;g.lineWidth=lineWidth;g.lineJoin=Graphics.LineJoin.ROUND;
+        g.moveTo(-w+3,-h+1);g.lineTo(-w-1,-h*.25);g.lineTo(-w+2,h-3);g.lineTo(-w*.25,h+2);g.lineTo(w-4,h-1);g.lineTo(w+1,h*.18);g.lineTo(w-2,-h+3);g.lineTo(w*.18,-h-2);g.close();if(fill.a>0)g.fill();if(stroke.a>0)g.stroke();
+    }
+    private layoutHandDrawnChrome(width:number,height:number):void{
+        const chrome=this.handDrawnChrome;if(!chrome?.isValid)return;ui(chrome,width,height);const hudY=height/2-168;
+        chrome.getChildByName('ComboPaperCard')?.setPosition(-width/2+96,hudY);
+        chrome.getChildByName('PromptPaperCard')?.setPosition(0,hudY-2);
+        chrome.getChildByName('TimerPaperCard')?.setPosition(width/2-96,hudY);
+        const frame=chrome.getChildByName('GameplayHandDrawnFrame')?.getComponent(Graphics);if(!frame)return;
+        const frameTop=height/2-292,frameBottom=-height/2+110,frameWidth=width-38,frameHeight=frameTop-frameBottom;ui(frame.node,frameWidth,frameHeight);frame.node.setPosition(0,(frameTop+frameBottom)/2);this.drawHandDrawnFrame(frame,frameWidth,frameHeight);
+    }
+    private drawHandDrawnFrame(g:Graphics,width:number,height:number):void{
+        const w=width/2,h=height/2;g.clear();g.strokeColor=new Color(196,57,43,235);g.lineWidth=4;g.lineCap=Graphics.LineCap.ROUND;g.lineJoin=Graphics.LineJoin.ROUND;
+        g.moveTo(-w+7,-h+5);g.bezierCurveTo(-w+1,-h*.25,-w+4,h*.45,-w+8,h-7);g.bezierCurveTo(-w*.35,h+2,w*.38,h-2,w-8,h-5);g.bezierCurveTo(w+1,h*.3,w-3,-h*.4,w-6,-h+7);g.bezierCurveTo(w*.35,-h-1,-w*.4,-h+2,-w+7,-h+5);g.stroke();
+        g.strokeColor=new Color(166,48,37,155);g.lineWidth=2;g.moveTo(-w+12,-h+10);g.bezierCurveTo(-w+8,-h*.18,-w+10,h*.48,-w+13,h-12);g.bezierCurveTo(-w*.28,h-5,w*.42,h-7,w-13,h-10);g.bezierCurveTo(w-7,h*.25,w-9,-h*.48,w-11,-h+12);g.bezierCurveTo(w*.28,-h+5,-w*.38,-h+7,-w+12,-h+10);g.stroke();
+    }
     private spawn():void {
         if(this.session.state.phase!=='playing')return;for(const c of [...this.targets.children]){c.removeFromParent();c.destroy();}this.effectByNode.clear();this.motions.length=0;this.gesture=null;
         const d=difficultyAt(this.session.state.elapsedMs);this.question=this.generator.next(this.session.state.elapsedMs,d.stage);this.constraint=evaluateRules(this.question);
