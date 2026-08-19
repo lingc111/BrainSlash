@@ -60,6 +60,7 @@ export class HomeController extends Component {
     private countdownLabel: Label | null = null;
     private progressValueLabel: Label | null = null;
     private progressCells: Node[] = [];
+    private navSelectionMarkers: Node[] = [];
 
     private readonly handleResize = (): void => this.applyLayout();
 
@@ -220,15 +221,9 @@ export class HomeController extends Component {
     }
 
     private buildDailyChallenge(parent: Node): Node {
-        const root = this.makeNode(parent, 'DailyChallenge', 0, 0, 790, 500);
-        const shadow = this.graphics(root, 'PaperShadow', 8, -12, 788, 490);
-        this.drawIrregularPaper(shadow, 780, 472, C.shadow, new Color(0, 0, 0, 0), 0);
-
-        const paper = this.graphics(root, 'PaperBackground', 0, 0, 788, 490);
-        this.drawIrregularPaper(paper, 780, 472, C.paperRaised, new Color(0x75, 0x70, 0x66, 0xb0), 2);
-        this.drawPaperHoles(paper, -370, 150, 7, 50);
-        this.attachPaperTexture(paper.node, 'daily_paper');
-        this.drawTape(root, 'RedTape', 0, 239, 250, 62, -1, C.red, 'tape_red');
+        const root = this.makeNode(parent, 'DailyChallenge', 0, 0, 790, 600);
+        const paper = this.makeNode(root, 'PaperBackground', 0, 0, 788, 591);
+        this.attachResourceTexture(paper, 'textures/home/ui/home_slash_paper/spriteFrame');
 
         const titleGroup = this.makeNode(root, 'TitleImagePlaceholder', -100, 104, 450, 162);
         this.label(titleGroup, 'AccentCharacter', '成', -176, 42, 92, 76, 58, C.red, 'center');
@@ -248,59 +243,36 @@ export class HomeController extends Component {
         this.countdownLabel = this.label(root, 'CountdownLabel', '00:00:00', 266, -60, 220, 58, 34, C.ink, 'center');
         this.drawUnderline(root, 'CountdownUnderline', 266, -94, 210, C.red, -1);
 
-        const start = this.makeNode(root, 'StartButton', 0, -172, 520, 108);
-        const brush = this.graphics(start, 'BrushBackground', 0, 0, 520, 108);
-        this.drawBrushStroke(brush, 510, 94, C.orange);
-        this.drawPlayIcon(start, -108, 0, 42);
-        this.attachPaperTexture(brush.node, 'brush_orange');
-        this.label(start, 'StartLabel', '拔刀', 40, 2, 250, 80, 56, C.ink, 'center');
+        const start = this.makeNode(root, 'StartButton', 0, -172, 600, 132);
+        // The source keeps generous transparent margins around the hand-drawn stroke.
+        // Preserve its native ratio so the brush texture and lettering are not squeezed.
+        const artwork = this.makeNode(start, 'ButtonArtwork', 0, 0, 600, 225);
+        this.attachResourceTexture(artwork, 'textures/home/ui/draw_sword/spriteFrame');
         this.bindButton(start, this.onDailyChallengeClick.bind(this));
         return root;
     }
 
     private buildBrawlButton(parent: Node): Node {
-        const root = this.makeNode(parent, 'BrawlButton', 0, 0, 800, 188);
-        const shadow = this.graphics(root, 'PaperShadow', 8, -10, 798, 180);
-        this.drawRibbon(shadow, 790, 170, C.shadow);
-        const paper = this.graphics(root, 'YellowPaper', 0, 0, 798, 180);
-        this.drawRibbon(paper, 790, 170, C.yellow);
-
-        this.attachPaperTexture(paper.node, 'brawl_yellow_paper');
-        this.drawDashedCutLine(root, -292, 44, 584);
-        this.drawScissors(root, 0, 46, 64);
-        this.label(root, 'BrawlLabel', '60秒  乱斗', 0, -30, 650, 92, 62, C.ink, 'center');
+        const root = this.makeNode(parent, 'BrawlButton', 0, 0, 800, 266);
+        const paper = this.makeNode(root, 'YellowPaper', 0, 0, 798, 266);
+        this.attachResourceTexture(paper, 'textures/home/ui/home_60s/spriteFrame');
         this.bindButton(root, this.onBrawlClick.bind(this));
         return root;
     }
 
     private buildEvents(parent: Node): Node {
-        const area = this.makeNode(parent, 'EventArea', 0, 0, 790, 294);
+        const area = this.makeNode(parent, 'EventArea', 0, 0, 790, 420);
 
-        const reverse = this.makeNode(area, 'ReverseDayCard', -210, 0, 342, 280);
-        const reverseShadow = this.graphics(reverse, 'PaperShadow', 8, -10, 334, 270);
-        this.drawStickyNote(reverseShadow, 328, 264, C.shadow);
-        const pink = this.graphics(reverse, 'Paper', 0, 0, 334, 270);
-        this.drawStickyNote(pink, 328, 264, C.pink);
-        this.drawTape(reverse, 'Tape', -55, 137, 120, 38, 2);
-        this.attachPaperTexture(pink.node, 'sticky_pink');
-        this.drawReverseFace(reverse, 0, 58, 68);
-        this.label(reverse, 'TypeLabel', '好友挑战', 0, -32, 250, 40, 27, C.ink, 'center');
-        this.label(reverse, 'TitleLabel', '反向日', 0, -88, 260, 64, 46, C.ink, 'center');
-        this.drawUnderline(reverse, 'TitleUnderline', 0, -121, 190, C.red, -2);
+        const reverse = this.makeNode(area, 'ReverseDayCard', -190, 0, 370, 420);
+        const pink = this.makeNode(reverse, 'Paper', 0, 0, 350, 420);
+        this.attachResourceTexture(pink, 'textures/home/ui/friend_challenge/spriteFrame');
+        this.label(reverse, 'TitleLabel', '反向日', -4, -105, 280, 68, 48, C.ink, 'center');
         this.bindButton(reverse, this.onReverseDayClick.bind(this));
 
-        const flag = this.makeNode(area, 'FlagHunterCard', 210, 0, 342, 284);
-        flag.setRotationFromEuler(0, 0, -1.5);
-        const flagShadow = this.graphics(flag, 'PaperShadow', 10, -12, 334, 278);
-        this.drawPolaroid(flagShadow, 326, 270, C.shadow, false);
-        const polaroid = this.graphics(flag, 'Polaroid', 0, 0, 334, 278);
-        this.drawPolaroid(polaroid, 326, 270, C.paperRaised, true);
-        this.drawThumbtack(flag, 72, 135);
-        this.attachPaperTexture(polaroid.node, 'polaroid_paper');
-        this.drawGlobe(flag, 0, 54, 72);
-        this.label(flag, 'TypeLabel', '限时活动', 0, -44, 250, 38, 27, C.ink, 'center');
-        this.label(flag, 'TitleLabel', '国旗猎人', 0, -96, 280, 58, 43, C.blue, 'center');
-        this.drawUnderline(flag, 'TitleUnderline', 0, -126, 225, C.blue, 2);
+        const flag = this.makeNode(area, 'FlagHunterCard', 190, 0, 370, 420);
+        const polaroid = this.makeNode(flag, 'Polaroid', 0, 0, 350, 420);
+        this.attachResourceTexture(polaroid, 'textures/home/ui/limited_activity/spriteFrame');
+        this.label(flag, 'TitleLabel', '国旗猎人', 0, -120, 300, 64, 44, C.blue, 'center');
         this.bindButton(flag, this.onFlagHunterClick.bind(this));
         return area;
     }
@@ -327,23 +299,36 @@ export class HomeController extends Component {
         separator.bezierCurveTo(-160, 2, 130, -3, 430, 0);
         separator.stroke();
 
-        const items: Array<[string, string, number, () => void]> = [
-            ['HomeButton', '首页', -306, this.onHomeClick.bind(this)],
-            ['TopicButton', '主题', -102, this.onTopicClick.bind(this)],
-            ['RankButton', '排行', 102, this.onRankClick.bind(this)],
-            ['ProfileButton', '我的', 306, this.onProfileClick.bind(this)],
+        this.navSelectionMarkers = [];
+        // The source canvases are equally sized, but their painted pixels occupy
+        // different areas. These sizes normalize the visible icon+caption height.
+        const items: Array<[string, string, number, number, () => void]> = [
+            ['HomeButton', 'nav_home', -306, 110, this.onHomeClick.bind(this)],
+            ['TopicButton', 'nav_topic', -102, 138, this.onTopicClick.bind(this)],
+            ['RankButton', 'nav_rank', 102, 134, this.onRankClick.bind(this)],
+            ['ProfileButton', 'nav_profile', 306, 140, this.onProfileClick.bind(this)],
         ];
-        items.forEach(([name, text, x, callback], index) => {
-            const item = this.makeNode(root, name, x as number, -4, 176, 120);
-            if (index === 0) {
-                const marker = this.graphics(item, 'ActiveMarker', 0, 22, 104, 70);
-                this.drawBrushStroke(marker, 98, 58, C.yellow);
-            }
-            this.drawNavIcon(item, index, 0, 25);
-            this.label(item, 'Label', text as string, 0, -34, 140, 42, 28, C.ink, 'center');
-            this.bindButton(item, callback as () => void);
+        items.forEach(([name, assetName, x, artworkSize, callback], index) => {
+            const item = this.makeNode(root, name, x, -4, 176, 120);
+            const marker = this.makeNode(item, 'SelectedPaint', 0, 20, 142, 82);
+            this.attachResourceTexture(marker, 'textures/home/ui/nav_selected_paint/spriteFrame');
+            marker.active = index === 0;
+            this.navSelectionMarkers.push(marker);
+
+            const artwork = this.makeNode(item, 'NavArtwork', 0, 0, artworkSize, artworkSize);
+            this.attachResourceTexture(artwork, `textures/home/ui/${assetName}/spriteFrame`);
+            this.bindButton(item, () => {
+                this.setSelectedNavigation(index);
+                callback();
+            });
         });
         return root;
+    }
+
+    private setSelectedNavigation(selectedIndex: number): void {
+        this.navSelectionMarkers.forEach((marker, index) => {
+            if (marker.isValid) marker.active = index === selectedIndex;
+        });
     }
 
     private applyLayout = (): void => {
@@ -377,8 +362,10 @@ export class HomeController extends Component {
         const headerY = topEdge - topInset - 60;
         const dailyY = headerY - 69 - 22 - gapBoost * 0.15 - 250;
         const brawlY = dailyY - 250 - (28 + gapBoost) - 94;
-        const eventY = brawlY - 94 - (28 + gapBoost) - 147;
-        const progressY = eventY - 147 - (24 + gapBoost * 0.72) - 56;
+        const eventY = brawlY - 94 - (18 + gapBoost * 0.72) - 108;
+        // Keep progress anchored while using the previous dead space above the
+        // cards; the extra separation now sits where the composition needs it.
+        const progressY = eventY - 168 - (74 + gapBoost * 0.48) - 56;
         const navY = bottomEdge + bottomInset + 64;
 
         this.header?.setPosition(0, headerY, 0);
@@ -388,17 +375,14 @@ export class HomeController extends Component {
         this.rankProgress?.setPosition(0, progressY, 0);
         this.bottomNavigation?.setPosition(0, navY, 0);
 
-        // Only compact genuinely shorter-than-reference previews; never stretch paper art.
+        // Only compact genuinely shorter-than-reference previews. Major paper cards use
+        // section-specific emphasis so the home screen does not dissolve into empty space.
         const contentScale = Math.max(0.9, Math.min(1, visible.height / C.designHeight));
-        for (const section of [
-            this.header,
-            this.dailyChallenge,
-            this.brawlButton,
-            this.eventArea,
-            this.rankProgress,
-        ]) {
-            section?.setScale(contentScale, contentScale, 1);
-        }
+        this.header?.setScale(contentScale, contentScale, 1);
+        this.dailyChallenge?.setScale(contentScale * 1.07, contentScale * 1.07, 1);
+        this.brawlButton?.setScale(contentScale * 1.08, contentScale * 1.08, 1);
+        this.eventArea?.setScale(contentScale * 1.18, contentScale * 1.18, 1);
+        this.rankProgress?.setScale(contentScale * 1.05, contentScale * 1.05, 1);
     };
 
     private redrawBackground(width: number, height: number): void {
@@ -468,9 +452,9 @@ export class HomeController extends Component {
 
     private startIdleMotion(): void {
         const start = this.dailyChallenge?.getChildByName('StartButton');
-        const brush = start?.getChildByName('BrushBackground');
-        if (brush) {
-            tween(brush)
+        const artwork = start?.getChildByName('ButtonArtwork');
+        if (artwork) {
+            tween(artwork)
                 .repeatForever(
                     tween()
                         .to(0.72, { scale: new Vec3(1.015, 1.03, 1) }, { easing: 'sineInOut' })
