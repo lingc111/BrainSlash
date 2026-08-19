@@ -7,7 +7,7 @@ export interface GameEntryParams { mode: GameMode; seed: string; contentVersion:
 export interface PromptSpec { text: string; }
 export interface TargetSpec { id: string; text: string; value?: string | number; colorName?: string; isBomb?: boolean; }
 export interface QuestionInstance {
-    id: string; theme: ThemeId; familyId?: string; prompt: PromptSpec; targets: TargetSpec[];
+    id: string; theme: ThemeId; familyId?: string; factIds?: string[]; prompt: PromptSpec; targets: TargetSpec[];
     baseCorrectTargetIds: string[]; orderedTargetIds?: string[]; activeRules: RuleId[];
     timeLimitMs: number; tutorialSafe: boolean;
 }

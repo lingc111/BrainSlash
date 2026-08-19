@@ -1,6 +1,7 @@
-export interface DifficultySettings { stage: 0 | 1 | 2; targetCount: number; speed: number; }
+import { phaseAt, type BrawlPhaseId } from './Brawl60Director';
+
+export interface DifficultySettings { stage: 0 | 1 | 2; phase: BrawlPhaseId; targetCount: number; speed: number; }
 export function difficultyAt(elapsedMs: number): DifficultySettings {
-    if (elapsedMs < 15_000) return { stage: 0, targetCount: 3, speed: 0.7 };
-    if (elapsedMs < 40_000) return { stage: 1, targetCount: 4, speed: 1 };
-    return { stage: 2, targetCount: 5, speed: 1.25 };
+    const settings = phaseAt(elapsedMs);
+    return { stage: settings.difficultyStage, phase: settings.id, targetCount: settings.targetCount, speed: settings.speed };
 }

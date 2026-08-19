@@ -1,6 +1,6 @@
 import type { GameplayConfig } from '../configs/GameConfig';
+import type { BrawlQuestionDirective } from './Brawl60Director';
 import {
-    CONTENT_FAMILIES,
     ENGLISH_ANTONYMS,
     ENGLISH_WORDS,
     GEOGRAPHY_FACTS,
@@ -20,39 +20,39 @@ const OPPOSITE_ARROW: Readonly<Record<string, string>> = { '←': '→', '→': 
 
 export class QuestionGenerator {
     private index = 0;
-    private readonly familyBags = new Map<Stage, ContentFamilySpec[]>();
+    private directive!: BrawlQuestionDirective;
+    private readonly factBags = new Map<string, number[]>();
+    private readonly recentQuestionFacts: string[][] = [];
+    private activeFactIds: string[] = [];
 
-    public constructor(private readonly rng: SeededRng, private readonly config: GameplayConfig) {}
+    public constructor(private readonly rng: SeededRng, _config: GameplayConfig) {}
 
-    public next(elapsedMs: number, stage: Stage): QuestionInstance {
+    public next(directive: BrawlQuestionDirective): QuestionInstance {
+        this.directive = directive;
         for (let attempt = 0; attempt < 8; attempt++) {
-            const family = this.nextFamily(stage);
-            const question = this.generate(family, elapsedMs, stage);
-            if (!validateQuestion(question, evaluateRules(question)).length) return question;
+            this.activeFactIds = [];
+            const question = this.generate(directive.family, directive.difficultyStage);
+            if (!validateQuestion(question, evaluateRules(question)).length) {
+                this.recordQuestionFacts();
+                return question;
+            }
         }
-        return this.make(
-            { id: 'math-property.safe', theme: 'math', kind: 'math-property', variant: 0 },
-            '斩偶数',
-            [{ id: 'safe-2', text: '2', value: 2 }, { id: 'safe-3', text: '3', value: 3 }],
-            ['safe-2'],
-            ['standard'],
-            stage,
-        );
+        this.activeFactIds = [];
+        return {
+            id: `math-property.safe-${this.index}`,
+            familyId: 'math-property.safe',
+            factIds: [],
+            theme: 'math',
+            prompt: { text: '斩偶数' },
+            targets: [{ id: 'safe-2', text: '2', value: 2 }, { id: 'safe-3', text: '3', value: 3 }],
+            baseCorrectTargetIds: ['safe-2'],
+            activeRules: ['standard'],
+            timeLimitMs: directive.questionTimeMs,
+            tutorialSafe: directive.difficultyStage === 0,
+        };
     }
 
-    private nextFamily(stage: Stage): ContentFamilySpec {
-        let bag = this.familyBags.get(stage);
-        if (!bag?.length) {
-            const eligible = stage === 0
-                ? CONTENT_FAMILIES.filter((family) => family.theme === 'math' || family.theme === 'vision')
-                : CONTENT_FAMILIES;
-            bag = this.rng.shuffle(eligible);
-            this.familyBags.set(stage, bag);
-        }
-        return bag.pop()!;
-    }
-
-    private generate(family: ContentFamilySpec, elapsedMs: number, stage: Stage): QuestionInstance {
+    private generate(family: ContentFamilySpec, stage: Stage): QuestionInstance {
         this.index += 1;
         switch (family.kind) {
             case 'math-add': return this.mathAdd(family, stage);
@@ -85,20 +85,22 @@ export class QuestionGenerator {
         prompt: string,
         targets: TargetSpec[],
         correct: string[],
-        rules: RuleId[],
+        _rules: RuleId[],
         stage: Stage,
         orderedTargetIds?: string[],
     ): QuestionInstance {
+        const activeRules = [...this.directive.rules];
         return {
             id: `${family.id}-${this.index}`,
             familyId: family.id,
             theme: family.theme,
-            prompt: { text: rules.includes('reverse') ? `反向·${prompt}` : prompt },
+            factIds: [...this.activeFactIds],
+            prompt: { text: activeRules.includes('reverse') ? `反向·${prompt}` : prompt },
             targets,
             baseCorrectTargetIds: correct,
             orderedTargetIds,
-            activeRules: rules,
-            timeLimitMs: this.config.questionTimeMs[stage],
+            activeRules,
+            timeLimitMs: this.directive.questionTimeMs,
             tutorialSafe: stage === 0,
         };
     }
@@ -111,23 +113,12 @@ export class QuestionGenerator {
         stage: Stage,
         options: { allowReverse?: boolean; allowBomb?: boolean } = { allowReverse: true, allowBomb: true },
     ): QuestionInstance {
-        const rules = this.choiceRules(family, stage, options);
-        const count = Math.max(2, stage + 3 - (rules.includes('bomb') ? 1 : 0));
+        const rules = this.directive.rules;
+        const count = Math.max(2, this.directive.targetCount - (rules.includes('bomb') ? 1 : 0));
         const values = this.includeAnswer(answer, candidates, count);
         const targets: TargetSpec[] = values.map((value, index) => ({ id: `t${index}`, text: String(value), value }));
         if (rules.includes('bomb')) targets.push({ id: 'bomb', text: '爆', isBomb: true });
         return this.make(family, prompt, targets, [targets.find((target) => target.value === answer)!.id], rules, stage);
-    }
-
-    private choiceRules(
-        family: ContentFamilySpec,
-        stage: Stage,
-        options: { allowReverse?: boolean; allowBomb?: boolean },
-    ): RuleId[] {
-        if (stage === 0) return ['standard'];
-        if (options.allowReverse !== false && family.variant === 4) return ['reverse'];
-        if (options.allowBomb !== false && family.variant === 3) return ['bomb'];
-        return ['standard'];
     }
 
     private includeAnswer<T>(answer: T, candidates: readonly T[], count: number): T[] {
@@ -169,7 +160,7 @@ export class QuestionGenerator {
     }
 
     private mathProperty(family: ContentFamilySpec, stage: Stage): QuestionInstance {
-        const count = stage + 3;
+        const count = this.nonBombTargetCount();
         const max = 30 + family.variant * 20 + stage * 60;
         const values = this.uniqueNumbers(count, 2, max);
         let predicate: (value: number) => boolean;
@@ -184,14 +175,22 @@ export class QuestionGenerator {
         }
         if (!values.some(predicate)) this.forcePropertyValue(values, 0, predicate, true, max);
         if (values.every(predicate)) this.forcePropertyValue(values, values.length - 1, predicate, false, max);
-        const targets = values.map((value, index) => ({ id: `n${index}`, text: String(value), value }));
+        if (this.directive.rules.includes('multi')) {
+            while (values.filter(predicate).length < 2) {
+                const index = values.findIndex((value) => !predicate(value));
+                if (index < 0) break;
+                this.forcePropertyValue(values, index, predicate, true, max);
+            }
+        }
+        const targets: TargetSpec[] = values.map((value, index) => ({ id: `n${index}`, text: String(value), value }));
         const correct = targets.filter((target) => predicate(Number(target.value))).map((target) => target.id);
-        const rules: RuleId[] = stage > 0 && correct.length > 1 ? ['multi'] : ['standard'];
+        this.appendBomb(targets);
+        const rules = this.directive.rules;
         return this.make(family, rules.includes('multi') ? `${prompt}·全部` : prompt, targets, correct, rules, stage);
     }
 
     private mathCompare(family: ContentFamilySpec, stage: Stage): QuestionInstance {
-        const count = stage + 3;
+        const count = this.nonBombTargetCount();
         const values = this.uniqueNumbers(count, 5, 50 + family.variant * 25 + stage * 80);
         const largest = family.variant % 2 === 0;
         const answer = largest ? Math.max(...values) : Math.min(...values);
@@ -199,10 +198,11 @@ export class QuestionGenerator {
     }
 
     private mathSequence(family: ContentFamilySpec, stage: Stage): QuestionInstance {
-        if (family.variant >= 3 && stage > 0) {
-            const values = this.uniqueNumbers(Math.min(5, stage + 3), 1, 50 + stage * 50);
-            const targets = this.rng.shuffle(values).map((value, index) => ({ id: `o${index}`, text: String(value), value }));
+        if (this.directive.rules.includes('order')) {
+            const values = this.uniqueNumbers(this.nonBombTargetCount(), 1, 50 + stage * 50);
+            const targets: TargetSpec[] = this.rng.shuffle(values).map((value, index) => ({ id: `o${index}`, text: String(value), value }));
             const ordered = [...targets].sort((a, b) => Number(a.value) - Number(b.value)).map((target) => target.id);
+            this.appendBomb(targets);
             return this.make(family, '从小到大', targets, ordered, ['order'], stage, ordered);
         }
         const step = 1 + family.variant + stage;
@@ -221,9 +221,10 @@ export class QuestionGenerator {
     private visionOdd(family: ContentFamilySpec, stage: Stage): QuestionInstance {
         const pairs: readonly (readonly [string, string])[] = [['●', '○'], ['▲', '△'], ['■', '□'], ['◆', '◇'], ['★', '☆']];
         const [base, odd] = pairs[family.variant];
-        const count = stage + 3;
+        const count = this.nonBombTargetCount();
         const oddIndex = this.rng.int(0, count - 1);
-        const targets = Array.from({ length: count }, (_, index) => ({ id: `v${index}`, text: index === oddIndex ? odd : base, value: index }));
+        const targets: TargetSpec[] = Array.from({ length: count }, (_, index) => ({ id: `v${index}`, text: index === oddIndex ? odd : base, value: index }));
+        this.appendBomb(targets);
         return this.make(family, '斩不同的', targets, [`v${oddIndex}`], ['standard'], stage);
     }
 
@@ -231,21 +232,23 @@ export class QuestionGenerator {
         const symbols = ['●', '▲', '■', '◆', '★'];
         const symbol = symbols[family.variant];
         const answerCount = this.rng.int(2, 4 + stage);
-        const values = this.includeAnswer(answerCount, [1, 2, 3, 4, 5, 6], stage + 3);
-        const targets = values.map((value, index) => ({ id: `c${index}`, text: symbol.repeat(value), value }));
+        const values = this.includeAnswer(answerCount, [1, 2, 3, 4, 5, 6], this.nonBombTargetCount());
+        const targets: TargetSpec[] = values.map((value, index) => ({ id: `c${index}`, text: symbol.repeat(value), value }));
+        this.appendBomb(targets);
         return this.make(family, `斩${answerCount}个`, targets, [targets.find((target) => target.value === answerCount)!.id], ['standard'], stage);
     }
 
     private visionStroop(family: ContentFamilySpec, stage: Stage): QuestionInstance {
         const wanted = COLOR_WORDS[family.variant % COLOR_WORDS.length];
         if (stage === 0) return this.makeChoice(family, `斩“${wanted}”`, wanted, COLOR_WORDS, stage, { allowBomb: false, allowReverse: false });
-        const colors = this.includeAnswer(wanted, COLOR_WORDS, stage + 3);
-        const targets = colors.map((color, index) => ({
+        const colors = this.includeAnswer(wanted, COLOR_WORDS, this.nonBombTargetCount());
+        const targets: TargetSpec[] = colors.map((color, index) => ({
             id: `s${index}`,
             text: COLOR_WORDS[(index + family.variant + 1) % COLOR_WORDS.length],
             colorName: color,
             value: color,
         }));
+        this.appendBomb(targets);
         return this.make(family, `斩字体颜色·${wanted}`, targets, [targets.find((target) => target.value === wanted)!.id], ['stroop'], stage);
     }
 
@@ -262,29 +265,30 @@ export class QuestionGenerator {
     }
 
     private hanziFill(family: ContentFamilySpec, stage: Stage): QuestionInstance {
-        const entry = this.pickOffset(IDIOMS, family.variant);
+        const entry = this.pickFact('idioms', IDIOMS, (item) => `idiom:${item.text}`);
         const answer = entry.text[entry.missingIndex];
         const prompt = `${entry.text.slice(0, entry.missingIndex)}□${entry.text.slice(entry.missingIndex + 1)}`;
         return this.makeChoice(family, prompt, answer, entry.wrong, stage);
     }
 
     private hanziValid(family: ContentFamilySpec, stage: Stage): QuestionInstance {
-        const entry = this.pickOffset(IDIOMS, family.variant * 3);
+        const entry = this.pickFact('idioms', IDIOMS, (item) => `idiom:${item.text}`);
         const wrong = entry.wrong.map((char) => `${entry.text.slice(0, entry.missingIndex)}${char}${entry.text.slice(entry.missingIndex + 1)}`);
         return this.makeChoice(family, '斩真成语', entry.text, wrong, stage);
     }
 
     private hanziOrder(family: ContentFamilySpec, stage: Stage): QuestionInstance {
         const orderable = IDIOMS.filter((entry) => new Set(entry.text).size === 4);
-        const entry = this.pickOffset(orderable, family.variant * 2);
+        const entry = this.pickFact('idioms-orderable', orderable, (item) => `idiom:${item.text}`);
         const source = [...entry.text].map((text, originalIndex) => ({ text, originalIndex }));
-        const targets = this.rng.shuffle(source).map((item, index) => ({ id: `h${index}`, text: item.text, value: item.originalIndex }));
+        const targets: TargetSpec[] = this.rng.shuffle(source).map((item, index) => ({ id: `h${index}`, text: item.text, value: item.originalIndex }));
         const ordered = [...targets].sort((a, b) => Number(a.value) - Number(b.value)).map((target) => target.id);
+        this.appendBomb(targets);
         return this.make(family, '排成语', targets, ordered, ['order'], stage, ordered);
     }
 
     private englishMeaning(family: ContentFamilySpec, stage: Stage): QuestionInstance {
-        const word = this.pickOffset(ENGLISH_WORDS, family.variant * 4);
+        const word = this.pickFact('english-words', ENGLISH_WORDS, (item) => `english:${item.en}`);
         const sameCategory = ENGLISH_WORDS.filter((candidate) => candidate.category === word.category && candidate.en !== word.en).map((candidate) => candidate.zh);
         return this.makeChoice(family, `${word.en} 是？`, word.zh, sameCategory, stage);
     }
@@ -292,18 +296,20 @@ export class QuestionGenerator {
     private englishCategory(family: ContentFamilySpec, stage: Stage): QuestionInstance {
         const categories = ['动物', '颜色', '食物', '动作', '物品'] as const;
         const category = categories[family.variant];
-        const count = stage + 3;
-        const matching = this.rng.shuffle(ENGLISH_WORDS.filter((word) => word.category === category));
+        const count = this.nonBombTargetCount();
+        const matchingPool = ENGLISH_WORDS.filter((word) => word.category === category);
         const others = this.rng.shuffle(ENGLISH_WORDS.filter((word) => word.category !== category));
         const correctCount = stage > 0 ? 2 : 1;
-        const words = this.rng.shuffle([...matching.slice(0, correctCount), ...others.slice(0, count - correctCount)]);
-        const targets = words.map((word, index) => ({ id: `e${index}`, text: word.en, value: word.category }));
+        const matching = this.pickFacts(`english-category:${category}`, matchingPool, correctCount, (word) => `english:${word.en}`);
+        const words = this.rng.shuffle([...matching, ...others.slice(0, count - correctCount)]);
+        const targets: TargetSpec[] = words.map((word, index) => ({ id: `e${index}`, text: word.en, value: word.category }));
         const correct = targets.filter((target) => target.value === category).map((target) => target.id);
-        return this.make(family, stage > 0 ? `斩全部${category}` : `斩${category}`, targets, correct, stage > 0 ? ['multi'] : ['standard'], stage);
+        this.appendBomb(targets);
+        return this.make(family, this.directive.rules.includes('multi') ? `斩全部${category}` : `斩${category}`, targets, correct, this.directive.rules, stage);
     }
 
     private englishAntonym(family: ContentFamilySpec, stage: Stage): QuestionInstance {
-        const pair = this.pickOffset(ENGLISH_ANTONYMS, family.variant * 2);
+        const pair = this.pickFact('english-antonyms', ENGLISH_ANTONYMS, (item) => `antonym:${item[0]}:${item[1]}`);
         const reversePair = this.rng.next() < 0.5;
         const promptWord = pair[reversePair ? 1 : 0];
         const answer = pair[reversePair ? 0 : 1];
@@ -314,7 +320,7 @@ export class QuestionGenerator {
     }
 
     private lifeUse(family: ContentFamilySpec, stage: Stage): QuestionInstance {
-        const fact = this.pickOffset(LIFE_FACTS, family.variant * 3);
+        const fact = this.pickFact('life-facts', LIFE_FACTS, (item) => `life:${item.item}`);
         const candidates = LIFE_FACTS.filter((candidate) => candidate.item !== fact.item).map((candidate) => candidate.item);
         return this.makeChoice(family, fact.use, fact.item, candidates, stage);
     }
@@ -322,24 +328,26 @@ export class QuestionGenerator {
     private lifeCategory(family: ContentFamilySpec, stage: Stage): QuestionInstance {
         const categories = ['清洁工具', '厨房用品', '学习用品', '安全用品', '交通工具'] as const;
         const category = categories[family.variant];
-        const count = stage + 3;
-        const matching = this.rng.shuffle(LIFE_FACTS.filter((fact) => fact.category === category));
+        const count = this.nonBombTargetCount();
+        const matchingPool = LIFE_FACTS.filter((fact) => fact.category === category);
         const others = this.rng.shuffle(LIFE_FACTS.filter((fact) => fact.category !== category));
         const correctCount = stage > 0 ? 2 : 1;
-        const facts = this.rng.shuffle([...matching.slice(0, correctCount), ...others.slice(0, count - correctCount)]);
-        const targets = facts.map((fact, index) => ({ id: `l${index}`, text: fact.item, value: fact.category }));
+        const matching = this.pickFacts(`life-category:${category}`, matchingPool, correctCount, (fact) => `life:${fact.item}`);
+        const facts = this.rng.shuffle([...matching, ...others.slice(0, count - correctCount)]);
+        const targets: TargetSpec[] = facts.map((fact, index) => ({ id: `l${index}`, text: fact.item, value: fact.category }));
         const correct = targets.filter((target) => target.value === category).map((target) => target.id);
-        return this.make(family, stage > 0 ? `斩全部${category}` : `斩${category}`, targets, correct, stage > 0 ? ['multi'] : ['standard'], stage);
+        this.appendBomb(targets);
+        return this.make(family, this.directive.rules.includes('multi') ? `斩全部${category}` : `斩${category}`, targets, correct, this.directive.rules, stage);
     }
 
     private geographyCapital(family: ContentFamilySpec, stage: Stage): QuestionInstance {
-        const fact = this.pickOffset(GEOGRAPHY_FACTS, family.variant * 3);
+        const fact = this.pickFact('geography-facts', GEOGRAPHY_FACTS, (item) => `geography:${item.country}`);
         const candidates = GEOGRAPHY_FACTS.filter((candidate) => candidate.capital !== fact.capital).map((candidate) => candidate.capital);
         return this.makeChoice(family, `${fact.country}首都`, fact.capital, candidates, stage);
     }
 
     private geographyCountry(family: ContentFamilySpec, stage: Stage): QuestionInstance {
-        const fact = this.pickOffset(GEOGRAPHY_FACTS, family.variant * 4 + 1);
+        const fact = this.pickFact('geography-facts', GEOGRAPHY_FACTS, (item) => `geography:${item.country}`);
         const candidates = GEOGRAPHY_FACTS.filter((candidate) => candidate.country !== fact.country).map((candidate) => candidate.country);
         return this.makeChoice(family, `${fact.capital}在哪国`, fact.country, candidates, stage);
     }
@@ -359,7 +367,49 @@ export class QuestionGenerator {
         }
     }
 
-    private pickOffset<T>(items: readonly T[], offset: number): T {
-        return items[(this.rng.int(0, items.length - 1) + offset) % items.length];
+    private nonBombTargetCount(): number {
+        return Math.max(2, this.directive.targetCount - (this.directive.rules.includes('bomb') ? 1 : 0));
+    }
+
+    private appendBomb(targets: TargetSpec[]): void {
+        if (this.directive.rules.includes('bomb')) targets.push({ id: 'bomb', text: '爆', isBomb: true });
+    }
+
+    private pickFacts<T>(key: string, items: readonly T[], count: number, idOf: (item: T) => string): T[] {
+        const picked: T[] = [];
+        for (let i = 0; i < count; i++) picked.push(this.pickFact(key, items, idOf));
+        return picked;
+    }
+
+    private pickFact<T>(key: string, items: readonly T[], idOf: (item: T) => string): T {
+        if (!items.length) throw new Error(`Empty fact pool: ${key}`);
+        let bag = this.factBags.get(key);
+        if (!bag?.length) {
+            bag = this.rng.shuffle(items.map((_, index) => index));
+            this.factBags.set(key, bag);
+        }
+        const recent = new Set(this.recentQuestionFacts.flat());
+        let bagIndex = bag.length - 1;
+        while (bagIndex >= 0) {
+            const factId = idOf(items[bag[bagIndex]]);
+            if (!recent.has(factId) && !this.activeFactIds.includes(factId)) break;
+            bagIndex--;
+        }
+        if (bagIndex < 0) {
+            bag = this.rng.shuffle(items.map((_, index) => index));
+            this.factBags.set(key, bag);
+            bagIndex = bag.findIndex((index) => !recent.has(idOf(items[index])) && !this.activeFactIds.includes(idOf(items[index])));
+            if (bagIndex < 0) bagIndex = bag.findIndex((index) => !this.activeFactIds.includes(idOf(items[index])));
+            if (bagIndex < 0) bagIndex = 0;
+        }
+        const item = items[bag.splice(bagIndex, 1)[0]];
+        const factId = idOf(item);
+        if (!this.activeFactIds.includes(factId)) this.activeFactIds.push(factId);
+        return item;
+    }
+
+    private recordQuestionFacts(): void {
+        this.recentQuestionFacts.push([...this.activeFactIds]);
+        if (this.recentQuestionFacts.length > 20) this.recentQuestionFacts.shift();
     }
 }

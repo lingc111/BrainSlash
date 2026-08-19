@@ -1,6 +1,7 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
 import { GAMEPLAY_CONFIG } from '../assets/Scripts/configs/GameConfig.ts';
+import { Brawl60Director, phaseAt } from '../assets/Scripts/domain/Brawl60Director.ts';
 import {
     CONTENT_FAMILIES,
     CONTENT_FAMILY_TARGETS,
@@ -17,6 +18,13 @@ import { evaluateRules } from '../assets/Scripts/domain/Rules.ts';
 import { SeededRng } from '../assets/Scripts/domain/SeededRng.ts';
 import { validateQuestion } from '../assets/Scripts/domain/FairnessValidator.ts';
 import { difficultyAt } from '../assets/Scripts/domain/DifficultyDirector.ts';
+
+function pipeline(seed: string): { director: Brawl60Director; generator: QuestionGenerator } {
+    return {
+        director: new Brawl60Director(new SeededRng(`${seed}:director`)),
+        generator: new QuestionGenerator(new SeededRng(`${seed}:gameplay`), GAMEPLAY_CONFIG),
+    };
+}
 
 test('seeded RNG is deterministic and streams do not drift', () => {
     const a = new SeededRng('same'), b = new SeededRng('same');
@@ -92,38 +100,100 @@ test('reviewed fact pools contain unique answers and safe idiom distractors', ()
     assert.equal(new Set(GEOGRAPHY_FACTS.map((fact) => fact.capital)).size, GEOGRAPHY_FACTS.length);
 });
 
-test('opening-stage catalog stays readable while later stages cover every expanded theme', () => {
-    const opening = new QuestionGenerator(new SeededRng('opening-content'), GAMEPLAY_CONFIG);
-    for (let i = 0; i < 55; i++) {
-        const question = opening.next(i * 100, 0);
+test('brawl director exposes exact four-phase boundaries and rising pressure', () => {
+    assert.equal(phaseAt(0).id, 'warmup');
+    assert.equal(phaseAt(9_999).id, 'warmup');
+    assert.equal(phaseAt(10_000).id, 'action');
+    assert.equal(phaseAt(24_999).id, 'action');
+    assert.equal(phaseAt(25_000).id, 'twist');
+    assert.equal(phaseAt(44_999).id, 'twist');
+    assert.equal(phaseAt(45_000).id, 'climax');
+    assert.equal(phaseAt(60_000).id, 'climax');
+    assert.deepEqual([0, 10_000, 25_000, 45_000].map((elapsed) => difficultyAt(elapsed).targetCount), [3, 4, 5, 6]);
+    assert.deepEqual([0, 10_000, 25_000, 45_000].map((elapsed) => difficultyAt(elapsed).phase), ['warmup', 'action', 'twist', 'climax']);
+    assert.ok(phaseAt(0).questionTimeMs > phaseAt(10_000).questionTimeMs);
+    assert.ok(phaseAt(10_000).questionTimeMs > phaseAt(25_000).questionTimeMs);
+    assert.ok(phaseAt(25_000).questionTimeMs > phaseAt(45_000).questionTimeMs);
+    assert.ok(phaseAt(0).speed < phaseAt(45_000).speed);
+});
+
+test('each phase schedules its intended themes and rule beats', () => {
+    const warmup = pipeline('warmup');
+    for (let i = 0; i < 20; i++) {
+        const directive = warmup.director.next(5_000);
+        const question = warmup.generator.next(directive);
+        assert.equal(directive.phase, 'warmup');
+        assert.deepEqual(question.activeRules, ['standard']);
         assert.ok(question.theme === 'math' || question.theme === 'vision');
         assert.deepEqual(validateQuestion(question, evaluateRules(question)), []);
     }
 
-    const advanced = new QuestionGenerator(new SeededRng('advanced-content'), GAMEPLAY_CONFIG);
-    const themes = new Set<string>(), families = new Set<string>();
-    for (let i = 0; i < CONTENT_FAMILIES.length; i++) {
-        const question = advanced.next(20_000 + i * 100, 1);
-        themes.add(question.theme);
-        families.add(question.familyId ?? '');
+    const action = pipeline('action');
+    const actionRules = Array.from({ length: 5 }, () => action.director.next(15_000).rules);
+    assert.deepEqual(actionRules, [['multi'], ['bomb'], ['standard'], ['order'], ['bomb']]);
+
+    const twist = pipeline('twist');
+    const twistRules = Array.from({ length: 6 }, () => twist.director.next(30_000).rules);
+    assert.deepEqual(twistRules, [['reverse'], ['stroop'], ['standard'], ['reverse'], ['multi'], ['stroop']]);
+
+    const climax = pipeline('climax');
+    for (let i = 0; i < 15; i++) {
+        const directive = climax.director.next(50_000);
+        const question = climax.generator.next(directive);
+        assert.equal(directive.rules.length, 2);
+        assert.deepEqual(question.activeRules, directive.rules);
         assert.deepEqual(validateQuestion(question, evaluateRules(question)), []);
     }
-    assert.deepEqual([...themes].sort(), ['english', 'geography', 'hanzi', 'life', 'math', 'vision']);
-    assert.equal(families.size, CONTENT_FAMILIES.length);
 });
 
-test('1000 seeds generate only valid questions and repeat exactly', () => {
+test('theme and family bags enforce cooldowns across long mixed runs', () => {
+    const { director, generator } = pipeline('bag-cooldowns');
+    const recentFamilies: string[] = [];
+    const recentThemes: string[] = [];
+    for (let i = 0; i < 500; i++) {
+        const elapsed = [5_000, 15_000, 30_000, 50_000][i % 4];
+        const directive = director.next(elapsed);
+        const question = generator.next(directive);
+        assert.ok(!recentFamilies.includes(question.familyId ?? ''));
+        recentFamilies.push(question.familyId ?? '');
+        if (recentFamilies.length > 3) recentFamilies.shift();
+        recentThemes.push(question.theme);
+        if (recentThemes.length > 3) recentThemes.shift();
+        if (recentThemes.length === 3) assert.ok(new Set(recentThemes).size > 1);
+        assert.deepEqual(validateQuestion(question, evaluateRules(question)), []);
+    }
+});
+
+test('fact bag keeps repeated reviewed facts more than 20 questions apart', () => {
+    const { director, generator } = pipeline('fact-cooldowns');
+    const lastSeen = new Map<string, number>();
+    for (let i = 0; i < 800; i++) {
+        const elapsed = i % 3 === 0 ? 15_000 : i % 3 === 1 ? 30_000 : 50_000;
+        const question = generator.next(director.next(elapsed));
+        for (const factId of question.factIds ?? []) {
+            const previous = lastSeen.get(factId);
+            if (previous !== undefined) assert.ok(i - previous > 20, `${factId} repeated after ${i - previous} questions`);
+            lastSeen.set(factId, i);
+        }
+    }
+});
+
+test('1000 seeds survive full multi-round deterministic legality regression', () => {
     for (let i = 0; i < 1000; i++) {
         const seed = `regression-${i}`;
-        const firstGenerator = new QuestionGenerator(new SeededRng(seed), GAMEPLAY_CONFIG);
-        const secondGenerator = new QuestionGenerator(new SeededRng(seed), GAMEPLAY_CONFIG);
-        for (let questionIndex = 0; questionIndex < 18; questionIndex++) {
-            const elapsed = (i * 137 + questionIndex * 3_271) % 59_000;
-            const stage = difficultyAt(elapsed).stage;
-            const first = firstGenerator.next(elapsed, stage);
-            const second = secondGenerator.next(elapsed, stage);
+        const firstPipeline = pipeline(seed), secondPipeline = pipeline(seed);
+        for (let questionIndex = 0; questionIndex < 64; questionIndex++) {
+            const elapsed = (questionIndex * 997 + i * 137) % 60_000;
+            const firstDirective = firstPipeline.director.next(elapsed);
+            const secondDirective = secondPipeline.director.next(elapsed);
+            assert.deepEqual(firstDirective, secondDirective);
+            const first = firstPipeline.generator.next(firstDirective);
+            const second = secondPipeline.generator.next(secondDirective);
             assert.deepEqual(first, second);
             assert.deepEqual(validateQuestion(first, evaluateRules(first)), []);
+            assert.ok(first.targets.length <= firstDirective.targetCount);
+            assert.ok(first.targets.length >= 2);
+            assert.equal(first.timeLimitMs, firstDirective.questionTimeMs);
         }
     }
 });
