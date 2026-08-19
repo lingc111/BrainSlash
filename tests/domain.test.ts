@@ -1,6 +1,14 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
 import { GAMEPLAY_CONFIG } from '../assets/Scripts/configs/GameConfig.ts';
+import {
+    CONTENT_FAMILIES,
+    CONTENT_FAMILY_TARGETS,
+    ENGLISH_WORDS,
+    GEOGRAPHY_FACTS,
+    IDIOMS,
+    LIFE_FACTS,
+} from '../assets/Scripts/domain/ContentCatalog.ts';
 import { GameSession } from '../assets/Scripts/domain/GameSession.ts';
 import { GestureResolver } from '../assets/Scripts/domain/GestureResolver.ts';
 import type { QuestionInstance } from '../assets/Scripts/domain/Models.ts';
@@ -61,6 +69,47 @@ test('session applies a question result only once', () => {
     const session = new GameSession(entry, GAMEPLAY_CONFIG); session.start(); session.beginQuestion();
     const q: QuestionInstance = { id: 'q', theme: 'math', prompt: { text: 'x' }, targets: [{ id: 'a', text: '1' }, { id: 'b', text: '2' }], baseCorrectTargetIds: ['a'], activeRules: ['standard'], timeLimitMs: 3000, tutorialSafe: true };
     assert.ok(session.resolveSuccess(q)); assert.equal(session.resolveSuccess(q), null); assert.equal(session.state.correctCount, 1);
+});
+
+test('expanded content catalog contains five times the recommended family counts', () => {
+    const counts = Object.fromEntries(Object.keys(CONTENT_FAMILY_TARGETS).map((theme) => [theme, 0])) as Record<keyof typeof CONTENT_FAMILY_TARGETS, number>;
+    for (const family of CONTENT_FAMILIES) counts[family.theme] += 1;
+    assert.deepEqual(counts, CONTENT_FAMILY_TARGETS);
+    assert.equal(CONTENT_FAMILIES.length, 105);
+    assert.equal(new Set(CONTENT_FAMILIES.map((family) => family.id)).size, CONTENT_FAMILIES.length);
+});
+
+test('reviewed fact pools contain unique answers and safe idiom distractors', () => {
+    for (const idiom of IDIOMS) {
+        assert.equal([...idiom.text].length, 4);
+        const answer = [...idiom.text][idiom.missingIndex];
+        assert.equal(new Set(idiom.wrong).size, idiom.wrong.length);
+        assert.ok(!idiom.wrong.includes(answer));
+    }
+    assert.equal(new Set(ENGLISH_WORDS.map((word) => word.en)).size, ENGLISH_WORDS.length);
+    assert.equal(new Set(LIFE_FACTS.map((fact) => fact.item)).size, LIFE_FACTS.length);
+    assert.equal(new Set(GEOGRAPHY_FACTS.map((fact) => fact.country)).size, GEOGRAPHY_FACTS.length);
+    assert.equal(new Set(GEOGRAPHY_FACTS.map((fact) => fact.capital)).size, GEOGRAPHY_FACTS.length);
+});
+
+test('opening-stage catalog stays readable while later stages cover every expanded theme', () => {
+    const opening = new QuestionGenerator(new SeededRng('opening-content'), GAMEPLAY_CONFIG);
+    for (let i = 0; i < 55; i++) {
+        const question = opening.next(i * 100, 0);
+        assert.ok(question.theme === 'math' || question.theme === 'vision');
+        assert.deepEqual(validateQuestion(question, evaluateRules(question)), []);
+    }
+
+    const advanced = new QuestionGenerator(new SeededRng('advanced-content'), GAMEPLAY_CONFIG);
+    const themes = new Set<string>(), families = new Set<string>();
+    for (let i = 0; i < CONTENT_FAMILIES.length; i++) {
+        const question = advanced.next(20_000 + i * 100, 1);
+        themes.add(question.theme);
+        families.add(question.familyId ?? '');
+        assert.deepEqual(validateQuestion(question, evaluateRules(question)), []);
+    }
+    assert.deepEqual([...themes].sort(), ['english', 'geography', 'hanzi', 'life', 'math', 'vision']);
+    assert.equal(families.size, CONTENT_FAMILIES.length);
 });
 
 test('1000 seeds generate only valid questions and repeat exactly', () => {
