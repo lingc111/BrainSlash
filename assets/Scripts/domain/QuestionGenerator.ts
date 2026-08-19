@@ -116,9 +116,14 @@ export class QuestionGenerator {
         const rules = this.directive.rules;
         const count = Math.max(2, this.directive.targetCount - (rules.includes('bomb') ? 1 : 0));
         const values = this.includeAnswer(answer, candidates, count);
+        // Object.is also handles numeric edge values such as NaN. includeAnswer
+        // inserts the answer before shuffling; retain a defensive repair so a
+        // malformed external pool can never crash the live question loop.
+        let answerIndex = values.findIndex((value) => Object.is(value, answer));
+        if (answerIndex < 0) { values[0] = answer; answerIndex = 0; }
         const targets: TargetSpec[] = values.map((value, index) => ({ id: `t${index}`, text: String(value), value }));
         if (rules.includes('bomb')) targets.push({ id: 'bomb', text: '爆', isBomb: true });
-        return this.make(family, prompt, targets, [targets.find((target) => target.value === answer)!.id], rules, stage);
+        return this.make(family, prompt, targets, [`t${answerIndex}`], rules, stage);
     }
 
     private includeAnswer<T>(answer: T, candidates: readonly T[], count: number): T[] {

@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
-import { GAMEPLAY_CONFIG } from '../assets/Scripts/configs/GameConfig.ts';
+import { CONTENT_VERSION, GAMEPLAY_CONFIG } from '../assets/Scripts/configs/GameConfig.ts';
 import { Brawl60Director, phaseAt } from '../assets/Scripts/domain/Brawl60Director.ts';
 import {
     CONTENT_FAMILIES,
@@ -18,6 +18,12 @@ import { evaluateRules } from '../assets/Scripts/domain/Rules.ts';
 import { SeededRng } from '../assets/Scripts/domain/SeededRng.ts';
 import { validateQuestion } from '../assets/Scripts/domain/FairnessValidator.ts';
 import { difficultyAt } from '../assets/Scripts/domain/DifficultyDirector.ts';
+import {
+    calculateHomePortraitLayout,
+    HOME_PORTRAIT_SECTION_HEIGHTS,
+    type HomeSectionId,
+} from '../assets/Scripts/UI/home/HomePortraitLayout.ts';
+import { RunSeedFactory } from '../assets/Scripts/app/RunSeedFactory.ts';
 
 function pipeline(seed: string): { director: Brawl60Director; generator: QuestionGenerator } {
     return {
@@ -130,11 +136,11 @@ test('each phase schedules its intended themes and rule beats', () => {
 
     const action = pipeline('action');
     const actionRules = Array.from({ length: 5 }, () => action.director.next(15_000).rules);
-    assert.deepEqual(actionRules, [['multi'], ['bomb'], ['standard'], ['order'], ['bomb']]);
+    assert.deepEqual(actionRules.map((rules) => rules.join('+')).sort(), ['bomb', 'bomb', 'multi', 'order', 'standard']);
 
     const twist = pipeline('twist');
     const twistRules = Array.from({ length: 6 }, () => twist.director.next(30_000).rules);
-    assert.deepEqual(twistRules, [['reverse'], ['stroop'], ['standard'], ['reverse'], ['multi'], ['stroop']]);
+    assert.deepEqual(twistRules.map((rules) => rules.join('+')).sort(), ['multi', 'reverse', 'reverse', 'standard', 'stroop', 'stroop']);
 
     const climax = pipeline('climax');
     for (let i = 0; i < 15; i++) {
@@ -144,6 +150,43 @@ test('each phase schedules its intended themes and rule beats', () => {
         assert.deepEqual(question.activeRules, directive.rules);
         assert.deepEqual(validateQuestion(question, evaluateRules(question)), []);
     }
+});
+
+test('brawl rule beats vary by seed while preserving each phase recipe', () => {
+    const signatures = new Set<string>();
+    for (let seedIndex = 0; seedIndex < 24; seedIndex++) {
+        const director = new Brawl60Director(new SeededRng(`rule-order-${seedIndex}`));
+        signatures.add(Array.from({ length: 5 }, () => director.next(15_000).rules.join('+')).join(','));
+    }
+    assert.ok(signatures.size > 8);
+});
+
+test('brawl topic and question-family order varies across fresh session seeds', () => {
+    const signatures = new Set<string>();
+    for (let seedIndex = 0; seedIndex < 32; seedIndex++) {
+        const director = new Brawl60Director(new SeededRng(`session-order-${seedIndex}`));
+        const signature = Array.from({ length: 12 }, (_, questionIndex) => {
+            const elapsed = questionIndex < 3 ? 5_000 : questionIndex < 8 ? 15_000 : 30_000;
+            const directive = director.next(elapsed);
+            return `${directive.family.id}:${directive.rules.join('+')}`;
+        }).join(',');
+        signatures.add(signature);
+    }
+    assert.ok(signatures.size > 24);
+});
+
+test('run seed factory refreshes free-play but keeps the daily recipe reproducible', () => {
+    const fixedDate = new Date(2026, 7, 20, 12, 0, 0);
+    const factory = new RunSeedFactory(() => fixedDate, () => 123_456_789);
+    const first = factory.create('brawl60', CONTENT_VERSION);
+    const second = factory.create('brawl60', CONTENT_VERSION);
+    assert.notEqual(first.seed, second.seed);
+    assert.match(first.seed, /^brawl60:/);
+
+    const dailyA = factory.create('daily', CONTENT_VERSION);
+    const dailyB = factory.create('daily', CONTENT_VERSION);
+    assert.equal(dailyA.seed, dailyB.seed);
+    assert.equal(dailyA.recipeId, 'daily-default');
 });
 
 test('theme and family bags enforce cooldowns across long mixed runs', () => {
@@ -195,5 +238,36 @@ test('1000 seeds survive full multi-round deterministic legality regression', ()
             assert.ok(first.targets.length >= 2);
             assert.equal(first.timeLimitMs, firstDirective.questionTimeMs);
         }
+    }
+});
+
+test('home portrait layout keeps every section separated across common safe areas', () => {
+    const profiles = [
+        { name: 'reference-16:9', height: 1_672, top: 54, bottom: 42 },
+        { name: 'modern-phone', height: 2_037, top: 230, bottom: 105 },
+        { name: 'tall-android', height: 2_090, top: 200, bottom: 75 },
+        { name: 'portrait-tablet', height: 1_672, top: 120, bottom: 60 },
+    ];
+    const order: HomeSectionId[] = ['header', 'daily', 'brawl', 'events', 'rank'];
+
+    for (const profile of profiles) {
+        const layout = calculateHomePortraitLayout(profile.height, profile.top, profile.bottom);
+        assert.ok(layout.contentScale >= 0.8 && layout.contentScale <= 1, `${profile.name} scale`);
+        assert.ok(layout.sectionGap >= 18, `${profile.name} gap`);
+
+        const headerTop = layout.sectionY.header + HOME_PORTRAIT_SECTION_HEIGHTS.header * layout.contentScale * 0.5;
+        assert.ok(headerTop <= profile.height * 0.5 - profile.top + 0.001, `${profile.name} top safe area`);
+
+        for (let i = 0; i < order.length - 1; i++) {
+            const upper = order[i], lower = order[i + 1];
+            const upperBottom = layout.sectionY[upper] - HOME_PORTRAIT_SECTION_HEIGHTS[upper] * layout.contentScale * 0.5;
+            const lowerTop = layout.sectionY[lower] + HOME_PORTRAIT_SECTION_HEIGHTS[lower] * layout.contentScale * 0.5;
+            assert.ok(upperBottom - lowerTop >= 18 - 0.001, `${profile.name} ${upper}/${lower} overlap`);
+        }
+
+        const rankBottom = layout.sectionY.rank - HOME_PORTRAIT_SECTION_HEIGHTS.rank * layout.contentScale * 0.5;
+        const navigationTop = layout.navigationY + 64;
+        assert.ok(rankBottom - navigationTop >= 18 - 0.001, `${profile.name} rank/navigation overlap`);
+        assert.equal(layout.navigationY - 64, -profile.height * 0.5 + profile.bottom);
     }
 });

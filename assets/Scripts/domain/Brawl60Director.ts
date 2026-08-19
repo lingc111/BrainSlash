@@ -89,7 +89,8 @@ export function familySupportsRules(family: ContentFamilySpec, rules: readonly R
 }
 
 export class Brawl60Director {
-    private readonly phaseQuestionCounts = new Map<BrawlPhaseId, number>();
+    private readonly ruleBags = new Map<BrawlPhaseId, RuleId[][]>();
+    private readonly lastRuleKeys = new Map<BrawlPhaseId, string>();
     private readonly themeBags = new Map<string, ThemeId[]>();
     private readonly familyBags = new Map<string, ContentFamilySpec[]>();
     private readonly recentThemes: ThemeId[] = [];
@@ -100,9 +101,7 @@ export class Brawl60Director {
 
     public next(elapsedMs: number): BrawlQuestionDirective {
         const phase = phaseAt(elapsedMs);
-        const phaseIndex = this.phaseQuestionCounts.get(phase.id) ?? 0;
-        this.phaseQuestionCounts.set(phase.id, phaseIndex + 1);
-        const requestedRules = [...phase.ruleSequence[phaseIndex % phase.ruleSequence.length]];
+        const requestedRules = this.pickRules(phase);
         const compatible = CONTENT_FAMILIES.filter((family) =>
             (phase.themeWeights[family.theme] ?? 0) > 0 && familySupportsRules(family, requestedRules),
         );
@@ -117,6 +116,36 @@ export class Brawl60Director {
             family,
             rules: requestedRules,
         };
+    }
+
+    private pickRules(phase: BrawlPhaseSettings): RuleId[] {
+        let bag = this.ruleBags.get(phase.id);
+        if (!bag?.length) {
+            bag = this.rng.shuffle(phase.ruleSequence.map((rules) => [...rules]));
+            const lastKey = this.lastRuleKeys.get(phase.id);
+            const nextIndex = bag.length - 1;
+            if (lastKey && bag.length > 1 && ruleKey(bag[nextIndex]) === lastKey) {
+                const swapIndex = bag.findIndex((rules) => ruleKey(rules) !== lastKey);
+                if (swapIndex >= 0) [bag[swapIndex], bag[nextIndex]] = [bag[nextIndex], bag[swapIndex]];
+            }
+            this.ruleBags.set(phase.id, bag);
+        }
+        let nextIndex = bag.length - 1;
+        const recentTheme = this.recentThemes[this.recentThemes.length - 1];
+        const themeRepeated = recentTheme !== undefined
+            && this.recentThemes.length >= 2
+            && this.recentThemes[this.recentThemes.length - 2] === recentTheme;
+        if (themeRepeated) {
+            const alternativeIndex = bag.findIndex((rules) => CONTENT_FAMILIES.some((family) =>
+                family.theme !== recentTheme
+                && (phase.themeWeights[family.theme] ?? 0) > 0
+                && familySupportsRules(family, rules),
+            ));
+            if (alternativeIndex >= 0) nextIndex = alternativeIndex;
+        }
+        const rules = bag.splice(nextIndex, 1)[0];
+        this.lastRuleKeys.set(phase.id, ruleKey(rules));
+        return [...rules];
     }
 
     private pickFamily(phase: BrawlPhaseSettings, rules: readonly RuleId[], compatible: readonly ContentFamilySpec[]): ContentFamilySpec {

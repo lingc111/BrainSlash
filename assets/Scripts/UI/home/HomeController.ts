@@ -22,6 +22,7 @@ import {
 import { EDITOR } from 'cc/env';
 import { HOME_HAND_DRAWN as C } from '../DesignTokens';
 import { CountdownTimer } from './CountdownTimer';
+import { calculateHomePortraitLayout } from './HomePortraitLayout';
 import { createMockHomeViewData, HomeViewData } from './HomeViewData';
 import { AppRuntime } from '../../app/AppRuntime';
 
@@ -225,29 +226,30 @@ export class HomeController extends Component {
         const paper = this.makeNode(root, 'PaperBackground', 0, 0, 788, 591);
         this.attachResourceTexture(paper, 'textures/home/ui/home_slash_paper/spriteFrame');
 
-        const titleGroup = this.makeNode(root, 'TitleImagePlaceholder', -100, 104, 450, 162);
+        const titleGroup = this.makeNode(root, 'TitleImagePlaceholder', -100, 118, 450, 162);
         this.label(titleGroup, 'AccentCharacter', '成', -176, 42, 92, 76, 58, C.red, 'center');
         this.label(titleGroup, 'TitleLine1', '语斩：', -34, 42, 220, 76, 58, C.ink, 'left');
         this.label(titleGroup, 'TitleLine2', '百词破晓', -14, -43, 430, 84, 66, C.ink, 'center');
         this.drawUnderline(titleGroup, 'TitleRedUnderline', 0, -82, 430, C.red, -4);
 
-        const hourglass = this.makeNode(root, 'HourglassIcon', 263, 98, 110, 140);
+        const hourglass = this.makeNode(root, 'HourglassIcon', 263, 112, 110, 140);
         this.drawHourglass(hourglass);
 
-        const friend = this.makeNode(root, 'FriendBubble', -105, -54, 440, 78);
+        const friend = this.makeNode(root, 'FriendBubble', -105, -34, 440, 78);
         this.drawSmallFriend(friend, -188, 0);
         const bubble = this.graphics(friend, 'BubbleOutline', 30, 0, 360, 68);
         this.roundedRect(bubble, -180, -32, 360, 64, C.paperRaised, C.ink, 2.5, 14);
         this.friendMessageLabel = this.label(friend, 'FriendMessage', '', 31, 0, 326, 56, 26, C.ink, 'center');
 
-        this.countdownLabel = this.label(root, 'CountdownLabel', '00:00:00', 266, -60, 220, 58, 34, C.ink, 'center');
-        this.drawUnderline(root, 'CountdownUnderline', 266, -94, 210, C.red, -1);
+        this.countdownLabel = this.label(root, 'CountdownLabel', '00:00:00', 266, -34, 220, 58, 34, C.ink, 'center');
+        this.drawUnderline(root, 'CountdownUnderline', 266, -68, 210, C.red, -1);
 
-        const start = this.makeNode(root, 'StartButton', 0, -172, 600, 132);
+        const start = this.makeNode(root, 'StartButton', 0, -190, 600, 126);
         // The source keeps generous transparent margins around the hand-drawn stroke.
         // Preserve its native ratio so the brush texture and lettering are not squeezed.
-        const artwork = this.makeNode(start, 'ButtonArtwork', 0, 0, 600, 225);
+        const artwork = this.makeNode(start, 'ButtonArtwork', 0, 0, 565, 210);
         this.attachResourceTexture(artwork, 'textures/home/ui/draw_sword/spriteFrame');
+        start.setSiblingIndex(root.children.length - 1);
         this.bindButton(start, this.onDailyChallengeClick.bind(this));
         return root;
     }
@@ -352,37 +354,20 @@ export class HomeController extends Component {
         if (backgroundTexture) this.resizeCoverTexture(backgroundTexture, visible.width, visible.height);
         this.redrawBackground(visible.width, visible.height);
 
-        const extraHeight = Math.max(0, visible.height - C.designHeight);
-        const gapBoost = Math.min(96, extraHeight / 4);
         const topInset = this.getTopInset(visible.height);
         const bottomInset = this.getBottomInset(visible.height);
-        const topEdge = visible.height * 0.5;
-        const bottomEdge = -visible.height * 0.5;
+        const layout = calculateHomePortraitLayout(visible.height, topInset, bottomInset);
 
-        const headerY = topEdge - topInset - 60;
-        const dailyY = headerY - 69 - 22 - gapBoost * 0.15 - 250;
-        const brawlY = dailyY - 250 - (28 + gapBoost) - 94;
-        const eventY = brawlY - 94 - (18 + gapBoost * 0.72) - 108;
-        // Keep progress anchored while using the previous dead space above the
-        // cards; the extra separation now sits where the composition needs it.
-        const progressY = eventY - 168 - (74 + gapBoost * 0.48) - 56;
-        const navY = bottomEdge + bottomInset + 64;
+        this.header?.setPosition(0, layout.sectionY.header, 0);
+        this.dailyChallenge?.setPosition(0, layout.sectionY.daily, 0);
+        this.brawlButton?.setPosition(0, layout.sectionY.brawl, 0);
+        this.eventArea?.setPosition(0, layout.sectionY.events, 0);
+        this.rankProgress?.setPosition(0, layout.sectionY.rank, 0);
+        this.bottomNavigation?.setPosition(0, layout.navigationY, 0);
 
-        this.header?.setPosition(0, headerY, 0);
-        this.dailyChallenge?.setPosition(0, dailyY, 0);
-        this.brawlButton?.setPosition(0, brawlY, 0);
-        this.eventArea?.setPosition(0, eventY, 0);
-        this.rankProgress?.setPosition(0, progressY, 0);
-        this.bottomNavigation?.setPosition(0, navY, 0);
-
-        // Only compact genuinely shorter-than-reference previews. Major paper cards use
-        // section-specific emphasis so the home screen does not dissolve into empty space.
-        const contentScale = Math.max(0.9, Math.min(1, visible.height / C.designHeight));
-        this.header?.setScale(contentScale, contentScale, 1);
-        this.dailyChallenge?.setScale(contentScale * 1.07, contentScale * 1.07, 1);
-        this.brawlButton?.setScale(contentScale * 1.08, contentScale * 1.08, 1);
-        this.eventArea?.setScale(contentScale * 1.18, contentScale * 1.18, 1);
-        this.rankProgress?.setScale(contentScale * 1.05, contentScale * 1.05, 1);
+        for (const section of [this.header, this.dailyChallenge, this.brawlButton, this.eventArea, this.rankProgress]) {
+            section?.setScale(layout.contentScale, layout.contentScale, 1);
+        }
     };
 
     private redrawBackground(width: number, height: number): void {
@@ -597,13 +582,20 @@ export class HomeController extends Component {
         const button = node.addComponent(Button);
         button.transition = Button.Transition.NONE;
         node.on(Button.EventType.CLICK, callback, this);
+        let restingScale = node.scale.clone();
+        let pressed = false;
         node.on(Node.EventType.TOUCH_START, () => {
+            if (!pressed) restingScale = node.scale.clone();
+            pressed = true;
             Tween.stopAllByTarget(node);
-            tween(node).to(0.08, { scale: new Vec3(0.97, 0.97, 1) }, { easing: 'quadOut' }).start();
+            tween(node).to(0.08, {
+                scale: new Vec3(restingScale.x * 0.97, restingScale.y * 0.97, restingScale.z),
+            }, { easing: 'quadOut' }).start();
         }, this);
         const release = (): void => {
             Tween.stopAllByTarget(node);
-            tween(node).to(0.1, { scale: Vec3.ONE }, { easing: 'backOut' }).start();
+            tween(node).to(0.1, { scale: restingScale }, { easing: 'backOut' }).start();
+            pressed = false;
         };
         node.on(Node.EventType.TOUCH_END, release, this);
         node.on(Node.EventType.TOUCH_CANCEL, release, this);
