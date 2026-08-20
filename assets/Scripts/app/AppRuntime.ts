@@ -1,6 +1,6 @@
 import { director } from 'cc';
 import { CONTENT_VERSION } from '../configs/GameConfig';
-import type { FriendChallengePayload, GameEntryParams, GameResult, GameMode } from '../domain/Models';
+import type { FriendChallengePayload, GameEntryParams, GameResult, GameMode, RunResult } from '../domain/Models';
 import { AnalyticsService } from '../infrastructure/AnalyticsService';
 import { AudioService } from '../infrastructure/AudioService';
 import { PlatformService } from '../infrastructure/PlatformService';
@@ -41,10 +41,10 @@ class AppRuntimeState {
         director.loadScene('Gameplay', () => { this.transitioning = false; });
     }
     public home(): void { if (!this.transitioning) { this.transitioning = true; director.loadScene('Home', () => { this.transitioning = false; }); } }
-    public finish(result: GameResult): void {
-        const isNewRecord = this.save.commitResult(result);
-        this.result = { ...result, isNewRecord };
-        this.analytics.track('game_finish', { score: result.score, mode: result.entry.mode });
+    public finish(run: RunResult): GameResult {
+        this.result = this.save.commitResult(run);
+        this.analytics.track('game_finish', { score: run.score, mode: run.entry.mode });
+        return this.result;
     }
     public share(): void {
         if (!this.result) return;

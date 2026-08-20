@@ -1,15 +1,16 @@
-import { _decorator, Button, Color, Component, director, EventTouch, game, Game, Graphics, Label, Mask, Node, NodePool, ResolutionPolicy, resources, screen, Sprite, SpriteFrame, tween, Tween, UIOpacity, UITransform, Vec2, Vec3, view } from 'cc';
+import { _decorator, Color, Component, director, EventTouch, game, Game, Graphics, Label, Mask, Node, NodePool, ResolutionPolicy, resources, screen, Sprite, SpriteFrame, tween, Tween, UIOpacity, UITransform, Vec2, Vec3, view } from 'cc';
 import { AppRuntime } from '../app/AppRuntime';
 import { GAMEPLAY_CONFIG } from '../configs/GameConfig';
 import { Brawl60Director } from '../domain/Brawl60Director';
 import { GameSession } from '../domain/GameSession';
 import { GestureResolver, GestureProgress, shouldKeepIncompleteGesture } from '../domain/GestureResolver';
-import type { ActionConstraint, FailureKind, GameResult, QuestionInstance, RuleId, TargetSpec } from '../domain/Models';
+import type { ActionConstraint, FailureKind, QuestionInstance, RuleId, RunResult, TargetSpec } from '../domain/Models';
 import { QuestionGenerator } from '../domain/QuestionGenerator';
 import { evaluateRules } from '../domain/Rules';
 import { SeededRng } from '../domain/SeededRng';
 import { GameplayTarget, GameplayTargetData, TargetContentType, TargetShape } from './GameplayTarget';
 import { calculatePortraitTargetLayout, portraitTargetEntranceDelay } from './PortraitTargetLayout';
+import { showResultOverlay } from './ResultOverlay';
 
 const { ccclass } = _decorator;
 const INK = new Color(45,43,39,255), PAPER = new Color(255,250,236,255), RED = new Color(174,69,61,255), GREEN = new Color(109,152,106,255), BLUE = new Color(91,133,156,255), YELLOW = new Color(226,184,67,255);
@@ -155,9 +156,7 @@ export class GameplayMVP extends Component {
     private keepsIncompleteGesture():boolean{return !!this.constraint&&shouldKeepIncompleteGesture(this.constraint);}
     private success(t:GameplayTarget|null):void{if(!this.question)return;const r=this.session.resolveSuccess(this.question);if(!r)return;if(this.tutorialRule)AppRuntime.save.markTutorial(this.tutorialRule);this.float(t?.node.position??Vec3.ZERO,`+${r.scoreDelta}${r.kind==='master'?' MASTER':''}`,r.kind==='master'?YELLOW:GREEN);this.scheduleOnce(()=>{this.session.continueAfterFeedback();this.spawn();},.28);}
     private fail(kind:FailureKind,t:GameplayTarget|null=null):void{if(this.question?.tutorialSafe){this.session.cancelQuestion();this.float(t?.node.position??Vec3.ZERO,'再试一次',YELLOW);this.scheduleOnce(()=>{this.session.continueAfterFeedback();this.spawn();},.35);return;}if(!this.session.resolveFailure(kind))return;AppRuntime.platform.vibrate(AppRuntime.save.snapshot().settings.vibration);if(t)this.error(t.node.position);if(this.session.state.phase!=='finished')this.scheduleOnce(()=>{this.session.continueAfterFeedback();this.spawn();},.28);}
-    private finish():void{if(this.finished)return;this.finished=true;const s=this.session.state,total=s.correctCount+s.errorCount;const r:GameResult={entry:this.session.entry,score:s.score,maxCombo:s.maxCombo,correctCount:s.correctCount,errorCount:s.errorCount,accuracy:total?s.correctCount/total:0,bestReactionMs:s.bestReactionMs,isNewRecord:false};AppRuntime.finish(r);this.result(AppRuntime.result!);}
-    private result(r:GameResult):void{const v=view.getVisibleSize(),o=node('ResultOverlay',this.node,v.width,v.height),g=gfx(o,'Shade',v.width,v.height);g.fillColor=new Color(35,31,27,240);g.rect(-v.width/2,-v.height/2,v.width,v.height);g.fill();text(o,'Title',r.isNewRecord?'NEW RECORD!':'本局完成',52,YELLOW).node.setPosition(0,340);text(o,'Score',String(r.score),92,PAPER).node.setPosition(0,220);text(o,'Stats',`最高 COMBO ${r.maxCombo}   正确率 ${Math.round(r.accuracy*100)}%`,27,PAPER).node.setPosition(0,90);this.button(o,'再来一局',-70,()=>AppRuntime.replay());this.button(o,'挑战好友',-185,()=>AppRuntime.share());this.button(o,'返回首页',-300,()=>AppRuntime.home());}
-    private button(p:Node,value:string,y:number,fn:()=>void):void{const n=node(`Button_${value}`,p,390,82),g=n.addComponent(Graphics);g.fillColor=value==='再来一局'?YELLOW:PAPER;g.strokeColor=INK;g.lineWidth=4;g.roundRect(-195,-41,390,82,16);g.fill();g.stroke();text(n,'Label',value,31);n.setPosition(0,y);n.addComponent(Button);n.on(Node.EventType.TOUCH_END,fn);}
+    private finish():void{if(this.finished)return;this.finished=true;const s=this.session.state,total=s.correctCount+s.errorCount;const run:RunResult={entry:this.session.entry,score:s.score,maxCombo:s.maxCombo,correctCount:s.correctCount,errorCount:s.errorCount,accuracy:total?s.correctCount/total:0,bestReactionMs:s.bestReactionMs};const result=AppRuntime.finish(run);showResultOverlay(this.node,result,{replay:()=>AppRuntime.replay(),share:()=>AppRuntime.share(),home:()=>AppRuntime.home()});}
     private refresh():void{if(!this.score)return;const s=this.session.state;this.score.string=String(s.score);this.combo.string=String(s.combo);this.timer.string=`${Math.ceil(s.remainingMs/1000)}s`;this.updateLifeHearts(s.life);}
     private updateLifeHearts(life:number):void{
         if(life===this.renderedLife)return;const previous=this.renderedLife,lit=new Color(255,255,255,255),off=new Color(92,88,82,125);

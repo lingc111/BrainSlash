@@ -12,8 +12,9 @@ import {
 } from '../assets/Scripts/domain/ContentCatalog.ts';
 import { GameSession } from '../assets/Scripts/domain/GameSession.ts';
 import { GestureResolver, shouldKeepIncompleteGesture } from '../assets/Scripts/domain/GestureResolver.ts';
-import type { QuestionInstance } from '../assets/Scripts/domain/Models.ts';
+import type { PlayerProgress, QuestionInstance, RunResult } from '../assets/Scripts/domain/Models.ts';
 import { QuestionGenerator } from '../assets/Scripts/domain/QuestionGenerator.ts';
+import { createResultPresentation, finalizeResult } from '../assets/Scripts/domain/ResultSummary.ts';
 import { evaluateRules } from '../assets/Scripts/domain/Rules.ts';
 import { SeededRng } from '../assets/Scripts/domain/SeededRng.ts';
 import { validateQuestion } from '../assets/Scripts/domain/FairnessValidator.ts';
@@ -153,6 +154,66 @@ test('session applies a question result only once', () => {
     const session = new GameSession(entry, GAMEPLAY_CONFIG); session.start(); session.beginQuestion();
     const q: QuestionInstance = { id: 'q', theme: 'math', prompt: { text: 'x' }, targets: [{ id: 'a', text: '1' }, { id: 'b', text: '2' }], baseCorrectTargetIds: ['a'], activeRules: ['standard'], timeLimitMs: 3000, tutorialSafe: true };
     assert.ok(session.resolveSuccess(q)); assert.equal(session.resolveSuccess(q), null); assert.equal(session.state.correctCount, 1);
+});
+
+test('result finalization atomically records growth, level-up and new best score', () => {
+    const player: PlayerProgress = { level: 1, xp: 495, bestScore: 500 };
+    const run: RunResult = {
+        entry: { mode: 'brawl60', seed: 'result', contentVersion: CONTENT_VERSION },
+        score: 620, maxCombo: 8, correctCount: 2, errorCount: 1, accuracy: 2 / 3, bestReactionMs: 384,
+    };
+    const committed = finalizeResult(run, player);
+    assert.deepEqual(committed.player, { level: 2, xp: 505, bestScore: 620 });
+    assert.equal(committed.result.previousBestScore, 500);
+    assert.equal(committed.result.isNewRecord, true);
+    assert.deepEqual(committed.result.growth, {
+        xpGained: 10,
+        levelBefore: 1,
+        levelAfter: 2,
+        levelProgressBefore: 495,
+        levelProgressAfter: 5,
+        levelTarget: 500,
+    });
+    const presentation = createResultPresentation(committed.result);
+    assert.equal(presentation.headline, '新纪录！');
+    assert.equal(presentation.comparison, '刷新纪录 +120');
+    assert.equal(presentation.fastestReaction, '384ms');
+    assert.equal(presentation.sharePrimary, true);
+});
+
+test('result presentation covers friend win, tie and loss without a server', () => {
+    const player: PlayerProgress = { level: 3, xp: 1_100, bestScore: 900 };
+    const friendRun = (score: number): RunResult => ({
+        entry: { mode: 'friendChallenge', seed: 'friend', contentVersion: CONTENT_VERSION, targetScore: 700 },
+        score, maxCombo: 4, correctCount: 10, errorCount: 2, accuracy: 10 / 12,
+    });
+    const won = finalizeResult(friendRun(750), player).result;
+    const tied = finalizeResult(friendRun(700), player).result;
+    const lost = finalizeResult(friendRun(640), player).result;
+    assert.deepEqual(won.challenge, { targetScore: 700, scoreDelta: 50, outcome: 'won' });
+    assert.equal(createResultPresentation(won).comparison, '超过好友 50 分');
+    assert.equal(createResultPresentation(won).sharePrimary, true);
+    assert.deepEqual(tied.challenge, { targetScore: 700, scoreDelta: 0, outcome: 'tied' });
+    assert.equal(createResultPresentation(tied).headline, '势均力敌！');
+    assert.equal(createResultPresentation(tied).sharePrimary, false);
+    assert.deepEqual(lost.challenge, { targetScore: 700, scoreDelta: -60, outcome: 'lost' });
+    assert.equal(createResultPresentation(lost).comparison, '距离好友 60 分');
+    assert.equal(createResultPresentation(lost).replayLabel, '再战同题');
+});
+
+test('result presentation keeps replay and share actions contextual across modes', () => {
+    const player: PlayerProgress = { level: 1, xp: 0, bestScore: 800 };
+    const daily = finalizeResult({
+        entry: { mode: 'daily', seed: 'daily', contentVersion: CONTENT_VERSION },
+        score: 500, maxCombo: 3, correctCount: 0, errorCount: 0, accuracy: 0,
+    }, player).result;
+    const presentation = createResultPresentation(daily);
+    assert.equal(presentation.modeLabel, '今日挑战');
+    assert.equal(presentation.headline, '今日挑战完成');
+    assert.equal(presentation.fastestReaction, '—');
+    assert.equal(presentation.replayLabel, '再战今日');
+    assert.equal(presentation.shareLabel, '挑战好友');
+    assert.equal(presentation.sharePrimary, false);
 });
 
 test('expanded content catalog contains five times the recommended family counts', () => {

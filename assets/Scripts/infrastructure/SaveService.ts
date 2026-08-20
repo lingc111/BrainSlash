@@ -1,9 +1,10 @@
 import { sys } from 'cc';
-import type { GameResult, RuleId } from '../domain/Models';
+import type { GameResult, PlayerProgress, RuleId, RunResult } from '../domain/Models';
+import { finalizeResult } from '../domain/ResultSummary';
 
 export interface SaveDataV1 {
     schemaVersion: 1;
-    player: { level: number; xp: number; bestScore: number };
+    player: PlayerProgress;
     settings: { music: boolean; sfx: boolean; vibration: boolean; quality: 'auto' | 'low' | 'medium' | 'high' };
     tutorials: Partial<Record<RuleId, boolean>>;
 }
@@ -31,13 +32,11 @@ export class SaveService {
     }
 
     public snapshot(): SaveDataV1 { return clone(this.data); }
-    public commitResult(result: GameResult): boolean {
-        const isNewRecord = result.score > this.data.player.bestScore;
-        this.data.player.bestScore = Math.max(this.data.player.bestScore, result.score);
-        this.data.player.xp += result.correctCount * 5;
-        this.data.player.level = 1 + Math.floor(this.data.player.xp / 500);
+    public commitResult(run: RunResult): GameResult {
+        const committed = finalizeResult(run, this.data.player);
+        this.data.player = committed.player;
         this.persist();
-        return isNewRecord;
+        return committed.result;
     }
     public markTutorial(rule: RuleId): void { this.data.tutorials[rule] = true; this.persist(); }
     public updateSettings(patch: Partial<SaveDataV1['settings']>): void { this.data.settings = { ...this.data.settings, ...patch }; this.persist(); }

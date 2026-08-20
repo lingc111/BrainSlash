@@ -21,9 +21,21 @@ export type FailureKind = 'wrong' | 'bomb' | 'miss' | 'orderError';
 export type HitResult =
     | { kind: 'correct' | 'master'; scoreDelta: number; reactionMs: number }
     | { kind: FailureKind; lifeDelta: -1 };
-export interface GameResult {
+export interface PlayerProgress { level: number; xp: number; bestScore: number; }
+export interface RunResult {
     entry: GameEntryParams; score: number; maxCombo: number; correctCount: number; errorCount: number;
-    accuracy: number; bestReactionMs?: number; isNewRecord: boolean;
+    accuracy: number; bestReactionMs?: number;
+}
+export interface ResultGrowth {
+    xpGained: number; levelBefore: number; levelAfter: number;
+    levelProgressBefore: number; levelProgressAfter: number; levelTarget: number;
+}
+export interface FriendChallengeResult {
+    targetScore: number; scoreDelta: number; outcome: 'won' | 'tied' | 'lost';
+}
+export interface GameResult extends RunResult {
+    previousBestScore: number; isNewRecord: boolean; growth: ResultGrowth;
+    challenge?: FriendChallengeResult;
 }
 export interface FriendChallengePayload {
     v: 1; seed: string; contentVersion: string; mode: 'brawl60'; recipeId: string; targetScore: number;
