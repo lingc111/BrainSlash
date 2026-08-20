@@ -75,7 +75,42 @@ test('standard parity accepts either even while multi parity requires all evens'
     assert.equal(multi.matchMode, 'all');
     const gesture = new GestureResolver(multi);
     assert.equal(gesture.hit('6').status, 'continue');
+    assert.equal(gesture.end(true).status, 'continue');
     assert.equal(gesture.hit('12').status, 'success');
+});
+
+test('multi selection keeps correct progress across separate strokes', () => {
+    const gesture = new GestureResolver({
+        requiredTargetIds: ['first', 'second', 'third'],
+        forbiddenTargetIds: ['bomb'],
+        matchMode: 'all',
+        ordered: false,
+        allowExtraHits: false,
+    });
+    assert.equal(gesture.hit('first').status, 'continue');
+    assert.equal(gesture.end(true).status, 'continue');
+    assert.equal(gesture.hit('third').status, 'continue');
+    assert.equal(gesture.end(true).status, 'continue');
+    assert.equal(gesture.hit('second').status, 'success');
+});
+
+test('generated multi questions do not resolve after only one correct target', () => {
+    let checked = 0;
+    for (let seedIndex = 0; seedIndex < 40; seedIndex++) {
+        const { director, generator } = pipeline(`multi-stroke-${seedIndex}`);
+        for (let questionIndex = 0; questionIndex < 18; questionIndex++) {
+            const elapsed = [15_000, 30_000, 50_000][questionIndex % 3];
+            const question = generator.next(director.next(elapsed));
+            if (!question.activeRules.includes('multi')) continue;
+            const constraint = evaluateRules(question);
+            if (constraint.requiredTargetIds.length < 2) continue;
+            const gesture = new GestureResolver(constraint);
+            assert.equal(gesture.hit(constraint.requiredTargetIds[0]).status, 'continue');
+            assert.equal(gesture.end(true).status, 'continue');
+            checked++;
+        }
+    }
+    assert.ok(checked >= 100);
 });
 
 test('session applies a question result only once', () => {
