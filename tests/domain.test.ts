@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
 import { CONTENT_VERSION, GAMEPLAY_CONFIG } from '../assets/Scripts/configs/GameConfig.ts';
-import { Brawl60Director, phaseAt } from '../assets/Scripts/domain/Brawl60Director.ts';
+import { Brawl60Director, phaseAt, targetCountForFamily } from '../assets/Scripts/domain/Brawl60Director.ts';
 import {
     CONTENT_FAMILIES,
     CONTENT_FAMILY_TARGETS,
@@ -24,6 +24,7 @@ import {
     type HomeSectionId,
 } from '../assets/Scripts/UI/home/HomePortraitLayout.ts';
 import { RunSeedFactory } from '../assets/Scripts/app/RunSeedFactory.ts';
+import { calculatePortraitTargetLayout } from '../assets/Scripts/UI/PortraitTargetLayout.ts';
 
 function pipeline(seed: string): { director: Brawl60Director; generator: QuestionGenerator } {
     return {
@@ -156,6 +157,34 @@ test('brawl director exposes exact four-phase boundaries and rising pressure', (
     assert.ok(phaseAt(10_000).questionTimeMs > phaseAt(25_000).questionTimeMs);
     assert.ok(phaseAt(25_000).questionTimeMs > phaseAt(45_000).questionTimeMs);
     assert.ok(phaseAt(0).speed < phaseAt(45_000).speed);
+});
+
+test('target density respects content readability and compound-rule pressure', () => {
+    assert.equal(targetCountForFamily(6, 'math-add', ['bomb', 'reverse']), 4);
+    assert.equal(targetCountForFamily(6, 'math-property', ['multi', 'reverse']), 5);
+    assert.equal(targetCountForFamily(6, 'vision-odd', ['standard']), 6);
+    assert.equal(targetCountForFamily(6, 'vision-odd', ['bomb', 'reverse']), 5);
+    assert.equal(targetCountForFamily(6, 'hanzi-order', ['bomb', 'order']), 5);
+
+    const climax = pipeline('portrait-climax');
+    for (let i = 0; i < 30; i++) assert.ok(climax.director.next(50_000).targetCount <= 5);
+});
+
+test('portrait target formations use at most two targets per row with clear spacing', () => {
+    for (let count = 2; count <= 6; count++) {
+        const positions = calculatePortraitTargetLayout(count, 750, 1624);
+        assert.equal(positions.length, count);
+        for (const row of new Set(positions.map((position) => position.row))) {
+            assert.ok(positions.filter((position) => position.row === row).length <= 2);
+        }
+        for (let a = 0; a < positions.length; a++) {
+            for (let b = a + 1; b < positions.length; b++) {
+                assert.ok(Math.hypot(positions[a].x - positions[b].x, positions[a].y - positions[b].y) >= 210);
+            }
+        }
+    }
+    assert.deepEqual(calculatePortraitTargetLayout(5, 750, 1624).map((position) => position.row), [0, 0, 1, 2, 2]);
+    assert.deepEqual(calculatePortraitTargetLayout(6, 750, 1624).map((position) => position.row), [0, 0, 1, 1, 2, 2]);
 });
 
 test('each phase schedules its intended themes and rule beats', () => {

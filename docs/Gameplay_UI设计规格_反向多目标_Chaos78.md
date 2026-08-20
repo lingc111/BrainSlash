@@ -2,7 +2,7 @@
 
 ## 1. 页面设计目标
 
-让玩家在高压阶段仍能于 0.5 秒内读懂“提示是斩偶数，但当前规则为反向，因此要斩错误项”，随后用一条干净轨迹连续命中 7 和 3，同时避开 8、12、14 与炸弹。
+让玩家在高压阶段仍能于 0.5 秒内读懂“提示是斩偶数，但当前规则为反向，因此要斩错误项”，随后用一条干净轨迹连续命中 7 和 3，同时避开 8、12 与炸弹。
 
 ## 2. 前置假设
 
@@ -62,14 +62,13 @@
 
 建议初始位置：
 
-- 8：圆形，中心约 (390, 470)；
-- 7：三角形，中心约 (160, 560)；
-- 12：圆角方块，中心约 (590, 650)；
-- 3：六边形，中心约 (520, 930)；
-- 14：圆环，中心约 (175, 1100)；
-- 炸弹：黑色尖刺圆形，中心约 (430, 1220)。
+- 7：三角形，中心约 (230, 480)；
+- 8：圆形，中心约 (520, 480)；
+- 12：圆角方块，中心约 (375, 710)；
+- 3：六边形，中心约 (230, 940)；
+- 炸弹：黑色尖刺圆形，中心约 (520, 940)。
 
-7 与 3 之间形成一条自然弧形连斩路径；8、12、14 和炸弹与该轨迹保持明显距离。实际运行时位置可以移动，但生成器必须先验证可达路径与危险目标间距。
+5 个目标采用竖屏 `2+1+2` 阵型，7 与 3 之间形成一条自然纵向连斩路径；8、12 和炸弹与该轨迹保持明显距离。实际运行时位置可以移动，但生成器必须先验证可达路径与危险目标间距。
 
 ### 4.4 Chaos 区
 
@@ -120,6 +119,7 @@
 - 轮廓宽 4–6 px；
 - 通过圆、三角、圆角方、六边形、圆环形成快速区分；
 - 正确性不通过颜色泄露。
+- 数字层始终保持正向可读；目标仅以 `±8°–12°` 入场，并在 180–240ms 内回正，之后不持续自转。
 
 ### Bomb
 
@@ -165,6 +165,7 @@
 ### 默认进行中
 
 - 目标以可预测轨迹运动；
+- 目标入场倾斜在 240ms 内回正，后续只做位移，不持续自转；
 - 反向边框低频呼吸；
 - Chaos 边缘压力持续但不扰动内容；
 - 规则文字和徽标保持稳定位置。
@@ -177,7 +178,7 @@
 - 显示短时得分浮字；
 - 若满足快速、干净、不碰干扰项，触发 Master Hit。
 
-### 误斩 8、12、14
+### 误斩 8、12
 
 - 因反向规则，它们属于错误命中；
 - Combo 断裂，生命减少 1；
@@ -286,13 +287,13 @@ Top-left: exact "17" large, exact "COMBO" small. Top-center focal instruction ex
 
 Persistent Reverse mode: thin red inner screen border and restrained red HUD accent, no flashing, do not reveal the answer with any wording such as 斩奇数.
 
-Central playfield: exactly five large separated touch targets, each 90-130px, neutral dark surfaces with bright crisp outlines and large white numerals. Include exactly once: "8", "7", "12", "3", "14". Use simple circle, triangle, rounded square, hexagon and ring silhouettes. Do not color-code correctness. Add exactly one distinct black spiked bomb with red outline, hazard icon and fuse, separated from all targets. Arrange a clean curved cyan-white slash trail through only 7 and 3, with tiny controlled split sparks, never touching 8, 12, 14 or bomb. Keep every numeral readable.
+Central playfield: exactly five large separated touch targets in a portrait 2+1+2 formation, each 90-130px, neutral dark surfaces with bright crisp outlines. Four numeral targets include exactly once: "8", "7", "12", "3"; add exactly one distinct black spiked bomb with red outline, hazard icon and fuse. Use simple circle, triangle, rounded square and hexagon silhouettes. Do not color-code correctness. Arrange a clean vertical-curved cyan-white slash trail through only 7 and 3, with tiny controlled split sparks, never touching 8, 12 or bomb. Keep every numeral upright and readable; no continuous target spinning.
 
 Chaos is 78%, not full Chaos Mode. Add restrained amber/red pressure only at screen edges and subtle speed lines, never distort UI or target positions. Bottom has exact "CHAOS" left, exact "78%" right, one segmented near-full bar colored cyan to amber to red. No buttons, joystick or bottom operation bar. Bottom gesture-safe space clear.
 
 Visual system: Surface #161D32, Primary #55E6D2, Positive #70E88B, Danger #FF4D6D, Highlight #FFD166, text #F7FAFF and #9AA7C2. Crisp Chinese typography, bold condensed numeric typography, disciplined spacing, restrained glow, flat 2D with slight premium depth, feasible in Cocos Creator.
 
-Render these strings verbatim with no extra text: "17", "COMBO", "斩偶数", "反向", "多目标", "15s", "CHAOS", "78%", "8", "7", "12", "3", "14".
+Render these strings verbatim with no extra text: "17", "COMBO", "斩偶数", "反向", "多目标", "15s", "CHAOS", "78%", "8", "7", "12", "3".
 ```
 
 ## 11. Negative Prompt

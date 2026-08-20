@@ -79,6 +79,37 @@ const RULE_SUPPORT: Readonly<Record<ContentFamilyKind, readonly string[]>> = {
     'geography-country': ['standard', 'reverse', 'bomb', 'bomb+reverse'],
 };
 
+const TARGET_CAP_BY_KIND: Readonly<Record<ContentFamilyKind, number>> = {
+    'math-add': 4,
+    'math-subtract': 4,
+    'math-multiply': 4,
+    'math-property': 5,
+    'math-compare': 4,
+    'math-sequence': 4,
+    'vision-direction': 6,
+    'vision-odd': 6,
+    'vision-count': 6,
+    'vision-stroop': 6,
+    'vision-pattern': 6,
+    'hanzi-fill': 4,
+    'hanzi-valid': 4,
+    'hanzi-order': 5,
+    'english-meaning': 4,
+    'english-category': 5,
+    'english-antonym': 4,
+    'life-use': 4,
+    'life-category': 5,
+    'geography-capital': 4,
+    'geography-country': 4,
+};
+
+export function targetCountForFamily(baseCount: number, kind: ContentFamilyKind, rules: readonly RuleId[]): number {
+    const complexRuleCount = rules.filter((rule) => rule !== 'standard').length;
+    const ruleAdjustedCount = complexRuleCount > 1 ? baseCount - 1 : baseCount;
+    const contentMinimum = kind === 'hanzi-order' ? 4 + (rules.includes('bomb') ? 1 : 0) : 2;
+    return Math.max(contentMinimum, Math.min(ruleAdjustedCount, TARGET_CAP_BY_KIND[kind]));
+}
+
 export function phaseAt(elapsedMs: number): BrawlPhaseSettings {
     const clamped = Math.max(0, Math.min(60_000, elapsedMs));
     return BRAWL_PHASES.find((phase) => clamped >= phase.startMs && clamped < phase.endMs) ?? BRAWL_PHASES[BRAWL_PHASES.length - 1];
@@ -110,7 +141,7 @@ export class Brawl60Director {
         return {
             phase: phase.id,
             difficultyStage: phase.difficultyStage,
-            targetCount: phase.targetCount,
+            targetCount: targetCountForFamily(phase.targetCount, family.kind, requestedRules),
             questionTimeMs: phase.questionTimeMs,
             speed: phase.speed,
             family,
