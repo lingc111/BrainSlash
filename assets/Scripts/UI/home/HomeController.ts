@@ -75,9 +75,9 @@ export class HomeController extends Component {
                 rankName: save.player.bestScore > 0 ? `最高 ${save.player.bestScore}` : '新手',
                 rankProgress: save.player.xp % 500,
                 rankProgressMax: 500,
-                friendMessage: AppRuntime.entry.mode === 'friendChallenge'
+                friendMessage: AppRuntime.challengeLaunchNotice() ?? (AppRuntime.entry.mode === 'friendChallenge'
                     ? `好友目标 ${AppRuntime.entry.targetScore ?? 0} 分`
-                    : '一刀开局，挑战最高分！',
+                    : '一刀开局，挑战最高分！'),
             };
         }
         // Preview and device must share one coordinate system; otherwise the
@@ -93,6 +93,11 @@ export class HomeController extends Component {
         }
         this.buildView();
         this.refresh(this.data);
+        if (!EDITOR && AppRuntime.hasPendingFriendChallenge()) {
+            this.scheduleOnce(() => {
+                if (AppRuntime.consumePendingFriendChallenge()) AppRuntime.start('friendChallenge');
+            }, 0);
+        }
     }
 
     protected onEnable(): void {
@@ -150,7 +155,7 @@ export class HomeController extends Component {
 
     public onBrawlClick(): void {
         this.pulseHaptic();
-        AppRuntime.start(AppRuntime.entry.mode === 'friendChallenge' ? 'friendChallenge' : 'brawl60');
+        AppRuntime.start('brawl60');
     }
 
     public onReverseDayClick(): void {

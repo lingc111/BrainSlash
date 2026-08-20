@@ -11,6 +11,13 @@ import {
     LIFE_FACTS,
 } from '../assets/Scripts/domain/ContentCatalog.ts';
 import { GameSession } from '../assets/Scripts/domain/GameSession.ts';
+import {
+    canStartFriendChallenge,
+    createFriendChallengePayload,
+    encodeFriendChallengeQuery,
+    friendTargetPresentation,
+    parseFriendChallengeQuery,
+} from '../assets/Scripts/domain/FriendChallenge.ts';
 import { GestureResolver, shouldKeepIncompleteGesture } from '../assets/Scripts/domain/GestureResolver.ts';
 import type { PlayerProgress, QuestionInstance, RunResult } from '../assets/Scripts/domain/Models.ts';
 import { QuestionGenerator } from '../assets/Scripts/domain/QuestionGenerator.ts';
@@ -25,6 +32,7 @@ import {
     type HomeSectionId,
 } from '../assets/Scripts/UI/home/HomePortraitLayout.ts';
 import { RunSeedFactory } from '../assets/Scripts/app/RunSeedFactory.ts';
+import { PlatformService } from '../assets/Scripts/infrastructure/PlatformService.ts';
 import { calculatePortraitTargetLayout, portraitTargetEntranceDelay } from '../assets/Scripts/UI/PortraitTargetLayout.ts';
 
 function pipeline(seed: string): { director: Brawl60Director; generator: QuestionGenerator } {
@@ -44,10 +52,87 @@ function assertCompletesAcrossSeparateStrokes(constraint: ReturnType<typeof eval
     assert.equal(gesture.hit(constraint.requiredTargetIds.at(-1)!).status, 'success');
 }
 
+function decodeQuery(query: string): Record<string, string> {
+    return Object.fromEntries(new URLSearchParams(query).entries());
+}
+
 test('seeded RNG is deterministic and streams do not drift', () => {
     const a = new SeededRng('same'), b = new SeededRng('same');
     assert.deepEqual(Array.from({ length: 20 }, () => a.next()), Array.from({ length: 20 }, () => b.next()));
     assert.notEqual(a.fork('gameplay').next(), a.fork('visual').next());
+});
+
+test('friend challenge payload round-trips and rebuilds the same question sequence', () => {
+    const payload = createFriendChallengePayload({
+        entry: { mode: 'brawl60', seed: 'shared:/?seed&1', contentVersion: CONTENT_VERSION, recipeId: 'mixed' },
+        score: 987.9,
+    });
+    assert.equal(payload.targetScore, 987);
+    const parsed = parseFriendChallengeQuery(decodeQuery(encodeFriendChallengeQuery(payload)), CONTENT_VERSION);
+    assert.equal(parsed.status, 'valid');
+    if (parsed.status !== 'valid') return;
+    assert.deepEqual(parsed.entry, {
+        mode: 'friendChallenge', seed: 'shared:/?seed&1', contentVersion: CONTENT_VERSION, recipeId: 'mixed', targetScore: 987,
+    });
+    const first = pipeline(parsed.entry.seed), second = pipeline(parsed.entry.seed);
+    for (let index = 0; index < 64; index++) {
+        const elapsed = (index * 947) % 60_000;
+        assert.deepEqual(first.generator.next(first.director.next(elapsed)), second.generator.next(second.director.next(elapsed)));
+    }
+});
+
+test('friend challenge parser distinguishes expired, invalid and unrelated links', () => {
+    const base = { v: '1', mode: 'brawl60', seed: 'friend-seed', contentVersion: CONTENT_VERSION, recipeId: 'mixed', targetScore: '800' };
+    assert.equal(parseFriendChallengeQuery({}, CONTENT_VERSION).status, 'none');
+    assert.equal(parseFriendChallengeQuery({ source: 'campaign' }, CONTENT_VERSION).status, 'none');
+    assert.equal(parseFriendChallengeQuery({ ...base, contentVersion: 'old-content' }, CONTENT_VERSION).status, 'expired');
+    assert.equal(parseFriendChallengeQuery({ ...base, v: '2' }, CONTENT_VERSION).status, 'invalid');
+    assert.equal(parseFriendChallengeQuery({ ...base, mode: 'daily' }, CONTENT_VERSION).status, 'invalid');
+    for (const targetScore of ['', 'NaN', '-1', '12.5', '100000001']) {
+        assert.equal(parseFriendChallengeQuery({ ...base, targetScore }, CONTENT_VERSION).status, 'invalid');
+    }
+    assert.equal(canStartFriendChallenge({ mode: 'friendChallenge', seed: 'valid', contentVersion: CONTENT_VERSION, targetScore: 0 }), true);
+    assert.equal(canStartFriendChallenge({ mode: 'friendChallenge', seed: 'missing-target', contentVersion: CONTENT_VERSION }), false);
+    assert.equal(canStartFriendChallenge({ mode: 'brawl60', seed: 'wrong-mode', contentVersion: CONTENT_VERSION, targetScore: 800 }), false);
+});
+
+test('platform adapter shares and receives cold or warm friend challenge links', () => {
+    type ShowOptions = { query?: Record<string, string> };
+    const host = globalThis as typeof globalThis & { wx?: Record<string, unknown> };
+    const previousWx = host.wx;
+    let shared: { title: string; query: string } | undefined;
+    let onShow: ((options: ShowOptions) => void) | undefined;
+    const payload = createFriendChallengePayload({
+        entry: { mode: 'brawl60', seed: 'platform-seed', contentVersion: CONTENT_VERSION, recipeId: 'mixed' },
+        score: 860,
+    });
+    const coldQuery = decodeQuery(encodeFriendChallengeQuery(payload));
+    host.wx = {
+        shareAppMessage: (options: { title: string; query: string }) => { shared = options; },
+        getLaunchOptionsSync: () => ({ query: coldQuery }),
+        onShow: (listener: (options: ShowOptions) => void) => { onShow = listener; },
+    };
+    try {
+        const platform = new PlatformService();
+        platform.share(payload);
+        assert.match(shared?.title ?? '', /860/);
+        assert.deepEqual(decodeQuery(shared?.query ?? ''), coldQuery);
+        assert.equal(platform.readChallenge(CONTENT_VERSION).status, 'valid');
+        let warmStatus = 'none';
+        platform.onChallengeOpened(CONTENT_VERSION, (result) => { warmStatus = result.status; });
+        onShow?.({ query: coldQuery });
+        assert.equal(warmStatus, 'valid');
+        onShow?.({ query: { source: 'resume' } });
+        assert.equal(warmStatus, 'valid');
+    } finally {
+        host.wx = previousWx;
+    }
+});
+
+test('friend target HUD reports behind, tied and ahead score states', () => {
+    assert.deepEqual(friendTargetPresentation(650, 800), { text: '好友目标 800 · 还差 150', tone: 'behind', scoreDelta: -150 });
+    assert.deepEqual(friendTargetPresentation(800, 800), { text: '好友 800 · 已追平', tone: 'tied', scoreDelta: 0 });
+    assert.deepEqual(friendTargetPresentation(920, 800), { text: '好友 800 · 已超过 120', tone: 'ahead', scoreDelta: 120 });
 });
 
 test('reverse never turns a bomb into a required target', () => {
