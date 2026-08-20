@@ -4,6 +4,11 @@ export interface PortraitTargetPosition {
     row: number;
 }
 
+/** All choices enter together so their index or row never creates an information advantage. */
+export function portraitTargetEntranceDelay(_position: PortraitTargetPosition): number {
+    return 0;
+}
+
 type FormationPoint = readonly [column: -1 | 0 | 1, rowOffset: -1 | -0.5 | 0 | 0.5 | 1, row: number];
 
 const PORTRAIT_FORMATIONS: Readonly<Record<number, readonly FormationPoint[]>> = {

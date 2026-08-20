@@ -1,5 +1,10 @@
 import type { ActionConstraint, FailureKind } from './Models';
 export type GestureProgress = { status: 'continue' } | { status: 'success' } | { status: 'failure'; kind: FailureKind };
+
+export function shouldKeepIncompleteGesture(constraint: ActionConstraint): boolean {
+    return constraint.matchMode === 'all' && constraint.requiredTargetIds.length > 1;
+}
+
 export class GestureResolver {
     private readonly hits: string[] = [];
     private readonly seen = new Set<string>();

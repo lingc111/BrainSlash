@@ -3,13 +3,13 @@ import { AppRuntime } from '../app/AppRuntime';
 import { GAMEPLAY_CONFIG } from '../configs/GameConfig';
 import { Brawl60Director } from '../domain/Brawl60Director';
 import { GameSession } from '../domain/GameSession';
-import { GestureResolver, GestureProgress } from '../domain/GestureResolver';
+import { GestureResolver, GestureProgress, shouldKeepIncompleteGesture } from '../domain/GestureResolver';
 import type { ActionConstraint, FailureKind, GameResult, QuestionInstance, RuleId, TargetSpec } from '../domain/Models';
 import { QuestionGenerator } from '../domain/QuestionGenerator';
 import { evaluateRules } from '../domain/Rules';
 import { SeededRng } from '../domain/SeededRng';
 import { GameplayTarget, GameplayTargetData, TargetContentType, TargetShape } from './GameplayTarget';
-import { calculatePortraitTargetLayout } from './PortraitTargetLayout';
+import { calculatePortraitTargetLayout, portraitTargetEntranceDelay } from './PortraitTargetLayout';
 
 const { ccclass } = _decorator;
 const INK = new Color(45,43,39,255), PAPER = new Color(255,250,236,255), RED = new Color(174,69,61,255), GREEN = new Color(109,152,106,255), BLUE = new Color(91,133,156,255), YELLOW = new Color(226,184,67,255);
@@ -137,7 +137,7 @@ export class GameplayMVP extends Component {
         const positions=this.layout(this.question.targets.length),skins=this.visual.shuffle(SKINS);this.question.targets.forEach((s,i)=>this.createTarget(s,positions[i],skins[i%skins.length],i,directive.speed));this.refresh();
     }
     private createTarget(spec:TargetSpec,pos:Vec3,skin:typeof SKINS[number],i:number,speed:number):void {
-        const n=node(spec.isBomb?'BombTarget':`Target_${spec.id}`,this.targets,168,168);const v=view.getVisibleSize(),side=pos.x<0?-1:pos.x>0?1:i%2===0?-1:1,row=Math.max(0,pos.z),groundY=-v.height/2-TARGET_VISUAL_RADIUS-8-row*220,startY=pos.y,delay=(i%3)*.12+row*.08,baseDuration=(this.question?.timeLimitMs??3000)/1000,duration=Math.max(.9,baseDuration-delay),maxApexY=v.height/2-FRAME_TOP_INSET-TARGET_VISUAL_RADIUS-8,apexY=Math.max(startY+24,Math.min(maxApexY,startY+v.height*.105)),arcRatio=Math.sqrt(Math.max(1,apexY-startY)/Math.max(1,apexY-groundY)),apexTime=duration*arcRatio/(1+arcRatio),gravity=2*(startY-apexY)/(apexTime*apexTime),velocityY=-gravity*apexTime,entranceAngle=[-10,8,-7,10,-6,7][i]??0;
+        const n=node(spec.isBomb?'BombTarget':`Target_${spec.id}`,this.targets,168,168);const v=view.getVisibleSize(),side=pos.x<0?-1:pos.x>0?1:i%2===0?-1:1,row=Math.max(0,pos.z),groundY=-v.height/2-TARGET_VISUAL_RADIUS-8-row*220,startY=pos.y,delay=portraitTargetEntranceDelay({x:pos.x,y:pos.y,row}),baseDuration=(this.question?.timeLimitMs??3000)/1000,duration=Math.max(.9,baseDuration-delay),maxApexY=v.height/2-FRAME_TOP_INSET-TARGET_VISUAL_RADIUS-8,apexY=Math.max(startY+24,Math.min(maxApexY,startY+v.height*.105)),arcRatio=Math.sqrt(Math.max(1,apexY-startY)/Math.max(1,apexY-groundY)),apexTime=duration*arcRatio/(1+arcRatio),gravity=2*(startY-apexY)/(apexTime*apexTime),velocityY=-gravity*apexTime,entranceAngle=[-10,8,-7,10,-6,7][i]??0;
         n.setPosition(side*(v.width/2+110),startY);n.setScale(.68,.68,1);n.angle=entranceAngle;
         const wordColors:Record<string,Color>={红:RED,蓝:BLUE,绿:GREEN,黄:YELLOW};
         const data:GameplayTargetData={id:spec.id,contentType:TargetContentType.TEXT,text:spec.text,value:spec.value,shape:(['roundedSquare','triangle','hexagon','circle','pentagon'] as TargetShape[])[i%5],isBomb:spec.isBomb,color:COLORS[i%COLORS.length],contentColor:spec.colorName?wordColors[spec.colorName]:undefined};const target=n.addComponent(GameplayTarget);target.configure(data);
@@ -148,11 +148,11 @@ export class GameplayMVP extends Component {
     private layout(count:number):Vec3[]{const v=view.getVisibleSize();return calculatePortraitTargetLayout(count,v.width,v.height).map((position)=>new Vec3(position.x,position.y,position.row));}
     private startTouch(e:EventTouch):void{if(this.paused||this.session.state.phase!=='playing'||!this.constraint)return;if(!this.gesture)this.gesture=new GestureResolver(this.constraint);this.points=[this.point(e)];this.trailAge=0;}
     private moveTouch(e:EventTouch):void{if(!this.gesture||this.session.state.phase!=='playing')return;const p=this.point(e),a=this.points[this.points.length-1];if(!a||Vec2.distance(a,p)<4)return;this.points.push(p);if(this.points.length>18)this.points.shift();this.sweep(a,p);this.trailAge=0;this.drawTrail(1);}
-    private endTouch():void{if(this.gesture&&this.gesture.hasHits()&&this.session.state.phase==='playing'){const p=this.gesture.end(this.isMultiSelection());this.progress(p,null);if(p.status!=='continue')this.gesture=null;}else if(!this.isMultiSelection())this.gesture=null;this.trailAge=0;}
+    private endTouch():void{if(this.gesture&&this.gesture.hasHits()&&this.session.state.phase==='playing'){const p=this.gesture.end(this.keepsIncompleteGesture());this.progress(p,null);if(p.status!=='continue')this.gesture=null;}else if(!this.keepsIncompleteGesture())this.gesture=null;this.trailAge=0;}
     private point(e:EventTouch):Vec2{const p=e.getUILocation(),v=view.getVisibleSize();return new Vec2(p.x-v.width/2,p.y-v.height/2);}
     private sweep(a:Vec2,b:Vec2):void{if(!this.gesture)return;for(const n of [...this.targets.children]){const t=n.getComponent(GameplayTarget);if(!t||t.hit||!t.segmentHit(a,b))continue;t.hit=true;const p=this.gesture.hit(t.data.id);this.slash(t,a,b);this.progress(p,t);if(p.status!=='continue'){this.gesture=null;break;}}}
     private progress(p:GestureProgress,t:GameplayTarget|null):void{if(p.status==='success')this.success(t);else if(p.status==='failure')this.fail(p.kind,t);}
-    private isMultiSelection():boolean{return this.question?.activeRules.includes('multi')??false;}
+    private keepsIncompleteGesture():boolean{return !!this.constraint&&shouldKeepIncompleteGesture(this.constraint);}
     private success(t:GameplayTarget|null):void{if(!this.question)return;const r=this.session.resolveSuccess(this.question);if(!r)return;if(this.tutorialRule)AppRuntime.save.markTutorial(this.tutorialRule);this.float(t?.node.position??Vec3.ZERO,`+${r.scoreDelta}${r.kind==='master'?' MASTER':''}`,r.kind==='master'?YELLOW:GREEN);this.scheduleOnce(()=>{this.session.continueAfterFeedback();this.spawn();},.28);}
     private fail(kind:FailureKind,t:GameplayTarget|null=null):void{if(this.question?.tutorialSafe){this.session.cancelQuestion();this.float(t?.node.position??Vec3.ZERO,'再试一次',YELLOW);this.scheduleOnce(()=>{this.session.continueAfterFeedback();this.spawn();},.35);return;}if(!this.session.resolveFailure(kind))return;AppRuntime.platform.vibrate(AppRuntime.save.snapshot().settings.vibration);if(t)this.error(t.node.position);if(this.session.state.phase!=='finished')this.scheduleOnce(()=>{this.session.continueAfterFeedback();this.spawn();},.28);}
     private finish():void{if(this.finished)return;this.finished=true;const s=this.session.state,total=s.correctCount+s.errorCount;const r:GameResult={entry:this.session.entry,score:s.score,maxCombo:s.maxCombo,correctCount:s.correctCount,errorCount:s.errorCount,accuracy:total?s.correctCount/total:0,bestReactionMs:s.bestReactionMs,isNewRecord:false};AppRuntime.finish(r);this.result(AppRuntime.result!);}
@@ -184,6 +184,6 @@ export class GameplayMVP extends Component {
         }
         return landed;
     }
-    private onHide():void{if(this.finished)return;this.paused=true;if(!this.isMultiSelection())this.gesture=null;director.pause();}
+    private onHide():void{if(this.finished)return;this.paused=true;if(!this.keepsIncompleteGesture())this.gesture=null;director.pause();}
     private onShow():void{if(this.finished)return;director.resume();this.paused=true;const ready=text(this.node,'ResumeReady','READY',68,RED);this.scheduleOnce(()=>{ready.node.destroy();this.paused=false;},GAMEPLAY_CONFIG.readyMs/1000);}
 }

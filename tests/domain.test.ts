@@ -11,7 +11,7 @@ import {
     LIFE_FACTS,
 } from '../assets/Scripts/domain/ContentCatalog.ts';
 import { GameSession } from '../assets/Scripts/domain/GameSession.ts';
-import { GestureResolver } from '../assets/Scripts/domain/GestureResolver.ts';
+import { GestureResolver, shouldKeepIncompleteGesture } from '../assets/Scripts/domain/GestureResolver.ts';
 import type { QuestionInstance } from '../assets/Scripts/domain/Models.ts';
 import { QuestionGenerator } from '../assets/Scripts/domain/QuestionGenerator.ts';
 import { evaluateRules } from '../assets/Scripts/domain/Rules.ts';
@@ -24,13 +24,23 @@ import {
     type HomeSectionId,
 } from '../assets/Scripts/UI/home/HomePortraitLayout.ts';
 import { RunSeedFactory } from '../assets/Scripts/app/RunSeedFactory.ts';
-import { calculatePortraitTargetLayout } from '../assets/Scripts/UI/PortraitTargetLayout.ts';
+import { calculatePortraitTargetLayout, portraitTargetEntranceDelay } from '../assets/Scripts/UI/PortraitTargetLayout.ts';
 
 function pipeline(seed: string): { director: Brawl60Director; generator: QuestionGenerator } {
     return {
         director: new Brawl60Director(new SeededRng(`${seed}:director`)),
         generator: new QuestionGenerator(new SeededRng(`${seed}:gameplay`), GAMEPLAY_CONFIG),
     };
+}
+
+function assertCompletesAcrossSeparateStrokes(constraint: ReturnType<typeof evaluateRules>): void {
+    assert.equal(shouldKeepIncompleteGesture(constraint), true);
+    const gesture = new GestureResolver(constraint);
+    for (const targetId of constraint.requiredTargetIds.slice(0, -1)) {
+        assert.equal(gesture.hit(targetId).status, 'continue');
+        assert.equal(gesture.end(shouldKeepIncompleteGesture(constraint)).status, 'continue');
+    }
+    assert.equal(gesture.hit(constraint.requiredTargetIds.at(-1)!).status, 'success');
 }
 
 test('seeded RNG is deterministic and streams do not drift', () => {
@@ -59,6 +69,30 @@ test('order and multi gestures resolve once and reject incomplete strokes', () =
     assert.deepEqual(incomplete.end(), { status: 'failure', kind: 'miss' });
     const empty = new GestureResolver({ requiredTargetIds: ['a'], forbiddenTargetIds: [], matchMode: 'any', ordered: false, allowExtraHits: false });
     assert.equal(empty.hasHits(), false);
+});
+
+test('idiom ordering keeps progress when each character is slashed separately', () => {
+    const constraint = {
+        requiredTargetIds: ['狐', '假', '虎', '威'],
+        forbiddenTargetIds: [],
+        matchMode: 'all' as const,
+        ordered: true,
+        allowExtraHits: false,
+    };
+    assertCompletesAcrossSeparateStrokes(constraint);
+});
+
+test('every orderable idiom completes only after all four characters', () => {
+    const orderable = IDIOMS.filter((entry) => new Set(entry.text).size === 4);
+    for (const entry of orderable) {
+        assertCompletesAcrossSeparateStrokes({
+            requiredTargetIds: [...entry.text].map((_, index) => `${entry.text}:${index}`),
+            forbiddenTargetIds: [],
+            matchMode: 'all',
+            ordered: true,
+            allowExtraHits: false,
+        });
+    }
 });
 
 test('standard parity accepts either even while multi parity requires all evens', () => {
@@ -95,23 +129,23 @@ test('multi selection keeps correct progress across separate strokes', () => {
     assert.equal(gesture.hit('second').status, 'success');
 });
 
-test('generated multi questions do not resolve after only one correct target', () => {
+test('generated multi-step questions keep progress until every required target is hit', () => {
     let checked = 0;
+    const checkedRules = new Set<string>();
     for (let seedIndex = 0; seedIndex < 40; seedIndex++) {
         const { director, generator } = pipeline(`multi-stroke-${seedIndex}`);
         for (let questionIndex = 0; questionIndex < 18; questionIndex++) {
             const elapsed = [15_000, 30_000, 50_000][questionIndex % 3];
             const question = generator.next(director.next(elapsed));
-            if (!question.activeRules.includes('multi')) continue;
             const constraint = evaluateRules(question);
-            if (constraint.requiredTargetIds.length < 2) continue;
-            const gesture = new GestureResolver(constraint);
-            assert.equal(gesture.hit(constraint.requiredTargetIds[0]).status, 'continue');
-            assert.equal(gesture.end(true).status, 'continue');
+            if (constraint.matchMode !== 'all' || constraint.requiredTargetIds.length < 2) continue;
+            assertCompletesAcrossSeparateStrokes(constraint);
+            for (const rule of question.activeRules) if (rule === 'multi' || rule === 'order') checkedRules.add(rule);
             checked++;
         }
     }
     assert.ok(checked >= 100);
+    assert.deepEqual([...checkedRules].sort(), ['multi', 'order']);
 });
 
 test('session applies a question result only once', () => {
@@ -174,6 +208,7 @@ test('portrait target formations use at most two targets per row with clear spac
     for (let count = 2; count <= 6; count++) {
         const positions = calculatePortraitTargetLayout(count, 750, 1624);
         assert.equal(positions.length, count);
+        assert.ok(positions.every((position) => portraitTargetEntranceDelay(position) === 0));
         for (const row of new Set(positions.map((position) => position.row))) {
             assert.ok(positions.filter((position) => position.row === row).length <= 2);
         }
@@ -286,6 +321,8 @@ test('fact bag keeps repeated reviewed facts more than 20 questions apart', () =
 });
 
 test('1000 seeds survive full multi-round deterministic legality regression', () => {
+    const multiStepFamilyIds = new Set<string>();
+    let multiStepQuestions = 0;
     for (let i = 0; i < 1000; i++) {
         const seed = `regression-${i}`;
         const firstPipeline = pipeline(seed), secondPipeline = pipeline(seed);
@@ -301,8 +338,20 @@ test('1000 seeds survive full multi-round deterministic legality regression', ()
             assert.ok(first.targets.length <= firstDirective.targetCount);
             assert.ok(first.targets.length >= 2);
             assert.equal(first.timeLimitMs, firstDirective.questionTimeMs);
+            const constraint = evaluateRules(first);
+            if (constraint.matchMode === 'all' && constraint.requiredTargetIds.length > 1) {
+                assertCompletesAcrossSeparateStrokes(constraint);
+                multiStepFamilyIds.add(first.familyId ?? '');
+                multiStepQuestions++;
+            }
         }
     }
+    const expectedMultiStepFamilies = CONTENT_FAMILIES
+        .filter((family) => ['math-property', 'math-sequence', 'hanzi-order', 'english-category', 'life-category'].includes(family.kind))
+        .map((family) => family.id)
+        .sort();
+    assert.deepEqual([...multiStepFamilyIds].sort(), expectedMultiStepFamilies);
+    assert.ok(multiStepQuestions > 10_000);
 });
 
 test('home portrait layout keeps every section separated across common safe areas', () => {
