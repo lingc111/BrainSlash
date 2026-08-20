@@ -1,4 +1,5 @@
 import { BlockInputEvents, Button, Color, Graphics, Label, Node, UIOpacity, UITransform, Vec3, tween, view } from 'cc';
+import { AppRuntime } from '../app/AppRuntime';
 import type { GameResult } from '../domain/Models';
 import { createResultPresentation, type ResultPresentation } from '../domain/ResultSummary';
 
@@ -128,7 +129,7 @@ function makeActionButton(parent: Node, value: string, y: number, primary: boole
     graphic.fill(); graphic.stroke();
     makeLabel(button, 'Label', value, 31, INK, 500);
     button.addComponent(Button);
-    button.on(Node.EventType.TOUCH_END, action);
+    button.on(Node.EventType.TOUCH_END, () => { AppRuntime.audio.play('ui'); action(); });
 }
 
 function makeHomeLink(parent: Node, y: number, action: () => void): void {
@@ -136,7 +137,7 @@ function makeHomeLink(parent: Node, y: number, action: () => void): void {
     link.setPosition(0, y);
     makeLabel(link, 'Label', '返回首页', 24, BLUE, 250);
     link.addComponent(Button);
-    link.on(Node.EventType.TOUCH_END, action);
+    link.on(Node.EventType.TOUCH_END, () => { AppRuntime.audio.play('ui'); action(); });
 }
 
 function drawResultCard(graphic: Graphics, width: number, height: number): void {

@@ -586,7 +586,10 @@ export class HomeController extends Component {
     private bindButton(node: Node, callback: () => void): void {
         const button = node.addComponent(Button);
         button.transition = Button.Transition.NONE;
-        node.on(Button.EventType.CLICK, callback, this);
+        node.on(Button.EventType.CLICK, () => {
+            callback();
+            if (!EDITOR) AppRuntime.audio.play('ui');
+        }, this);
         let restingScale = node.scale.clone();
         let pressed = false;
         node.on(Node.EventType.TOUCH_START, () => {
@@ -1036,10 +1039,7 @@ export class HomeController extends Component {
     }
 
     private pulseHaptic(): void {
-        try {
-            (globalThis as { wx?: WechatApi }).wx?.vibrateShort?.({ type: 'light' });
-        } catch {
-            // Haptics are optional on desktop preview and unsupported devices.
-        }
+        if (!AppRuntime.save.snapshot().settings.vibration) return;
+        AppRuntime.platform.vibrate(true, 'light');
     }
 }

@@ -11,6 +11,7 @@ import {
     LIFE_FACTS,
 } from '../assets/Scripts/domain/ContentCatalog.ts';
 import { GameSession } from '../assets/Scripts/domain/GameSession.ts';
+import { countdownWarningSecond, failureFeedback, successFeedback } from '../assets/Scripts/domain/GameFeedback.ts';
 import {
     canStartFriendChallenge,
     createFriendChallengePayload,
@@ -33,6 +34,7 @@ import {
 } from '../assets/Scripts/UI/home/HomePortraitLayout.ts';
 import { RunSeedFactory } from '../assets/Scripts/app/RunSeedFactory.ts';
 import { PlatformService } from '../assets/Scripts/infrastructure/PlatformService.ts';
+import { AudioService, SoundThrottle } from '../assets/Scripts/infrastructure/AudioService.ts';
 import { calculatePortraitTargetLayout, portraitTargetEntranceDelay } from '../assets/Scripts/UI/PortraitTargetLayout.ts';
 
 function pipeline(seed: string): { director: Brawl60Director; generator: QuestionGenerator } {
@@ -133,6 +135,79 @@ test('friend target HUD reports behind, tied and ahead score states', () => {
     assert.deepEqual(friendTargetPresentation(650, 800), { text: '好友目标 800 · 还差 150', tone: 'behind', scoreDelta: -150 });
     assert.deepEqual(friendTargetPresentation(800, 800), { text: '好友 800 · 已追平', tone: 'tied', scoreDelta: 0 });
     assert.deepEqual(friendTargetPresentation(920, 800), { text: '好友 800 · 已超过 120', tone: 'ahead', scoreDelta: 120 });
+});
+
+test('audio service synthesizes cues, respects settings and throttles rapid repeats', () => {
+    let now = 1_000;
+    let oscillatorCount = 0;
+    const parameter = { setValueAtTime: () => undefined, exponentialRampToValueAtTime: () => undefined };
+    const context = {
+        currentTime: 2,
+        destination: {},
+        state: 'running',
+        createOscillator: () => {
+            oscillatorCount++;
+            return { frequency: parameter, type: 'sine', connect: () => undefined, start: () => undefined, stop: () => undefined };
+        },
+        createGain: () => ({ gain: parameter, connect: () => undefined }),
+    };
+    const audio = new AudioService(() => now, () => context as never);
+    assert.equal(audio.play('slash'), true);
+    assert.equal(oscillatorCount, 2);
+    assert.equal(audio.play('slash'), false);
+    assert.equal(oscillatorCount, 2);
+    now += 34;
+    assert.equal(audio.play('slash'), true);
+    assert.equal(oscillatorCount, 4);
+    audio.enabled = false;
+    assert.equal(audio.play('master'), false);
+    assert.equal(oscillatorCount, 4);
+});
+
+test('audio service resumes once without stacking delayed cues', async () => {
+    let oscillatorCount = 0;
+    let finishResume = (): void => undefined;
+    const parameter = { setValueAtTime: () => undefined, exponentialRampToValueAtTime: () => undefined };
+    const context = {
+        currentTime: 2,
+        destination: {},
+        state: 'suspended',
+        createOscillator: () => {
+            oscillatorCount++;
+            return { frequency: parameter, type: 'sine', connect: () => undefined, start: () => undefined, stop: () => undefined };
+        },
+        createGain: () => ({ gain: parameter, connect: () => undefined }),
+        resume: () => new Promise<void>((resolve) => {
+            finishResume = () => { context.state = 'running'; resolve(); };
+        }),
+    };
+    const audio = new AudioService(() => 1_000, () => context as never);
+    assert.equal(audio.play('ui'), true);
+    assert.equal(audio.play('correct'), false);
+    assert.equal(oscillatorCount, 0);
+    finishResume();
+    await Promise.resolve();
+    assert.equal(oscillatorCount, 1);
+});
+
+test('sound throttle recovers from cooldowns and device clock rollback', () => {
+    const throttle = new SoundThrottle();
+    assert.equal(throttle.allow('warning', 1_000), true);
+    assert.equal(throttle.allow('warning', 1_200), false);
+    assert.equal(throttle.allow('warning', 1_280), true);
+    assert.equal(throttle.allow('warning', 900), true);
+});
+
+test('game feedback policy maps master, combo, failures and final countdown', () => {
+    assert.deepEqual(successFeedback('correct', 4), { sound: 'correct', haptic: 'light', hitStopMs: 0, comboMilestone: false });
+    assert.deepEqual(successFeedback('master', 10), { sound: 'master', haptic: 'medium', hitStopMs: 100, comboMilestone: true });
+    assert.deepEqual(failureFeedback('bomb', 6), { sound: 'bomb', haptic: 'heavy', label: '炸弹！', showComboBreak: true });
+    assert.deepEqual(failureFeedback('orderError', 2), { sound: 'error', haptic: 'medium', label: '顺序错误', showComboBreak: false });
+    assert.equal(countdownWarningSecond(5_000, 6), 5);
+    assert.equal(countdownWarningSecond(4_999, 5), null);
+    assert.equal(countdownWarningSecond(4_000, 5), 4);
+    assert.equal(countdownWarningSecond(6_000, 7), null);
+    assert.equal(countdownWarningSecond(0, 1), null);
 });
 
 test('reverse never turns a bomb into a required target', () => {
