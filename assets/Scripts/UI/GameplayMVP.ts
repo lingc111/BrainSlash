@@ -1,14 +1,15 @@
 import { _decorator, Color, Component, director, EventTouch, game, Game, Graphics, Label, Mask, Node, NodePool, ResolutionPolicy, resources, screen, Sprite, SpriteFrame, tween, Tween, UIOpacity, UITransform, Vec2, Vec3, view } from 'cc';
 import { AppRuntime } from '../app/AppRuntime';
 import { GAMEPLAY_CONFIG } from '../configs/GameConfig';
-import { Brawl60Director } from '../domain/Brawl60Director';
+import { Brawl60Director, type BrawlQuestionDirective } from '../domain/Brawl60Director';
 import { GameSession } from '../domain/GameSession';
 import { friendTargetPresentation } from '../domain/FriendChallenge';
 import { countdownWarningSecond, failureFeedback, successFeedback } from '../domain/GameFeedback';
 import { GestureResolver, GestureProgress, shouldKeepIncompleteGesture } from '../domain/GestureResolver';
-import type { ActionConstraint, FailureKind, QuestionInstance, RuleId, RunResult, TargetSpec } from '../domain/Models';
+import type { ActionConstraint, FailureKind, QuestionInstance, RunResult, TargetSpec } from '../domain/Models';
 import { QuestionGenerator } from '../domain/QuestionGenerator';
 import { evaluateRules } from '../domain/Rules';
+import { prepareRuleTutorial, tutorialRetryInstruction, type RuleTutorialSpec } from '../domain/RuleTutorial';
 import { SeededRng } from '../domain/SeededRng';
 import { GameplayTarget, GameplayTargetData, TargetContentType, TargetShape } from './GameplayTarget';
 import { calculatePortraitTargetLayout, portraitTargetEntranceDelay } from './PortraitTargetLayout';
@@ -48,12 +49,13 @@ export class GameplayMVP extends Component {
     private question:QuestionInstance|null=null; private constraint:ActionConstraint|null=null; private gesture:GestureResolver|null=null;
     private targets!:Node; private effects!:Node; private floats!:Node; private trail!:Graphics;
     private score!:Label; private combo!:Label; private prompt!:Label; private rule!:Label; private timer!:Label; private life!:Label;
-    private friendTarget:Label|null=null;
+    private friendTarget:Label|null=null; private friendTargetCard:Node|null=null; private tutorialCoach:Label|null=null;
     private handDrawnChrome:Node|null=null; private handDrawnFrame:Graphics|null=null;
     private readonly lifeHearts:Sprite[]=[]; private renderedLife=-1;
     private points:Vec2[]=[]; private trailAge=1; private finished=false; private reverseFrame:Node|null=null;
     private paused=false; private hidden=false; private hitStopActive=false; private lastCountdownSecond=-1;
-    private tutorialRule:RuleId|null=null;
+    private currentDirective:BrawlQuestionDirective|null=null; private tutorial:RuleTutorialSpec|null=null;
+    private currentSkins:(typeof SKINS[number])[]=[]; private currentMotionPhases:number[]=[];
     private readonly handleResize=():void=>this.applyVisibleLayout();
     private readonly effectByNode=new Map<Node,EffectKey>(); private readonly frames=new Map<EffectKey,SpriteFrame>(); private readonly pool=new NodePool();
     private readonly motions:TargetMotion[]=[];
@@ -106,7 +108,8 @@ export class GameplayMVP extends Component {
         this.makeComboCard(chrome);
         this.makeArtworkCard(chrome,'PromptPaperCard','gameplay_mid_title',306,230);
         const timerCard=this.makeArtworkCard(chrome,'TimerPaperCard','gameplay_time',176,176,1.1);this.makeLifeHearts(timerCard);
-        const friendCard=node('FriendChallengeTarget',chrome,430,44),badge=friendCard.addComponent(Graphics);badge.fillColor=new Color(255,250,236,245);badge.strokeColor=INK;badge.lineWidth=2.5;badge.roundRect(-215,-22,430,44,15);badge.fill();badge.stroke();const friend=text(friendCard,'Label','',21,INK);ui(friend.node,410,40);friend.overflow=Label.Overflow.SHRINK;friendCard.active=this.session?.entry.mode==='friendChallenge';this.friendTarget=friend;
+        const friendCard=node('FriendChallengeTarget',chrome,430,44),badge=friendCard.addComponent(Graphics);badge.fillColor=new Color(255,250,236,245);badge.strokeColor=INK;badge.lineWidth=2.5;badge.roundRect(-215,-22,430,44,15);badge.fill();badge.stroke();const friend=text(friendCard,'Label','',21,INK);ui(friend.node,410,40);friend.overflow=Label.Overflow.SHRINK;friendCard.active=this.session?.entry.mode==='friendChallenge';this.friendTarget=friend;this.friendTargetCard=friendCard;
+        const coachCard=node('TutorialCoach',chrome,430,48),coachBadge=coachCard.addComponent(Graphics);coachBadge.fillColor=new Color(255,244,194,250);coachBadge.strokeColor=YELLOW;coachBadge.lineWidth=3;coachBadge.roundRect(-215,-24,430,48,16);coachBadge.fill();coachBadge.stroke();const coach=text(coachCard,'Label','',22,INK);ui(coach.node,410,44);coach.overflow=Label.Overflow.SHRINK;coachCard.active=false;this.tutorialCoach=coach;
     }
     private makeComboCard(parent:Node):Node{
         const card=node('ComboPaperCard',parent,164,212);card.angle=-1.2;const artwork=image(card,'ComboArtwork',164,212);
@@ -126,6 +129,7 @@ export class GameplayMVP extends Component {
         chrome.getChildByName('PromptPaperCard')?.setPosition(0,hudY-2);
         chrome.getChildByName('TimerPaperCard')?.setPosition(width/2-96,hudY);
         chrome.getChildByName('FriendChallengeTarget')?.setPosition(0,hudY-100);
+        chrome.getChildByName('TutorialCoach')?.setPosition(0,hudY-100);
         const frame=this.handDrawnFrame;if(!frame?.isValid)return;const frameLayer=frame.node.parent;if(frameLayer)ui(frameLayer,width,height);
         const frameTop=height/2-FRAME_TOP_INSET,frameBottom=-height/2+FRAME_BOTTOM_INSET,frameWidth=width-38,frameHeight=frameTop-frameBottom;ui(frame.node,frameWidth,frameHeight);frame.node.setPosition(0,(frameTop+frameBottom)/2);this.drawHandDrawnFrame(frame,frameWidth,frameHeight);
     }
@@ -135,20 +139,17 @@ export class GameplayMVP extends Component {
         g.strokeColor=new Color(166,48,37,155);g.lineWidth=2;g.moveTo(-w+12,-h+10);g.bezierCurveTo(-w+8,-h*.18,-w+10,h*.48,-w+13,h-12);g.bezierCurveTo(-w*.28,h-5,w*.42,h-7,w-13,h-10);g.bezierCurveTo(w-7,h*.25,w-9,-h*.48,w-11,-h+12);g.stroke();
     }
     private spawn():void {
-        if(this.session.state.phase!=='playing')return;for(const c of [...this.targets.children]){c.removeFromParent();c.destroy();}this.effectByNode.clear();this.motions.length=0;this.gesture=null;
-        const directive=this.director.next(this.session.state.elapsedMs);this.question=this.generator.next(directive);this.constraint=evaluateRules(this.question);
-        const learned=AppRuntime.save.snapshot().tutorials;this.tutorialRule=this.question.activeRules.find(r=>r!=='standard'&&!learned[r])??null;this.question.tutorialSafe=!!this.tutorialRule;
-        this.session.beginQuestion();this.prompt.string=`${this.tutorialRule?'教学·':''}${this.question.prompt.text}`;
-        const rs=this.question.activeRules.filter(r=>r!=='standard');this.rule.string=rs.length?rs.map(r=>({reverse:'反向',multi:'多目标',order:'顺序',stroop:'颜色骗局',bomb:'禁区'} as Record<string,string>)[r]).join(' + '):'标准';this.showReverse(this.question.activeRules.includes('reverse'));
-        const positions=this.layout(this.question.targets.length),skins=this.visual.shuffle(SKINS);this.question.targets.forEach((s,i)=>this.createTarget(s,positions[i],skins[i%skins.length],i,directive.speed));this.refresh();
+        if(this.session.state.phase!=='playing')return;
+        const prepared=prepareRuleTutorial(this.director.next(this.session.state.elapsedMs),AppRuntime.save.snapshot().tutorials);this.currentDirective=prepared.directive;this.tutorial=prepared.tutorial;this.question=this.generator.next(prepared.directive);this.question.tutorialSafe=!!this.tutorial;this.presentCurrentQuestion(false);
     }
-    private createTarget(spec:TargetSpec,pos:Vec3,skin:typeof SKINS[number],i:number,speed:number):void {
+    private presentCurrentQuestion(retry:boolean,retryCopy?:string):void{if(!this.question||!this.currentDirective||this.session.state.phase!=='playing')return;for(const c of [...this.targets.children]){c.removeFromParent();c.destroy();}this.effectByNode.clear();this.motions.length=0;this.gesture=null;this.constraint=evaluateRules(this.question);if(!retry){this.session.beginQuestion();this.currentSkins=this.visual.shuffle(SKINS);this.currentMotionPhases=this.question.targets.map(()=>this.visual.next()*Math.PI*2);}this.prompt.string=this.question.prompt.text;const rs=this.question.activeRules.filter(r=>r!=='standard');this.rule.string=this.tutorial?`新规则 · ${this.tutorial.name}`:rs.length?rs.map(r=>({reverse:'反向',multi:'多目标',order:'顺序',stroop:'颜色骗局',bomb:'禁区'} as Record<string,string>)[r]).join(' + '):'标准';this.updateTutorialCoach(retryCopy);this.showReverse(this.question.activeRules.includes('reverse'));const positions=this.layout(this.question.targets.length);this.question.targets.forEach((s,i)=>this.createTarget(s,positions[i],this.currentSkins[i%this.currentSkins.length],i,this.currentDirective!.speed,this.currentMotionPhases[i]));this.refresh();}
+    private createTarget(spec:TargetSpec,pos:Vec3,skin:typeof SKINS[number],i:number,speed:number,motionPhase:number):void {
         const n=node(spec.isBomb?'BombTarget':`Target_${spec.id}`,this.targets,168,168);const v=view.getVisibleSize(),side=pos.x<0?-1:pos.x>0?1:i%2===0?-1:1,row=Math.max(0,pos.z),groundY=-v.height/2-TARGET_VISUAL_RADIUS-8-row*220,startY=pos.y,delay=portraitTargetEntranceDelay({x:pos.x,y:pos.y,row}),baseDuration=(this.question?.timeLimitMs??3000)/1000,duration=Math.max(.9,baseDuration-delay),maxApexY=v.height/2-FRAME_TOP_INSET-TARGET_VISUAL_RADIUS-8,apexY=Math.max(startY+24,Math.min(maxApexY,startY+v.height*.105)),arcRatio=Math.sqrt(Math.max(1,apexY-startY)/Math.max(1,apexY-groundY)),apexTime=duration*arcRatio/(1+arcRatio),gravity=2*(startY-apexY)/(apexTime*apexTime),velocityY=-gravity*apexTime,entranceAngle=[-10,8,-7,10,-6,7][i]??0;
         n.setPosition(side*(v.width/2+110),startY);n.setScale(.68,.68,1);n.angle=entranceAngle;
         const wordColors:Record<string,Color>={红:RED,蓝:BLUE,绿:GREEN,黄:YELLOW};
         const data:GameplayTargetData={id:spec.id,contentType:TargetContentType.TEXT,text:spec.text,value:spec.value,shape:(['roundedSquare','triangle','hexagon','circle','pentagon'] as TargetShape[])[i%5],isBomb:spec.isBomb,color:COLORS[i%COLORS.length],contentColor:spec.colorName?wordColors[spec.colorName]:undefined};const target=n.addComponent(GameplayTarget);target.configure(data);
         const key:EffectKey=spec.isBomb?'bomb':skin;this.effectByNode.set(n,key);resources.load(`textures/gameplay/targets/${key}/spriteFrame`,SpriteFrame,(e,f)=>{if(!e&&n.isValid&&n.active)target.applySkin(f);});
-        this.motions.push({node:n,startX:n.position.x,targetX:pos.x,startY,ceilingY:maxApexY,groundY,delay,duration,velocityY,gravity,entranceAngle,phase:this.visual.next()*Math.PI*2,speed});
+        this.motions.push({node:n,startX:n.position.x,targetX:pos.x,startY,ceilingY:maxApexY,groundY,delay,duration,velocityY,gravity,entranceAngle,phase:motionPhase,speed});
         tween(n).delay(delay).to(.18,{scale:new Vec3(1.12,1.12,1)},{easing:'backOut'}).to(.16,{scale:Vec3.ONE},{easing:'quadOut'}).start();
     }
     private layout(count:number):Vec3[]{const v=view.getVisibleSize();return calculatePortraitTargetLayout(count,v.width,v.height).map((position)=>new Vec3(position.x,position.y,position.row));}
@@ -159,11 +160,12 @@ export class GameplayMVP extends Component {
     private sweep(a:Vec2,b:Vec2):void{if(!this.gesture)return;for(const n of [...this.targets.children]){const t=n.getComponent(GameplayTarget);if(!t||t.hit||!t.segmentHit(a,b))continue;t.hit=true;const p=this.gesture.hit(t.data.id);this.slash(t,a,b);this.progress(p,t);if(p.status!=='continue'){this.gesture=null;break;}}}
     private progress(p:GestureProgress,t:GameplayTarget|null):void{if(p.status==='success')this.success(t);else if(p.status==='failure')this.fail(p.kind,t);}
     private keepsIncompleteGesture():boolean{return !!this.constraint&&shouldKeepIncompleteGesture(this.constraint);}
-    private success(t:GameplayTarget|null):void{if(!this.question)return;const r=this.session.resolveSuccess(this.question);if(!r)return;const pos=t?.node.position??Vec3.ZERO,feedback=successFeedback(r.kind,this.session.state.combo),vibration=AppRuntime.save.snapshot().settings.vibration;AppRuntime.audio.play(feedback.sound,{variant:this.session.state.combo});AppRuntime.platform.vibrate(vibration,feedback.haptic);if(feedback.comboMilestone&&r.kind!=='master')AppRuntime.audio.play('combo',{variant:this.session.state.combo});this.animateCombo(this.session.state.combo,feedback.comboMilestone);this.hitSparks(pos,r.kind==='master'?YELLOW:GREEN,r.kind==='master');if(feedback.hitStopMs)this.applyHitStop(feedback.hitStopMs);if(this.tutorialRule)AppRuntime.save.markTutorial(this.tutorialRule);this.float(pos,`+${r.scoreDelta}${r.kind==='master'?' MASTER':''}`,r.kind==='master'?YELLOW:GREEN);this.scheduleOnce(()=>{this.session.continueAfterFeedback();this.spawn();},r.kind==='master'?.32:.28);}
-    private fail(kind:FailureKind,t:GameplayTarget|null=null):void{const pos=t?.node.position??Vec3.ZERO,vibration=AppRuntime.save.snapshot().settings.vibration;if(this.question?.tutorialSafe){this.session.cancelQuestion();AppRuntime.audio.play('warning');AppRuntime.platform.vibrate(vibration,'light');this.error(pos);this.float(pos,'再试一次',YELLOW);this.scheduleOnce(()=>{this.session.continueAfterFeedback();this.spawn();},.35);return;}const brokenCombo=this.session.state.combo;if(!this.session.resolveFailure(kind))return;const feedback=failureFeedback(kind,brokenCombo);AppRuntime.audio.play(feedback.sound);AppRuntime.platform.vibrate(vibration,feedback.haptic);this.error(pos);this.float(pos,feedback.label,RED);if(feedback.showComboBreak)this.breakCombo(brokenCombo);if(this.session.state.phase!=='finished')this.scheduleOnce(()=>{this.session.continueAfterFeedback();this.spawn();},.3);}
+    private success(t:GameplayTarget|null):void{if(!this.question)return;const r=this.session.resolveSuccess(this.question);if(!r)return;const pos=t?.node.position??Vec3.ZERO,feedback=successFeedback(r.kind,this.session.state.combo),vibration=AppRuntime.save.snapshot().settings.vibration;AppRuntime.audio.play(feedback.sound,{variant:this.session.state.combo});AppRuntime.platform.vibrate(vibration,feedback.haptic);if(feedback.comboMilestone&&r.kind!=='master')AppRuntime.audio.play('combo',{variant:this.session.state.combo});this.animateCombo(this.session.state.combo,feedback.comboMilestone);this.hitSparks(pos,r.kind==='master'?YELLOW:GREEN,r.kind==='master');if(feedback.hitStopMs)this.applyHitStop(feedback.hitStopMs);if(this.tutorial){AppRuntime.save.markTutorial(this.tutorial.rule);this.updateTutorialCoach(`已掌握 · ${this.tutorial.name}`);}this.float(pos,`+${r.scoreDelta}${r.kind==='master'?' MASTER':''}`,r.kind==='master'?YELLOW:GREEN);this.scheduleOnce(()=>{this.session.continueAfterFeedback();this.spawn();},r.kind==='master'?.32:.28);}
+    private fail(kind:FailureKind,t:GameplayTarget|null=null):void{const pos=t?.node.position??Vec3.ZERO,vibration=AppRuntime.save.snapshot().settings.vibration;if(this.question?.tutorialSafe&&this.tutorial){this.session.cancelQuestion();const retryCopy=tutorialRetryInstruction(this.tutorial,kind);AppRuntime.audio.play('warning');AppRuntime.platform.vibrate(vibration,'light');this.float(pos,'再斩一次',YELLOW);this.updateTutorialCoach(retryCopy,true);this.scheduleOnce(()=>{if(this.session.retryQuestion())this.presentCurrentQuestion(true,retryCopy);},.38);return;}const brokenCombo=this.session.state.combo;if(!this.session.resolveFailure(kind))return;const feedback=failureFeedback(kind,brokenCombo);AppRuntime.audio.play(feedback.sound);AppRuntime.platform.vibrate(vibration,feedback.haptic);this.error(pos);this.float(pos,feedback.label,RED);if(feedback.showComboBreak)this.breakCombo(brokenCombo);if(this.session.state.phase!=='finished')this.scheduleOnce(()=>{this.session.continueAfterFeedback();this.spawn();},.3);}
     private finish():void{if(this.finished)return;this.finished=true;AppRuntime.audio.play('finish');const s=this.session.state,total=s.correctCount+s.errorCount;const run:RunResult={entry:this.session.entry,score:s.score,maxCombo:s.maxCombo,correctCount:s.correctCount,errorCount:s.errorCount,accuracy:total?s.correctCount/total:0,bestReactionMs:s.bestReactionMs};const result=AppRuntime.finish(run);showResultOverlay(this.node,result,{replay:()=>AppRuntime.replay(),share:()=>AppRuntime.share(),home:()=>AppRuntime.home()});}
     private refresh():void{if(!this.score)return;const s=this.session.state,seconds=Math.ceil(s.remainingMs/1000);this.score.string=String(s.score);this.combo.string=String(s.combo);this.timer.string=`${seconds}s`;this.updateLifeHearts(s.life);this.updateFriendTarget(s.score);this.updateCountdownFeedback(s.remainingMs);}
-    private updateFriendTarget(score:number):void{const label=this.friendTarget,target=this.session.entry.targetScore;if(!label)return;if(this.session.entry.mode!=='friendChallenge'||target===undefined){label.node.active=false;return;}const state=friendTargetPresentation(score,target);label.node.active=true;label.string=state.text;label.color=state.tone==='ahead'?GREEN:state.tone==='tied'?BLUE:INK;}
+    private updateFriendTarget(score:number):void{const label=this.friendTarget,card=this.friendTargetCard,target=this.session.entry.targetScore;if(!label||!card)return;if(this.tutorial||this.session.entry.mode!=='friendChallenge'||target===undefined){card.active=false;return;}const state=friendTargetPresentation(score,target);card.active=true;label.string=state.text;label.color=state.tone==='ahead'?GREEN:state.tone==='tied'?BLUE:INK;}
+    private updateTutorialCoach(copy?:string,pulse=false):void{const label=this.tutorialCoach,card=label?.node.parent;if(!label||!card)return;if(!this.tutorial){card.active=false;return;}card.active=true;label.string=copy??`新规则 · ${this.tutorial.instruction}`;if(!pulse)return;Tween.stopAllByTarget(card);card.setScale(Vec3.ONE);tween(card).to(.08,{scale:new Vec3(1.06,1.06,1)},{easing:'backOut'}).to(.14,{scale:Vec3.ONE},{easing:'quadOut'}).start();}
     private updateLifeHearts(life:number):void{
         if(life===this.renderedLife)return;const previous=this.renderedLife,lit=new Color(255,255,255,255),off=new Color(92,88,82,125);
         this.lifeHearts.forEach((heart,i)=>{Tween.stopAllByTarget(heart.node);heart.node.setScale(Vec3.ONE);const alive=i<life;if(previous>=0&&!alive&&i<previous){heart.color=lit;tween(heart.node).to(.09,{scale:new Vec3(.78,.78,1)}).call(()=>{if(heart.isValid)heart.color=off;}).to(.14,{scale:Vec3.ONE},{easing:'backOut'}).start();}else heart.color=alive?lit:off;});

@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
 import { CONTENT_VERSION, GAMEPLAY_CONFIG } from '../assets/Scripts/configs/GameConfig.ts';
-import { Brawl60Director, phaseAt, targetCountForFamily } from '../assets/Scripts/domain/Brawl60Director.ts';
+import { Brawl60Director, familySupportsRules, phaseAt, targetCountForFamily } from '../assets/Scripts/domain/Brawl60Director.ts';
 import {
     CONTENT_FAMILIES,
     CONTENT_FAMILY_TARGETS,
@@ -25,6 +25,7 @@ import { QuestionGenerator } from '../assets/Scripts/domain/QuestionGenerator.ts
 import { createResultPresentation, finalizeResult } from '../assets/Scripts/domain/ResultSummary.ts';
 import { evaluateRules } from '../assets/Scripts/domain/Rules.ts';
 import { SeededRng } from '../assets/Scripts/domain/SeededRng.ts';
+import { prepareRuleTutorial, tutorialRetryInstruction } from '../assets/Scripts/domain/RuleTutorial.ts';
 import { validateQuestion } from '../assets/Scripts/domain/FairnessValidator.ts';
 import { difficultyAt } from '../assets/Scripts/domain/DifficultyDirector.ts';
 import {
@@ -210,6 +211,61 @@ test('game feedback policy maps master, combo, failures and final countdown', ()
     assert.equal(countdownWarningSecond(0, 1), null);
 });
 
+test('every complex rule first appears as a readable single-rule safe tutorial', () => {
+    const { director, generator } = pipeline('tutorial-coverage');
+    const learned: Partial<Record<'reverse' | 'multi' | 'order' | 'stroop' | 'bomb', boolean>> = {};
+    const elapsedSequence = [12_000, 28_000, 48_000];
+    for (let index = 0; index < 120 && Object.keys(learned).length < 5; index++) {
+        const prepared = prepareRuleTutorial(director.next(elapsedSequence[index % elapsedSequence.length]), learned);
+        if (!prepared.tutorial) continue;
+        const { directive, tutorial } = prepared;
+        assert.deepEqual(directive.rules, [tutorial.rule]);
+        assert.ok(familySupportsRules(directive.family, directive.rules));
+        assert.ok(directive.targetCount <= 4);
+        assert.ok(directive.questionTimeMs >= 3_400);
+        assert.ok(directive.speed <= 0.76);
+        const question = generator.next(directive);
+        question.tutorialSafe = true;
+        assert.equal(validateQuestion(question, evaluateRules(question)).length, 0);
+        learned[tutorial.rule] = true;
+    }
+    assert.deepEqual(Object.keys(learned).sort(), ['bomb', 'multi', 'order', 'reverse', 'stroop']);
+});
+
+test('learned rule pairs stay combined while tutorial retry copy explains the failure', () => {
+    const { director } = pipeline('tutorial-pairs');
+    let directive = director.next(50_000);
+    for (let index = 0; directive.rules.length < 2 && index < 20; index++) directive = director.next(50_000);
+    assert.equal(directive.rules.length, 2);
+    const first = prepareRuleTutorial(directive, {});
+    assert.ok(first.tutorial);
+    if (!first.tutorial) return;
+    const second = prepareRuleTutorial(directive, { [first.tutorial.rule]: true });
+    assert.ok(second.tutorial);
+    if (!second.tutorial) return;
+    const learned = prepareRuleTutorial(directive, { [first.tutorial.rule]: true, [second.tutorial.rule]: true });
+    assert.equal(learned.tutorial, null);
+    assert.deepEqual(learned.directive.rules, directive.rules);
+    assert.match(tutorialRetryInstruction(first.tutorial, 'wrong'), /再斩一次/);
+    assert.equal(tutorialRetryInstruction(first.tutorial, 'bomb'), '避开炸弹 · 再斩一次');
+    assert.equal(tutorialRetryInstruction(second.tutorial, 'orderError'), '顺序不对 · 再斩一次');
+    assert.match(tutorialRetryInstruction(second.tutorial, 'miss'), /别漏目标/);
+});
+
+test('tutorials switch to a compatible safe family when only the remaining rule needs it', () => {
+    const { director, generator } = pipeline('tutorial-fallback');
+    const base = director.next(50_000);
+    const stroopFamily = CONTENT_FAMILIES.find((family) => family.kind === 'vision-stroop');
+    assert.ok(stroopFamily);
+    if (!stroopFamily) return;
+    const prepared = prepareRuleTutorial({ ...base, family: stroopFamily, rules: ['bomb', 'stroop'] }, { stroop: true });
+    assert.equal(prepared.tutorial?.rule, 'bomb');
+    assert.notEqual(prepared.directive.family.id, stroopFamily.id);
+    assert.equal(familySupportsRules(prepared.directive.family, ['bomb']), true);
+    const question = generator.next(prepared.directive);
+    assert.equal(validateQuestion(question, evaluateRules(question)).length, 0);
+});
+
 test('reverse never turns a bomb into a required target', () => {
     const question: QuestionInstance = {
         id: 'reverse', theme: 'math', prompt: { text: '反向' },
@@ -314,6 +370,19 @@ test('session applies a question result only once', () => {
     const session = new GameSession(entry, GAMEPLAY_CONFIG); session.start(); session.beginQuestion();
     const q: QuestionInstance = { id: 'q', theme: 'math', prompt: { text: 'x' }, targets: [{ id: 'a', text: '1' }, { id: 'b', text: '2' }], baseCorrectTargetIds: ['a'], activeRules: ['standard'], timeLimitMs: 3000, tutorialSafe: true };
     assert.ok(session.resolveSuccess(q)); assert.equal(session.resolveSuccess(q), null); assert.equal(session.state.correctCount, 1);
+});
+
+test('tutorial retry resets the same question window without life, combo or error penalties', () => {
+    const entry = { mode: 'brawl60' as const, seed: 'retry', contentVersion: 'v' };
+    const session = new GameSession(entry, GAMEPLAY_CONFIG); session.start(); session.tick(120); session.beginQuestion(); session.tick(480);
+    session.state.combo = 4; session.state.score = 700;
+    session.cancelQuestion();
+    assert.equal(session.state.phase, 'resolving');
+    assert.equal(session.retryQuestion(), true);
+    assert.equal(session.state.phase, 'playing');
+    assert.equal(session.questionElapsedMs(), 0);
+    assert.deepEqual({ life: session.state.life, combo: session.state.combo, score: session.state.score, errors: session.state.errorCount }, { life: 3, combo: 4, score: 700, errors: 0 });
+    assert.equal(session.retryQuestion(), false);
 });
 
 test('result finalization atomically records growth, level-up and new best score', () => {

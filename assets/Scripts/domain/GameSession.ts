@@ -37,5 +37,10 @@ export class GameSession {
     }
     public continueAfterFeedback(): void { if (this.state.phase === 'resolving') this.state.phase = 'playing'; }
     public cancelQuestion(): void { if (!this.questionResolved && this.state.phase === 'playing') { this.questionResolved = true; this.state.phase = 'resolving'; } }
+    public retryQuestion(): boolean {
+        if (this.state.phase !== 'resolving' || !this.questionResolved) return false;
+        this.state.phase = 'playing'; this.questionStartedAt = this.state.elapsedMs; this.questionResolved = false;
+        return true;
+    }
     public finish(): void { this.state.phase = 'finished'; this.questionResolved = true; }
 }
