@@ -101,6 +101,8 @@ Chaos 不属于本次 MVP。代码中可以预留扩展接口，但不开发 Cha
 
 启动 Loading 不单独做复杂页面；用轻量 `Boot` 场景或启动 Prefab 完成配置、存档和核心资源加载后立即进入首页。
 
+应用冷启动必须落在 `Home.scene`。即使编辑器或旧构建配置误将 Gameplay 设为启动场景，运行时启动闸门也会先回到首页；只有首页入口、Result 重玩或好友挑战参数可以显式进入 Gameplay。
+
 ### 4.2 常驻服务
 
 `AppRoot` 使用持久节点承载：
@@ -392,7 +394,7 @@ DifficultyDirector
 
 #### B. 首页
 
-- [ ] 今日挑战卡：挑战化名称、当日固定 seed、一键开始；
+- [x] 今日挑战卡：七日轮换挑战名称、本地日期固定 seed、真实午夜倒计时、一键开始；
 - [ ] 60 秒乱斗主按钮；
 - [ ] 好友挑战入口：存在分享参数时显示待挑战分数；
 - [ ] 本地最高分 / 轻量等级摘要；
@@ -527,7 +529,15 @@ interface SaveDataV1 {
   };
   tutorials: Partial<Record<RuleId, boolean>>;
   themeMastery: Partial<Record<ThemeId, number>>;
-  lastDailyDate?: string;
+  daily?: {
+    dateKey: string;
+    recipeId: string;
+    attempts: number;
+    bestScore: number;
+    lastScore: number;
+    completed: boolean;
+    tutorialBaseline: RuleId[];
+  };
 }
 ```
 

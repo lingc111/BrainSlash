@@ -3,7 +3,7 @@ export type ThemeId = 'math' | 'vision' | 'english' | 'hanzi' | 'geography' | 'l
 export type RuleId = 'standard' | 'reverse' | 'multi' | 'order' | 'stroop' | 'bomb';
 export type SessionPhase = 'ready' | 'playing' | 'resolving' | 'finished';
 
-export interface GameEntryParams { mode: GameMode; seed: string; contentVersion: string; recipeId?: string; targetScore?: number; }
+export interface GameEntryParams { mode: GameMode; seed: string; contentVersion: string; recipeId?: string; targetScore?: number; dailyDate?: string; }
 export interface PromptSpec { text: string; }
 export interface TargetSpec { id: string; text: string; value?: string | number; colorName?: string; isBomb?: boolean; }
 export interface QuestionInstance {
@@ -33,9 +33,13 @@ export interface ResultGrowth {
 export interface FriendChallengeResult {
     targetScore: number; scoreDelta: number; outcome: 'won' | 'tied' | 'lost';
 }
+export interface DailyChallengeResult {
+    dateKey: string; recipeId: string; attempts: number; previousBestScore: number; bestScore: number; isNewBest: boolean;
+}
 export interface GameResult extends RunResult {
     previousBestScore: number; isNewRecord: boolean; growth: ResultGrowth;
     challenge?: FriendChallengeResult;
+    daily?: DailyChallengeResult;
 }
 export interface FriendChallengePayload {
     v: 1; seed: string; contentVersion: string; mode: 'brawl60'; recipeId: string; targetScore: number;

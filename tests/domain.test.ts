@@ -12,6 +12,7 @@ import {
 } from '../assets/Scripts/domain/ContentCatalog.ts';
 import { GameSession } from '../assets/Scripts/domain/GameSession.ts';
 import { countdownWarningSecond, failureFeedback, successFeedback } from '../assets/Scripts/domain/GameFeedback.ts';
+import { beginDailyRun, createDailyChallenge, createDailyHomePresentation, dailyRecipeById, dailyTutorialProgress, localDateKey, recordDailyRun } from '../assets/Scripts/domain/DailyChallenge.ts';
 import {
     canStartFriendChallenge,
     createFriendChallengePayload,
@@ -445,6 +446,52 @@ test('result presentation keeps replay and share actions contextual across modes
     assert.equal(presentation.sharePrimary, false);
 });
 
+test('daily completion records attempts and compares against the local daily best', () => {
+    const challenge = createDailyChallenge(new Date(2026, 7, 20, 12, 0, 0), CONTENT_VERSION);
+    const run = (score: number): RunResult => ({
+        entry: challenge.entry, score, maxCombo: 6, correctCount: 8, errorCount: 1, accuracy: 8 / 9,
+    });
+    const first = recordDailyRun(undefined, run(620));
+    assert.ok(first);
+    if (!first) return;
+    assert.deepEqual(first.record, {
+        dateKey: '2026-08-20', recipeId: challenge.recipe.id, attempts: 1, bestScore: 620, lastScore: 620, completed: true, tutorialBaseline: [],
+    });
+    assert.deepEqual(first.result, {
+        dateKey: '2026-08-20', recipeId: challenge.recipe.id, attempts: 1, previousBestScore: 0, bestScore: 620, isNewBest: true,
+    });
+    const second = recordDailyRun(first.record, run(580));
+    assert.ok(second);
+    if (!second) return;
+    assert.equal(second.record.attempts, 2);
+    assert.equal(second.record.bestScore, 620);
+    assert.equal(second.result.isNewBest, false);
+    const result = { ...finalizeResult(run(580), { level: 2, xp: 500, bestScore: 900 }).result, daily: second.result };
+    const presentation = createResultPresentation(result);
+    assert.equal(presentation.modeLabel, `今日挑战 · ${challenge.recipe.title}`);
+    assert.equal(presentation.headline, '今日挑战完成');
+    assert.equal(presentation.comparison, '距离今日最佳 40 分');
+    assert.equal(presentation.replayLabel, '再战今日');
+    const home = createDailyHomePresentation(challenge, second.record);
+    assert.equal(home.status, '今日最佳 620 · 已战 2 次');
+    assert.equal(home.actionLabel, '再战今日');
+});
+
+test('daily challenge freezes the first-attempt tutorial baseline for same-day replays', () => {
+    const challenge = createDailyChallenge(new Date(2026, 7, 20, 9, 0, 0), CONTENT_VERSION);
+    const first = beginDailyRun(undefined, challenge.entry, { reverse: true, bomb: true });
+    assert.ok(first);
+    if (!first) return;
+    assert.deepEqual(first.tutorialBaseline, ['reverse', 'bomb']);
+    assert.deepEqual(dailyTutorialProgress(first), { reverse: true, bomb: true });
+    const replay = beginDailyRun(first, challenge.entry, { reverse: true, bomb: true, multi: true, order: true, stroop: true });
+    assert.equal(replay, first);
+    assert.deepEqual(replay?.tutorialBaseline, ['reverse', 'bomb']);
+    const tomorrow = createDailyChallenge(new Date(2026, 7, 21, 9, 0, 0), CONTENT_VERSION);
+    const nextDay = beginDailyRun(first, tomorrow.entry, { reverse: true, bomb: true, multi: true });
+    assert.deepEqual(nextDay?.tutorialBaseline, ['reverse', 'multi', 'bomb']);
+});
+
 test('expanded content catalog contains five times the recommended family counts', () => {
     const counts = Object.fromEntries(Object.keys(CONTENT_FAMILY_TARGETS).map((theme) => [theme, 0])) as Record<keyof typeof CONTENT_FAMILY_TARGETS, number>;
     for (const family of CONTENT_FAMILIES) counts[family.theme] += 1;
@@ -575,7 +622,41 @@ test('run seed factory refreshes free-play but keeps the daily recipe reproducib
     const dailyA = factory.create('daily', CONTENT_VERSION);
     const dailyB = factory.create('daily', CONTENT_VERSION);
     assert.equal(dailyA.seed, dailyB.seed);
-    assert.equal(dailyA.recipeId, 'daily-default');
+    assert.equal(dailyA.dailyDate, '2026-08-20');
+    assert.ok(dailyRecipeById(dailyA.recipeId));
+    assert.match(dailyA.seed, /^daily:[^:]+:2026-08-20:[a-z-]+$/);
+});
+
+test('local daily challenge rotates seven recipes and rolls over at local midnight', () => {
+    const challenges = Array.from({ length: 8 }, (_, offset) => createDailyChallenge(new Date(2026, 7, 17 + offset, 12, 0, 0), CONTENT_VERSION));
+    assert.equal(new Set(challenges.slice(0, 7).map((challenge) => challenge.recipe.id)).size, 7);
+    assert.equal(challenges[0].recipe.id, challenges[7].recipe.id);
+    for (const challenge of challenges) {
+        assert.equal(challenge.dateKey, localDateKey(new Date(challenge.endTime - 1)));
+        const midnight = new Date(challenge.endTime);
+        assert.deepEqual([midnight.getHours(), midnight.getMinutes(), midnight.getSeconds(), midnight.getMilliseconds()], [0, 0, 0, 0]);
+    }
+});
+
+test('all seven daily recipes generate deterministic legal multi-phase runs', () => {
+    const signatures = new Set<string>();
+    for (let day = 0; day < 7; day++) {
+        const challenge = createDailyChallenge(new Date(2026, 7, 17 + day, 12, 0, 0), CONTENT_VERSION);
+        const build = (): string => {
+            const director = new Brawl60Director(new SeededRng('daily-recipe-director'), challenge.recipe.id);
+            const generator = new QuestionGenerator(new SeededRng('daily-recipe-gameplay'), GAMEPLAY_CONFIG);
+            return Array.from({ length: 80 }, (_, index) => {
+                const elapsed = [5_000, 15_000, 30_000, 50_000][index % 4];
+                const question = generator.next(director.next(elapsed));
+                assert.equal(validateQuestion(question, evaluateRules(question)).length, 0);
+                return `${question.familyId}:${question.activeRules.join('+')}`;
+            }).join(',');
+        };
+        const first = build(), second = build();
+        assert.equal(first, second);
+        signatures.add(first);
+    }
+    assert.equal(signatures.size, 7);
 });
 
 test('theme and family bags enforce cooldowns across long mixed runs', () => {

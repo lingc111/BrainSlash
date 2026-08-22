@@ -1,4 +1,5 @@
 import type { GameEntryParams, GameMode } from '../domain/Models';
+import { createDailyChallenge } from '../domain/DailyChallenge';
 
 type Clock = () => Date;
 type EntropySource = () => number;
@@ -16,10 +17,6 @@ function defaultEntropy(): number {
     return Math.floor(Math.random() * 0x1_0000_0000) >>> 0;
 }
 
-function dailyKey(now: Date): string {
-    return `${now.getFullYear()}-${now.getMonth() + 1}-${now.getDate()}`;
-}
-
 /** Creates reproducible daily/friend entries and unique seeds for free-play runs. */
 export class RunSeedFactory {
     private sequence = 0;
@@ -32,12 +29,7 @@ export class RunSeedFactory {
     public create(mode: GameMode, contentVersion: string): GameEntryParams {
         const now = this.clock();
         if (mode === 'daily') {
-            return {
-                mode,
-                seed: `daily:${contentVersion}:${dailyKey(now)}:daily-default`,
-                contentVersion,
-                recipeId: 'daily-default',
-            };
+            return createDailyChallenge(now, contentVersion).entry;
         }
 
         this.sequence = (this.sequence + 1) >>> 0;

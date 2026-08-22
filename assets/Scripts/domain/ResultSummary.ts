@@ -1,4 +1,5 @@
 import type { GameResult, PlayerProgress, RunResult } from './Models';
+import { dailyRecipeById } from './DailyChallenge';
 
 export const XP_PER_CORRECT = 5;
 export const XP_PER_LEVEL = 500;
@@ -58,14 +59,15 @@ export function finalizeResult(run: RunResult, playerBefore: PlayerProgress): Re
 
 export function createResultPresentation(result: GameResult): ResultPresentation {
     const challenge = result.challenge;
-    const sharePrimary = result.isNewRecord || challenge?.outcome === 'won';
+    const daily = result.daily;
+    const sharePrimary = daily ? daily.isNewBest : result.isNewRecord || challenge?.outcome === 'won';
     return {
-        modeLabel: modeLabel(result.entry.mode),
+        modeLabel: modeLabel(result),
         headline: challenge
             ? challenge.outcome === 'won' ? '挑战成功！' : challenge.outcome === 'tied' ? '势均力敌！' : '就差一点！'
-            : result.isNewRecord ? '新纪录！' : result.entry.mode === 'daily' ? '今日挑战完成' : '本局完成',
+            : daily?.isNewBest ? '今日新纪录！' : result.entry.mode === 'daily' ? '今日挑战完成' : result.isNewRecord ? '新纪录！' : '本局完成',
         comparison: comparisonText(result),
-        comparisonTone: challenge?.outcome === 'won' ? 'positive' : result.isNewRecord ? 'highlight' : 'neutral',
+        comparisonTone: challenge?.outcome === 'won' ? 'positive' : daily?.isNewBest || result.isNewRecord ? 'highlight' : 'neutral',
         accuracy: `${Math.round(Math.max(0, Math.min(1, result.accuracy)) * 100)}%`,
         maxCombo: String(result.maxCombo),
         fastestReaction: formatReaction(result.bestReactionMs),
@@ -91,9 +93,12 @@ function challengeResult(score: number, rawTargetScore: number): NonNullable<Gam
     return { targetScore, scoreDelta, outcome: scoreDelta > 0 ? 'won' : scoreDelta < 0 ? 'lost' : 'tied' };
 }
 
-function modeLabel(mode: GameResult['entry']['mode']): string {
-    if (mode === 'daily') return '今日挑战';
-    if (mode === 'friendChallenge') return '好友挑战';
+function modeLabel(result: GameResult): string {
+    if (result.entry.mode === 'daily') {
+        const title = dailyRecipeById(result.entry.recipeId)?.title;
+        return title ? `今日挑战 · ${title}` : '今日挑战';
+    }
+    if (result.entry.mode === 'friendChallenge') return '好友挑战';
     return '60 秒乱斗';
 }
 
@@ -102,6 +107,12 @@ function comparisonText(result: GameResult): string {
         if (result.challenge.scoreDelta > 0) return `超过好友 ${result.challenge.scoreDelta} 分`;
         if (result.challenge.scoreDelta < 0) return `距离好友 ${Math.abs(result.challenge.scoreDelta)} 分`;
         return `追平好友 ${result.challenge.targetScore} 分`;
+    }
+    if (result.daily) {
+        if (result.daily.attempts === 1) return `今日首战 · ${result.score} 分`;
+        if (result.daily.isNewBest) return `刷新今日最佳 +${result.score - result.daily.previousBestScore}`;
+        if (result.score === result.daily.bestScore) return '追平今日最佳';
+        return `距离今日最佳 ${Math.max(0, result.daily.bestScore - result.score)} 分`;
     }
     if (result.isNewRecord) {
         return result.previousBestScore > 0

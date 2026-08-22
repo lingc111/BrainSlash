@@ -1,4 +1,5 @@
 import { CONTENT_FAMILIES, type ContentFamilyKind, type ContentFamilySpec } from './ContentCatalog';
+import { dailyRecipeById } from './DailyChallenge';
 import type { RuleId, ThemeId } from './Models';
 import { SeededRng } from './SeededRng';
 
@@ -128,10 +129,10 @@ export class Brawl60Director {
     private readonly recentFamilyIds: string[] = [];
     private readonly seenFamilyIds = new Set<string>();
 
-    public constructor(private readonly rng: SeededRng) {}
+    public constructor(private readonly rng: SeededRng, private readonly recipeId = 'mixed') {}
 
     public next(elapsedMs: number): BrawlQuestionDirective {
-        const phase = phaseAt(elapsedMs);
+        const phase = phaseForRecipe(phaseAt(elapsedMs), this.recipeId);
         const requestedRules = this.pickRules(phase);
         const compatible = CONTENT_FAMILIES.filter((family) =>
             (phase.themeWeights[family.theme] ?? 0) > 0 && familySupportsRules(family, requestedRules),
@@ -249,4 +250,24 @@ export class Brawl60Director {
 
 function ruleKey(rules: readonly RuleId[]): string {
     return [...rules].sort().join('+');
+}
+
+function phaseForRecipe(phase: BrawlPhaseSettings, recipeId: string): BrawlPhaseSettings {
+    const recipe = dailyRecipeById(recipeId);
+    if (!recipe || phase.id === 'warmup') return phase;
+    let ruleSequence = phase.ruleSequence;
+    if (recipe.preferredRule && recipe.preferredRule !== 'bomb') {
+        const preferred = recipe.preferredRule;
+        ruleSequence = phase.id === 'climax'
+            ? [[preferred], ['bomb', preferred], ['standard'], [preferred], ['bomb', preferred]]
+            : phase.ruleSequence.map((rules, index) => index % 2 === 0 ? [preferred] : rules);
+    } else if (recipe.preferredRule === 'bomb') {
+        ruleSequence = phase.ruleSequence.map((rules, index) => index % 2 === 0 ? ['bomb'] : rules);
+    }
+    return {
+        ...phase,
+        speed: phase.speed * recipe.speedMultiplier,
+        themeWeights: recipe.themeWeights,
+        ruleSequence,
+    };
 }

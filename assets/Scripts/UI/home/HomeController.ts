@@ -21,6 +21,8 @@ import {
 } from 'cc';
 import { EDITOR } from 'cc/env';
 import { HOME_HAND_DRAWN as C } from '../DesignTokens';
+import { CONTENT_VERSION } from '../../configs/GameConfig';
+import { createDailyChallenge, createDailyHomePresentation } from '../../domain/DailyChallenge';
 import { CountdownTimer } from './CountdownTimer';
 import { calculateHomePortraitLayout } from './HomePortraitLayout';
 import { createMockHomeViewData, HomeViewData } from './HomeViewData';
@@ -57,7 +59,9 @@ export class HomeController extends Component {
 
     private levelLabel: Label | null = null;
     private energyLabel: Label | null = null;
-    private friendMessageLabel: Label | null = null;
+    private dailyAccentLabel: Label | null = null;
+    private dailyTitleLabel: Label | null = null;
+    private dailyStatusLabel: Label | null = null;
     private countdownLabel: Label | null = null;
     private progressValueLabel: Label | null = null;
     private progressCells: Node[] = [];
@@ -69,15 +73,18 @@ export class HomeController extends Component {
         if (!EDITOR) {
             AppRuntime.initialize();
             const save = AppRuntime.save.snapshot();
+            const daily = createDailyChallenge(new Date(), CONTENT_VERSION);
+            const dailyView = createDailyHomePresentation(daily, save.daily);
             this.data = {
                 ...createMockHomeViewData(),
                 level: save.player.level,
                 rankName: save.player.bestScore > 0 ? `最高 ${save.player.bestScore}` : '新手',
                 rankProgress: save.player.xp % 500,
                 rankProgressMax: 500,
-                friendMessage: AppRuntime.challengeLaunchNotice() ?? (AppRuntime.entry.mode === 'friendChallenge'
-                    ? `好友目标 ${AppRuntime.entry.targetScore ?? 0} 分`
-                    : '一刀开局，挑战最高分！'),
+                dailyAccent: dailyView.accent,
+                dailyTitle: dailyView.title,
+                dailyStatus: dailyView.status,
+                challengeEndTime: dailyView.endTime,
             };
         }
         // Preview and device must share one coordinate system; otherwise the
@@ -131,7 +138,9 @@ export class HomeController extends Component {
         this.data = { ...data };
         if (this.levelLabel) this.levelLabel.string = `Lv.${data.level}  ${data.rankName}`;
         if (this.energyLabel) this.energyLabel.string = `${data.energy}/${data.maxEnergy}`;
-        if (this.friendMessageLabel) this.friendMessageLabel.string = data.friendMessage;
+        if (this.dailyAccentLabel) this.dailyAccentLabel.string = data.dailyAccent;
+        if (this.dailyTitleLabel) this.dailyTitleLabel.string = data.dailyTitle;
+        if (this.dailyStatusLabel) this.dailyStatusLabel.string = data.dailyStatus;
         if (this.progressValueLabel) {
             this.progressValueLabel.string = `${data.rankProgress}/${data.rankProgressMax}`;
         }
@@ -184,7 +193,19 @@ export class HomeController extends Component {
 
     public onChallengeExpired(): void {
         if (this.countdownLabel) this.countdownLabel.string = '00:00:00';
-        console.log('[Home] Daily challenge expired');
+        if (!EDITOR) this.scheduleOnce(() => this.refreshLocalDaily(), 0);
+    }
+
+    private refreshLocalDaily(): void {
+        const challenge = createDailyChallenge(new Date(), CONTENT_VERSION);
+        const viewData = createDailyHomePresentation(challenge, AppRuntime.save.snapshot().daily);
+        this.refresh({
+            ...this.data,
+            dailyAccent: viewData.accent,
+            dailyTitle: viewData.title,
+            dailyStatus: viewData.status,
+            challengeEndTime: viewData.endTime,
+        });
     }
 
     private buildView(): void {
@@ -232,9 +253,9 @@ export class HomeController extends Component {
         this.attachResourceTexture(paper, 'textures/home/ui/home_slash_paper/spriteFrame');
 
         const titleGroup = this.makeNode(root, 'TitleImagePlaceholder', -100, 118, 450, 162);
-        this.label(titleGroup, 'AccentCharacter', '成', -176, 42, 92, 76, 58, C.red, 'center');
-        this.label(titleGroup, 'TitleLine1', '语斩：', -34, 42, 220, 76, 58, C.ink, 'left');
-        this.label(titleGroup, 'TitleLine2', '百词破晓', -14, -43, 430, 84, 66, C.ink, 'center');
+        this.dailyAccentLabel = this.label(titleGroup, 'AccentCharacter', '成', -176, 42, 92, 76, 58, C.red, 'center');
+        this.label(titleGroup, 'TitleLine1', '今日挑战', -34, 42, 260, 76, 50, C.ink, 'left');
+        this.dailyTitleLabel = this.label(titleGroup, 'TitleLine2', '成语连斩', -14, -43, 430, 84, 66, C.ink, 'center');
         this.drawUnderline(titleGroup, 'TitleRedUnderline', 0, -82, 430, C.red, -4);
 
         const hourglass = this.makeNode(root, 'HourglassIcon', 263, 112, 110, 140);
@@ -244,7 +265,7 @@ export class HomeController extends Component {
         this.drawSmallFriend(friend, -188, 0);
         const bubble = this.graphics(friend, 'BubbleOutline', 30, 0, 360, 68);
         this.roundedRect(bubble, -180, -32, 360, 64, C.paperRaised, C.ink, 2.5, 14);
-        this.friendMessageLabel = this.label(friend, 'FriendMessage', '', 31, 0, 326, 56, 26, C.ink, 'center');
+        this.dailyStatusLabel = this.label(friend, 'DailyStatus', '', 31, 0, 326, 56, 26, C.ink, 'center');
 
         this.countdownLabel = this.label(root, 'CountdownLabel', '00:00:00', 266, -34, 220, 58, 34, C.ink, 'center');
         this.drawUnderline(root, 'CountdownUnderline', 266, -68, 210, C.red, -1);

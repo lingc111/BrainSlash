@@ -21,6 +21,7 @@ class AppRuntimeState {
     private lastLaunchChallengeKey: string | null = null;
     private launchNotice: string | null = null;
     private challengeListenerRegistered = false;
+    private gameplayLaunchAuthorized = false;
 
     public initialize(): void {
         const data = this.save.load();
@@ -60,6 +61,11 @@ class AppRuntimeState {
         return true;
     }
     public challengeLaunchNotice(): string | null { return this.launchNotice; }
+    public consumeGameplayLaunch(): boolean {
+        if (!this.gameplayLaunchAuthorized) return false;
+        this.gameplayLaunchAuthorized = false;
+        return true;
+    }
     public start(mode: GameMode): void {
         if (this.transitioning) return;
         if (mode === 'friendChallenge') {
@@ -68,17 +74,21 @@ class AppRuntimeState {
         } else {
             this.pendingFriendChallenge = false;
             this.entry = this.seedFactory.create(mode, CONTENT_VERSION);
+            if (mode === 'daily') this.save.beginDaily(this.entry);
         }
-        this.result = null; this.transitioning = true; this.analytics.track('game_start', { mode, seed: this.entry.seed });
+        this.result = null; this.transitioning = true; this.gameplayLaunchAuthorized = true; this.analytics.track('game_start', { mode, seed: this.entry.seed });
         director.loadScene('Gameplay', () => { this.transitioning = false; });
     }
     public replay(): void {
         if (this.transitioning) return;
-        // Free-play should feel fresh on every run. Daily and friend challenges
-        // deliberately retain their shared seed so scores remain comparable.
-        if (this.entry.mode === 'brawl60') this.entry = this.seedFactory.create('brawl60', CONTENT_VERSION);
+        // Free-play refreshes every run. Daily recreates the local-day entry:
+        // the seed stays fixed before midnight and rolls over afterwards.
+        if (this.entry.mode === 'brawl60' || this.entry.mode === 'daily') {
+            this.entry = this.seedFactory.create(this.entry.mode, CONTENT_VERSION);
+            if (this.entry.mode === 'daily') this.save.beginDaily(this.entry);
+        }
         this.result = null;
-        this.transitioning = true;
+        this.transitioning = true; this.gameplayLaunchAuthorized = true;
         this.analytics.track('game_start', { mode: this.entry.mode, seed: this.entry.seed });
         director.loadScene('Gameplay', () => { this.transitioning = false; });
     }
