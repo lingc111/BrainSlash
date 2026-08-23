@@ -24,7 +24,7 @@ import { GestureResolver, shouldKeepIncompleteGesture } from '../assets/Scripts/
 import type { PlayerProgress, QuestionInstance, RunResult } from '../assets/Scripts/domain/Models.ts';
 import { QuestionGenerator } from '../assets/Scripts/domain/QuestionGenerator.ts';
 import { createResultPresentation, finalizeResult } from '../assets/Scripts/domain/ResultSummary.ts';
-import { evaluateRules } from '../assets/Scripts/domain/Rules.ts';
+import { evaluateRules, questionPreviewDurationSeconds, slashRuleCount, slashRuleLabel } from '../assets/Scripts/domain/Rules.ts';
 import { SeededRng } from '../assets/Scripts/domain/SeededRng.ts';
 import { prepareRuleTutorial, tutorialRetryInstruction } from '../assets/Scripts/domain/RuleTutorial.ts';
 import { validateQuestion } from '../assets/Scripts/domain/FairnessValidator.ts';
@@ -294,6 +294,18 @@ test('reverse never turns a bomb into a required target', () => {
     assert.deepEqual(constraint.forbiddenTargetIds, ['bomb']);
 });
 
+test('slash rule labels describe the gesture and ignore bomb distractors', () => {
+    assert.equal(slashRuleLabel(['standard']), '单选');
+    assert.equal(slashRuleLabel(['bomb']), '单选');
+    assert.equal(slashRuleLabel(['bomb', 'multi']), '多选');
+    assert.equal(slashRuleLabel(['order']), '顺序');
+    assert.equal(slashRuleLabel(['multi', 'reverse']), '多选 + 反向');
+    assert.equal(slashRuleCount(['bomb', 'multi']), 1);
+    assert.equal(slashRuleCount(['multi', 'reverse']), 2);
+    assert.equal(questionPreviewDurationSeconds(['bomb', 'multi']), 0.3);
+    assert.equal(questionPreviewDurationSeconds(['multi', 'reverse']), 0.7);
+});
+
 test('order and multi gestures resolve once and reject incomplete strokes', () => {
     const ordered = new GestureResolver({ requiredTargetIds: ['a', 'b'], forbiddenTargetIds: [], matchMode: 'all', ordered: true, allowExtraHits: false });
     assert.equal(ordered.hit('a').status, 'continue');
@@ -387,6 +399,13 @@ test('session applies a question result only once', () => {
     const session = new GameSession(entry, GAMEPLAY_CONFIG); session.start(); session.beginQuestion();
     const q: QuestionInstance = { id: 'q', theme: 'math', prompt: { text: 'x' }, targets: [{ id: 'a', text: '1' }, { id: 'b', text: '2' }], baseCorrectTargetIds: ['a'], activeRules: ['standard'], timeLimitMs: 3000, tutorialSafe: true };
     assert.ok(session.resolveSuccess(q)); assert.equal(session.resolveSuccess(q), null); assert.equal(session.state.correctCount, 1);
+});
+
+test('question preview time does not reduce the measured answer window', () => {
+    const entry = { mode: 'brawl60' as const, seed: 'preview-window', contentVersion: 'v' };
+    const session = new GameSession(entry, GAMEPLAY_CONFIG); session.start(); session.tick(300); session.beginQuestion(); session.tick(120);
+    const q: QuestionInstance = { id: 'preview-q', theme: 'math', prompt: { text: '1+1=?' }, targets: [{ id: 'a', text: '2' }, { id: 'b', text: '3' }], baseCorrectTargetIds: ['a'], activeRules: ['standard'], timeLimitMs: 3000, tutorialSafe: false };
+    assert.equal(session.resolveSuccess(q)?.reactionMs, 120);
 });
 
 test('tutorial retry resets the same question window without life, combo or error penalties', () => {
@@ -548,7 +567,8 @@ test('brawl director exposes exact four-phase boundaries and rising pressure', (
 
 test('target density respects content readability and compound-rule pressure', () => {
     assert.equal(targetCountForFamily(6, 'math-add', ['bomb', 'reverse']), 4);
-    assert.equal(targetCountForFamily(6, 'math-property', ['multi', 'reverse']), 5);
+    assert.equal(targetCountForFamily(5, 'math-property', ['bomb', 'multi']), 5);
+    assert.equal(targetCountForFamily(6, 'math-property', ['multi', 'reverse']), 4);
     assert.equal(targetCountForFamily(6, 'vision-odd', ['standard']), 6);
     assert.equal(targetCountForFamily(6, 'vision-odd', ['bomb', 'reverse']), 5);
     assert.equal(targetCountForFamily(6, 'hanzi-order', ['bomb', 'order']), 5);
@@ -786,10 +806,17 @@ test('1000 seeds survive full multi-round deterministic legality regression', ()
             const second = secondPipeline.generator.next(secondDirective);
             assert.deepEqual(first, second);
             assert.deepEqual(validateQuestion(first, evaluateRules(first)), []);
-            assert.ok(first.targets.length <= firstDirective.targetCount);
+            assert.equal(first.prompt.text.startsWith('斩'), false);
+            assert.equal(first.prompt.text.startsWith('反向·'), false);
+            assert.equal(first.prompt.text.includes('全部'), false);
+            assert.ok(first.targets.length <= firstDirective.targetCount + (firstDirective.rules.includes('bomb') ? 1 : 0));
+            if (slashRuleCount(firstDirective.rules) >= 2) {
+                assert.ok(first.targets.filter((target) => !target.isBomb).length <= 4);
+            }
             assert.ok(first.targets.length >= 2);
             assert.equal(first.timeLimitMs, firstDirective.questionTimeMs);
             const constraint = evaluateRules(first);
+            if (first.activeRules.includes('multi')) assert.ok(constraint.requiredTargetIds.length >= 2);
             if (constraint.matchMode === 'all' && constraint.requiredTargetIds.length > 1) {
                 assertCompletesAcrossSeparateStrokes(constraint);
                 multiStepFamilyIds.add(first.familyId ?? '');
@@ -837,6 +864,32 @@ test('tower exposes the fixed 60-second 1-30 progression and unlock schedule', (
     assert.deepEqual(unlockedRulesForTower(2), ['standard']);
     assert.deepEqual(unlockedRulesForTower(3), ['standard', 'bomb']);
     assert.deepEqual(unlockedRulesForTower(13), ['standard', 'bomb', 'multi', 'order', 'reverse', 'stroop']);
+});
+
+test('tower bombs add a hazard without replacing answer candidates', () => {
+    const seed = 'tower-floor-3-bomb-regression';
+    const director = new TowerDirector(new SeededRng(`${seed}:director`), 3);
+    const generator = new QuestionGenerator(new SeededRng(`${seed}:gameplay`), GAMEPLAY_CONFIG);
+    const directive = director.next(0);
+    assert.deepEqual(directive.rules, ['bomb']);
+    assert.equal(directive.targetCount, 3);
+    const question = generator.next(directive);
+    assert.equal(question.targets.filter((target) => !target.isBomb).length, 3);
+    assert.equal(question.targets.filter((target) => target.isBomb).length, 1);
+    assert.equal(question.targets.length, 4);
+});
+
+test('tower bomb placement varies by seed instead of staying in the final slot', () => {
+    const positions = new Set<number>();
+    for (let seedIndex = 0; seedIndex < 40; seedIndex++) {
+        const seed = `tower-floor-3-bomb-position-${seedIndex}`;
+        const director = new TowerDirector(new SeededRng(`${seed}:director`), 3);
+        const generator = new QuestionGenerator(new SeededRng(`${seed}:gameplay`), GAMEPLAY_CONFIG);
+        const question = generator.next(director.next(0));
+        positions.add(question.targets.findIndex((target) => target.isBomb));
+    }
+    assert.ok(positions.size > 1);
+    assert.ok([...positions].some((position) => position !== 3));
 });
 
 test('tower director is deterministic per attempt and legal across 100 seeds and 30 floors', () => {

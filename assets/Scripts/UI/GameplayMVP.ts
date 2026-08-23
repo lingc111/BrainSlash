@@ -9,7 +9,7 @@ import { countdownWarningSecond, failureFeedback, successFeedback } from '../dom
 import { GestureResolver, GestureProgress, shouldKeepIncompleteGesture } from '../domain/GestureResolver';
 import type { ActionConstraint, FailureKind, QuestionInstance, RunResult, TargetSpec } from '../domain/Models';
 import { QuestionGenerator } from '../domain/QuestionGenerator';
-import { evaluateRules } from '../domain/Rules';
+import { evaluateRules, questionPreviewDurationSeconds, slashRuleLabel } from '../domain/Rules';
 import { prepareRuleTutorial, tutorialRetryInstruction, type RuleTutorialSpec } from '../domain/RuleTutorial';
 import { SeededRng } from '../domain/SeededRng';
 import { TowerDirector } from '../domain/TowerDirector';
@@ -27,7 +27,7 @@ import { showResultOverlay, showTowerResultOverlay } from './ResultOverlay';
 const { ccclass } = _decorator;
 const INK = new Color(45,43,39,255), PAPER = new Color(255,250,236,255), RED = new Color(174,69,61,255), GREEN = new Color(109,152,106,255), BLUE = new Color(91,133,156,255), YELLOW = new Color(226,184,67,255);
 const COLORS = [YELLOW,GREEN,BLUE,new Color(137,111,158,255),new Color(207,132,70,255)];
-const SKINS = ['blue_square','green_octagon','green_triangle','orange_circle','pink_diamond','purple_hexagon','red_trapezoid','yellow_circle'] as const;
+const SKINS = ['blue_square','green_triangle','orange_circle','pink_diamond','purple_hexagon','red_trapezoid','yellow_circle'] as const;
 const DESIGN_WIDTH = 750, DESIGN_HEIGHT = 1624;
 const FRAME_TOP_INSET = 292, FRAME_BOTTOM_INSET = 12, TARGET_VISUAL_RADIUS = 132;
 type EffectKey = typeof SKINS[number] | 'bomb';
@@ -46,13 +46,13 @@ export class GameplayMVP extends Component {
     private session!:GameSession; private generator!:QuestionGenerator; private director!:Brawl60Director|TowerDirector; private visual!:SeededRng;
     private question:QuestionInstance|null=null; private constraint:ActionConstraint|null=null; private gesture:GestureResolver|null=null;
     private targets!:Node; private effects!:Node; private floats!:Node; private trail!:Graphics;
-    private score!:Label; private combo!:Label; private prompt!:Label; private rule!:Label; private timer!:Label; private life!:Label;
+    private score!:Label; private combo!:Label; private prompt!:Label; private rule!:Label; private ruleBadge:Node|null=null; private timer!:Label; private life!:Label;
     private friendTarget:Label|null=null; private friendTargetCard:Node|null=null; private tutorialCoach:Label|null=null;
     private towerProgress:Label|null=null; private towerProgressCard:Node|null=null; private towerTutorialPreflight=false;
     private handDrawnChrome:Node|null=null; private handDrawnFrame:Graphics|null=null;
     private readonly lifeHearts:Sprite[]=[]; private renderedLife=-1;
     private points:Vec2[]=[]; private trailAge=1; private finished=false; private reverseFrame:Node|null=null;
-    private paused=false; private hidden=false; private hitStopActive=false; private lastCountdownSecond=-1;
+    private paused=false; private hidden=false; private hitStopActive=false; private targetRevealPending=false; private revealToken=0; private lastCountdownSecond=-1;
     private currentDirective:BrawlQuestionDirective|null=null; private tutorial:RuleTutorialSpec|null=null;
     private learnedTutorials:Partial<Record<'reverse'|'multi'|'order'|'stroop'|'bomb',boolean>>={};
     private currentSkins:(typeof SKINS[number])[]=[]; private currentMotionPhases:number[]=[];
@@ -67,10 +67,10 @@ export class GameplayMVP extends Component {
         this.bindStaticView();screen.on('window-resize',this.handleResize,this);game.on(Game.EVENT_HIDE,this.onHide,this);game.on(Game.EVENT_SHOW,this.onShow,this);this.scheduleOnce(this.handleResize,0);
         this.scheduleOnce(()=>{this.node.getChildByName('Ready')?.destroy();AppRuntime.audio.play('ui');this.session.start();this.spawn();},GAMEPLAY_CONFIG.readyMs/1000);
     }
-    protected onDestroy():void { screen.off('window-resize',this.handleResize,this);game.off(Game.EVENT_HIDE,this.onHide,this);game.off(Game.EVENT_SHOW,this.onShow,this);this.node.off(Node.EventType.TOUCH_START,this.startTouch,this);this.node.off(Node.EventType.TOUCH_MOVE,this.moveTouch,this);this.node.off(Node.EventType.TOUCH_END,this.endTouch,this);this.node.off(Node.EventType.TOUCH_CANCEL,this.endTouch,this);this.pool.clear(); }
+    protected onDestroy():void { this.revealToken++;screen.off('window-resize',this.handleResize,this);game.off(Game.EVENT_HIDE,this.onHide,this);game.off(Game.EVENT_SHOW,this.onShow,this);this.node.off(Node.EventType.TOUCH_START,this.startTouch,this);this.node.off(Node.EventType.TOUCH_MOVE,this.moveTouch,this);this.node.off(Node.EventType.TOUCH_END,this.endTouch,this);this.node.off(Node.EventType.TOUCH_CANCEL,this.endTouch,this);this.pool.clear(); }
     protected update(dt:number):void {
         if(this.finished||this.paused)return;if(!this.towerTutorialPreflight)this.session.tick(dt*1000);
-        if(this.session.state.phase==='playing'&&this.question&&!this.session.isQuestionResolved()&&this.updateTargetMotions())this.fail('miss');
+        if(this.session.state.phase==='playing'&&this.question&&!this.targetRevealPending&&!this.session.isQuestionResolved()&&this.updateTargetMotions())this.fail('miss');
         if(this.session.state.phase==='finished')this.finish(); this.refresh(); this.trailAge+=dt;if(this.trailAge<.14)this.drawTrail(1-this.trailAge/.14);else this.trail.clear();
     }
     public rebuildStaticView():void {
@@ -79,7 +79,7 @@ export class GameplayMVP extends Component {
         const bg=image(this.node,'Background',DESIGN_WIDTH,DESIGN_HEIGHT);resources.load('textures/common/background_paper/spriteFrame',SpriteFrame,(e,f)=>{if(!e&&bg.isValid)bg.spriteFrame=f;});
         node('TargetContainer',this.node,DESIGN_WIDTH,DESIGN_HEIGHT);gfx(this.node,'SlashTrail',DESIGN_WIDTH,DESIGN_HEIGHT);node('HitEffects',this.node,DESIGN_WIDTH,DESIGN_HEIGHT);node('FloatingText',this.node,DESIGN_WIDTH,DESIGN_HEIGHT);
         const y=DESIGN_HEIGHT/2-150;const score=text(this.node,'Score','0',30);score.node.setPosition(-DESIGN_WIDTH/2+85,y);const combo=text(this.node,'Combo','0 COMBO',27,RED);combo.node.setPosition(-DESIGN_WIDTH/2+110,y-48);
-        const prompt=text(this.node,'Prompt','准备斩击',44);prompt.node.setPosition(0,y);const rule=text(this.node,'Rule','标准',25,PAPER);rule.node.setPosition(0,y-55);const badge=image(rule.node,'Badge',210,45);badge.node.setSiblingIndex(0);badge.color=BLUE;resources.load('textures/home/paper/daily_paper/spriteFrame',SpriteFrame,(e,f)=>{if(!e&&badge.isValid)badge.spriteFrame=f;});
+        const prompt=text(this.node,'Prompt','准备斩击',44);prompt.node.setPosition(0,y);const badge=image(this.node,'RuleBadge',230,45);badge.node.setPosition(0,y-55);badge.color=BLUE;resources.load('textures/home/paper/daily_paper/spriteFrame',SpriteFrame,(e,f)=>{if(!e&&badge.isValid)badge.spriteFrame=f;});const rule=text(this.node,'Rule','单选',25,PAPER);rule.node.setPosition(0,y-55);rule.isBold=true;ui(rule.node,220,40);rule.overflow=Label.Overflow.SHRINK;
         const timer=text(this.node,'Timer','60s',38);timer.node.setPosition(DESIGN_WIDTH/2-85,y);const life=text(this.node,'Life','♥ ♥ ♥',26,RED);life.node.setPosition(DESIGN_WIDTH/2-85,y-48);text(this.node,'Ready','READY',68,RED);
         this.buildHandDrawnChrome();this.layoutHandDrawnChrome(DESIGN_WIDTH,DESIGN_HEIGHT);
     }
@@ -89,14 +89,19 @@ export class GameplayMVP extends Component {
         const background=required('Background').getComponent(Sprite);if(!background)throw new Error('[GameplayMVP] 静态节点 Background 缺少 Sprite 组件。');
         resources.load('textures/common/background_paper/spriteFrame',SpriteFrame,(e,f)=>{if(!e&&background.isValid)background.spriteFrame=f;});
         this.targets=required('TargetContainer');const trailNode=required('SlashTrail');const trail=trailNode.getComponent(Graphics);if(!trail)throw new Error('[GameplayMVP] 静态节点 SlashTrail 缺少 Graphics 组件。');this.trail=trail;
-        this.effects=required('HitEffects');this.floats=required('FloatingText');this.score=requiredLabel('Score');this.combo=requiredLabel('Combo');this.prompt=requiredLabel('Prompt');this.rule=requiredLabel('Rule');this.timer=requiredLabel('Timer');this.life=requiredLabel('Life');
+        this.effects=required('HitEffects');this.floats=required('FloatingText');this.score=requiredLabel('Score');this.combo=requiredLabel('Combo');this.prompt=requiredLabel('Prompt');this.rule=requiredLabel('Rule');this.prepareRuleBadge();this.timer=requiredLabel('Timer');this.life=requiredLabel('Life');
         this.buildHandDrawnChrome();
         this.applyVisibleLayout();
         this.node.on(Node.EventType.TOUCH_START,this.startTouch,this);this.node.on(Node.EventType.TOUCH_MOVE,this.moveTouch,this);this.node.on(Node.EventType.TOUCH_END,this.endTouch,this);this.node.on(Node.EventType.TOUCH_CANCEL,this.endTouch,this);
         for(const key of [...SKINS,'bomb'] as EffectKey[])resources.load(`textures/gameplay/effects/slash/${key}_slash/spriteFrame`,SpriteFrame,(e,f)=>{if(!e&&f?.isValid)this.frames.set(key,f);});
     }
     private applyVisibleLayout():void{const background=this.node.getChildByName('Background')?.getComponent(Sprite);if(!background||!this.score)return;const v=view.getVisibleSize();ui(this.node,v.width,v.height);for(const layer of [background.node,this.targets,this.trail.node,this.effects,this.floats])ui(layer,v.width,v.height);this.layoutStaticHud(v.width,v.height);this.layoutHandDrawnChrome(v.width,v.height);}
-    private layoutStaticHud(width:number,height:number):void{const y=height/2-150;this.score.node.active=false;this.combo.node.active=true;this.combo.fontSize=44;this.combo.lineHeight=53;this.combo.color=INK;this.combo.node.setPosition(-width/2+96,y+3);this.prompt.node.setPosition(0,y);this.rule.node.setPosition(0,y-55);this.timer.node.setPosition(width/2-68,y+4);this.life.node.active=false;}
+    private layoutStaticHud(width:number,height:number):void{const y=height/2-150;this.score.node.active=false;this.combo.node.active=true;this.combo.fontSize=44;this.combo.lineHeight=53;this.combo.color=INK;this.combo.node.setPosition(-width/2+96,y+3);this.prompt.node.setPosition(0,y);this.ruleBadge?.setPosition(0,y-55);this.rule.node.setPosition(0,y-55);this.timer.node.setPosition(width/2-68,y+4);this.life.node.active=false;}
+    private prepareRuleBadge():void{
+        let badge=this.node.getChildByName('RuleBadge')??this.rule.node.getChildByName('Badge');
+        if(badge?.parent===this.rule.node){const ruleIndex=this.rule.node.getSiblingIndex();badge.removeFromParent();badge.name='RuleBadge';this.node.addChild(badge);badge.setSiblingIndex(ruleIndex);}
+        this.ruleBadge=badge;this.rule.isBold=true;ui(this.rule.node,220,40);this.rule.overflow=Label.Overflow.SHRINK;
+    }
     private buildHandDrawnChrome():void{
         for(const name of ['HandDrawnChrome','HandDrawnFrameLayer']){const old=this.node.getChildByName(name);if(old){old.removeFromParent();old.destroy();}}
         this.lifeHearts.length=0;this.renderedLife=-1;
@@ -144,7 +149,21 @@ export class GameplayMVP extends Component {
         if(this.session.state.phase!=='playing')return;
         const prepared=prepareRuleTutorial(this.director.next(this.session.state.elapsedMs),this.learnedTutorials);this.currentDirective=prepared.directive;this.tutorial=prepared.tutorial;this.towerTutorialPreflight=AppRuntime.entry.mode==='tower'&&!!prepared.tutorial&&this.session.state.elapsedMs===0&&this.session.state.correctCount===0;this.question=this.generator.next(prepared.directive);this.question.tutorialSafe=!!this.tutorial;this.presentCurrentQuestion(false);
     }
-    private presentCurrentQuestion(retry:boolean,retryCopy?:string):void{if(!this.question||!this.currentDirective||this.session.state.phase!=='playing')return;for(const c of [...this.targets.children]){c.removeFromParent();c.destroy();}this.effectByNode.clear();this.motions.length=0;this.gesture=null;this.constraint=evaluateRules(this.question);if(!retry){this.session.beginQuestion();this.currentSkins=this.visual.shuffle(SKINS);this.currentMotionPhases=this.question.targets.map(()=>this.visual.next()*Math.PI*2);}this.prompt.string=this.question.prompt.text;const rs=this.question.activeRules.filter(r=>r!=='standard');this.rule.string=this.tutorial?`新规则 · ${this.tutorial.name}`:rs.length?rs.map(r=>({reverse:'反向',multi:'多目标',order:'顺序',stroop:'颜色骗局',bomb:'禁区'} as Record<string,string>)[r]).join(' + '):'标准';this.updateTutorialCoach(retryCopy);this.showReverse(this.question.activeRules.includes('reverse'));const positions=this.layout(this.question.targets.length),v=view.getVisibleSize(),duration=Math.max(.9,(this.question.timeLimitMs??3000)/1000),plans=createPortraitTargetMotionPlans(positions,this.currentMotionPhases,{visibleWidth:v.width,visibleHeight:v.height,duration,speed:this.currentDirective.speed,topInset:FRAME_TOP_INSET,visualRadius:TARGET_VISUAL_RADIUS});this.question.targets.forEach((s,i)=>this.createTarget(s,positions[i],plans[i],this.currentSkins[i%this.currentSkins.length],i));this.refresh();}
+    private presentCurrentQuestion(retry:boolean,retryCopy?:string):void{
+        if(!this.question||!this.currentDirective||this.session.state.phase!=='playing')return;
+        for(const c of [...this.targets.children]){c.removeFromParent();c.destroy();}
+        this.effectByNode.clear();this.motions.length=0;this.gesture=null;this.constraint=null;
+        if(!retry){this.currentSkins=this.visual.shuffle(SKINS);this.currentMotionPhases=this.question.targets.map(()=>this.visual.next()*Math.PI*2);}
+        this.prompt.string=this.question.prompt.text;this.rule.string=slashRuleLabel(this.question.activeRules);this.updateTutorialCoach(retryCopy);this.showReverse(this.question.activeRules.includes('reverse'));
+        this.targetRevealPending=true;const token=++this.revealToken;this.refresh();
+        this.scheduleOnce(()=>this.revealCurrentTargets(token),questionPreviewDurationSeconds(this.question.activeRules));
+    }
+    private revealCurrentTargets(token:number):void{
+        if(token!==this.revealToken||!this.question||!this.currentDirective||this.session.state.phase!=='playing')return;
+        this.targetRevealPending=false;this.constraint=evaluateRules(this.question);this.session.beginQuestion();
+        const positions=this.layout(this.question.targets.length),v=view.getVisibleSize(),duration=Math.max(.9,(this.question.timeLimitMs??3000)/1000),plans=createPortraitTargetMotionPlans(positions,this.currentMotionPhases,{visibleWidth:v.width,visibleHeight:v.height,duration,speed:this.currentDirective.speed,topInset:FRAME_TOP_INSET,visualRadius:TARGET_VISUAL_RADIUS});
+        this.question.targets.forEach((s,i)=>this.createTarget(s,positions[i],plans[i],this.currentSkins[i%this.currentSkins.length],i));this.refresh();
+    }
     private createTarget(spec:TargetSpec,pos:PortraitTargetPosition,motion:PortraitTargetMotionPlan,skin:typeof SKINS[number],i:number):void {
         const n=node(spec.isBomb?'BombTarget':`Target_${spec.id}`,this.targets,168,168);const row=Math.max(0,pos.row),delay=portraitTargetEntranceDelay({x:pos.x,y:pos.y,row});
         if(this.towerTutorialPreflight){n.setPosition(pos.x,pos.y);n.setScale(Vec3.ONE);n.angle=0;}else{n.setPosition(motion.startX,motion.startY);n.setScale(.68,.68,1);n.angle=motion.entranceAngle;}
@@ -154,7 +173,7 @@ export class GameplayMVP extends Component {
         if(!this.towerTutorialPreflight){this.motions.push({node:n,...motion,delay});tween(n).delay(delay).to(.18,{scale:new Vec3(1.12,1.12,1)},{easing:'backOut'}).to(.16,{scale:Vec3.ONE},{easing:'quadOut'}).start();}
     }
     private layout(count:number):PortraitTargetPosition[]{const v=view.getVisibleSize();return calculatePortraitTargetLayout(count,v.width,v.height);}
-    private startTouch(e:EventTouch):void{if(this.paused||this.session.state.phase!=='playing'||!this.constraint)return;if(!this.gesture)this.gesture=new GestureResolver(this.constraint);this.points=[this.point(e)];this.trailAge=0;}
+    private startTouch(e:EventTouch):void{if(this.paused||this.targetRevealPending||this.session.state.phase!=='playing'||!this.constraint)return;if(!this.gesture)this.gesture=new GestureResolver(this.constraint);this.points=[this.point(e)];this.trailAge=0;}
     private moveTouch(e:EventTouch):void{if(!this.gesture||this.session.state.phase!=='playing')return;const p=this.point(e),a=this.points[this.points.length-1];if(!a||Vec2.distance(a,p)<4)return;this.points.push(p);if(this.points.length>18)this.points.shift();this.sweep(a,p);this.trailAge=0;this.drawTrail(1);}
     private endTouch():void{if(this.gesture&&this.gesture.hasHits()&&this.session.state.phase==='playing'){const p=this.gesture.end(this.keepsIncompleteGesture());this.progress(p,null);if(p.status!=='continue')this.gesture=null;}else if(!this.keepsIncompleteGesture())this.gesture=null;this.trailAge=0;}
     private point(e:EventTouch):Vec2{const p=e.getUILocation(),v=view.getVisibleSize();return new Vec2(p.x-v.width/2,p.y-v.height/2);}
@@ -168,7 +187,7 @@ export class GameplayMVP extends Component {
     private updateTowerProgress(correct:number):void{const label=this.towerProgress,card=this.towerProgressCard;if(!label||!card)return;if(this.session.entry.mode!=='tower'||this.towerTutorialPreflight||this.tutorial){card.active=false;return;}const floor=this.session.entry.towerFloor??1,required=towerFloorConfig(floor).requiredCorrect;card.active=true;label.string=`第 ${floor} 层 · 正确 ${correct}/${required}${correct>=required?' ✓':''}`;}
     private beginTowerTimedRun():void{this.towerTutorialPreflight=false;this.tutorial=null;for(const child of [...this.targets.children])child.destroy();this.session.resetForTimedRun();this.paused=true;const ready=text(this.node,'TowerReady','READY',68,RED);this.scheduleOnce(()=>{if(ready.isValid)ready.node.destroy();this.session.start();if(!this.hidden)this.paused=false;this.spawn();},GAMEPLAY_CONFIG.readyMs/1000);}
     private updateFriendTarget(score:number):void{const label=this.friendTarget,card=this.friendTargetCard,target=this.session.entry.targetScore;if(!label||!card)return;if(this.tutorial||this.session.entry.mode!=='friendChallenge'||target===undefined){card.active=false;return;}const state=friendTargetPresentation(score,target);card.active=true;label.string=state.text;label.color=state.tone==='ahead'?GREEN:state.tone==='tied'?BLUE:INK;}
-    private updateTutorialCoach(copy?:string,pulse=false):void{const label=this.tutorialCoach,card=label?.node.parent;if(!label||!card)return;if(!this.tutorial){card.active=false;return;}card.active=true;label.string=copy??`新规则 · ${this.tutorial.instruction}`;if(!pulse)return;Tween.stopAllByTarget(card);card.setScale(Vec3.ONE);tween(card).to(.08,{scale:new Vec3(1.06,1.06,1)},{easing:'backOut'}).to(.14,{scale:Vec3.ONE},{easing:'quadOut'}).start();}
+    private updateTutorialCoach(copy?:string,pulse=false):void{const label=this.tutorialCoach,card=label?.node.parent;if(!label||!card)return;if(!this.tutorial){card.active=false;return;}card.active=true;const prefix=this.tutorial.rule==='bomb'?'注意干扰':'新规则';label.string=copy??`${prefix} · ${this.tutorial.instruction}`;if(!pulse)return;Tween.stopAllByTarget(card);card.setScale(Vec3.ONE);tween(card).to(.08,{scale:new Vec3(1.06,1.06,1)},{easing:'backOut'}).to(.14,{scale:Vec3.ONE},{easing:'quadOut'}).start();}
     private updateLifeHearts(life:number):void{
         if(life===this.renderedLife)return;const previous=this.renderedLife,lit=new Color(255,255,255,255),off=new Color(92,88,82,125);
         this.lifeHearts.forEach((heart,i)=>{Tween.stopAllByTarget(heart.node);heart.node.setScale(Vec3.ONE);const alive=i<life;if(previous>=0&&!alive&&i<previous){heart.color=lit;tween(heart.node).to(.09,{scale:new Vec3(.78,.78,1)}).call(()=>{if(heart.isValid)heart.color=off;}).to(.14,{scale:Vec3.ONE},{easing:'backOut'}).start();}else heart.color=alive?lit:off;});

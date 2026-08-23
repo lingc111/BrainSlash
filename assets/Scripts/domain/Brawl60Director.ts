@@ -1,6 +1,7 @@
 import { CONTENT_FAMILIES, type ContentFamilyKind, type ContentFamilySpec } from './ContentCatalog';
 import { dailyRecipeById } from './DailyChallenge';
 import type { RuleId, ThemeId } from './Models';
+import { slashRuleCount } from './Rules';
 import { SeededRng } from './SeededRng';
 
 export type BrawlPhaseId = 'warmup' | 'action' | 'twist' | 'climax';
@@ -105,10 +106,14 @@ const TARGET_CAP_BY_KIND: Readonly<Record<ContentFamilyKind, number>> = {
 };
 
 export function targetCountForFamily(baseCount: number, kind: ContentFamilyKind, rules: readonly RuleId[]): number {
-    const complexRuleCount = rules.filter((rule) => rule !== 'standard').length;
-    const ruleAdjustedCount = complexRuleCount > 1 ? baseCount - 1 : baseCount;
-    const contentMinimum = kind === 'hanzi-order' ? 4 + (rules.includes('bomb') ? 1 : 0) : 2;
-    return Math.max(contentMinimum, Math.min(ruleAdjustedCount, TARGET_CAP_BY_KIND[kind]));
+    const activeSlashRuleCount = slashRuleCount(rules);
+    const contentMinimum = kind === 'hanzi-order' || (rules.includes('multi') && rules.includes('reverse')) ? 4 : 2;
+    // Reserve one of the six portrait slots for an additive bomb while
+    // retaining the requested number of answer candidates.
+    const bombCap = rules.includes('bomb') ? 5 : TARGET_CAP_BY_KIND[kind];
+    const dualRuleCap = activeSlashRuleCount >= 2 ? 4 : TARGET_CAP_BY_KIND[kind];
+    const readabilityCap = Math.min(TARGET_CAP_BY_KIND[kind], bombCap, dualRuleCap);
+    return Math.max(contentMinimum, Math.min(baseCount, readabilityCap));
 }
 
 export function phaseAt(elapsedMs: number): BrawlPhaseSettings {

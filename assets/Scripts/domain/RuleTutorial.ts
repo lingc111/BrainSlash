@@ -18,7 +18,7 @@ export interface PreparedTutorialDirective {
 
 const TUTORIALS: Readonly<Record<Exclude<RuleId, 'standard'>, Omit<RuleTutorialSpec, 'rule'>>> = {
     reverse: { name: '反向', instruction: '斩错误项' },
-    multi: { name: '多目标', instruction: '正确目标全部斩完' },
+    multi: { name: '多选', instruction: '正确目标全部斩完' },
     order: { name: '顺序', instruction: '按提示顺序斩' },
     stroop: { name: '颜色骗局', instruction: '只看字体颜色' },
     bomb: { name: '禁区', instruction: '避开“爆”' },

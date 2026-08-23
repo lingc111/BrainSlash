@@ -43,7 +43,7 @@ export class QuestionGenerator {
             familyId: 'math-property.safe',
             factIds: [],
             theme: 'math',
-            prompt: { text: '斩偶数' },
+            prompt: { text: '偶数' },
             targets: [{ id: 'safe-2', text: '2', value: 2 }, { id: 'safe-3', text: '3', value: 3 }],
             baseCorrectTargetIds: ['safe-2'],
             activeRules: ['standard'],
@@ -76,7 +76,7 @@ export class QuestionGenerator {
             case 'life-category': return this.lifeCategory(family, stage);
             case 'geography-capital': return this.geographyCapital(family, stage);
             case 'geography-country': return this.geographyCountry(family, stage);
-            default: return this.makeChoice(family, '斩偶数', 2, [3, 4, 5, 6], stage);
+            default: return this.makeChoice(family, '偶数', 2, [3, 4, 5, 6], stage);
         }
     }
 
@@ -95,7 +95,7 @@ export class QuestionGenerator {
             familyId: family.id,
             theme: family.theme,
             factIds: [...this.activeFactIds],
-            prompt: { text: activeRules.includes('reverse') ? `反向·${prompt}` : prompt },
+            prompt: { text: prompt },
             targets,
             baseCorrectTargetIds: correct,
             orderedTargetIds,
@@ -114,7 +114,9 @@ export class QuestionGenerator {
         options: { allowReverse?: boolean; allowBomb?: boolean } = { allowReverse: true, allowBomb: true },
     ): QuestionInstance {
         const rules = this.directive.rules;
-        const count = Math.max(2, this.directive.targetCount - (rules.includes('bomb') ? 1 : 0));
+        // targetCount describes answer candidates. A bomb is an additional
+        // hazard and must never replace one of those candidates.
+        const count = Math.max(2, this.directive.targetCount);
         const values = this.includeAnswer(answer, candidates, count);
         // Object.is also handles numeric edge values such as NaN. includeAnswer
         // inserts the answer before shuffling; retain a defensive repair so a
@@ -122,7 +124,7 @@ export class QuestionGenerator {
         let answerIndex = values.findIndex((value) => Object.is(value, answer));
         if (answerIndex < 0) { values[0] = answer; answerIndex = 0; }
         const targets: TargetSpec[] = values.map((value, index) => ({ id: `t${index}`, text: String(value), value }));
-        if (rules.includes('bomb')) targets.push({ id: 'bomb', text: '爆', isBomb: true });
+        this.appendBomb(targets);
         return this.make(family, prompt, targets, [`t${answerIndex}`], rules, stage);
     }
 
@@ -170,13 +172,13 @@ export class QuestionGenerator {
         const values = this.uniqueNumbers(count, 2, max);
         let predicate: (value: number) => boolean;
         let prompt: string;
-        if (family.variant === 0) { predicate = (value) => value % 2 === 0; prompt = '斩偶数'; }
-        else if (family.variant === 1) { predicate = (value) => value % 2 !== 0; prompt = '斩奇数'; }
-        else if (family.variant === 2) { predicate = (value) => value % 3 === 0; prompt = '斩3的倍数'; }
+        if (family.variant === 0) { predicate = (value) => value % 2 === 0; prompt = '偶数'; }
+        else if (family.variant === 1) { predicate = (value) => value % 2 !== 0; prompt = '奇数'; }
+        else if (family.variant === 2) { predicate = (value) => value % 3 === 0; prompt = '3的倍数'; }
         else {
             const threshold = Math.max(10, Math.round(max * 0.5 / 5) * 5);
             predicate = family.variant === 3 ? (value) => value > threshold : (value) => value < threshold;
-            prompt = family.variant === 3 ? `斩大于${threshold}` : `斩小于${threshold}`;
+            prompt = family.variant === 3 ? `大于${threshold}` : `小于${threshold}`;
         }
         if (!values.some(predicate)) this.forcePropertyValue(values, 0, predicate, true, max);
         if (values.every(predicate)) this.forcePropertyValue(values, values.length - 1, predicate, false, max);
@@ -187,11 +189,18 @@ export class QuestionGenerator {
                 this.forcePropertyValue(values, index, predicate, true, max);
             }
         }
+        if (this.directive.rules.includes('multi') && this.directive.rules.includes('reverse')) {
+            while (values.filter((value) => !predicate(value)).length < 2 && values.filter(predicate).length > 2) {
+                const index = values.findIndex(predicate);
+                if (index < 0) break;
+                this.forcePropertyValue(values, index, predicate, false, max);
+            }
+        }
         const targets: TargetSpec[] = values.map((value, index) => ({ id: `n${index}`, text: String(value), value }));
         const correct = targets.filter((target) => predicate(Number(target.value))).map((target) => target.id);
         this.appendBomb(targets);
         const rules = this.directive.rules;
-        return this.make(family, rules.includes('multi') ? `${prompt}·全部` : prompt, targets, correct, rules, stage);
+        return this.make(family, prompt, targets, correct, rules, stage);
     }
 
     private mathCompare(family: ContentFamilySpec, stage: Stage): QuestionInstance {
@@ -199,7 +208,7 @@ export class QuestionGenerator {
         const values = this.uniqueNumbers(count, 5, 50 + family.variant * 25 + stage * 80);
         const largest = family.variant % 2 === 0;
         const answer = largest ? Math.max(...values) : Math.min(...values);
-        return this.makeChoice(family, largest ? '斩最大的' : '斩最小的', answer, values, stage);
+        return this.makeChoice(family, largest ? '最大的' : '最小的', answer, values, stage);
     }
 
     private mathSequence(family: ContentFamilySpec, stage: Stage): QuestionInstance {
@@ -220,7 +229,7 @@ export class QuestionGenerator {
         const shown = this.rng.pick(ARROWS);
         const opposite = family.variant >= 3 && stage > 0;
         const answer = opposite ? OPPOSITE_ARROW[shown] : shown;
-        return this.makeChoice(family, opposite ? `斩 ${shown} 的反向` : `斩 ${shown}`, answer, ARROWS, stage, { allowBomb: false });
+        return this.makeChoice(family, opposite ? `${shown} 的反向` : shown, answer, ARROWS, stage, { allowBomb: false });
     }
 
     private visionOdd(family: ContentFamilySpec, stage: Stage): QuestionInstance {
@@ -230,7 +239,7 @@ export class QuestionGenerator {
         const oddIndex = this.rng.int(0, count - 1);
         const targets: TargetSpec[] = Array.from({ length: count }, (_, index) => ({ id: `v${index}`, text: index === oddIndex ? odd : base, value: index }));
         this.appendBomb(targets);
-        return this.make(family, '斩不同的', targets, [`v${oddIndex}`], ['standard'], stage);
+        return this.make(family, '不同的', targets, [`v${oddIndex}`], ['standard'], stage);
     }
 
     private visionCount(family: ContentFamilySpec, stage: Stage): QuestionInstance {
@@ -240,12 +249,12 @@ export class QuestionGenerator {
         const values = this.includeAnswer(answerCount, [1, 2, 3, 4, 5, 6], this.nonBombTargetCount());
         const targets: TargetSpec[] = values.map((value, index) => ({ id: `c${index}`, text: symbol.repeat(value), value }));
         this.appendBomb(targets);
-        return this.make(family, `斩${answerCount}个`, targets, [targets.find((target) => target.value === answerCount)!.id], ['standard'], stage);
+        return this.make(family, `${answerCount}个`, targets, [targets.find((target) => target.value === answerCount)!.id], ['standard'], stage);
     }
 
     private visionStroop(family: ContentFamilySpec, stage: Stage): QuestionInstance {
         const wanted = COLOR_WORDS[family.variant % COLOR_WORDS.length];
-        if (stage === 0) return this.makeChoice(family, `斩“${wanted}”`, wanted, COLOR_WORDS, stage, { allowBomb: false, allowReverse: false });
+        if (stage === 0) return this.makeChoice(family, `“${wanted}”`, wanted, COLOR_WORDS, stage, { allowBomb: false, allowReverse: false });
         const colors = this.includeAnswer(wanted, COLOR_WORDS, this.nonBombTargetCount());
         const targets: TargetSpec[] = colors.map((color, index) => ({
             id: `s${index}`,
@@ -254,7 +263,7 @@ export class QuestionGenerator {
             value: color,
         }));
         this.appendBomb(targets);
-        return this.make(family, `斩字体颜色·${wanted}`, targets, [targets.find((target) => target.value === wanted)!.id], ['stroop'], stage);
+        return this.make(family, `字体颜色·${wanted}`, targets, [targets.find((target) => target.value === wanted)!.id], ['stroop'], stage);
     }
 
     private visionPattern(family: ContentFamilySpec, stage: Stage): QuestionInstance {
@@ -279,7 +288,7 @@ export class QuestionGenerator {
     private hanziValid(family: ContentFamilySpec, stage: Stage): QuestionInstance {
         const entry = this.pickFact('idioms', IDIOMS, (item) => `idiom:${item.text}`);
         const wrong = entry.wrong.map((char) => `${entry.text.slice(0, entry.missingIndex)}${char}${entry.text.slice(entry.missingIndex + 1)}`);
-        return this.makeChoice(family, '斩真成语', entry.text, wrong, stage);
+        return this.makeChoice(family, '真成语', entry.text, wrong, stage);
     }
 
     private hanziOrder(family: ContentFamilySpec, stage: Stage): QuestionInstance {
@@ -304,13 +313,13 @@ export class QuestionGenerator {
         const count = this.nonBombTargetCount();
         const matchingPool = ENGLISH_WORDS.filter((word) => word.category === category);
         const others = this.rng.shuffle(ENGLISH_WORDS.filter((word) => word.category !== category));
-        const correctCount = stage > 0 ? 2 : 1;
+        const correctCount = this.directive.rules.includes('multi') || stage > 0 ? 2 : 1;
         const matching = this.pickFacts(`english-category:${category}`, matchingPool, correctCount, (word) => `english:${word.en}`);
         const words = this.rng.shuffle([...matching, ...others.slice(0, count - correctCount)]);
         const targets: TargetSpec[] = words.map((word, index) => ({ id: `e${index}`, text: word.en, value: word.category }));
         const correct = targets.filter((target) => target.value === category).map((target) => target.id);
         this.appendBomb(targets);
-        return this.make(family, this.directive.rules.includes('multi') ? `斩全部${category}` : `斩${category}`, targets, correct, this.directive.rules, stage);
+        return this.make(family, category, targets, correct, this.directive.rules, stage);
     }
 
     private englishAntonym(family: ContentFamilySpec, stage: Stage): QuestionInstance {
@@ -336,13 +345,13 @@ export class QuestionGenerator {
         const count = this.nonBombTargetCount();
         const matchingPool = LIFE_FACTS.filter((fact) => fact.category === category);
         const others = this.rng.shuffle(LIFE_FACTS.filter((fact) => fact.category !== category));
-        const correctCount = stage > 0 ? 2 : 1;
+        const correctCount = this.directive.rules.includes('multi') || stage > 0 ? 2 : 1;
         const matching = this.pickFacts(`life-category:${category}`, matchingPool, correctCount, (fact) => `life:${fact.item}`);
         const facts = this.rng.shuffle([...matching, ...others.slice(0, count - correctCount)]);
         const targets: TargetSpec[] = facts.map((fact, index) => ({ id: `l${index}`, text: fact.item, value: fact.category }));
         const correct = targets.filter((target) => target.value === category).map((target) => target.id);
         this.appendBomb(targets);
-        return this.make(family, this.directive.rules.includes('multi') ? `斩全部${category}` : `斩${category}`, targets, correct, this.directive.rules, stage);
+        return this.make(family, category, targets, correct, this.directive.rules, stage);
     }
 
     private geographyCapital(family: ContentFamilySpec, stage: Stage): QuestionInstance {
@@ -373,11 +382,13 @@ export class QuestionGenerator {
     }
 
     private nonBombTargetCount(): number {
-        return Math.max(2, this.directive.targetCount - (this.directive.rules.includes('bomb') ? 1 : 0));
+        return Math.max(2, this.directive.targetCount);
     }
 
     private appendBomb(targets: TargetSpec[]): void {
-        if (this.directive.rules.includes('bomb')) targets.push({ id: 'bomb', text: '爆', isBomb: true });
+        if (!this.directive.rules.includes('bomb')) return;
+        const insertIndex = this.rng.int(0, targets.length);
+        targets.splice(insertIndex, 0, { id: 'bomb', text: '爆', isBomb: true });
     }
 
     private pickFacts<T>(key: string, items: readonly T[], count: number, idOf: (item: T) => string): T[] {

@@ -21,7 +21,7 @@ export interface GameplayHUDState {
 type LayoutPoint = { x: number; y: number };
 
 const SLASH_EFFECT_KEYS = [
-    'blue_square', 'bomb', 'green_octagon', 'green_triangle', 'orange_circle',
+    'blue_square', 'bomb', 'green_triangle', 'orange_circle',
     'pink_diamond', 'purple_hexagon', 'red_trapezoid', 'yellow_circle',
 ] as const;
 type SlashEffectKey = typeof SLASH_EFFECT_KEYS[number];
@@ -210,7 +210,7 @@ export class GameplayHUD extends Component {
         const badges = makeNode('RuleBadgeGroup', hud, 340, 82);
         badges.setPosition(0, top - 119);
         this.paperBadge(badges, 'ReverseBadge', '↔  反向', RED, -86);
-        this.paperBadge(badges, 'MultiTargetBadge', '◎  多目标', BLUE, 86);
+        this.paperBadge(badges, 'MultiTargetBadge', '◎  多选', BLUE, 86);
 
         const timer = makeNode('TimerLifeGroup', hud, 176, 158);
         timer.setPosition(this.layoutWidth / 2 - 112, top - 18);
@@ -298,7 +298,7 @@ export class GameplayHUD extends Component {
 
     private applyRandomTargetSkins(): void {
         const skinNames = [
-            'blue_square', 'green_octagon', 'green_triangle', 'orange_circle',
+            'blue_square', 'green_triangle', 'orange_circle',
             'pink_diamond', 'purple_hexagon', 'red_trapezoid', 'yellow_circle',
         ];
         const targets = this.targetContainer.children.filter((node) => node.name !== 'BombTarget');

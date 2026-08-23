@@ -117,7 +117,7 @@ export function nextTowerUnlock(currentFloor: number): { floor: number; label: s
 }
 
 export function towerRuleLabel(rule: RuleId): string {
-    return ({ standard: '标准', reverse: '反向', multi: '多目标', order: '顺序', stroop: '颜色骗局', bomb: '禁区' } as const)[rule];
+    return ({ standard: '单选', reverse: '反向', multi: '多选', order: '顺序', stroop: '颜色骗局', bomb: '禁区' } as const)[rule];
 }
 
 export function towerFloorLabel(floor: number): string {
@@ -128,7 +128,7 @@ export function towerFloorLabel(floor: number): string {
     return config.ruleSequence.some((rules) => rules.includes('order')) ? '顺序试炼'
         : config.ruleSequence.some((rules) => rules.includes('reverse')) ? '反向试炼'
         : config.ruleSequence.some((rules) => rules.includes('stroop')) ? '颜色试炼'
-        : config.ruleSequence.some((rules) => rules.includes('multi')) ? '多目标试炼'
+        : config.ruleSequence.some((rules) => rules.includes('multi')) ? '多选试炼'
         : config.ruleSequence.some((rules) => rules.includes('bomb')) ? '禁区试炼' : '基础试炼';
 }
 
