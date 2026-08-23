@@ -3,7 +3,7 @@ export interface GameplayConfig {
     durationMs: number; readyMs: number; maxLife: number; masterWindowMs: number;
     baseScore: number; masterBonus: number; ruleMultiplierStep: number; questionTimeMs: [number, number, number];
 }
-export const CONTENT_VERSION = '1.0.0-mvp';
+export const CONTENT_VERSION = '1.3.0-mvp';
 export const GAMEPLAY_CONFIG: GameplayConfig = {
     durationMs: 60_000, readyMs: 600, maxLife: 3, masterWindowMs: 650,
     baseScore: 100, masterBonus: 50, ruleMultiplierStep: 0.25, questionTimeMs: [3000, 2500, 2100],

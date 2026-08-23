@@ -21,7 +21,10 @@ import {
 } from 'cc';
 import { EDITOR } from 'cc/env';
 import { HOME_HAND_DRAWN as C } from '../DesignTokens';
+import { CONTENT_VERSION } from '../../configs/GameConfig';
+import { createDailyChallenge, createDailyHomePresentation } from '../../domain/DailyChallenge';
 import { CountdownTimer } from './CountdownTimer';
+import { calculateHomePortraitLayout } from './HomePortraitLayout';
 import { createMockHomeViewData, HomeViewData } from './HomeViewData';
 import { AppRuntime } from '../../app/AppRuntime';
 
@@ -56,7 +59,9 @@ export class HomeController extends Component {
 
     private levelLabel: Label | null = null;
     private energyLabel: Label | null = null;
-    private friendMessageLabel: Label | null = null;
+    private dailyAccentLabel: Label | null = null;
+    private dailyTitleLabel: Label | null = null;
+    private dailyStatusLabel: Label | null = null;
     private countdownLabel: Label | null = null;
     private progressValueLabel: Label | null = null;
     private progressCells: Node[] = [];
@@ -68,15 +73,18 @@ export class HomeController extends Component {
         if (!EDITOR) {
             AppRuntime.initialize();
             const save = AppRuntime.save.snapshot();
+            const daily = createDailyChallenge(new Date(), CONTENT_VERSION);
+            const dailyView = createDailyHomePresentation(daily, save.daily);
             this.data = {
                 ...createMockHomeViewData(),
                 level: save.player.level,
                 rankName: save.player.bestScore > 0 ? `最高 ${save.player.bestScore}` : '新手',
                 rankProgress: save.player.xp % 500,
                 rankProgressMax: 500,
-                friendMessage: AppRuntime.entry.mode === 'friendChallenge'
-                    ? `好友目标 ${AppRuntime.entry.targetScore ?? 0} 分`
-                    : '一刀开局，挑战最高分！',
+                dailyAccent: dailyView.accent,
+                dailyTitle: dailyView.title,
+                dailyStatus: dailyView.status,
+                challengeEndTime: dailyView.endTime,
             };
         }
         // Preview and device must share one coordinate system; otherwise the
@@ -92,6 +100,11 @@ export class HomeController extends Component {
         }
         this.buildView();
         this.refresh(this.data);
+        if (!EDITOR && AppRuntime.hasPendingFriendChallenge()) {
+            this.scheduleOnce(() => {
+                if (AppRuntime.consumePendingFriendChallenge()) AppRuntime.start('friendChallenge');
+            }, 0);
+        }
     }
 
     protected onEnable(): void {
@@ -125,7 +138,9 @@ export class HomeController extends Component {
         this.data = { ...data };
         if (this.levelLabel) this.levelLabel.string = `Lv.${data.level}  ${data.rankName}`;
         if (this.energyLabel) this.energyLabel.string = `${data.energy}/${data.maxEnergy}`;
-        if (this.friendMessageLabel) this.friendMessageLabel.string = data.friendMessage;
+        if (this.dailyAccentLabel) this.dailyAccentLabel.string = data.dailyAccent;
+        if (this.dailyTitleLabel) this.dailyTitleLabel.string = data.dailyTitle;
+        if (this.dailyStatusLabel) this.dailyStatusLabel.string = data.dailyStatus;
         if (this.progressValueLabel) {
             this.progressValueLabel.string = `${data.rankProgress}/${data.rankProgressMax}`;
         }
@@ -149,7 +164,7 @@ export class HomeController extends Component {
 
     public onBrawlClick(): void {
         this.pulseHaptic();
-        AppRuntime.start(AppRuntime.entry.mode === 'friendChallenge' ? 'friendChallenge' : 'brawl60');
+        AppRuntime.start('brawl60');
     }
 
     public onReverseDayClick(): void {
@@ -178,7 +193,19 @@ export class HomeController extends Component {
 
     public onChallengeExpired(): void {
         if (this.countdownLabel) this.countdownLabel.string = '00:00:00';
-        console.log('[Home] Daily challenge expired');
+        if (!EDITOR) this.scheduleOnce(() => this.refreshLocalDaily(), 0);
+    }
+
+    private refreshLocalDaily(): void {
+        const challenge = createDailyChallenge(new Date(), CONTENT_VERSION);
+        const viewData = createDailyHomePresentation(challenge, AppRuntime.save.snapshot().daily);
+        this.refresh({
+            ...this.data,
+            dailyAccent: viewData.accent,
+            dailyTitle: viewData.title,
+            dailyStatus: viewData.status,
+            challengeEndTime: viewData.endTime,
+        });
     }
 
     private buildView(): void {
@@ -225,29 +252,30 @@ export class HomeController extends Component {
         const paper = this.makeNode(root, 'PaperBackground', 0, 0, 788, 591);
         this.attachResourceTexture(paper, 'textures/home/ui/home_slash_paper/spriteFrame');
 
-        const titleGroup = this.makeNode(root, 'TitleImagePlaceholder', -100, 104, 450, 162);
-        this.label(titleGroup, 'AccentCharacter', '成', -176, 42, 92, 76, 58, C.red, 'center');
-        this.label(titleGroup, 'TitleLine1', '语斩：', -34, 42, 220, 76, 58, C.ink, 'left');
-        this.label(titleGroup, 'TitleLine2', '百词破晓', -14, -43, 430, 84, 66, C.ink, 'center');
+        const titleGroup = this.makeNode(root, 'TitleImagePlaceholder', -100, 118, 450, 162);
+        this.dailyAccentLabel = this.label(titleGroup, 'AccentCharacter', '成', -176, 42, 92, 76, 58, C.red, 'center');
+        this.label(titleGroup, 'TitleLine1', '今日挑战', -34, 42, 260, 76, 50, C.ink, 'left');
+        this.dailyTitleLabel = this.label(titleGroup, 'TitleLine2', '成语连斩', -14, -43, 430, 84, 66, C.ink, 'center');
         this.drawUnderline(titleGroup, 'TitleRedUnderline', 0, -82, 430, C.red, -4);
 
-        const hourglass = this.makeNode(root, 'HourglassIcon', 263, 98, 110, 140);
+        const hourglass = this.makeNode(root, 'HourglassIcon', 263, 112, 110, 140);
         this.drawHourglass(hourglass);
 
-        const friend = this.makeNode(root, 'FriendBubble', -105, -54, 440, 78);
+        const friend = this.makeNode(root, 'FriendBubble', -105, -34, 440, 78);
         this.drawSmallFriend(friend, -188, 0);
         const bubble = this.graphics(friend, 'BubbleOutline', 30, 0, 360, 68);
         this.roundedRect(bubble, -180, -32, 360, 64, C.paperRaised, C.ink, 2.5, 14);
-        this.friendMessageLabel = this.label(friend, 'FriendMessage', '', 31, 0, 326, 56, 26, C.ink, 'center');
+        this.dailyStatusLabel = this.label(friend, 'DailyStatus', '', 31, 0, 326, 56, 26, C.ink, 'center');
 
-        this.countdownLabel = this.label(root, 'CountdownLabel', '00:00:00', 266, -60, 220, 58, 34, C.ink, 'center');
-        this.drawUnderline(root, 'CountdownUnderline', 266, -94, 210, C.red, -1);
+        this.countdownLabel = this.label(root, 'CountdownLabel', '00:00:00', 266, -34, 220, 58, 34, C.ink, 'center');
+        this.drawUnderline(root, 'CountdownUnderline', 266, -68, 210, C.red, -1);
 
-        const start = this.makeNode(root, 'StartButton', 0, -172, 600, 132);
+        const start = this.makeNode(root, 'StartButton', 0, -190, 600, 126);
         // The source keeps generous transparent margins around the hand-drawn stroke.
         // Preserve its native ratio so the brush texture and lettering are not squeezed.
-        const artwork = this.makeNode(start, 'ButtonArtwork', 0, 0, 600, 225);
+        const artwork = this.makeNode(start, 'ButtonArtwork', 0, 0, 565, 210);
         this.attachResourceTexture(artwork, 'textures/home/ui/draw_sword/spriteFrame');
+        start.setSiblingIndex(root.children.length - 1);
         this.bindButton(start, this.onDailyChallengeClick.bind(this));
         return root;
     }
@@ -352,37 +380,20 @@ export class HomeController extends Component {
         if (backgroundTexture) this.resizeCoverTexture(backgroundTexture, visible.width, visible.height);
         this.redrawBackground(visible.width, visible.height);
 
-        const extraHeight = Math.max(0, visible.height - C.designHeight);
-        const gapBoost = Math.min(96, extraHeight / 4);
         const topInset = this.getTopInset(visible.height);
         const bottomInset = this.getBottomInset(visible.height);
-        const topEdge = visible.height * 0.5;
-        const bottomEdge = -visible.height * 0.5;
+        const layout = calculateHomePortraitLayout(visible.height, topInset, bottomInset);
 
-        const headerY = topEdge - topInset - 60;
-        const dailyY = headerY - 69 - 22 - gapBoost * 0.15 - 250;
-        const brawlY = dailyY - 250 - (28 + gapBoost) - 94;
-        const eventY = brawlY - 94 - (18 + gapBoost * 0.72) - 108;
-        // Keep progress anchored while using the previous dead space above the
-        // cards; the extra separation now sits where the composition needs it.
-        const progressY = eventY - 168 - (74 + gapBoost * 0.48) - 56;
-        const navY = bottomEdge + bottomInset + 64;
+        this.header?.setPosition(0, layout.sectionY.header, 0);
+        this.dailyChallenge?.setPosition(0, layout.sectionY.daily, 0);
+        this.brawlButton?.setPosition(0, layout.sectionY.brawl, 0);
+        this.eventArea?.setPosition(0, layout.sectionY.events, 0);
+        this.rankProgress?.setPosition(0, layout.sectionY.rank, 0);
+        this.bottomNavigation?.setPosition(0, layout.navigationY, 0);
 
-        this.header?.setPosition(0, headerY, 0);
-        this.dailyChallenge?.setPosition(0, dailyY, 0);
-        this.brawlButton?.setPosition(0, brawlY, 0);
-        this.eventArea?.setPosition(0, eventY, 0);
-        this.rankProgress?.setPosition(0, progressY, 0);
-        this.bottomNavigation?.setPosition(0, navY, 0);
-
-        // Only compact genuinely shorter-than-reference previews. Major paper cards use
-        // section-specific emphasis so the home screen does not dissolve into empty space.
-        const contentScale = Math.max(0.9, Math.min(1, visible.height / C.designHeight));
-        this.header?.setScale(contentScale, contentScale, 1);
-        this.dailyChallenge?.setScale(contentScale * 1.07, contentScale * 1.07, 1);
-        this.brawlButton?.setScale(contentScale * 1.08, contentScale * 1.08, 1);
-        this.eventArea?.setScale(contentScale * 1.18, contentScale * 1.18, 1);
-        this.rankProgress?.setScale(contentScale * 1.05, contentScale * 1.05, 1);
+        for (const section of [this.header, this.dailyChallenge, this.brawlButton, this.eventArea, this.rankProgress]) {
+            section?.setScale(layout.contentScale, layout.contentScale, 1);
+        }
     };
 
     private redrawBackground(width: number, height: number): void {
@@ -596,14 +607,24 @@ export class HomeController extends Component {
     private bindButton(node: Node, callback: () => void): void {
         const button = node.addComponent(Button);
         button.transition = Button.Transition.NONE;
-        node.on(Button.EventType.CLICK, callback, this);
+        node.on(Button.EventType.CLICK, () => {
+            callback();
+            if (!EDITOR) AppRuntime.audio.play('ui');
+        }, this);
+        let restingScale = node.scale.clone();
+        let pressed = false;
         node.on(Node.EventType.TOUCH_START, () => {
+            if (!pressed) restingScale = node.scale.clone();
+            pressed = true;
             Tween.stopAllByTarget(node);
-            tween(node).to(0.08, { scale: new Vec3(0.97, 0.97, 1) }, { easing: 'quadOut' }).start();
+            tween(node).to(0.08, {
+                scale: new Vec3(restingScale.x * 0.97, restingScale.y * 0.97, restingScale.z),
+            }, { easing: 'quadOut' }).start();
         }, this);
         const release = (): void => {
             Tween.stopAllByTarget(node);
-            tween(node).to(0.1, { scale: Vec3.ONE }, { easing: 'backOut' }).start();
+            tween(node).to(0.1, { scale: restingScale }, { easing: 'backOut' }).start();
+            pressed = false;
         };
         node.on(Node.EventType.TOUCH_END, release, this);
         node.on(Node.EventType.TOUCH_CANCEL, release, this);
@@ -1039,10 +1060,7 @@ export class HomeController extends Component {
     }
 
     private pulseHaptic(): void {
-        try {
-            (globalThis as { wx?: WechatApi }).wx?.vibrateShort?.({ type: 'light' });
-        } catch {
-            // Haptics are optional on desktop preview and unsupported devices.
-        }
+        if (!AppRuntime.save.snapshot().settings.vibration) return;
+        AppRuntime.platform.vibrate(true, 'light');
     }
 }

@@ -3,7 +3,9 @@ export interface HomeViewData {
     rankName: string;
     energy: number;
     maxEnergy: number;
-    friendMessage: string;
+    dailyAccent: string;
+    dailyTitle: string;
+    dailyStatus: string;
     challengeEndTime: number;
     rankProgress: number;
     rankProgressMax: number;
@@ -15,7 +17,9 @@ export function createMockHomeViewData(now = Date.now()): HomeViewData {
         rankName: '学徒',
         energy: 120,
         maxEnergy: 150,
-        friendMessage: '好友刚刚完成斩击！',
+        dailyAccent: '成',
+        dailyTitle: '成语连斩',
+        dailyStatus: '今日首战 · 全员同题',
         challengeEndTime: now + 4 * 60 * 60 * 1000 + 23 * 60 * 1000 + 59 * 1000,
         rankProgress: 7,
         rankProgressMax: 10,

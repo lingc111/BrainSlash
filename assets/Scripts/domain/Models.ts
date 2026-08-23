@@ -3,11 +3,11 @@ export type ThemeId = 'math' | 'vision' | 'english' | 'hanzi' | 'geography' | 'l
 export type RuleId = 'standard' | 'reverse' | 'multi' | 'order' | 'stroop' | 'bomb';
 export type SessionPhase = 'ready' | 'playing' | 'resolving' | 'finished';
 
-export interface GameEntryParams { mode: GameMode; seed: string; contentVersion: string; recipeId?: string; targetScore?: number; }
+export interface GameEntryParams { mode: GameMode; seed: string; contentVersion: string; recipeId?: string; targetScore?: number; dailyDate?: string; }
 export interface PromptSpec { text: string; }
 export interface TargetSpec { id: string; text: string; value?: string | number; colorName?: string; isBomb?: boolean; }
 export interface QuestionInstance {
-    id: string; theme: ThemeId; prompt: PromptSpec; targets: TargetSpec[];
+    id: string; theme: ThemeId; familyId?: string; factIds?: string[]; prompt: PromptSpec; targets: TargetSpec[];
     baseCorrectTargetIds: string[]; orderedTargetIds?: string[]; activeRules: RuleId[];
     timeLimitMs: number; tutorialSafe: boolean;
 }
@@ -21,9 +21,25 @@ export type FailureKind = 'wrong' | 'bomb' | 'miss' | 'orderError';
 export type HitResult =
     | { kind: 'correct' | 'master'; scoreDelta: number; reactionMs: number }
     | { kind: FailureKind; lifeDelta: -1 };
-export interface GameResult {
+export interface PlayerProgress { level: number; xp: number; bestScore: number; }
+export interface RunResult {
     entry: GameEntryParams; score: number; maxCombo: number; correctCount: number; errorCount: number;
-    accuracy: number; bestReactionMs?: number; isNewRecord: boolean;
+    accuracy: number; bestReactionMs?: number;
+}
+export interface ResultGrowth {
+    xpGained: number; levelBefore: number; levelAfter: number;
+    levelProgressBefore: number; levelProgressAfter: number; levelTarget: number;
+}
+export interface FriendChallengeResult {
+    targetScore: number; scoreDelta: number; outcome: 'won' | 'tied' | 'lost';
+}
+export interface DailyChallengeResult {
+    dateKey: string; recipeId: string; attempts: number; previousBestScore: number; bestScore: number; isNewBest: boolean;
+}
+export interface GameResult extends RunResult {
+    previousBestScore: number; isNewRecord: boolean; growth: ResultGrowth;
+    challenge?: FriendChallengeResult;
+    daily?: DailyChallengeResult;
 }
 export interface FriendChallengePayload {
     v: 1; seed: string; contentVersion: string; mode: 'brawl60'; recipeId: string; targetScore: number;
