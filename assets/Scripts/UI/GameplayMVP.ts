@@ -13,7 +13,13 @@ import { evaluateRules } from '../domain/Rules';
 import { prepareRuleTutorial, tutorialRetryInstruction, type RuleTutorialSpec } from '../domain/RuleTutorial';
 import { SeededRng } from '../domain/SeededRng';
 import { GameplayTarget, GameplayTargetData, TargetContentType, TargetShape } from './GameplayTarget';
-import { calculatePortraitTargetLayout, portraitTargetEntranceDelay } from './PortraitTargetLayout';
+import { calculatePortraitTargetLayout, portraitTargetEntranceDelay, type PortraitTargetPosition } from './PortraitTargetLayout';
+import {
+    createPortraitTargetMotionPlans,
+    evaluatePortraitTargetMotion,
+    resolveSoftTargetSeparation,
+    type PortraitTargetMotionPlan,
+} from './PortraitTargetMotion';
 import { showResultOverlay } from './ResultOverlay';
 
 const { ccclass } = _decorator;
@@ -23,20 +29,9 @@ const SKINS = ['blue_square','green_octagon','green_triangle','orange_circle','p
 const DESIGN_WIDTH = 750, DESIGN_HEIGHT = 1624;
 const FRAME_TOP_INSET = 292, FRAME_BOTTOM_INSET = 12, TARGET_VISUAL_RADIUS = 132;
 type EffectKey = typeof SKINS[number] | 'bomb';
-interface TargetMotion {
+interface TargetMotion extends PortraitTargetMotionPlan {
     node: Node;
-    startX: number;
-    targetX: number;
-    startY: number;
-    ceilingY: number;
-    groundY: number;
     delay: number;
-    duration: number;
-    velocityY: number;
-    gravity: number;
-    entranceAngle: number;
-    phase: number;
-    speed: number;
 }
 function ui(n:Node,w:number,h:number):UITransform { const t=n.getComponent(UITransform)??n.addComponent(UITransform); t.setContentSize(w,h); t.setAnchorPoint(.5,.5); return t; }
 function node(name:string,parent:Node,w=0,h=0):Node { const n=new Node(name); parent.addChild(n); ui(n,w,h); return n; }
@@ -144,17 +139,17 @@ export class GameplayMVP extends Component {
         if(this.session.state.phase!=='playing')return;
         const prepared=prepareRuleTutorial(this.director.next(this.session.state.elapsedMs),this.learnedTutorials);this.currentDirective=prepared.directive;this.tutorial=prepared.tutorial;this.question=this.generator.next(prepared.directive);this.question.tutorialSafe=!!this.tutorial;this.presentCurrentQuestion(false);
     }
-    private presentCurrentQuestion(retry:boolean,retryCopy?:string):void{if(!this.question||!this.currentDirective||this.session.state.phase!=='playing')return;for(const c of [...this.targets.children]){c.removeFromParent();c.destroy();}this.effectByNode.clear();this.motions.length=0;this.gesture=null;this.constraint=evaluateRules(this.question);if(!retry){this.session.beginQuestion();this.currentSkins=this.visual.shuffle(SKINS);this.currentMotionPhases=this.question.targets.map(()=>this.visual.next()*Math.PI*2);}this.prompt.string=this.question.prompt.text;const rs=this.question.activeRules.filter(r=>r!=='standard');this.rule.string=this.tutorial?`新规则 · ${this.tutorial.name}`:rs.length?rs.map(r=>({reverse:'反向',multi:'多目标',order:'顺序',stroop:'颜色骗局',bomb:'禁区'} as Record<string,string>)[r]).join(' + '):'标准';this.updateTutorialCoach(retryCopy);this.showReverse(this.question.activeRules.includes('reverse'));const positions=this.layout(this.question.targets.length);this.question.targets.forEach((s,i)=>this.createTarget(s,positions[i],this.currentSkins[i%this.currentSkins.length],i,this.currentDirective!.speed,this.currentMotionPhases[i]));this.refresh();}
-    private createTarget(spec:TargetSpec,pos:Vec3,skin:typeof SKINS[number],i:number,speed:number,motionPhase:number):void {
-        const n=node(spec.isBomb?'BombTarget':`Target_${spec.id}`,this.targets,168,168);const v=view.getVisibleSize(),side=pos.x<0?-1:pos.x>0?1:i%2===0?-1:1,row=Math.max(0,pos.z),groundY=-v.height/2-TARGET_VISUAL_RADIUS-8-row*220,startY=pos.y,delay=portraitTargetEntranceDelay({x:pos.x,y:pos.y,row}),baseDuration=(this.question?.timeLimitMs??3000)/1000,duration=Math.max(.9,baseDuration-delay),maxApexY=v.height/2-FRAME_TOP_INSET-TARGET_VISUAL_RADIUS-8,apexY=Math.max(startY+24,Math.min(maxApexY,startY+v.height*.105)),arcRatio=Math.sqrt(Math.max(1,apexY-startY)/Math.max(1,apexY-groundY)),apexTime=duration*arcRatio/(1+arcRatio),gravity=2*(startY-apexY)/(apexTime*apexTime),velocityY=-gravity*apexTime,entranceAngle=[-10,8,-7,10,-6,7][i]??0;
-        n.setPosition(side*(v.width/2+110),startY);n.setScale(.68,.68,1);n.angle=entranceAngle;
+    private presentCurrentQuestion(retry:boolean,retryCopy?:string):void{if(!this.question||!this.currentDirective||this.session.state.phase!=='playing')return;for(const c of [...this.targets.children]){c.removeFromParent();c.destroy();}this.effectByNode.clear();this.motions.length=0;this.gesture=null;this.constraint=evaluateRules(this.question);if(!retry){this.session.beginQuestion();this.currentSkins=this.visual.shuffle(SKINS);this.currentMotionPhases=this.question.targets.map(()=>this.visual.next()*Math.PI*2);}this.prompt.string=this.question.prompt.text;const rs=this.question.activeRules.filter(r=>r!=='standard');this.rule.string=this.tutorial?`新规则 · ${this.tutorial.name}`:rs.length?rs.map(r=>({reverse:'反向',multi:'多目标',order:'顺序',stroop:'颜色骗局',bomb:'禁区'} as Record<string,string>)[r]).join(' + '):'标准';this.updateTutorialCoach(retryCopy);this.showReverse(this.question.activeRules.includes('reverse'));const positions=this.layout(this.question.targets.length),v=view.getVisibleSize(),duration=Math.max(.9,(this.question.timeLimitMs??3000)/1000),plans=createPortraitTargetMotionPlans(positions,this.currentMotionPhases,{visibleWidth:v.width,visibleHeight:v.height,duration,speed:this.currentDirective.speed,topInset:FRAME_TOP_INSET,visualRadius:TARGET_VISUAL_RADIUS});this.question.targets.forEach((s,i)=>this.createTarget(s,positions[i],plans[i],this.currentSkins[i%this.currentSkins.length],i));this.refresh();}
+    private createTarget(spec:TargetSpec,pos:PortraitTargetPosition,motion:PortraitTargetMotionPlan,skin:typeof SKINS[number],i:number):void {
+        const n=node(spec.isBomb?'BombTarget':`Target_${spec.id}`,this.targets,168,168);const row=Math.max(0,pos.row),delay=portraitTargetEntranceDelay({x:pos.x,y:pos.y,row});
+        n.setPosition(motion.startX,motion.startY);n.setScale(.68,.68,1);n.angle=motion.entranceAngle;
         const wordColors:Record<string,Color>={红:RED,蓝:BLUE,绿:GREEN,黄:YELLOW};
         const data:GameplayTargetData={id:spec.id,contentType:TargetContentType.TEXT,text:spec.text,value:spec.value,shape:(['roundedSquare','triangle','hexagon','circle','pentagon'] as TargetShape[])[i%5],isBomb:spec.isBomb,color:COLORS[i%COLORS.length],contentColor:spec.colorName?wordColors[spec.colorName]:undefined};const target=n.addComponent(GameplayTarget);target.configure(data);
         const key:EffectKey=spec.isBomb?'bomb':skin;this.effectByNode.set(n,key);resources.load(`textures/gameplay/targets/${key}/spriteFrame`,SpriteFrame,(e,f)=>{if(!e&&n.isValid&&n.active)target.applySkin(f);});
-        this.motions.push({node:n,startX:n.position.x,targetX:pos.x,startY,ceilingY:maxApexY,groundY,delay,duration,velocityY,gravity,entranceAngle,phase:motionPhase,speed});
+        this.motions.push({node:n,...motion,delay});
         tween(n).delay(delay).to(.18,{scale:new Vec3(1.12,1.12,1)},{easing:'backOut'}).to(.16,{scale:Vec3.ONE},{easing:'quadOut'}).start();
     }
-    private layout(count:number):Vec3[]{const v=view.getVisibleSize();return calculatePortraitTargetLayout(count,v.width,v.height).map((position)=>new Vec3(position.x,position.y,position.row));}
+    private layout(count:number):PortraitTargetPosition[]{const v=view.getVisibleSize();return calculatePortraitTargetLayout(count,v.width,v.height);}
     private startTouch(e:EventTouch):void{if(this.paused||this.session.state.phase!=='playing'||!this.constraint)return;if(!this.gesture)this.gesture=new GestureResolver(this.constraint);this.points=[this.point(e)];this.trailAge=0;}
     private moveTouch(e:EventTouch):void{if(!this.gesture||this.session.state.phase!=='playing')return;const p=this.point(e),a=this.points[this.points.length-1];if(!a||Vec2.distance(a,p)<4)return;this.points.push(p);if(this.points.length>18)this.points.shift();this.sweep(a,p);this.trailAge=0;this.drawTrail(1);}
     private endTouch():void{if(this.gesture&&this.gesture.hasHits()&&this.session.state.phase==='playing'){const p=this.gesture.end(this.keepsIncompleteGesture());this.progress(p,null);if(p.status!=='continue')this.gesture=null;}else if(!this.keepsIncompleteGesture())this.gesture=null;this.trailAge=0;}
@@ -186,14 +181,10 @@ export class GameplayMVP extends Component {
     private updateTargetMotions():boolean{
         const elapsed=this.session.questionElapsedMs()/1000;
         let landed=false;
-        for(const motion of this.motions){
-            if(!motion.node.isValid)continue;
-            const local=elapsed-motion.delay;
-            if(local<0){motion.node.setPosition(motion.startX,motion.startY);continue;}
-            const t=Math.min(local,motion.duration),entry=Math.min(1,t/Math.min(.58/Math.max(.1,motion.speed),motion.duration*.3)),ease=1-Math.pow(1-entry,3);
-            const x=motion.startX+(motion.targetX-motion.startX)*ease+Math.sin(t*2.4*motion.speed+motion.phase)*8*entry;
-            const y=motion.startY+motion.velocityY*t+.5*motion.gravity*t*t;
-            motion.node.setPosition(x,Math.min(motion.ceilingY,Math.max(motion.groundY,y)));motion.node.angle=motion.entranceAngle*Math.max(0,1-Math.min(1,t/.24));
+        const valid=this.motions.filter((motion)=>motion.node.isValid),base=valid.map((motion)=>evaluatePortraitTargetMotion(motion,elapsed-motion.delay)),separated=resolveSoftTargetSeparation(base);
+        for(let index=0;index<valid.length;index++){
+            const motion=valid[index],local=elapsed-motion.delay,point=separated[index];
+            motion.node.setPosition(point.x,point.y);motion.node.angle=motion.entranceAngle*Math.max(0,1-Math.min(1,Math.max(0,local)/.24));
             if(local>=motion.duration)landed=true;
         }
         return landed;

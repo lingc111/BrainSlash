@@ -38,6 +38,13 @@ import { RunSeedFactory } from '../assets/Scripts/app/RunSeedFactory.ts';
 import { PlatformService } from '../assets/Scripts/infrastructure/PlatformService.ts';
 import { AudioService, SoundThrottle } from '../assets/Scripts/infrastructure/AudioService.ts';
 import { calculatePortraitTargetLayout, portraitTargetEntranceDelay } from '../assets/Scripts/UI/PortraitTargetLayout.ts';
+import {
+    createPortraitTargetMotionPlans,
+    evaluatePortraitTargetMotion,
+    PORTRAIT_TARGET_MAX_SEPARATION_OFFSET,
+    PORTRAIT_TARGET_MIN_SEPARATION,
+    resolveSoftTargetSeparation,
+} from '../assets/Scripts/UI/PortraitTargetMotion.ts';
 
 function pipeline(seed: string): { director: Brawl60Director; generator: QuestionGenerator } {
     return {
@@ -557,6 +564,70 @@ test('portrait target formations use at most two targets per row with clear spac
     }
     assert.deepEqual(calculatePortraitTargetLayout(5, 750, 1624).map((position) => position.row), [0, 0, 1, 2, 2]);
     assert.deepEqual(calculatePortraitTargetLayout(6, 750, 1624).map((position) => position.row), [0, 0, 1, 1, 2, 2]);
+});
+
+test('portrait target motion preserves lanes and separates every phase throughout flight', () => {
+    const screens = [
+        { width: 750, height: 1624 },
+        { width: 720, height: 1280 },
+        { width: 828, height: 1792 },
+    ];
+    const phases = [
+        { duration: 3, speed: 0.72 },
+        { duration: 2.6, speed: 0.95 },
+        { duration: 2.25, speed: 1.15 },
+        { duration: 1.85, speed: 1.38 },
+    ];
+    for (const screen of screens) {
+        for (const phase of phases) {
+            for (let count = 2; count <= 6; count++) {
+                const layout = calculatePortraitTargetLayout(count, screen.width, screen.height);
+                for (let variation = 0; variation < 12; variation++) {
+                    const motionPhases = Array.from(
+                        { length: count },
+                        (_, index) => (index * 1.137 + variation * 0.733) % (Math.PI * 2),
+                    );
+                    const plans = createPortraitTargetMotionPlans(layout, motionPhases, {
+                        visibleWidth: screen.width,
+                        visibleHeight: screen.height,
+                        duration: phase.duration,
+                        speed: phase.speed,
+                        topInset: 292,
+                        visualRadius: 132,
+                    });
+                    for (let sample = 0; sample <= 180; sample++) {
+                        const elapsed = phase.duration * sample / 180;
+                        const base = plans.map((plan) => evaluatePortraitTargetMotion(plan, elapsed));
+                        const separated = resolveSoftTargetSeparation(base);
+                        for (let a = 0; a < separated.length; a++) {
+                            assert.ok(
+                                Math.hypot(separated[a].x - base[a].x, separated[a].y - base[a].y)
+                                    <= PORTRAIT_TARGET_MAX_SEPARATION_OFFSET + 0.001,
+                            );
+                            for (let b = a + 1; b < separated.length; b++) {
+                                assert.ok(
+                                    Math.hypot(separated[a].x - separated[b].x, separated[a].y - separated[b].y)
+                                        >= PORTRAIT_TARGET_MIN_SEPARATION - 0.05,
+                                    `${screen.width}x${screen.height}, count ${count}, variation ${variation}, sample ${sample}, pair ${a}/${b}`,
+                                );
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+});
+
+test('soft target separation is deterministic and capped for an invalid overlapping input', () => {
+    const input = [{ x: 10, y: 20 }, { x: 10, y: 20 }];
+    const first = resolveSoftTargetSeparation(input);
+    const second = resolveSoftTargetSeparation(input);
+    assert.deepEqual(first, second);
+    first.forEach((point, index) => {
+        assert.ok(Math.hypot(point.x - input[index].x, point.y - input[index].y)
+            <= PORTRAIT_TARGET_MAX_SEPARATION_OFFSET + 0.001);
+    });
 });
 
 test('each phase schedules its intended themes and rule beats', () => {
