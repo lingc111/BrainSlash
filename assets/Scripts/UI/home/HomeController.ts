@@ -23,6 +23,7 @@ import { EDITOR } from 'cc/env';
 import { HOME_HAND_DRAWN as C } from '../DesignTokens';
 import { CONTENT_VERSION } from '../../configs/GameConfig';
 import { createDailyChallenge, createDailyHomePresentation } from '../../domain/DailyChallenge';
+import { nextTowerUnlock, towerFloorConfig, towerFloorLabel, towerRuleLabel } from '../../domain/TowerMode';
 import { CountdownTimer } from './CountdownTimer';
 import { calculateHomePortraitLayout } from './HomePortraitLayout';
 import { createMockHomeViewData, HomeViewData } from './HomeViewData';
@@ -63,6 +64,9 @@ export class HomeController extends Component {
     private dailyTitleLabel: Label | null = null;
     private dailyStatusLabel: Label | null = null;
     private countdownLabel: Label | null = null;
+    private dailyEventTitleLabel: Label | null = null;
+    private dailyEventStatusLabel: Label | null = null;
+    private dailyEventCountdownLabel: Label | null = null;
     private progressValueLabel: Label | null = null;
     private progressCells: Node[] = [];
     private navSelectionMarkers: Node[] = [];
@@ -75,6 +79,10 @@ export class HomeController extends Component {
             const save = AppRuntime.save.snapshot();
             const daily = createDailyChallenge(new Date(), CONTENT_VERSION);
             const dailyView = createDailyHomePresentation(daily, save.daily);
+            const nextUnlock = nextTowerUnlock(save.tower.currentFloor);
+            const floorConfig = towerFloorConfig(save.tower.currentFloor);
+            const currentUnlock = floorConfig.unlockedRule ? towerRuleLabel(floorConfig.unlockedRule)
+                : save.tower.currentFloor === 15 ? '双规则' : undefined;
             this.data = {
                 ...createMockHomeViewData(),
                 level: save.player.level,
@@ -85,6 +93,13 @@ export class HomeController extends Component {
                 dailyTitle: dailyView.title,
                 dailyStatus: dailyView.status,
                 challengeEndTime: dailyView.endTime,
+                towerFloor: save.tower.currentFloor,
+                towerHighestFloor: save.tower.highestClearedFloor,
+                towerPoints: save.tower.totalTowerPoints,
+                towerFloorTitle: towerFloorLabel(save.tower.currentFloor),
+                towerHint: save.tower.chapterOneCompleted ? '首章完成 · 重战第30层'
+                    : currentUnlock ? `本层解锁${currentUnlock}`
+                    : nextUnlock ? `再过 ${nextUnlock.floor - save.tower.currentFloor} 层解锁${nextUnlock.label}` : '本层挑战首章终点',
             };
         }
         // Preview and device must share one coordinate system; otherwise the
@@ -118,7 +133,7 @@ export class HomeController extends Component {
         this.countdown.start(
             this.data.challengeEndTime,
             (formatted) => {
-                if (this.countdownLabel?.isValid) this.countdownLabel.string = formatted;
+                if (this.dailyEventCountdownLabel?.isValid) this.dailyEventCountdownLabel.string = formatted;
             },
             this.onChallengeExpired.bind(this),
         );
@@ -138,9 +153,12 @@ export class HomeController extends Component {
         this.data = { ...data };
         if (this.levelLabel) this.levelLabel.string = `Lv.${data.level}  ${data.rankName}`;
         if (this.energyLabel) this.energyLabel.string = `${data.energy}/${data.maxEnergy}`;
-        if (this.dailyAccentLabel) this.dailyAccentLabel.string = data.dailyAccent;
-        if (this.dailyTitleLabel) this.dailyTitleLabel.string = data.dailyTitle;
-        if (this.dailyStatusLabel) this.dailyStatusLabel.string = data.dailyStatus;
+        if (this.dailyAccentLabel) this.dailyAccentLabel.string = '答';
+        if (this.dailyTitleLabel) this.dailyTitleLabel.string = `第${data.towerFloor}层 · ${data.towerFloorTitle}`;
+        if (this.dailyStatusLabel) this.dailyStatusLabel.string = `最高 ${data.towerHighestFloor} 层 · 塔积分 ${data.towerPoints}`;
+        if (this.countdownLabel) this.countdownLabel.string = data.towerHint;
+        if (this.dailyEventTitleLabel) this.dailyEventTitleLabel.string = data.dailyTitle;
+        if (this.dailyEventStatusLabel) this.dailyEventStatusLabel.string = data.dailyStatus;
         if (this.progressValueLabel) {
             this.progressValueLabel.string = `${data.rankProgress}/${data.rankProgressMax}`;
         }
@@ -150,7 +168,7 @@ export class HomeController extends Component {
             this.countdown.start(
                 data.challengeEndTime,
                 (formatted) => {
-                    if (this.countdownLabel?.isValid) this.countdownLabel.string = formatted;
+                    if (this.dailyEventCountdownLabel?.isValid) this.dailyEventCountdownLabel.string = formatted;
                 },
                 this.onChallengeExpired.bind(this),
             );
@@ -160,6 +178,11 @@ export class HomeController extends Component {
     public onDailyChallengeClick(): void {
         this.pulseHaptic();
         AppRuntime.start('daily');
+    }
+
+    public onTowerClick(): void {
+        this.pulseHaptic();
+        AppRuntime.start('tower');
     }
 
     public onBrawlClick(): void {
@@ -172,7 +195,7 @@ export class HomeController extends Component {
     }
 
     public onFlagHunterClick(): void {
-        console.log('[Home] Limited event: 国旗猎人');
+        this.onDailyChallengeClick();
     }
 
     public onHomeClick(): void {
@@ -192,7 +215,7 @@ export class HomeController extends Component {
     }
 
     public onChallengeExpired(): void {
-        if (this.countdownLabel) this.countdownLabel.string = '00:00:00';
+        if (this.dailyEventCountdownLabel) this.dailyEventCountdownLabel.string = '00:00:00';
         if (!EDITOR) this.scheduleOnce(() => this.refreshLocalDaily(), 0);
     }
 
@@ -214,7 +237,7 @@ export class HomeController extends Component {
         this.safeArea = this.makeNode(this.node, 'SafeArea', 0, 0, C.designWidth, C.designHeight);
 
         this.header = this.buildHeader(this.safeArea);
-        this.dailyChallenge = this.buildDailyChallenge(this.safeArea);
+        this.dailyChallenge = this.buildTowerChallenge(this.safeArea);
         this.brawlButton = this.buildBrawlButton(this.safeArea);
         this.eventArea = this.buildEvents(this.safeArea);
         this.rankProgress = this.buildRankProgress(this.safeArea);
@@ -247,27 +270,27 @@ export class HomeController extends Component {
         return header;
     }
 
-    private buildDailyChallenge(parent: Node): Node {
-        const root = this.makeNode(parent, 'DailyChallenge', 0, 0, 790, 600);
+    private buildTowerChallenge(parent: Node): Node {
+        const root = this.makeNode(parent, 'TowerChallenge', 0, 0, 790, 600);
         const paper = this.makeNode(root, 'PaperBackground', 0, 0, 788, 591);
         this.attachResourceTexture(paper, 'textures/home/ui/home_slash_paper/spriteFrame');
 
         const titleGroup = this.makeNode(root, 'TitleImagePlaceholder', -100, 118, 450, 162);
-        this.dailyAccentLabel = this.label(titleGroup, 'AccentCharacter', '成', -176, 42, 92, 76, 58, C.red, 'center');
-        this.label(titleGroup, 'TitleLine1', '今日挑战', -34, 42, 260, 76, 50, C.ink, 'left');
-        this.dailyTitleLabel = this.label(titleGroup, 'TitleLine2', '成语连斩', -14, -43, 430, 84, 66, C.ink, 'center');
+        this.dailyAccentLabel = this.label(titleGroup, 'AccentCharacter', '答', -176, 42, 92, 76, 58, C.red, 'center');
+        this.label(titleGroup, 'TitleLine1', '题试炼塔', -34, 42, 310, 76, 50, C.ink, 'left');
+        this.dailyTitleLabel = this.label(titleGroup, 'TitleLine2', '第1层 · 基础试炼', -14, -43, 470, 84, 54, C.ink, 'center');
         this.drawUnderline(titleGroup, 'TitleRedUnderline', 0, -82, 430, C.red, -4);
 
-        const hourglass = this.makeNode(root, 'HourglassIcon', 263, 112, 110, 140);
-        this.drawHourglass(hourglass);
+        const towerIcon = this.makeNode(root, 'TowerIcon', 263, 112, 130, 150);
+        this.drawTowerIcon(towerIcon);
 
         const friend = this.makeNode(root, 'FriendBubble', -105, -34, 440, 78);
         this.drawSmallFriend(friend, -188, 0);
         const bubble = this.graphics(friend, 'BubbleOutline', 30, 0, 360, 68);
         this.roundedRect(bubble, -180, -32, 360, 64, C.paperRaised, C.ink, 2.5, 14);
-        this.dailyStatusLabel = this.label(friend, 'DailyStatus', '', 31, 0, 326, 56, 26, C.ink, 'center');
+        this.dailyStatusLabel = this.label(friend, 'TowerStatus', '', 31, 0, 326, 56, 24, C.ink, 'center');
 
-        this.countdownLabel = this.label(root, 'CountdownLabel', '00:00:00', 266, -34, 220, 58, 34, C.ink, 'center');
+        this.countdownLabel = this.label(root, 'TowerHint', '第3层解锁禁区', 266, -34, 250, 58, 25, C.ink, 'center');
         this.drawUnderline(root, 'CountdownUnderline', 266, -68, 210, C.red, -1);
 
         const start = this.makeNode(root, 'StartButton', 0, -190, 600, 126);
@@ -276,7 +299,7 @@ export class HomeController extends Component {
         const artwork = this.makeNode(start, 'ButtonArtwork', 0, 0, 565, 210);
         this.attachResourceTexture(artwork, 'textures/home/ui/draw_sword/spriteFrame');
         start.setSiblingIndex(root.children.length - 1);
-        this.bindButton(start, this.onDailyChallengeClick.bind(this));
+        this.bindButton(start, this.onTowerClick.bind(this));
         return root;
     }
 
@@ -297,10 +320,13 @@ export class HomeController extends Component {
         this.label(reverse, 'TitleLabel', '反向日', -4, -105, 280, 68, 48, C.ink, 'center');
         this.bindButton(reverse, this.onReverseDayClick.bind(this));
 
-        const flag = this.makeNode(area, 'FlagHunterCard', 190, 0, 370, 420);
+        const flag = this.makeNode(area, 'DailyChallengeCard', 190, 0, 370, 420);
         const polaroid = this.makeNode(flag, 'Polaroid', 0, 0, 350, 420);
         this.attachResourceTexture(polaroid, 'textures/home/ui/limited_activity/spriteFrame');
-        this.label(flag, 'TitleLabel', '国旗猎人', 0, -120, 300, 64, 44, C.blue, 'center');
+        this.label(flag, 'DailyCaption', '今日挑战', 0, -72, 280, 44, 25, C.ink, 'center');
+        this.dailyEventTitleLabel = this.label(flag, 'TitleLabel', '颜色骗局', 0, -120, 300, 60, 38, C.blue, 'center');
+        this.dailyEventStatusLabel = this.label(flag, 'StatusLabel', '今日首战', 0, -164, 300, 42, 20, C.ink, 'center');
+        this.dailyEventCountdownLabel = this.label(flag, 'CountdownLabel', '00:00:00', 0, 160, 210, 42, 23, C.red, 'center');
         this.bindButton(flag, this.onFlagHunterClick.bind(this));
         return area;
     }
@@ -865,6 +891,32 @@ export class HomeController extends Component {
         this.polygon(g, [
             [-20, 34], [12, 34], [4, 8], [25, 8], [-12, -40], [-6, -9], [-26, -9],
         ], C.yellow, C.ink, 5);
+    }
+
+    private drawTowerIcon(parent: Node): void {
+        const g = this.graphics(parent, 'TowerSteps', 0, 0, 130, 150);
+        g.fillColor = C.paperRaised;
+        g.strokeColor = C.ink;
+        g.lineWidth = 4;
+        const steps: Point[] = [[-50, -62], [50, -62], [50, -34], [26, -34], [26, -6], [2, -6], [2, 22], [-22, 22], [-22, 50], [-50, 50]];
+        this.polygon(g, steps, C.paperRaised, C.ink, 4);
+        g.strokeColor = C.red;
+        g.lineWidth = 5;
+        g.moveTo(-38, -48);
+        g.lineTo(37, 38);
+        g.stroke();
+        const flag = this.graphics(parent, 'TopFlag', 0, 0, 90, 70);
+        flag.strokeColor = C.ink;
+        flag.lineWidth = 4;
+        flag.moveTo(-20, 58);
+        flag.lineTo(-20, 12);
+        flag.stroke();
+        flag.fillColor = C.red;
+        flag.moveTo(-18, 55);
+        flag.lineTo(28, 44);
+        flag.lineTo(-18, 30);
+        flag.close();
+        flag.fill();
     }
 
     private drawHourglass(parent: Node): void {

@@ -37,6 +37,15 @@ import {
 import { RunSeedFactory } from '../assets/Scripts/app/RunSeedFactory.ts';
 import { PlatformService } from '../assets/Scripts/infrastructure/PlatformService.ts';
 import { AudioService, SoundThrottle } from '../assets/Scripts/infrastructure/AudioService.ts';
+import { migrateV1ToV2 } from '../assets/Scripts/infrastructure/SaveData.ts';
+import { TowerDirector } from '../assets/Scripts/domain/TowerDirector.ts';
+import {
+    DEFAULT_TOWER_PROGRESS,
+    allowedBrawlRules,
+    commitTowerFloor,
+    towerFloorConfig,
+    unlockedRulesForTower,
+} from '../assets/Scripts/domain/TowerMode.ts';
 import { calculatePortraitTargetLayout, portraitTargetEntranceDelay } from '../assets/Scripts/UI/PortraitTargetLayout.ts';
 import {
     createPortraitTargetMotionPlans,
@@ -794,6 +803,127 @@ test('1000 seeds survive full multi-round deterministic legality regression', ()
         .sort();
     assert.deepEqual([...multiStepFamilyIds].sort(), expectedMultiStepFamilies);
     assert.ok(multiStepQuestions > 10_000);
+});
+
+test('tower tutorial can reset the session before the formal 60-second floor starts', () => {
+    const entry = { mode: 'tower' as const, seed: 'tower-tutorial', contentVersion: CONTENT_VERSION, towerFloor: 3 };
+    const session = new GameSession(entry, GAMEPLAY_CONFIG);
+    session.start();
+    session.tick(900);
+    session.beginQuestion();
+    session.cancelQuestion();
+    session.resetForTimedRun();
+    assert.equal(session.state.phase, 'ready');
+    assert.equal(session.state.elapsedMs, 0);
+    assert.equal(session.state.remainingMs, 60_000);
+    assert.equal(session.state.score, 0);
+    assert.equal(session.state.correctCount, 0);
+    assert.equal(session.state.life, 3);
+});
+
+test('tower exposes the fixed 60-second 1-30 progression and unlock schedule', () => {
+    const expectedRequired = [
+        [1, 8], [2, 8], [3, 9], [4, 9], [5, 9], [6, 9], [7, 10], [9, 10],
+        [10, 10], [12, 10], [13, 10], [14, 10], [15, 11], [19, 11], [20, 12],
+        [24, 12], [25, 13], [29, 13], [30, 15],
+    ];
+    for (const [floor, required] of expectedRequired) {
+        const config = towerFloorConfig(floor);
+        assert.equal(config.floor, floor);
+        assert.equal(config.durationMs, 60_000);
+        assert.equal(config.requiredCorrect, required);
+        assert.ok(config.targetCount >= 3 && config.targetCount <= 5);
+    }
+    assert.deepEqual(unlockedRulesForTower(2), ['standard']);
+    assert.deepEqual(unlockedRulesForTower(3), ['standard', 'bomb']);
+    assert.deepEqual(unlockedRulesForTower(13), ['standard', 'bomb', 'multi', 'order', 'reverse', 'stroop']);
+});
+
+test('tower director is deterministic per attempt and legal across 100 seeds and 30 floors', () => {
+    for (let seedIndex = 0; seedIndex < 100; seedIndex++) {
+        for (let floor = 1; floor <= 30; floor++) {
+            const seed = `tower-${seedIndex}-floor-${floor}`;
+            const firstDirector = new TowerDirector(new SeededRng(`${seed}:director`), floor);
+            const secondDirector = new TowerDirector(new SeededRng(`${seed}:director`), floor);
+            const firstGenerator = new QuestionGenerator(new SeededRng(`${seed}:gameplay`), GAMEPLAY_CONFIG);
+            const secondGenerator = new QuestionGenerator(new SeededRng(`${seed}:gameplay`), GAMEPLAY_CONFIG);
+            for (let index = 0; index < 12; index++) {
+                const firstDirective = firstDirector.next(index * 2_000);
+                const secondDirective = secondDirector.next(index * 2_000);
+                assert.deepEqual(firstDirective, secondDirective);
+                assert.equal(familySupportsRules(firstDirective.family, firstDirective.rules), true);
+                const first = firstGenerator.next(firstDirective);
+                const second = secondGenerator.next(secondDirective);
+                assert.deepEqual(first, second);
+                assert.deepEqual(validateQuestion(first, evaluateRules(first)), []);
+            }
+        }
+    }
+});
+
+test('tower progress rewards first clears once and restores the latest checkpoint', () => {
+    const entry = { mode: 'tower' as const, seed: 'tower-attempt-a', contentVersion: CONTENT_VERSION, towerFloor: 5 };
+    const run: RunResult = { entry, score: 1_000, maxCombo: 7, correctCount: 10, errorCount: 1, accuracy: 10 / 11 };
+    const first = commitTowerFloor(DEFAULT_TOWER_PROGRESS, run, 2);
+    assert.equal(first.result.cleared, true);
+    assert.equal(first.result.firstClear, true);
+    assert.equal(first.result.towerPointsGained, 1_750);
+    assert.equal(first.progress.highestClearedFloor, 5);
+    assert.equal(first.progress.lastCheckpointFloor, 5);
+    const repeat = commitTowerFloor(first.progress, run, 2);
+    assert.equal(repeat.result.firstClear, false);
+    assert.equal(repeat.result.towerPointsGained, 100);
+    const floor15Run: RunResult = { ...run, entry: { ...entry, seed: 'tower-floor-15', towerFloor: 15 }, correctCount: 12 };
+    const floor15 = commitTowerFloor({ ...first.progress, highestClearedFloor: 14, currentFloor: 15 }, floor15Run, 2);
+    assert.equal(floor15.result.unlockedLabel, '双规则');
+});
+
+test('tower target stays cleared after life depletion and only fails below the target', () => {
+    const base = { entry: { mode: 'tower' as const, seed: 'tower-fail', contentVersion: CONTENT_VERSION, towerFloor: 10 }, score: 900, maxCombo: 5, errorCount: 2, accuracy: 0.8 };
+    const dead = commitTowerFloor(DEFAULT_TOWER_PROGRESS, { ...base, correctCount: 12 }, 0);
+    assert.equal(dead.result.cleared, true);
+    assert.equal(dead.result.failureReason, undefined);
+    const short = commitTowerFloor(DEFAULT_TOWER_PROGRESS, { ...base, correctCount: 9 }, 1);
+    assert.equal(short.result.cleared, false);
+    assert.equal(short.result.failureReason, 'targetMissed');
+    const deadShort = commitTowerFloor(DEFAULT_TOWER_PROGRESS, { ...base, correctCount: 9 }, 0);
+    assert.equal(deadShort.result.cleared, false);
+    assert.equal(deadShort.result.failureReason, 'lifeDepleted');
+});
+
+test('tower retries receive fresh seeds while a supplied seed remains reproducible', () => {
+    let entropy = 10;
+    const factory = new RunSeedFactory(() => new Date('2026-08-24T12:00:00+08:00'), () => entropy++);
+    const first = factory.create('tower', CONTENT_VERSION, 8);
+    const retry = factory.create('tower', CONTENT_VERSION, 8);
+    assert.notEqual(first.seed, retry.seed);
+    assert.equal(first.towerFloor, 8);
+    assert.match(first.seed, /^tower:floor-8:/);
+});
+
+test('brawl rule pool follows tower unlocks and learned legacy tutorials', () => {
+    const allowed = allowedBrawlRules(DEFAULT_TOWER_PROGRESS, { reverse: true });
+    assert.deepEqual([...allowed].sort(), ['reverse', 'standard']);
+    const director = new Brawl60Director(new SeededRng('locked-brawl'), 'mixed', allowed, false);
+    for (let index = 0; index < 80; index++) {
+        const directive = director.next((index * 997) % 60_000);
+        assert.ok(directive.rules.every((rule) => rule === 'standard' || allowed.has(rule)));
+        assert.ok(directive.rules.filter((rule) => rule !== 'standard').length <= 1);
+    }
+});
+
+test('save v1 migration preserves player settings daily-compatible fields and adds tower defaults', () => {
+    const migrated = migrateV1ToV2({
+        schemaVersion: 1,
+        player: { level: 4, xp: 1_560, bestScore: 8_800 },
+        settings: { music: false, sfx: true, vibration: false, quality: 'low' },
+        tutorials: { bomb: true },
+    });
+    assert.equal(migrated.schemaVersion, 2);
+    assert.deepEqual(migrated.player, { level: 4, xp: 1_560, bestScore: 8_800 });
+    assert.equal(migrated.settings.music, false);
+    assert.equal(migrated.tutorials.bomb, true);
+    assert.deepEqual(migrated.tower, DEFAULT_TOWER_PROGRESS);
 });
 
 test('home portrait layout keeps every section separated across common safe areas', () => {

@@ -26,19 +26,21 @@ export class RunSeedFactory {
         private readonly entropy: EntropySource = defaultEntropy,
     ) {}
 
-    public create(mode: GameMode, contentVersion: string): GameEntryParams {
+    public create(mode: GameMode, contentVersion: string, towerFloor?: number): GameEntryParams {
         const now = this.clock();
         if (mode === 'daily') {
             return createDailyChallenge(now, contentVersion).entry;
         }
 
         this.sequence = (this.sequence + 1) >>> 0;
+        const floor = mode === 'tower' ? Math.max(1, Math.min(30, Math.floor(towerFloor ?? 1))) : undefined;
         const seed = [
             mode,
+            ...(floor === undefined ? [] : [`floor-${floor}`]),
             now.getTime().toString(36),
             this.sequence.toString(36),
             (this.entropy() >>> 0).toString(36),
         ].join(':');
-        return { mode, seed, contentVersion, recipeId: 'mixed' };
+        return { mode, seed, contentVersion, recipeId: 'mixed', towerFloor: floor };
     }
 }

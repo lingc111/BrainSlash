@@ -2,6 +2,7 @@ import { director } from 'cc';
 import { CONTENT_VERSION } from '../configs/GameConfig';
 import { canStartFriendChallenge, createFriendChallengePayload, type FriendChallengeParseResult } from '../domain/FriendChallenge';
 import type { GameEntryParams, GameResult, GameMode, RunResult } from '../domain/Models';
+import type { TowerFloorResult } from '../domain/TowerMode';
 import { AnalyticsService } from '../infrastructure/AnalyticsService';
 import { AudioService } from '../infrastructure/AudioService';
 import { PlatformService } from '../infrastructure/PlatformService';
@@ -16,6 +17,7 @@ class AppRuntimeState {
     private readonly seedFactory = new RunSeedFactory();
     public entry: GameEntryParams = this.seedFactory.create('brawl60', CONTENT_VERSION);
     public result: GameResult | null = null;
+    public towerResult: TowerFloorResult | null = null;
     private transitioning = false;
     private pendingFriendChallenge = false;
     private lastLaunchChallengeKey: string | null = null;
@@ -73,21 +75,22 @@ class AppRuntimeState {
             this.pendingFriendChallenge = false;
         } else {
             this.pendingFriendChallenge = false;
-            this.entry = this.seedFactory.create(mode, CONTENT_VERSION);
+            const towerFloor = mode === 'tower' ? this.save.snapshot().tower.currentFloor : undefined;
+            this.entry = this.seedFactory.create(mode, CONTENT_VERSION, towerFloor);
             if (mode === 'daily') this.save.beginDaily(this.entry);
         }
-        this.result = null; this.transitioning = true; this.gameplayLaunchAuthorized = true; this.analytics.track('game_start', { mode, seed: this.entry.seed });
+        this.result = null; this.towerResult = null; this.transitioning = true; this.gameplayLaunchAuthorized = true; this.analytics.track('game_start', { mode, seed: this.entry.seed, floor: this.entry.towerFloor });
         director.loadScene('Gameplay', () => { this.transitioning = false; });
     }
     public replay(): void {
         if (this.transitioning) return;
         // Free-play refreshes every run. Daily recreates the local-day entry:
         // the seed stays fixed before midnight and rolls over afterwards.
-        if (this.entry.mode === 'brawl60' || this.entry.mode === 'daily') {
-            this.entry = this.seedFactory.create(this.entry.mode, CONTENT_VERSION);
+        if (this.entry.mode === 'brawl60' || this.entry.mode === 'daily' || this.entry.mode === 'tower') {
+            this.entry = this.seedFactory.create(this.entry.mode, CONTENT_VERSION, this.entry.towerFloor);
             if (this.entry.mode === 'daily') this.save.beginDaily(this.entry);
         }
-        this.result = null;
+        this.result = null; this.towerResult = null;
         this.transitioning = true; this.gameplayLaunchAuthorized = true;
         this.analytics.track('game_start', { mode: this.entry.mode, seed: this.entry.seed });
         director.loadScene('Gameplay', () => { this.transitioning = false; });
@@ -97,6 +100,33 @@ class AppRuntimeState {
         this.result = this.save.commitResult(run);
         this.analytics.track('game_finish', { score: run.score, mode: run.entry.mode });
         return this.result;
+    }
+    public finishTower(run: RunResult, life: number): TowerFloorResult {
+        this.towerResult = this.save.commitTowerResult(run, life);
+        this.analytics.track('tower_floor_finish', {
+            floor: this.towerResult.floor,
+            cleared: this.towerResult.cleared,
+            score: run.score,
+            seed: run.entry.seed,
+        });
+        return this.towerResult;
+    }
+    public nextTowerFloor(): void {
+        const floor = this.towerResult?.cleared
+            ? Math.min(30, this.towerResult.floor + 1)
+            : this.save.snapshot().tower.currentFloor;
+        this.launchTowerFloor(floor);
+    }
+    public retryTowerFloor(): void {
+        this.launchTowerFloor(this.entry.towerFloor ?? this.save.snapshot().tower.currentFloor);
+    }
+    private launchTowerFloor(floor: number): void {
+        if (this.transitioning) return;
+        this.pendingFriendChallenge = false;
+        this.entry = this.seedFactory.create('tower', CONTENT_VERSION, floor);
+        this.result = null; this.towerResult = null; this.transitioning = true; this.gameplayLaunchAuthorized = true;
+        this.analytics.track('game_start', { mode: 'tower', seed: this.entry.seed, floor });
+        director.loadScene('Gameplay', () => { this.transitioning = false; });
     }
     public share(): void {
         if (!this.result) return;

@@ -129,10 +129,15 @@ export class Brawl60Director {
     private readonly recentFamilyIds: string[] = [];
     private readonly seenFamilyIds = new Set<string>();
 
-    public constructor(private readonly rng: SeededRng, private readonly recipeId = 'mixed') {}
+    public constructor(
+        private readonly rng: SeededRng,
+        private readonly recipeId = 'mixed',
+        private readonly allowedRules?: ReadonlySet<RuleId>,
+        private readonly allowCompoundRules = true,
+    ) {}
 
     public next(elapsedMs: number): BrawlQuestionDirective {
-        const phase = phaseForRecipe(phaseAt(elapsedMs), this.recipeId);
+        const phase = filterPhaseRules(phaseForRecipe(phaseAt(elapsedMs), this.recipeId), this.allowedRules, this.allowCompoundRules);
         const requestedRules = this.pickRules(phase);
         const compatible = CONTENT_FAMILIES.filter((family) =>
             (phase.themeWeights[family.theme] ?? 0) > 0 && familySupportsRules(family, requestedRules),
@@ -270,4 +275,13 @@ function phaseForRecipe(phase: BrawlPhaseSettings, recipeId: string): BrawlPhase
         themeWeights: recipe.themeWeights,
         ruleSequence,
     };
+}
+
+function filterPhaseRules(phase: BrawlPhaseSettings, allowedRules?: ReadonlySet<RuleId>, allowCompoundRules = true): BrawlPhaseSettings {
+    if (!allowedRules) return phase;
+    const ruleSequence = phase.ruleSequence.filter((rules) =>
+        (allowCompoundRules || rules.filter((rule) => rule !== 'standard').length <= 1)
+        && rules.every((rule) => rule === 'standard' || allowedRules.has(rule)),
+    );
+    return { ...phase, ruleSequence: ruleSequence.length ? ruleSequence : [['standard']] };
 }

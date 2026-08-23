@@ -42,5 +42,19 @@ export class GameSession {
         this.state.phase = 'playing'; this.questionStartedAt = this.state.elapsedMs; this.questionResolved = false;
         return true;
     }
+    public resetForTimedRun(): void {
+        this.state.elapsedMs = 0;
+        this.state.remainingMs = this.config.durationMs;
+        this.state.life = this.config.maxLife;
+        this.state.score = 0;
+        this.state.combo = 0;
+        this.state.maxCombo = 0;
+        this.state.correctCount = 0;
+        this.state.errorCount = 0;
+        this.state.bestReactionMs = undefined;
+        this.state.phase = 'ready';
+        this.questionStartedAt = 0;
+        this.questionResolved = true;
+    }
     public finish(): void { this.state.phase = 'finished'; this.questionResolved = true; }
 }
