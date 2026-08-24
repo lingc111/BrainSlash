@@ -33,7 +33,7 @@ import { GestureResolver, shouldKeepIncompleteGesture } from '../assets/Scripts/
 import type { PlayerProgress, QuestionInstance, RunResult } from '../assets/Scripts/domain/Models.ts';
 import { QuestionGenerator } from '../assets/Scripts/domain/QuestionGenerator.ts';
 import { createResultPresentation, finalizeResult } from '../assets/Scripts/domain/ResultSummary.ts';
-import { evaluateRules, questionFlightDurationSeconds, questionPreviewDurationSeconds, slashRuleCount, slashRuleLabel } from '../assets/Scripts/domain/Rules.ts';
+import { evaluateRules, questionFlightDurationSeconds, questionPreviewDurationSeconds, rulesForReadableTargets, slashRuleCount, slashRuleLabel } from '../assets/Scripts/domain/Rules.ts';
 import { SeededRng } from '../assets/Scripts/domain/SeededRng.ts';
 import { prepareRuleTutorial, tutorialRetryInstruction } from '../assets/Scripts/domain/RuleTutorial.ts';
 import { validateQuestion } from '../assets/Scripts/domain/FairnessValidator.ts';
@@ -339,6 +339,13 @@ test('slash rule labels describe the gesture and ignore bomb distractors', () =>
     assert.equal(questionFlightDurationSeconds(2.5, ['multi', 'rotate']), 3.45);
     assert.equal(questionFlightDurationSeconds(2.5, ['multi', 'order']), 3.45);
     assert.equal(questionFlightDurationSeconds(2.5, ['bomb', 'multi']), 3.45);
+    const shortTargets = [{ id: 'a', text: '三字内' }, { id: 'b', text: '答案' }];
+    const longTargets = [{ id: 'a', text: '四字答案' }, { id: 'b', text: '答案' }];
+    assert.deepEqual(rulesForReadableTargets(['rotate'], shortTargets), ['rotate']);
+    assert.deepEqual(rulesForReadableTargets(['rotate'], longTargets), ['standard']);
+    assert.deepEqual(rulesForReadableTargets(['multi', 'rotate'], longTargets), ['multi']);
+    assert.deepEqual(rulesForReadableTargets(['order', 'rotate'], longTargets), ['order']);
+    assert.deepEqual(rulesForReadableTargets(['bomb', 'rotate'], [{ id: 'bomb', text: '四字炸弹', isBomb: true }, ...shortTargets]), ['bomb', 'rotate']);
 });
 
 test('order and multi gestures resolve once and reject incomplete strokes', () => {
@@ -742,7 +749,11 @@ test('each phase schedules its intended themes and rule beats', () => {
         const directive = climax.director.next(50_000);
         const question = climax.generator.next(directive);
         assert.equal(directive.rules.length, 2);
-        assert.deepEqual(question.activeRules, directive.rules);
+        const hasLongChoice = question.targets.some((target) => !target.isBomb && [...target.text.trim()].length >= 4);
+        const expectedRules = hasLongChoice && directive.rules.includes('rotate')
+            ? directive.rules.filter((rule) => rule !== 'rotate')
+            : directive.rules;
+        assert.deepEqual(question.activeRules, expectedRules.length ? expectedRules : ['standard']);
         assert.deepEqual(validateQuestion(question, evaluateRules(question)), []);
     }
 });
@@ -874,6 +885,9 @@ test('1000 seeds survive full multi-round deterministic legality regression', ()
             }
             assert.ok(first.targets.length >= 2);
             assert.equal(first.timeLimitMs, firstDirective.questionTimeMs);
+            if (first.activeRules.includes('rotate')) {
+                assert.ok(first.targets.filter((target) => !target.isBomb).every((target) => [...target.text.trim()].length < 4));
+            }
             const constraint = evaluateRules(first);
             if (first.activeRules.includes('multi')) assert.ok(constraint.requiredTargetIds.length >= 2);
             if (constraint.matchMode === 'all' && constraint.requiredTargetIds.length > 1) {
@@ -1019,6 +1033,9 @@ test('tower director is deterministic per attempt and legal across 100 seeds and
                 const second = secondGenerator.next(secondDirective);
                 assert.deepEqual(first, second);
                 assert.deepEqual(validateQuestion(first, evaluateRules(first)), []);
+                if (first.activeRules.includes('rotate')) {
+                    assert.ok(first.targets.filter((target) => !target.isBomb).every((target) => [...target.text.trim()].length < 4));
+                }
             }
         }
     }

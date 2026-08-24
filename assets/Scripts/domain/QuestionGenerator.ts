@@ -20,7 +20,7 @@ import {
 } from './ContentCatalog';
 import { validateQuestion } from './FairnessValidator';
 import type { QuestionInstance, RuleId, TargetSpec, ThemeId } from './Models';
-import { evaluateRules } from './Rules';
+import { evaluateRules, rulesForReadableTargets } from './Rules';
 import { SeededRng } from './SeededRng';
 
 type Stage = 0 | 1 | 2;
@@ -42,6 +42,7 @@ export class QuestionGenerator {
         for (let attempt = 0; attempt < 8; attempt++) {
             this.activeFactIds = [];
             const question = this.generate(directive.family, directive.difficultyStage);
+            question.activeRules = rulesForReadableTargets(question.activeRules, question.targets);
             if (!validateQuestion(question, evaluateRules(question)).length) {
                 this.recordQuestionFacts();
                 return question;

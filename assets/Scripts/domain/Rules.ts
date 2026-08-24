@@ -1,5 +1,5 @@
 import { validateRuleSet } from '../configs/GameConfig';
-import type { ActionConstraint, QuestionInstance, RuleId } from './Models';
+import type { ActionConstraint, QuestionInstance, RuleId, TargetSpec } from './Models';
 
 const SLASH_RULE_LABELS: Readonly<Partial<Record<RuleId, string>>> = {
     reverse: '反向',
@@ -21,6 +21,14 @@ export function questionFlightDurationSeconds(baseSeconds: number, rules: readon
     const safeBase = Math.max(0.9, baseSeconds);
     const needsThinkingBuffer = rules.includes('multi') || rules.includes('reverse') || rules.includes('rotate') || slashRuleCount(rules) >= 2;
     return needsThinkingBuffer ? safeBase + 0.95 : safeBase;
+}
+
+export function rulesForReadableTargets(rules: readonly RuleId[], targets: readonly TargetSpec[]): RuleId[] {
+    if (!rules.includes('rotate')) return [...rules];
+    const hasLongChoice = targets.some((target) => !target.isBomb && [...target.text.trim()].length >= 4);
+    if (!hasLongChoice) return [...rules];
+    const readable = rules.filter((rule) => rule !== 'rotate');
+    return readable.length ? readable : ['standard'];
 }
 
 export function slashRuleLabel(rules: readonly RuleId[]): string {

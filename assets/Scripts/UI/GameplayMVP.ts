@@ -148,7 +148,7 @@ export class GameplayMVP extends Component {
     }
     private spawn():void {
         if(this.session.state.phase!=='playing')return;
-        const prepared=prepareRuleTutorial(this.director.next(this.session.state.elapsedMs),this.learnedTutorials);this.currentDirective=prepared.directive;this.tutorial=prepared.tutorial;this.towerTutorialPreflight=AppRuntime.entry.mode==='tower'&&!!prepared.tutorial&&this.session.state.elapsedMs===0&&this.session.state.correctCount===0;this.question=this.generator.next(prepared.directive);this.question.tutorialSafe=!!this.tutorial;this.presentCurrentQuestion(false);
+        const prepared=prepareRuleTutorial(this.director.next(this.session.state.elapsedMs),this.learnedTutorials);this.currentDirective=prepared.directive;this.question=this.generator.next(prepared.directive);this.tutorial=prepared.tutorial&&this.question.activeRules.includes(prepared.tutorial.rule)?prepared.tutorial:null;this.towerTutorialPreflight=AppRuntime.entry.mode==='tower'&&!!this.tutorial&&this.session.state.elapsedMs===0&&this.session.state.correctCount===0;this.question.tutorialSafe=!!this.tutorial;this.presentCurrentQuestion(false);
     }
     private presentCurrentQuestion(retry:boolean,retryCopy?:string):void{
         if(!this.question||!this.currentDirective||this.session.state.phase!=='playing')return;
