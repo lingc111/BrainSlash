@@ -86,12 +86,13 @@ export class GameplayTarget extends Component {
     }
 
     public segmentHit(a: Vec2, b: Vec2): boolean {
-        const p = new Vec2(this.node.position.x, this.node.position.y);
-        const ab = b.clone().subtract(a);
-        const lengthSq = ab.lengthSqr();
-        const t = lengthSq === 0 ? 0 : Math.max(0, Math.min(1, p.clone().subtract(a).dot(ab) / lengthSq));
-        const nearest = a.clone().add(ab.multiplyScalar(t));
-        return Vec2.distance(nearest, p) <= this.radius;
+        const px = this.node.position.x, py = this.node.position.y;
+        const abx = b.x - a.x, aby = b.y - a.y;
+        const lengthSq = abx * abx + aby * aby;
+        const projection = lengthSq === 0 ? 0 : ((px - a.x) * abx + (py - a.y) * aby) / lengthSq;
+        const t = Math.max(0, Math.min(1, projection));
+        const dx = a.x + abx * t - px, dy = a.y + aby * t - py;
+        return dx * dx + dy * dy <= this.radius * this.radius;
     }
 
     private drawTarget(): void {

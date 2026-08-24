@@ -52,7 +52,9 @@ export class GameplayMVP extends Component {
     private towerProgress:Label|null=null; private towerProgressCard:Node|null=null; private towerTutorialPreflight=false;
     private handDrawnChrome:Node|null=null; private handDrawnFrame:Graphics|null=null;
     private readonly lifeHearts:Sprite[]=[]; private renderedLife=-1;
-    private points:Vec2[]=[]; private trailAge=1; private finished=false; private reverseFrame:Node|null=null;
+    private points:Vec2[]=[]; private pendingTouchPoint:Vec2|null=null; private lastQueuedTouchPoint:Vec2|null=null; private touchActive=false;
+    private trailAge=1; private trailVisible=false; private readonly trailOuterColor=new Color(148,187,199,95); private readonly trailInnerColor=new Color(255,253,241,235);
+    private finished=false; private reverseFrame:Node|null=null;
     private paused=false; private hidden=false; private hitStopActive=false; private targetRevealPending=false; private revealToken=0; private lastCountdownSecond=-1;
     private currentDirective:BrawlQuestionDirective|null=null; private tutorial:RuleTutorialSpec|null=null;
     private learnedTutorials:Partial<Record<Exclude<RuleId,'standard'>,boolean>>={};
@@ -70,9 +72,11 @@ export class GameplayMVP extends Component {
     }
     protected onDestroy():void { this.revealToken++;screen.off('window-resize',this.handleResize,this);game.off(Game.EVENT_HIDE,this.onHide,this);game.off(Game.EVENT_SHOW,this.onShow,this);this.node.off(Node.EventType.TOUCH_START,this.startTouch,this);this.node.off(Node.EventType.TOUCH_MOVE,this.moveTouch,this);this.node.off(Node.EventType.TOUCH_END,this.endTouch,this);this.node.off(Node.EventType.TOUCH_CANCEL,this.endTouch,this);this.pool.clear(); }
     protected update(dt:number):void {
-        if(this.finished||this.paused)return;if(!this.towerTutorialPreflight)this.session.tick(dt*1000);
+        if(this.finished||this.paused)return;
+        const moved=this.processPendingTouchMoves();
+        if(!this.towerTutorialPreflight)this.session.tick(dt*1000);
         if(this.session.state.phase==='playing'&&this.question&&!this.targetRevealPending&&!this.session.isQuestionResolved()&&this.updateTargetMotions())this.fail('miss');
-        if(this.session.state.phase==='finished')this.finish(); this.refresh(); this.trailAge+=dt;if(this.trailAge<.14)this.drawTrail(1-this.trailAge/.14);else this.trail.clear();
+        if(this.session.state.phase==='finished')this.finish(); this.refresh(); this.trailAge=moved?0:this.trailAge+dt;if(this.trailAge<.14)this.drawTrail(1-this.trailAge/.14);else if(this.trailVisible){this.trail.clear();this.trailVisible=false;}
     }
     public rebuildStaticView():void {
         for(const c of [...this.node.children]){c.removeFromParent();c.destroy();}
@@ -153,7 +157,7 @@ export class GameplayMVP extends Component {
     private presentCurrentQuestion(retry:boolean,retryCopy?:string):void{
         if(!this.question||!this.currentDirective||this.session.state.phase!=='playing')return;
         for(const c of [...this.targets.children]){c.removeFromParent();c.destroy();}
-        this.effectByNode.clear();this.motions.length=0;this.gesture=null;this.constraint=null;
+        this.effectByNode.clear();this.motions.length=0;this.gesture=null;this.constraint=null;this.pendingTouchPoint=null;this.lastQueuedTouchPoint=null;
         if(!retry){this.currentSkins=this.visual.shuffle(SKINS);this.currentMotionPhases=this.question.targets.map(()=>this.visual.next()*Math.PI*2);}
         this.prompt.string=this.question.prompt.text;this.rule.string=slashRuleLabel(this.question.activeRules);this.updateTutorialCoach(retryCopy);this.showReverse(this.question.activeRules.includes('reverse'));
         this.targetRevealPending=true;const token=++this.revealToken;this.refresh();
@@ -175,11 +179,14 @@ export class GameplayMVP extends Component {
         else if(this.question?.activeRules.includes('rotate')){const direction=i%2===0?1:-1;tween(n).by(3,{angle:360*direction}).repeatForever().start();}
     }
     private layout(count:number):PortraitTargetPosition[]{const v=view.getVisibleSize();return calculatePortraitTargetLayout(count,v.width,v.height);}
-    private startTouch(e:EventTouch):void{if(this.paused||this.targetRevealPending||this.session.state.phase!=='playing'||!this.constraint)return;if(!this.gesture)this.gesture=new GestureResolver(this.constraint);this.points=[this.point(e)];this.trailAge=0;}
-    private moveTouch(e:EventTouch):void{if(!this.gesture||this.session.state.phase!=='playing')return;const p=this.point(e),a=this.points[this.points.length-1];if(!a||Vec2.distance(a,p)<4)return;this.points.push(p);if(this.points.length>18)this.points.shift();this.sweep(a,p);this.trailAge=0;this.drawTrail(1);}
-    private endTouch():void{if(this.gesture&&this.gesture.hasHits()&&this.session.state.phase==='playing'){const p=this.gesture.end(this.keepsIncompleteGesture());this.progress(p,null);if(p.status!=='continue')this.gesture=null;}else if(!this.keepsIncompleteGesture())this.gesture=null;this.trailAge=0;}
+    private startTouch(e:EventTouch):void{if(this.finished||this.paused)return;if(this.touchActive){const moved=this.processPendingTouchMoves();if(moved)this.drawTrail(1);this.finishTouchGesture();}const p=this.point(e);this.touchActive=true;this.points=[p];this.pendingTouchPoint=null;this.lastQueuedTouchPoint=p;if(!this.gesture&&this.canResolveTouch())this.gesture=new GestureResolver(this.constraint!);this.trailAge=0;}
+    private moveTouch(e:EventTouch):void{if(!this.touchActive||this.finished||this.paused)return;const p=this.point(e),a=this.lastQueuedTouchPoint??this.points[this.points.length-1];if(!a||Vec2.distance(a,p)<4)return;this.pendingTouchPoint=p;this.lastQueuedTouchPoint=p;}
+    private endTouch():void{if(!this.touchActive)return;const moved=this.processPendingTouchMoves();if(moved)this.drawTrail(1);this.finishTouchGesture();}
+    private processPendingTouchMoves():boolean{const p=this.pendingTouchPoint,a=this.points[this.points.length-1];this.pendingTouchPoint=null;if(!p||!a)return false;this.points.push(p);if(this.points.length>18)this.points.shift();if(this.canResolveTouch()){if(!this.gesture)this.gesture=new GestureResolver(this.constraint!);this.sweep(a,p);}this.lastQueuedTouchPoint=p;return true;}
+    private finishTouchGesture():void{if(this.gesture&&this.gesture.hasHits()&&this.session.state.phase==='playing'){const p=this.gesture.end(this.keepsIncompleteGesture());this.progress(p,null);if(p.status!=='continue')this.gesture=null;}else if(!this.keepsIncompleteGesture())this.gesture=null;this.touchActive=false;this.lastQueuedTouchPoint=null;this.trailAge=0;}
+    private canResolveTouch():boolean{return !!this.constraint&&!this.targetRevealPending&&this.session.state.phase==='playing'&&!this.session.isQuestionResolved();}
     private point(e:EventTouch):Vec2{const p=e.getUILocation(),v=view.getVisibleSize();return new Vec2(p.x-v.width/2,p.y-v.height/2);}
-    private sweep(a:Vec2,b:Vec2):void{if(!this.gesture)return;for(const n of [...this.targets.children]){const t=n.getComponent(GameplayTarget);if(!t||t.hit||!t.segmentHit(a,b))continue;t.hit=true;const p=this.gesture.hit(t.data.id);this.slash(t,a,b);this.progress(p,t);if(p.status!=='continue'){this.gesture=null;break;}}}
+    private sweep(a:Vec2,b:Vec2):void{if(!this.gesture)return;for(const n of this.targets.children){const t=n.getComponent(GameplayTarget);if(!t||t.hit||!t.segmentHit(a,b))continue;t.hit=true;const p=this.gesture.hit(t.data.id);this.slash(t,a,b);this.progress(p,t);if(p.status!=='continue'){this.gesture=null;break;}}}
     private progress(p:GestureProgress,t:GameplayTarget|null):void{if(p.status==='success')this.success(t);else if(p.status==='failure')this.fail(p.kind,t);}
     private keepsIncompleteGesture():boolean{return !!this.constraint&&shouldKeepIncompleteGesture(this.constraint);}
     private success(t:GameplayTarget|null):void{if(!this.question)return;if(this.towerTutorialPreflight&&this.tutorial){const pos=t?.node.position??Vec3.ZERO,name=this.tutorial.name;this.session.cancelQuestion();this.learnedTutorials[this.tutorial.rule]=true;AppRuntime.save.markTutorial(this.tutorial.rule);AppRuntime.audio.play('correct');AppRuntime.platform.vibrate(AppRuntime.save.snapshot().settings.vibration,'light');this.hitSparks(pos,GREEN,false);this.float(pos,'已掌握',GREEN);this.updateTutorialCoach(`已掌握 · ${name}`);this.scheduleOnce(()=>this.beginTowerTimedRun(),.45);return;}const r=this.session.resolveSuccess(this.question);if(!r)return;const pos=t?.node.position??Vec3.ZERO,feedback=successFeedback(r.kind,this.session.state.combo),vibration=AppRuntime.save.snapshot().settings.vibration;AppRuntime.audio.play(feedback.sound,{variant:this.session.state.combo});AppRuntime.platform.vibrate(vibration,feedback.haptic);if(feedback.comboMilestone&&r.kind!=='master')AppRuntime.audio.play('combo',{variant:this.session.state.combo});this.animateCombo(this.session.state.combo,feedback.comboMilestone);this.hitSparks(pos,r.kind==='master'?YELLOW:GREEN,r.kind==='master');if(feedback.hitStopMs)this.applyHitStop(feedback.hitStopMs);if(this.tutorial){this.learnedTutorials[this.tutorial.rule]=true;AppRuntime.save.markTutorial(this.tutorial.rule);this.updateTutorialCoach(`已掌握 · ${this.tutorial.name}`);}this.float(pos,`+${r.scoreDelta}${r.kind==='master'?' MASTER':''}`,r.kind==='master'?YELLOW:GREEN);this.scheduleOnce(()=>{this.session.continueAfterFeedback();this.spawn();},r.kind==='master'?.32:.28);}
@@ -195,7 +202,8 @@ export class GameplayMVP extends Component {
         this.lifeHearts.forEach((heart,i)=>{Tween.stopAllByTarget(heart.node);heart.node.setScale(Vec3.ONE);const alive=i<life;if(previous>=0&&!alive&&i<previous){heart.color=lit;tween(heart.node).to(.09,{scale:new Vec3(.78,.78,1)}).call(()=>{if(heart.isValid)heart.color=off;}).to(.14,{scale:Vec3.ONE},{easing:'backOut'}).start();}else heart.color=alive?lit:off;});
         this.renderedLife=life;
     }
-    private drawTrail(alpha:number):void{this.trail.clear();if(this.points.length<2||alpha<=0)return;for(const [w,c] of [[16,new Color(148,187,199,Math.round(95*alpha))],[8,new Color(255,253,241,Math.round(235*alpha))]] as [number,Color][]){this.trail.lineCap=Graphics.LineCap.ROUND;this.trail.lineJoin=Graphics.LineJoin.ROUND;this.trail.lineWidth=w;this.trail.strokeColor=c;this.trail.moveTo(this.points[0].x,this.points[0].y);for(let i=1;i<this.points.length;i++)this.trail.lineTo(this.points[i].x,this.points[i].y);this.trail.stroke();}}
+    private drawTrail(alpha:number):void{this.trail.clear();if(this.points.length<2||alpha<=0){this.trailVisible=false;return;}this.trailOuterColor.a=Math.round(95*alpha);this.trailInnerColor.a=Math.round(235*alpha);this.trail.lineCap=Graphics.LineCap.ROUND;this.trail.lineJoin=Graphics.LineJoin.ROUND;this.drawTrailStroke(16,this.trailOuterColor);this.drawTrailStroke(8,this.trailInnerColor);this.trailVisible=true;}
+    private drawTrailStroke(width:number,color:Color):void{this.trail.lineWidth=width;this.trail.strokeColor=color;this.trail.moveTo(this.points[0].x,this.points[0].y);for(let i=1;i<this.points.length;i++)this.trail.lineTo(this.points[i].x,this.points[i].y);this.trail.stroke();}
     private showReverse(active:boolean):void{this.reverseFrame?.destroy();this.reverseFrame=null;if(!active)return;const v=view.getVisibleSize(),g=gfx(this.node,'ReverseFrame',v.width-24,v.height-28);g.strokeColor=new Color(174,69,61,170);g.lineWidth=8;g.rect(-v.width/2+12,-v.height/2+14,v.width-24,v.height-28);g.stroke();this.reverseFrame=g.node;}
     private error(pos:Readonly<Vec3>):void{const g=gfx(this.effects,'ErrorRing',190,190);g.node.setPosition(pos);g.strokeColor=RED;g.lineWidth=12;g.circle(0,0,80);g.moveTo(-52,-52);g.lineTo(52,52);g.moveTo(-52,52);g.lineTo(52,-52);g.stroke();const o=g.node.addComponent(UIOpacity);tween(g.node).to(.22,{scale:new Vec3(1.16,1.16,1)},{easing:'quadOut'}).start();tween(o).to(.24,{opacity:0}).call(()=>g.node.destroy()).start();}
     private float(pos:Readonly<Vec3>,value:string,color:Color):void{const l=text(this.floats,'Float',value,32,color);l.node.setPosition(pos.x,pos.y+44);const o=l.node.addComponent(UIOpacity);tween(l.node).to(.34,{position:new Vec3(pos.x,pos.y+105,0)},{easing:'quadOut'}).start();tween(o).delay(.12).to(.22,{opacity:0}).call(()=>l.node.destroy()).start();}
@@ -217,6 +225,6 @@ export class GameplayMVP extends Component {
         }
         return landed;
     }
-    private onHide():void{if(this.finished)return;this.hidden=true;this.paused=true;if(!this.keepsIncompleteGesture())this.gesture=null;director.pause();}
+    private onHide():void{if(this.finished)return;this.hidden=true;this.paused=true;this.pendingTouchPoint=null;this.lastQueuedTouchPoint=null;this.touchActive=false;if(!this.keepsIncompleteGesture())this.gesture=null;director.pause();}
     private onShow():void{if(this.finished)return;this.hidden=false;director.resume();this.paused=true;const ready=text(this.node,'ResumeReady','READY',68,RED);this.scheduleOnce(()=>{ready.node.destroy();if(!this.hitStopActive)this.paused=false;},GAMEPLAY_CONFIG.readyMs/1000);}
 }
