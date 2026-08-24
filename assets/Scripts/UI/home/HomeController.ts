@@ -365,23 +365,26 @@ export class HomeController extends Component {
         separator.stroke();
 
         this.navSelectionMarkers = [];
-        // The source canvases are equally sized, but their painted pixels occupy
-        // different areas. These sizes normalize the visible icon+caption height.
-        const items: Array<[string, string, number, number, () => void]> = [
-            ['HomeButton', 'nav_home', -306, 110, this.onHomeClick.bind(this)],
-            ['TopicButton', 'nav_topic', -102, 138, this.onTopicClick.bind(this)],
-            ['RankButton', 'nav_rank', 102, 134, this.onRankClick.bind(this)],
-            ['ProfileButton', 'nav_profile', 306, 140, this.onProfileClick.bind(this)],
+        // The source canvases are equal, but each drawing occupies a different
+        // pixel range. Per-item size and baseline offsets normalize the visible
+        // icon scale while keeping every caption on the same horizontal line.
+        const items: Array<[string, string, number, number, number, () => void]> = [
+            ['HomeButton', 'nav_home', -306, 110, 0, this.onHomeClick.bind(this)],
+            ['TopicButton', 'nav_topic', -102, 138, 3, this.onTopicClick.bind(this)],
+            ['RankButton', 'nav_rank', 102, 134, -2, this.onRankClick.bind(this)],
+            ['ProfileButton', 'nav_profile', 306, 152, 5, this.onProfileClick.bind(this)],
         ];
-        items.forEach(([name, assetName, x, artworkSize, callback], index) => {
+        items.forEach(([name, assetName, x, artworkSize, artworkY, callback], index) => {
             const item = this.makeNode(root, name, x, -4, 176, 120);
             const marker = this.makeNode(item, 'SelectedPaint', 0, 20, 142, 82);
             this.attachResourceTexture(marker, 'textures/home/ui/nav_selected_paint/spriteFrame');
             marker.active = index === 0;
             this.navSelectionMarkers.push(marker);
 
-            const artwork = this.makeNode(item, 'NavArtwork', 0, 0, artworkSize, artworkSize);
+            const artwork = this.makeNode(item, 'NavArtwork', 0, artworkY, artworkSize, artworkSize);
             this.attachResourceTexture(artwork, `textures/home/ui/${assetName}/spriteFrame`);
+            const artworkSprite = artwork.getChildByName('TextureSprite')?.getComponent(Sprite);
+            if (artworkSprite) artworkSprite.trim = false;
             this.bindButton(item, () => {
                 this.setSelectedNavigation(index);
                 callback();
