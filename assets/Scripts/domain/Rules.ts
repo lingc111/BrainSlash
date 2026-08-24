@@ -19,7 +19,8 @@ export function questionPreviewDurationSeconds(rules: readonly RuleId[]): number
 /** Extra airborne time for rules that require mentally remapping the choices. */
 export function questionFlightDurationSeconds(baseSeconds: number, rules: readonly RuleId[]): number {
     const safeBase = Math.max(0.9, baseSeconds);
-    return rules.includes('reverse') || rules.includes('rotate') ? safeBase + 0.85 : safeBase;
+    const needsThinkingBuffer = rules.includes('multi') || rules.includes('reverse') || rules.includes('rotate') || slashRuleCount(rules) >= 2;
+    return needsThinkingBuffer ? safeBase + 0.95 : safeBase;
 }
 
 export function slashRuleLabel(rules: readonly RuleId[]): string {

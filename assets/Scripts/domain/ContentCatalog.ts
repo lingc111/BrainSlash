@@ -146,13 +146,13 @@ export interface EnglishWord {
 
 export const ENGLISH_WORDS: readonly EnglishWord[] = [
     { en: 'CAT', zh: '猫', category: '动物' }, { en: 'DOG', zh: '狗', category: '动物' },
-    { en: 'BIRD', zh: '鸟', category: '动物' }, { en: 'FISH', zh: '鱼', category: '动物' },
+    { en: 'BIRD', zh: '鸟', category: '动物' }, { en: 'ZEBRA', zh: '斑马', category: '动物' },
     { en: 'LION', zh: '狮子', category: '动物' }, { en: 'TIGER', zh: '老虎', category: '动物' },
     { en: 'HORSE', zh: '马', category: '动物' }, { en: 'PANDA', zh: '熊猫', category: '动物' },
     { en: 'RED', zh: '红色', category: '颜色' }, { en: 'BLUE', zh: '蓝色', category: '颜色' },
     { en: 'GREEN', zh: '绿色', category: '颜色' }, { en: 'BLACK', zh: '黑色', category: '颜色' },
     { en: 'WHITE', zh: '白色', category: '颜色' }, { en: 'YELLOW', zh: '黄色', category: '颜色' },
-    { en: 'PURPLE', zh: '紫色', category: '颜色' }, { en: 'ORANGE', zh: '橙色', category: '颜色' },
+    { en: 'PURPLE', zh: '紫色', category: '颜色' }, { en: 'GRAY', zh: '灰色', category: '颜色' },
     { en: 'APPLE', zh: '苹果', category: '食物' }, { en: 'BREAD', zh: '面包', category: '食物' },
     { en: 'RICE', zh: '米饭', category: '食物' }, { en: 'MILK', zh: '牛奶', category: '食物' },
     { en: 'CAKE', zh: '蛋糕', category: '食物' }, { en: 'EGG', zh: '鸡蛋', category: '食物' },
@@ -207,6 +207,44 @@ export const LIFE_FACTS: readonly LifeFact[] = [
     { item: '警示锥', use: '标记危险区域', category: '安全用品' }, { item: '飞机', use: '空中运输', category: '交通工具' },
     { item: '火车', use: '铁路运输', category: '交通工具' }, { item: '出租车', use: '载客出行', category: '交通工具' },
     { item: '摩托车', use: '机动骑行', category: '交通工具' },
+];
+
+/**
+ * A deliberately stricter subset for category questions. Context-dependent
+ * objects such as garbage bags, sponges, scissors and masks stay available
+ * for precise use questions, but never act as misleading category distractors.
+ */
+export const LIFE_CATEGORY_FACTS: readonly LifeFact[] = [
+    { item: '扫帚', use: '清扫地面', category: '清洁工具' },
+    { item: '拖把', use: '拖洗地面', category: '清洁工具' },
+    { item: '吸尘器', use: '吸走灰尘', category: '清洁工具' },
+    { item: '簸箕', use: '收拢尘土', category: '清洁工具' },
+    { item: '玻璃刮', use: '刮净玻璃', category: '清洁工具' },
+    { item: '鸡毛掸子', use: '掸除浮尘', category: '清洁工具' },
+    { item: '炒锅', use: '炒制食物', category: '厨房用品' },
+    { item: '筷子', use: '夹取食物', category: '厨房用品' },
+    { item: '漏勺', use: '捞取食物', category: '厨房用品' },
+    { item: '砧板', use: '承托切菜', category: '厨房用品' },
+    { item: '擀面杖', use: '擀平面团', category: '厨房用品' },
+    { item: '蒸笼', use: '蒸制食物', category: '厨房用品' },
+    { item: '铅笔', use: '书写绘图', category: '学习用品' },
+    { item: '橡皮', use: '擦除铅笔字', category: '学习用品' },
+    { item: '圆规', use: '画圆', category: '学习用品' },
+    { item: '作业本', use: '书写作业', category: '学习用品' },
+    { item: '削笔器', use: '削尖铅笔', category: '学习用品' },
+    { item: '文具盒', use: '收纳文具', category: '学习用品' },
+    { item: '灭火器', use: '扑灭初起火灾', category: '安全用品' },
+    { item: '救生圈', use: '水上救生', category: '安全用品' },
+    { item: '安全帽', use: '保护头部', category: '安全用品' },
+    { item: '急救箱', use: '存放急救用品', category: '安全用品' },
+    { item: '警示锥', use: '标记危险区域', category: '安全用品' },
+    { item: '护目镜', use: '保护眼睛', category: '安全用品' },
+    { item: '自行车', use: '脚踏出行', category: '交通工具' },
+    { item: '公交车', use: '公共出行', category: '交通工具' },
+    { item: '地铁', use: '轨道通勤', category: '交通工具' },
+    { item: '轮船', use: '水上运输', category: '交通工具' },
+    { item: '飞机', use: '空中运输', category: '交通工具' },
+    { item: '火车', use: '铁路运输', category: '交通工具' },
 ];
 
 export interface GeographyFact {

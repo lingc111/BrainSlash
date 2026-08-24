@@ -87,7 +87,7 @@ export function showTowerResultOverlay(parent: Node, result: TowerFloorResult, a
     const row = makeNode('TowerStats', card, 630, 132);
     row.setPosition(0, 145);
     makeStat(row, 'Points', -210, `+${result.towerPointsGained}`, '本层塔积分');
-    makeStat(row, 'Run', 0, String(result.runTotalScore), '本轮累计');
+    makeStat(row, 'Run', 0, String(result.runTotalScore), '本轮塔积分');
     makeStat(row, 'Highest', 210, String(result.highestClearedFloor), '最高层');
 
     const growth = makeNode('TowerGrowthCard', card, 630, 160);

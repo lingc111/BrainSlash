@@ -3,6 +3,7 @@ import type { ContentFamilyKind } from './ContentCatalog';
 
 export const TOWER_LAST_FLOOR = 30;
 export const TOWER_DURATION_MS = 60_000;
+export const TOWER_SCORING_VERSION = 2;
 
 export interface TowerActiveRun {
     startFloor: number;
@@ -11,6 +12,7 @@ export interface TowerActiveRun {
 }
 
 export interface TowerProgress {
+    scoringVersion: number;
     currentFloor: number;
     highestClearedFloor: number;
     lastCheckpointFloor: number;
@@ -59,6 +61,7 @@ export interface TowerCommit {
 }
 
 export const DEFAULT_TOWER_PROGRESS: TowerProgress = {
+    scoringVersion: TOWER_SCORING_VERSION,
     currentFloor: 1,
     highestClearedFloor: 0,
     lastCheckpointFloor: 0,
@@ -145,15 +148,18 @@ export function commitTowerFloor(progressBefore: TowerProgress, run: RunResult, 
     // scoring window, so losing the last life afterwards must not revoke it.
     const cleared = run.correctCount >= config.requiredCorrect;
     const firstClear = cleared && floor > progressBefore.highestClearedFloor;
-    const towerPointsGained = cleared ? towerReward(run.score, floor, firstClear) : 0;
+    const towerPointsGained = cleared ? towerPointsForClear(run.score, floor, firstClear) : 0;
     const activeRun = progressBefore.activeRun ?? { startFloor: floor, totalScore: 0, maxCombo: 0 };
-    const runTotalScore = cleared ? activeRun.totalScore + run.score : activeRun.totalScore;
+    // The run summary tracks normalized tower points. Raw battle scores remain
+    // useful per floor, but summing them across 30 floors creates unreadable totals.
+    const runTotalScore = cleared ? activeRun.totalScore + towerPointsGained : activeRun.totalScore;
     const runMaxCombo = Math.max(activeRun.maxCombo, run.maxCombo);
     const highestClearedFloor = firstClear ? floor : progressBefore.highestClearedFloor;
     const checkpointReached = firstClear && floor % 5 === 0;
     const chapterOneCompleted = progressBefore.chapterOneCompleted || (cleared && floor === TOWER_LAST_FLOOR);
     const runFinished = chapterOneCompleted && cleared && floor === TOWER_LAST_FLOOR;
     const progress: TowerProgress = {
+        scoringVersion: TOWER_SCORING_VERSION,
         currentFloor: cleared ? Math.min(TOWER_LAST_FLOOR, floor + 1) : floor,
         highestClearedFloor,
         lastCheckpointFloor: checkpointReached ? floor : progressBefore.lastCheckpointFloor,
@@ -190,18 +196,26 @@ export function normalizeTowerProgress(value: unknown): TowerProgress {
         return cloneTower(DEFAULT_TOWER_PROGRESS);
     }
     const highest = candidate.highestClearedFloor!;
+    const legacyScoring = candidate.scoringVersion !== TOWER_SCORING_VERSION;
     const checkpoint = integerIn(candidate.lastCheckpointFloor, 0, TOWER_LAST_FLOOR)
         ? Math.min(candidate.lastCheckpointFloor!, Math.floor(highest / 5) * 5) : Math.floor(highest / 5) * 5;
     const normalized: TowerProgress = {
+        scoringVersion: TOWER_SCORING_VERSION,
         currentFloor: candidate.currentFloor!,
         highestClearedFloor: highest,
         lastCheckpointFloor: checkpoint,
-        totalTowerPoints: nonNegative(candidate.totalTowerPoints),
-        bestContinuousScore: nonNegative(candidate.bestContinuousScore),
+        totalTowerPoints: legacyScoring ? estimatedLegacyPoints(1, highest) : nonNegative(candidate.totalTowerPoints),
+        bestContinuousScore: legacyScoring && nonNegative(candidate.bestContinuousScore) > 0
+            ? estimatedLegacyPoints(1, highest) : nonNegative(candidate.bestContinuousScore),
         maxCombo: nonNegative(candidate.maxCombo),
         chapterOneCompleted: candidate.chapterOneCompleted === true && highest === TOWER_LAST_FLOOR,
     };
-    if (validActiveRun(candidate.activeRun)) normalized.activeRun = { ...candidate.activeRun };
+    if (validActiveRun(candidate.activeRun)) {
+        normalized.activeRun = {
+            ...candidate.activeRun,
+            totalScore: legacyScoring ? estimatedLegacyPoints(candidate.activeRun.startFloor, highest) : candidate.activeRun.totalScore,
+        };
+    }
     return normalized;
 }
 
@@ -223,12 +237,26 @@ function makeConfig(
 }
 
 function allThemes(): Readonly<Partial<Record<ThemeId, number>>> {
-    return { math: 3, vision: 3, hanzi: 2, english: 2, life: 1, geography: 1 };
+    return { math: 3, vision: 3, hanzi: 2, english: 2, life: 1, geography: 1, knowledge: 2, history: 2 };
 }
 
-function towerReward(score: number, floor: number, firstClear: boolean): number {
+export function towerPointsForClear(score: number, floor: number, firstClear: boolean): number {
     const safeScore = Math.max(0, Math.floor(score));
-    return firstClear ? safeScore + 500 + floor * 50 : Math.min(100, Math.floor(safeScore * 0.1));
+    const safeFloor = clampFloor(floor);
+    if (!firstClear) return Math.min(30, Math.floor(safeScore / 100));
+    const performanceBonus = Math.min(100, Math.floor(safeScore / 50));
+    return 100 + safeFloor * 10 + performanceBonus;
+}
+
+function estimatedLegacyPoints(startFloor: number, highestFloor: number): number {
+    const start = clampFloor(startFloor);
+    const end = Math.max(0, Math.min(TOWER_LAST_FLOOR, Math.floor(highestFloor || 0)));
+    if (end < start) return 0;
+    let result = 0;
+    // Forty points approximates a healthy mid-run performance bonus while
+    // preserving cleared-floor progress during the one-time score migration.
+    for (let floor = start; floor <= end; floor++) result += 100 + floor * 10 + 40;
+    return result;
 }
 
 function clampFloor(floor: number): number { return Math.max(1, Math.min(TOWER_LAST_FLOOR, Math.floor(floor || 1))); }

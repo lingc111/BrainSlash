@@ -40,19 +40,19 @@ export const BRAWL_PHASES: readonly BrawlPhaseSettings[] = [
     {
         id: 'action', startMs: 10_000, endMs: 25_000, difficultyStage: 1,
         targetCount: 4, questionTimeMs: 2_600, speed: 0.95,
-        themeWeights: { math: 3, vision: 3, hanzi: 1, english: 1, life: 1 },
+        themeWeights: { math: 3, vision: 3, hanzi: 1, english: 1, life: 1, knowledge: 2, history: 2 },
         ruleSequence: [['multi'], ['bomb'], ['standard'], ['order'], ['bomb']], reuseSeenFamilies: false,
     },
     {
         id: 'twist', startMs: 25_000, endMs: 45_000, difficultyStage: 2,
         targetCount: 5, questionTimeMs: 2_250, speed: 1.15,
-        themeWeights: { math: 2, vision: 3, hanzi: 2, english: 2, life: 1, geography: 1 },
+        themeWeights: { math: 2, vision: 3, hanzi: 2, english: 2, life: 1, geography: 1, knowledge: 2, history: 2 },
         ruleSequence: [['reverse'], ['rotate'], ['standard'], ['reverse'], ['multi'], ['standard']], reuseSeenFamilies: false,
     },
     {
         id: 'climax', startMs: 45_000, endMs: 60_001, difficultyStage: 2,
         targetCount: 6, questionTimeMs: 1_850, speed: 1.38,
-        themeWeights: { math: 3, vision: 3, hanzi: 2, english: 2, life: 1, geography: 1 },
+        themeWeights: { math: 3, vision: 3, hanzi: 2, english: 2, life: 1, geography: 1, knowledge: 2, history: 2 },
         ruleSequence: [
             ['bomb', 'multi'], ['bomb', 'reverse'], ['bomb', 'order'], ['bomb', 'rotate'],
             ['multi', 'reverse'], ['multi', 'rotate'], ['order', 'rotate'],

@@ -13,6 +13,7 @@ import {
     KNOWLEDGE_CULTURE_FACTS,
     KNOWLEDGE_NATURE_FACTS,
     KNOWLEDGE_SCIENCE_FACTS,
+    LIFE_CATEGORY_FACTS,
     LIFE_FACTS,
     type ContentFamilySpec,
     type TriviaFact,
@@ -352,16 +353,16 @@ export class QuestionGenerator {
 
     private lifeUse(family: ContentFamilySpec, stage: Stage): QuestionInstance {
         const fact = this.pickFact('life-facts', LIFE_FACTS, (item) => `life:${item.item}`);
-        const candidates = LIFE_FACTS.filter((candidate) => candidate.item !== fact.item).map((candidate) => candidate.item);
-        return this.makeChoice(family, fact.use, fact.item, candidates, stage);
+        const candidates = LIFE_FACTS.filter((candidate) => candidate.item !== fact.item).map((candidate) => candidate.use);
+        return this.makeChoice(family, `${fact.item}主要用于`, fact.use, candidates, stage);
     }
 
     private lifeCategory(family: ContentFamilySpec, stage: Stage): QuestionInstance {
         const categories = ['清洁工具', '厨房用品', '学习用品', '安全用品', '交通工具'] as const;
         const category = categories[family.variant];
         const count = this.nonBombTargetCount();
-        const matchingPool = LIFE_FACTS.filter((fact) => fact.category === category);
-        const others = this.rng.shuffle(LIFE_FACTS.filter((fact) => fact.category !== category));
+        const matchingPool = LIFE_CATEGORY_FACTS.filter((fact) => fact.category === category);
+        const others = this.rng.shuffle(LIFE_CATEGORY_FACTS.filter((fact) => fact.category !== category));
         const correctCount = this.directive.rules.includes('multi') || stage > 0 ? 2 : 1;
         const matching = this.pickFacts(`life-category:${category}`, matchingPool, correctCount, (fact) => `life:${fact.item}`);
         const facts = this.rng.shuffle([...matching, ...others.slice(0, count - correctCount)]);

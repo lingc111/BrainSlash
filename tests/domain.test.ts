@@ -16,6 +16,7 @@ import {
     KNOWLEDGE_CULTURE_FACTS,
     KNOWLEDGE_NATURE_FACTS,
     KNOWLEDGE_SCIENCE_FACTS,
+    LIFE_CATEGORY_FACTS,
     LIFE_FACTS,
 } from '../assets/Scripts/domain/ContentCatalog.ts';
 import { GameSession } from '../assets/Scripts/domain/GameSession.ts';
@@ -51,7 +52,9 @@ import {
     DEFAULT_TOWER_PROGRESS,
     allowedBrawlRules,
     commitTowerFloor,
+    normalizeTowerProgress,
     towerFloorConfig,
+    towerPointsForClear,
     unlockedRulesForTower,
 } from '../assets/Scripts/domain/TowerMode.ts';
 import { calculatePortraitTargetLayout, portraitTargetEntranceDelay } from '../assets/Scripts/UI/PortraitTargetLayout.ts';
@@ -329,11 +332,13 @@ test('slash rule labels describe the gesture and ignore bomb distractors', () =>
     assert.equal(questionPreviewDurationSeconds(['bomb', 'multi']), 0.3);
     assert.equal(questionPreviewDurationSeconds(['multi', 'reverse']), 0.7);
     assert.equal(questionFlightDurationSeconds(2.5, ['standard']), 2.5);
-    assert.equal(questionFlightDurationSeconds(2.5, ['multi']), 2.5);
-    assert.equal(questionFlightDurationSeconds(2.5, ['reverse']), 3.35);
-    assert.equal(questionFlightDurationSeconds(2.5, ['multi', 'reverse']), 3.35);
-    assert.equal(questionFlightDurationSeconds(2.5, ['rotate']), 3.35);
-    assert.equal(questionFlightDurationSeconds(2.5, ['multi', 'rotate']), 3.35);
+    assert.equal(questionFlightDurationSeconds(2.5, ['multi']), 3.45);
+    assert.equal(questionFlightDurationSeconds(2.5, ['reverse']), 3.45);
+    assert.equal(questionFlightDurationSeconds(2.5, ['multi', 'reverse']), 3.45);
+    assert.equal(questionFlightDurationSeconds(2.5, ['rotate']), 3.45);
+    assert.equal(questionFlightDurationSeconds(2.5, ['multi', 'rotate']), 3.45);
+    assert.equal(questionFlightDurationSeconds(2.5, ['multi', 'order']), 3.45);
+    assert.equal(questionFlightDurationSeconds(2.5, ['bomb', 'multi']), 3.45);
 });
 
 test('order and multi gestures resolve once and reject incomplete strokes', () => {
@@ -574,6 +579,7 @@ test('reviewed fact pools contain unique answers and safe idiom distractors', ()
     }
     assert.equal(new Set(ENGLISH_WORDS.map((word) => word.en)).size, ENGLISH_WORDS.length);
     assert.equal(new Set(LIFE_FACTS.map((fact) => fact.item)).size, LIFE_FACTS.length);
+    assert.equal(new Set(LIFE_FACTS.map((fact) => fact.use)).size, LIFE_FACTS.length);
     assert.equal(new Set(GEOGRAPHY_FACTS.map((fact) => fact.country)).size, GEOGRAPHY_FACTS.length);
     assert.equal(new Set(GEOGRAPHY_FACTS.map((fact) => fact.capital)).size, GEOGRAPHY_FACTS.length);
     const triviaPools = [
@@ -932,7 +938,7 @@ test('color identification remains a question family without becoming a rule unl
     assert.ok(dailyRecipeById('logic-detective')?.familyKinds.includes('vision-stroop'));
 });
 
-test('daily topics merge logic and vision while keeping common knowledge and history dedicated', () => {
+test('daily topics merge logic and vision while common knowledge and history also join core modes', () => {
     const logic = dailyRecipeById('logic-detective');
     assert.ok(logic?.familyKinds.some((kind) => kind.startsWith('math-')));
     assert.ok(logic?.familyKinds.some((kind) => kind.startsWith('vision-')));
@@ -953,16 +959,17 @@ test('daily topics merge logic and vision while keeping common knowledge and his
     }
     assert.ok(modern >= 50);
 
-    const ordinary = new Brawl60Director(new SeededRng('ordinary-excludes-daily-topics'));
-    for (let index = 0; index < 120; index++) {
-        assert.ok(!['knowledge', 'history'].includes(ordinary.next((index * 1_997) % 60_000).family.theme));
-    }
-    for (const floor of [1, 15, 30]) {
-        const tower = new TowerDirector(new SeededRng(`tower-excludes-daily-topics-${floor}`), floor);
-        for (let index = 0; index < 30; index++) {
-            assert.ok(!['knowledge', 'history'].includes(tower.next(index * 1_000).family.theme));
-        }
-    }
+    const ordinary = new Brawl60Director(new SeededRng('ordinary-includes-all-topics'));
+    const ordinaryThemes = new Set(Array.from({ length: 500 }, (_, index) =>
+        ordinary.next([15_000, 30_000, 50_000][index % 3]).family.theme,
+    ));
+    assert.ok(ordinaryThemes.has('knowledge'));
+    assert.ok(ordinaryThemes.has('history'));
+
+    const tower = new TowerDirector(new SeededRng('tower-includes-all-topics'), 20);
+    const towerThemes = new Set(Array.from({ length: 500 }, (_, index) => tower.next(index * 1_000).family.theme));
+    assert.ok(towerThemes.has('knowledge'));
+    assert.ok(towerThemes.has('history'));
 });
 
 test('tower bombs add a hazard without replacing answer candidates', () => {
@@ -1017,21 +1024,59 @@ test('tower director is deterministic per attempt and legal across 100 seeds and
     }
 });
 
+test('category question pools exclude context-dependent items and polysemous English words', () => {
+    assert.ok(!ENGLISH_WORDS.some((word) => word.en === 'ORANGE' || word.en === 'FISH'));
+    assert.ok(ENGLISH_WORDS.some((word) => word.en === 'GRAY' && word.category === '颜色'));
+    assert.ok(ENGLISH_WORDS.some((word) => word.en === 'ZEBRA' && word.category === '动物'));
+
+    const excludedLifeItems = new Set(['垃圾袋', '海绵', '抹布', '剪刀', '胶带', '口罩', '牙刷']);
+    assert.ok(LIFE_CATEGORY_FACTS.every((fact) => !excludedLifeItems.has(fact.item)));
+    assert.equal(new Set(LIFE_CATEGORY_FACTS.map((fact) => fact.item)).size, LIFE_CATEGORY_FACTS.length);
+    for (const category of ['清洁工具', '厨房用品', '学习用品', '安全用品', '交通工具']) {
+        assert.equal(LIFE_CATEGORY_FACTS.filter((fact) => fact.category === category).length, 6);
+    }
+});
+
 test('tower progress rewards first clears once and restores the latest checkpoint', () => {
     const entry = { mode: 'tower' as const, seed: 'tower-attempt-a', contentVersion: CONTENT_VERSION, towerFloor: 5 };
     const run: RunResult = { entry, score: 1_000, maxCombo: 7, correctCount: 10, errorCount: 1, accuracy: 10 / 11 };
     const first = commitTowerFloor(DEFAULT_TOWER_PROGRESS, run, 2);
     assert.equal(first.result.cleared, true);
     assert.equal(first.result.firstClear, true);
-    assert.equal(first.result.towerPointsGained, 1_750);
+    assert.equal(first.result.towerPointsGained, 170);
+    assert.equal(first.result.runTotalScore, 170);
     assert.equal(first.progress.highestClearedFloor, 5);
     assert.equal(first.progress.lastCheckpointFloor, 5);
     const repeat = commitTowerFloor(first.progress, run, 2);
     assert.equal(repeat.result.firstClear, false);
-    assert.equal(repeat.result.towerPointsGained, 100);
+    assert.equal(repeat.result.towerPointsGained, 10);
+    assert.equal(repeat.result.runTotalScore, 180);
     const floor15Run: RunResult = { ...run, entry: { ...entry, seed: 'tower-floor-15', towerFloor: 15 }, correctCount: 12 };
     const floor15 = commitTowerFloor({ ...first.progress, highestClearedFloor: 14, currentFloor: 15 }, floor15Run, 2);
     assert.equal(floor15.result.unlockedLabel, '双规则');
+});
+
+test('tower scoring stays near a ten-thousand-point chapter scale and migrates inflated totals', () => {
+    const maximumFirstClearTotal = Array.from({ length: 30 }, (_, index) =>
+        towerPointsForClear(999_999, index + 1, true),
+    ).reduce((sum, points) => sum + points, 0);
+    assert.equal(maximumFirstClearTotal, 10_650);
+    assert.equal(towerPointsForClear(999_999, 30, false), 30);
+
+    const migrated = normalizeTowerProgress({
+        currentFloor: 17,
+        highestClearedFloor: 16,
+        lastCheckpointFloor: 15,
+        totalTowerPoints: 51_096,
+        bestContinuousScore: 0,
+        maxCombo: 18,
+        chapterOneCompleted: false,
+        activeRun: { startFloor: 1, totalScore: 51_096, maxCombo: 18 },
+    });
+    assert.equal(migrated.scoringVersion, 2);
+    assert.equal(migrated.totalTowerPoints, 3_600);
+    assert.equal(migrated.activeRun?.totalScore, 3_600);
+    assert.equal(migrated.highestClearedFloor, 16);
 });
 
 test('tower target stays cleared after life depletion and only fails below the target', () => {
