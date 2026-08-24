@@ -402,6 +402,38 @@ test('standard parity accepts either even while multi parity requires all evens'
     assert.equal(gesture.hit('12').status, 'success');
 });
 
+test('ordinary single selection generates exactly one correct target', () => {
+    const familyKinds = new Set(['math-property', 'english-category', 'life-category']);
+    const ruleSets = [['standard'], ['bomb'], ['rotate']] as const;
+    for (const family of CONTENT_FAMILIES.filter((candidate) => familyKinds.has(candidate.kind))) {
+        for (const rules of ruleSets) {
+            if (!familySupportsRules(family, rules)) continue;
+            for (let seedIndex = 0; seedIndex < 20; seedIndex++) {
+                const generator = new QuestionGenerator(new SeededRng(`single-${family.id}-${rules.join('+')}-${seedIndex}`), GAMEPLAY_CONFIG);
+                const question = generator.next({
+                    phase: 'climax', difficultyStage: 2, targetCount: 6, questionTimeMs: 3_000,
+                    speed: 1, family, rules: [...rules],
+                });
+                const constraint = evaluateRules(question);
+                assert.equal(constraint.requiredTargetIds.length, 1, `${family.id}:${rules.join('+')}`);
+                assert.equal(validateQuestion(question, constraint).includes('single-needs-one-target'), false);
+            }
+        }
+    }
+});
+
+test('reverse selection may still accept any one of multiple reversed targets', () => {
+    const question: QuestionInstance = {
+        id: 'reverse-single', theme: 'math', prompt: { text: '奇数' },
+        targets: [{ id: '3', text: '3', value: 3 }, { id: '4', text: '4', value: 4 }, { id: '6', text: '6', value: 6 }],
+        baseCorrectTargetIds: ['3'], activeRules: ['reverse'], timeLimitMs: 3_000, tutorialSafe: false,
+    };
+    const constraint = evaluateRules(question);
+    assert.deepEqual(constraint.requiredTargetIds, ['4', '6']);
+    assert.equal(constraint.matchMode, 'any');
+    assert.equal(validateQuestion(question, constraint).includes('single-needs-one-target'), false);
+});
+
 test('multi selection keeps correct progress across separate strokes', () => {
     const gesture = new GestureResolver({
         requiredTargetIds: ['first', 'second', 'third'],

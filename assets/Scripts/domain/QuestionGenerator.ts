@@ -201,6 +201,13 @@ export class QuestionGenerator {
         }
         if (!values.some(predicate)) this.forcePropertyValue(values, 0, predicate, true, max);
         if (values.every(predicate)) this.forcePropertyValue(values, values.length - 1, predicate, false, max);
+        if (this.isOrdinarySingleSelection()) {
+            while (values.filter(predicate).length > 1) {
+                const index = values.findIndex(predicate);
+                if (index < 0) break;
+                this.forcePropertyValue(values, index, predicate, false, max);
+            }
+        }
         if (this.directive.rules.includes('multi')) {
             while (values.filter(predicate).length < 2) {
                 const index = values.findIndex((value) => !predicate(value));
@@ -332,7 +339,9 @@ export class QuestionGenerator {
         const count = this.nonBombTargetCount();
         const matchingPool = ENGLISH_WORDS.filter((word) => word.category === category);
         const others = this.rng.shuffle(ENGLISH_WORDS.filter((word) => word.category !== category));
-        const correctCount = this.directive.rules.includes('multi') || stage > 0 ? 2 : 1;
+        const correctCount = this.isOrdinarySingleSelection()
+            ? 1
+            : this.directive.rules.includes('multi') || stage > 0 ? 2 : 1;
         const matching = this.pickFacts(`english-category:${category}`, matchingPool, correctCount, (word) => `english:${word.en}`);
         const words = this.rng.shuffle([...matching, ...others.slice(0, count - correctCount)]);
         const targets: TargetSpec[] = words.map((word, index) => ({ id: `e${index}`, text: word.en, value: word.category }));
@@ -364,7 +373,9 @@ export class QuestionGenerator {
         const count = this.nonBombTargetCount();
         const matchingPool = LIFE_CATEGORY_FACTS.filter((fact) => fact.category === category);
         const others = this.rng.shuffle(LIFE_CATEGORY_FACTS.filter((fact) => fact.category !== category));
-        const correctCount = this.directive.rules.includes('multi') || stage > 0 ? 2 : 1;
+        const correctCount = this.isOrdinarySingleSelection()
+            ? 1
+            : this.directive.rules.includes('multi') || stage > 0 ? 2 : 1;
         const matching = this.pickFacts(`life-category:${category}`, matchingPool, correctCount, (fact) => `life:${fact.item}`);
         const facts = this.rng.shuffle([...matching, ...others.slice(0, count - correctCount)]);
         const targets: TargetSpec[] = facts.map((fact, index) => ({ id: `l${index}`, text: fact.item, value: fact.category }));
@@ -407,6 +418,11 @@ export class QuestionGenerator {
 
     private nonBombTargetCount(): number {
         return Math.max(2, this.directive.targetCount);
+    }
+
+    private isOrdinarySingleSelection(): boolean {
+        const rules = this.directive.rules;
+        return !rules.includes('reverse') && !rules.includes('multi') && !rules.includes('order');
     }
 
     private appendBomb(targets: TargetSpec[]): void {
