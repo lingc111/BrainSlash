@@ -320,7 +320,7 @@ export class QuestionGenerator {
     private hanziOrder(family: ContentFamilySpec, stage: Stage): QuestionInstance {
         const orderable = IDIOMS.filter((entry) => new Set(entry.text).size === 4);
         const entry = this.pickFact('idioms-orderable', orderable, (item) => `idiom:${item.text}`);
-        const source = [...entry.text].map((text, originalIndex) => ({ text, originalIndex }));
+        const source = Array.from(entry.text).map((text, originalIndex) => ({ text, originalIndex }));
         const targets: TargetSpec[] = this.rng.shuffle(source).map((item, index) => ({ id: `h${index}`, text: item.text, value: item.originalIndex }));
         const ordered = [...targets].sort((a, b) => Number(a.value) - Number(b.value)).map((target) => target.id);
         this.appendBomb(targets);
@@ -404,7 +404,9 @@ export class QuestionGenerator {
     private uniqueNumbers(count: number, min: number, max: number): number[] {
         const values = new Set<number>();
         while (values.size < count) values.add(this.rng.int(min, max));
-        return [...values];
+        // Creator's WeChat transform can lower iterable spread to [].concat(set),
+        // which produces [Set] instead of the set's numeric entries.
+        return Array.from(values);
     }
 
     private forcePropertyValue(values: number[], index: number, predicate: (value: number) => boolean, expected: boolean, max: number): void {

@@ -1097,10 +1097,12 @@ export class HomeController extends Component {
         try {
             const info = wxApi?.getSystemInfoSync?.();
             const capsule = wxApi?.getMenuButtonBoundingClientRect?.();
-            if (info && capsule && info.screenHeight > 0) {
+            if (info && capsule && Number.isFinite(info.screenHeight) && info.screenHeight > 0
+                && Number.isFinite(capsule.bottom)) {
                 return capsule.bottom * visibleHeight / info.screenHeight + 10;
             }
-            if (info?.safeArea && info.screenHeight > 0) {
+            if (info?.safeArea && Number.isFinite(info.screenHeight) && info.screenHeight > 0
+                && Number.isFinite(info.safeArea.top)) {
                 return info.safeArea.top * visibleHeight / info.screenHeight + 18;
             }
         } catch {
@@ -1113,7 +1115,8 @@ export class HomeController extends Component {
         const wxApi = (globalThis as { wx?: WechatApi }).wx;
         try {
             const info = wxApi?.getSystemInfoSync?.();
-            if (info?.safeArea && info.screenHeight > 0) {
+            if (info?.safeArea && Number.isFinite(info.screenHeight) && info.screenHeight > 0
+                && Number.isFinite(info.safeArea.bottom)) {
                 const inset = info.screenHeight - info.safeArea.bottom;
                 return Math.max(28, inset * visibleHeight / info.screenHeight + 20);
             }

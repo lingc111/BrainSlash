@@ -25,7 +25,7 @@ export function questionFlightDurationSeconds(baseSeconds: number, rules: readon
 
 export function rulesForReadableTargets(rules: readonly RuleId[], targets: readonly TargetSpec[]): RuleId[] {
     if (!rules.includes('rotate')) return [...rules];
-    const hasLongChoice = targets.some((target) => !target.isBomb && [...target.text.trim()].length >= 4);
+    const hasLongChoice = targets.some((target) => !target.isBomb && Array.from(target.text.trim()).length >= 4);
     if (!hasLongChoice) return [...rules];
     const readable = rules.filter((rule) => rule !== 'rotate');
     return readable.length ? readable : ['standard'];

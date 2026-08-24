@@ -72,7 +72,7 @@ function weightedThemes(weights: Readonly<Partial<Record<ThemeId, number>>>, ava
         if (!available.has(theme)) continue;
         for (let index = 0; index < Math.max(1, Math.round(weights[theme] ?? 0)); index += 1) result.push(theme);
     }
-    return result.length ? result : [...available];
+    return result.length ? result : Array.from(available);
 }
 
 function phaseForFloor(floor: number): BrawlPhaseId {

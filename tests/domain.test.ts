@@ -261,6 +261,25 @@ test('every complex rule first appears as a readable single-rule safe tutorial',
     assert.deepEqual(Object.keys(learned).sort(), ['bomb', 'multi', 'order', 'reverse', 'rotate']);
 });
 
+test('numeric comparison targets remain primitive numbers with readable labels', () => {
+    const family = CONTENT_FAMILIES.find((candidate) => candidate.kind === 'math-compare')!;
+    const generator = new QuestionGenerator(new SeededRng('wechat-set-spread-regression'), GAMEPLAY_CONFIG);
+    const question = generator.next({
+        phase: 'warmup',
+        difficultyStage: 1,
+        targetCount: 2,
+        questionTimeMs: 3_000,
+        speed: 1,
+        family,
+        rules: ['standard'],
+    });
+
+    for (const target of question.targets) {
+        assert.equal(typeof target.value, 'number');
+        assert.match(target.text, /^\d+$/);
+    }
+});
+
 test('rotation excludes reverse and every direction-sensitive family', () => {
     assert.equal(validateRuleSet(['rotate']), true);
     assert.equal(validateRuleSet(['multi', 'rotate']), true);
@@ -1206,4 +1225,13 @@ test('home portrait layout keeps every section separated across common safe area
         assert.ok(rankBottom - navigationTop >= 18 - 0.001, `${profile.name} rank/navigation overlap`);
         assert.equal(layout.navigationY - 64, -profile.height * 0.5 + profile.bottom);
     }
+});
+
+test('home portrait layout survives incomplete WeChat safe-area values', () => {
+    const layout = calculateHomePortraitLayout(Number.NaN, Number.NaN, Number.POSITIVE_INFINITY);
+
+    assert.ok(Number.isFinite(layout.contentScale));
+    assert.ok(Number.isFinite(layout.sectionGap));
+    assert.ok(Number.isFinite(layout.navigationY));
+    for (const y of Object.values(layout.sectionY)) assert.ok(Number.isFinite(y));
 });

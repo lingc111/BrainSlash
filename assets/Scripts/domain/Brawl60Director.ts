@@ -246,7 +246,7 @@ export class Brawl60Director {
             this.themeBags.set(key, bag);
         }
         const avoidTheme = this.recentThemes[this.recentThemes.length - 1];
-        if (avoidTheme && [...available].some((theme) => theme !== avoidTheme) && !bag.some((theme) => available.has(theme) && theme !== avoidTheme)) {
+        if (avoidTheme && Array.from(available).some((theme) => theme !== avoidTheme) && !bag.some((theme) => available.has(theme) && theme !== avoidTheme)) {
             const weighted: ThemeId[] = [];
             for (const theme of Object.keys(phase.themeWeights) as ThemeId[]) {
                 if (!available.has(theme)) continue;
