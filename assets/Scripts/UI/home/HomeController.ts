@@ -298,6 +298,10 @@ export class HomeController extends Component {
         // Preserve its native ratio so the brush texture and lettering are not squeezed.
         const artwork = this.makeNode(start, 'ButtonArtwork', 0, 0, 565, 210);
         this.attachResourceTexture(artwork, 'textures/home/ui/draw_sword/spriteFrame');
+        const artworkSprite = artwork.getChildByName('TextureSprite')?.getComponent(Sprite);
+        // The transparent asset is auto-trimmed on import. Render against its
+        // original canvas so the trimmed pixels are not stretched to this node.
+        if (artworkSprite) artworkSprite.trim = false;
         start.setSiblingIndex(root.children.length - 1);
         this.bindButton(start, this.onTowerClick.bind(this));
         return root;
@@ -312,22 +316,29 @@ export class HomeController extends Component {
     }
 
     private buildEvents(parent: Node): Node {
-        const area = this.makeNode(parent, 'EventArea', 0, 0, 790, 420);
+        const area = this.makeNode(parent, 'EventArea', 0, 0, 820, 476);
+        const cardScale = 1.13;
 
-        const reverse = this.makeNode(area, 'ReverseDayCard', -190, 0, 370, 420);
-        const pink = this.makeNode(reverse, 'Paper', 0, 0, 350, 420);
+        const reverse = this.makeNode(area, 'ReverseDayCard', -192, 0, 336, 420);
+        const pink = this.makeNode(reverse, 'Paper', 0, 0, 336, 420);
         this.attachResourceTexture(pink, 'textures/home/ui/friend_challenge/spriteFrame');
+        const pinkSprite = pink.getChildByName('TextureSprite')?.getComponent(Sprite);
+        if (pinkSprite) pinkSprite.trim = false;
         this.label(reverse, 'TitleLabel', '反向日', -4, -105, 280, 68, 48, C.ink, 'center');
         this.bindButton(reverse, this.onReverseDayClick.bind(this));
+        reverse.setScale(cardScale, cardScale, 1);
 
-        const flag = this.makeNode(area, 'DailyChallengeCard', 190, 0, 370, 420);
-        const polaroid = this.makeNode(flag, 'Polaroid', 0, 0, 350, 420);
+        const flag = this.makeNode(area, 'DailyChallengeCard', 192, 0, 336, 420);
+        const polaroid = this.makeNode(flag, 'Polaroid', 0, 0, 336, 420);
         this.attachResourceTexture(polaroid, 'textures/home/ui/limited_activity/spriteFrame');
+        const polaroidSprite = polaroid.getChildByName('TextureSprite')?.getComponent(Sprite);
+        if (polaroidSprite) polaroidSprite.trim = false;
         this.label(flag, 'DailyCaption', '今日挑战', 0, -72, 280, 44, 25, C.ink, 'center');
         this.dailyEventTitleLabel = this.label(flag, 'TitleLabel', '颜色骗局', 0, -120, 300, 60, 38, C.blue, 'center');
         this.dailyEventStatusLabel = this.label(flag, 'StatusLabel', '今日首战', 0, -164, 300, 42, 20, C.ink, 'center');
         this.dailyEventCountdownLabel = this.label(flag, 'CountdownLabel', '00:00:00', 0, 160, 210, 42, 23, C.red, 'center');
         this.bindButton(flag, this.onFlagHunterClick.bind(this));
+        flag.setScale(cardScale, cardScale, 1);
         return area;
     }
 

@@ -16,7 +16,7 @@ export const HOME_PORTRAIT_SECTION_HEIGHTS: Readonly<Record<HomeSectionId, numbe
     header: 138,
     daily: 600,
     brawl: 266,
-    events: 420,
+    events: 476,
     rank: 112,
 };
 
