@@ -7,7 +7,7 @@ import { dailyTutorialProgress } from '../domain/DailyChallenge';
 import { friendTargetPresentation } from '../domain/FriendChallenge';
 import { countdownWarningSecond, failureFeedback, successFeedback } from '../domain/GameFeedback';
 import { GestureResolver, GestureProgress, shouldKeepIncompleteGesture } from '../domain/GestureResolver';
-import type { ActionConstraint, FailureKind, QuestionInstance, RunResult, TargetSpec } from '../domain/Models';
+import type { ActionConstraint, FailureKind, QuestionInstance, RuleId, RunResult, TargetSpec } from '../domain/Models';
 import { QuestionGenerator } from '../domain/QuestionGenerator';
 import { evaluateRules, questionPreviewDurationSeconds, slashRuleLabel } from '../domain/Rules';
 import { prepareRuleTutorial, tutorialRetryInstruction, type RuleTutorialSpec } from '../domain/RuleTutorial';
@@ -19,6 +19,7 @@ import { calculatePortraitTargetLayout, portraitTargetEntranceDelay, type Portra
 import {
     createPortraitTargetMotionPlans,
     evaluatePortraitTargetMotion,
+    evaluatePortraitTargetRotation,
     resolveSoftTargetSeparation,
     type PortraitTargetMotionPlan,
 } from './PortraitTargetMotion';
@@ -54,7 +55,7 @@ export class GameplayMVP extends Component {
     private points:Vec2[]=[]; private trailAge=1; private finished=false; private reverseFrame:Node|null=null;
     private paused=false; private hidden=false; private hitStopActive=false; private targetRevealPending=false; private revealToken=0; private lastCountdownSecond=-1;
     private currentDirective:BrawlQuestionDirective|null=null; private tutorial:RuleTutorialSpec|null=null;
-    private learnedTutorials:Partial<Record<'reverse'|'multi'|'order'|'stroop'|'bomb',boolean>>={};
+    private learnedTutorials:Partial<Record<Exclude<RuleId,'standard'>,boolean>>={};
     private currentSkins:(typeof SKINS[number])[]=[]; private currentMotionPhases:number[]=[];
     private readonly handleResize=():void=>this.applyVisibleLayout();
     private readonly effectByNode=new Map<Node,EffectKey>(); private readonly frames=new Map<EffectKey,SpriteFrame>(); private readonly pool=new NodePool();
@@ -171,6 +172,7 @@ export class GameplayMVP extends Component {
         const data:GameplayTargetData={id:spec.id,contentType:TargetContentType.TEXT,text:spec.text,value:spec.value,shape:(['roundedSquare','triangle','hexagon','circle','pentagon'] as TargetShape[])[i%5],isBomb:spec.isBomb,color:COLORS[i%COLORS.length],contentColor:spec.colorName?wordColors[spec.colorName]:undefined};const target=n.addComponent(GameplayTarget);target.configure(data);
         const key:EffectKey=spec.isBomb?'bomb':skin;this.effectByNode.set(n,key);resources.load(`textures/gameplay/targets/${key}/spriteFrame`,SpriteFrame,(e,f)=>{if(!e&&n.isValid&&n.active)target.applySkin(f);});
         if(!this.towerTutorialPreflight){this.motions.push({node:n,...motion,delay});tween(n).delay(delay).to(.18,{scale:new Vec3(1.12,1.12,1)},{easing:'backOut'}).to(.16,{scale:Vec3.ONE},{easing:'quadOut'}).start();}
+        else if(this.question?.activeRules.includes('rotate')){const direction=i%2===0?1:-1;tween(n).by(3,{angle:360*direction}).repeatForever().start();}
     }
     private layout(count:number):PortraitTargetPosition[]{const v=view.getVisibleSize();return calculatePortraitTargetLayout(count,v.width,v.height);}
     private startTouch(e:EventTouch):void{if(this.paused||this.targetRevealPending||this.session.state.phase!=='playing'||!this.constraint)return;if(!this.gesture)this.gesture=new GestureResolver(this.constraint);this.points=[this.point(e)];this.trailAge=0;}
@@ -205,11 +207,12 @@ export class GameplayMVP extends Component {
     private updateCountdownFeedback(remainingMs:number):void{const second=countdownWarningSecond(remainingMs,this.lastCountdownSecond);if(second===null)return;this.lastCountdownSecond=second;AppRuntime.audio.play('warning',{variant:5-second});this.timer.color=RED;Tween.stopAllByTarget(this.timer.node);this.timer.node.setScale(Vec3.ONE);tween(this.timer.node).to(.08,{scale:new Vec3(1.18,1.18,1)},{easing:'backOut'}).to(.12,{scale:Vec3.ONE},{easing:'quadOut'}).start();}
     private updateTargetMotions():boolean{
         const elapsed=this.session.questionElapsedMs()/1000;
+        const rotating=this.question?.activeRules.includes('rotate')===true;
         let landed=false;
         const valid=this.motions.filter((motion)=>motion.node.isValid),base=valid.map((motion)=>evaluatePortraitTargetMotion(motion,elapsed-motion.delay)),separated=resolveSoftTargetSeparation(base);
         for(let index=0;index<valid.length;index++){
             const motion=valid[index],local=elapsed-motion.delay,point=separated[index];
-            motion.node.setPosition(point.x,point.y);motion.node.angle=motion.entranceAngle*Math.max(0,1-Math.min(1,Math.max(0,local)/.24));
+            motion.node.setPosition(point.x,point.y);motion.node.angle=evaluatePortraitTargetRotation(motion,local,rotating);
             if(local>=motion.duration)landed=true;
         }
         return landed;

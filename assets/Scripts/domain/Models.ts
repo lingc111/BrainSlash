@@ -1,6 +1,6 @@
 export type GameMode = 'brawl60' | 'daily' | 'friendChallenge' | 'tower';
 export type ThemeId = 'math' | 'vision' | 'english' | 'hanzi' | 'geography' | 'life';
-export type RuleId = 'standard' | 'reverse' | 'multi' | 'order' | 'stroop' | 'bomb';
+export type RuleId = 'standard' | 'reverse' | 'rotate' | 'multi' | 'order' | 'bomb';
 export type SessionPhase = 'ready' | 'playing' | 'resolving' | 'finished';
 
 export interface GameEntryParams { mode: GameMode; seed: string; contentVersion: string; recipeId?: string; targetScore?: number; dailyDate?: string; towerFloor?: number; }

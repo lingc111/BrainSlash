@@ -51,7 +51,7 @@ export function normalizeV2(parsed: Partial<SaveDataV2>): SaveDataV2 {
         player: normalizePlayer(parsed.player),
         settings: { ...DEFAULT_SETTINGS, ...parsed.settings },
         tutorials: validTutorials(parsed.tutorials),
-        daily: validDailyRecord(parsed.daily) ? { ...parsed.daily, tutorialBaseline: parsed.daily.tutorialBaseline ?? [] } : undefined,
+        daily: validDailyRecord(parsed.daily) ? { ...parsed.daily, tutorialBaseline: normalizeTutorialBaseline(parsed.daily.tutorialBaseline) } : undefined,
         tower: normalizeTowerProgress(parsed.tower),
     };
 }
@@ -69,7 +69,7 @@ function validTutorials(value: unknown): Partial<Record<RuleId, boolean>> {
     const candidate = value as Partial<Record<RuleId, unknown>> | null | undefined;
     const result: Partial<Record<RuleId, boolean>> = {};
     if (!candidate) return result;
-    for (const rule of ['reverse', 'multi', 'order', 'stroop', 'bomb'] as const) if (candidate[rule] === true) result[rule] = true;
+    for (const rule of ['reverse', 'rotate', 'multi', 'order', 'bomb'] as const) if (candidate[rule] === true) result[rule] = true;
     return result;
 }
 
@@ -82,7 +82,13 @@ function validDailyRecord(value: unknown): value is LocalDailyRecord {
         && typeof record.bestScore === 'number' && Number.isFinite(record.bestScore) && record.bestScore >= 0
         && typeof record.lastScore === 'number' && Number.isFinite(record.lastScore) && record.lastScore >= 0
         && typeof record.completed === 'boolean'
-        && (record.tutorialBaseline === undefined || (Array.isArray(record.tutorialBaseline) && record.tutorialBaseline.every((rule) => ['reverse', 'multi', 'order', 'stroop', 'bomb'].includes(rule))));
+        && (record.tutorialBaseline === undefined || Array.isArray(record.tutorialBaseline));
+}
+
+function normalizeTutorialBaseline(value: unknown): Exclude<RuleId, 'standard'>[] {
+    if (!Array.isArray(value)) return [];
+    const valid = new Set<Exclude<RuleId, 'standard'>>(['reverse', 'rotate', 'multi', 'order', 'bomb']);
+    return value.filter((rule): rule is Exclude<RuleId, 'standard'> => valid.has(rule as Exclude<RuleId, 'standard'>));
 }
 
 function finiteNonNegative(value: unknown): number {

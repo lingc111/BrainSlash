@@ -18,7 +18,9 @@ export class TowerDirector {
     public next(_elapsedMs: number): BrawlQuestionDirective {
         const rules = this.pickRules();
         const compatible = CONTENT_FAMILIES.filter((family) =>
-            (this.config.themeWeights[family.theme] ?? 0) > 0 && familySupportsRules(family, rules),
+            (this.config.themeWeights[family.theme] ?? 0) > 0
+            && (!this.config.familyKinds || this.config.familyKinds.includes(family.kind))
+            && familySupportsRules(family, rules),
         );
         if (!compatible.length) throw new Error(`No tower content supports floor ${this.config.floor}:${rules.join('+')}`);
         const family = this.pickFamily(compatible, rules);

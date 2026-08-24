@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
-import { CONTENT_VERSION, GAMEPLAY_CONFIG } from '../assets/Scripts/configs/GameConfig.ts';
-import { Brawl60Director, familySupportsRules, phaseAt, targetCountForFamily } from '../assets/Scripts/domain/Brawl60Director.ts';
+import { CONTENT_VERSION, GAMEPLAY_CONFIG, validateRuleSet } from '../assets/Scripts/configs/GameConfig.ts';
+import { Brawl60Director, familySupportsRules, isDirectionSensitiveFamily, phaseAt, targetCountForFamily } from '../assets/Scripts/domain/Brawl60Director.ts';
 import {
     CONTENT_FAMILIES,
     CONTENT_FAMILY_TARGETS,
@@ -50,6 +50,7 @@ import { calculatePortraitTargetLayout, portraitTargetEntranceDelay } from '../a
 import {
     createPortraitTargetMotionPlans,
     evaluatePortraitTargetMotion,
+    evaluatePortraitTargetRotation,
     PORTRAIT_TARGET_MAX_SEPARATION_OFFSET,
     PORTRAIT_TARGET_MIN_SEPARATION,
     resolveSoftTargetSeparation,
@@ -230,9 +231,9 @@ test('game feedback policy maps master, combo, failures and final countdown', ()
 
 test('every complex rule first appears as a readable single-rule safe tutorial', () => {
     const { director, generator } = pipeline('tutorial-coverage');
-    const learned: Partial<Record<'reverse' | 'multi' | 'order' | 'stroop' | 'bomb', boolean>> = {};
+    const learned: Partial<Record<'reverse' | 'rotate' | 'multi' | 'order' | 'bomb', boolean>> = {};
     const elapsedSequence = [12_000, 28_000, 48_000];
-    for (let index = 0; index < 120 && Object.keys(learned).length < 5; index++) {
+    for (let index = 0; index < 160 && Object.keys(learned).length < 5; index++) {
         const prepared = prepareRuleTutorial(director.next(elapsedSequence[index % elapsedSequence.length]), learned);
         if (!prepared.tutorial) continue;
         const { directive, tutorial } = prepared;
@@ -246,7 +247,22 @@ test('every complex rule first appears as a readable single-rule safe tutorial',
         assert.equal(validateQuestion(question, evaluateRules(question)).length, 0);
         learned[tutorial.rule] = true;
     }
-    assert.deepEqual(Object.keys(learned).sort(), ['bomb', 'multi', 'order', 'reverse', 'stroop']);
+    assert.deepEqual(Object.keys(learned).sort(), ['bomb', 'multi', 'order', 'reverse', 'rotate']);
+});
+
+test('rotation excludes reverse and every direction-sensitive family', () => {
+    assert.equal(validateRuleSet(['rotate']), true);
+    assert.equal(validateRuleSet(['multi', 'rotate']), true);
+    assert.equal(validateRuleSet(['reverse', 'rotate']), false);
+    for (const family of CONTENT_FAMILIES) {
+        if (isDirectionSensitiveFamily(family.kind)) {
+            assert.equal(familySupportsRules(family, ['rotate']), false);
+            assert.equal(familySupportsRules(family, ['bomb', 'rotate']), false);
+        }
+    }
+    const math = CONTENT_FAMILIES.find((family) => family.kind === 'math-add')!;
+    assert.equal(familySupportsRules(math, ['rotate']), true);
+    assert.equal(familySupportsRules(math, ['bomb', 'rotate']), true);
 });
 
 test('learned rule pairs stay combined while tutorial retry copy explains the failure', () => {
@@ -272,12 +288,12 @@ test('learned rule pairs stay combined while tutorial retry copy explains the fa
 test('tutorials switch to a compatible safe family when only the remaining rule needs it', () => {
     const { director, generator } = pipeline('tutorial-fallback');
     const base = director.next(50_000);
-    const stroopFamily = CONTENT_FAMILIES.find((family) => family.kind === 'vision-stroop');
-    assert.ok(stroopFamily);
-    if (!stroopFamily) return;
-    const prepared = prepareRuleTutorial({ ...base, family: stroopFamily, rules: ['bomb', 'stroop'] }, { stroop: true });
+    const orderFamily = CONTENT_FAMILIES.find((family) => family.kind === 'hanzi-order');
+    assert.ok(orderFamily);
+    if (!orderFamily) return;
+    const prepared = prepareRuleTutorial({ ...base, family: orderFamily, rules: ['bomb', 'order'] }, { order: true });
     assert.equal(prepared.tutorial?.rule, 'bomb');
-    assert.notEqual(prepared.directive.family.id, stroopFamily.id);
+    assert.notEqual(prepared.directive.family.id, orderFamily.id);
     assert.equal(familySupportsRules(prepared.directive.family, ['bomb']), true);
     const question = generator.next(prepared.directive);
     assert.equal(validateQuestion(question, evaluateRules(question)).length, 0);
@@ -514,17 +530,17 @@ test('daily completion records attempts and compares against the local daily bes
 
 test('daily challenge freezes the first-attempt tutorial baseline for same-day replays', () => {
     const challenge = createDailyChallenge(new Date(2026, 7, 20, 9, 0, 0), CONTENT_VERSION);
-    const first = beginDailyRun(undefined, challenge.entry, { reverse: true, bomb: true });
+    const first = beginDailyRun(undefined, challenge.entry, { reverse: true, rotate: true, bomb: true });
     assert.ok(first);
     if (!first) return;
-    assert.deepEqual(first.tutorialBaseline, ['reverse', 'bomb']);
-    assert.deepEqual(dailyTutorialProgress(first), { reverse: true, bomb: true });
-    const replay = beginDailyRun(first, challenge.entry, { reverse: true, bomb: true, multi: true, order: true, stroop: true });
+    assert.deepEqual(first.tutorialBaseline, ['reverse', 'rotate', 'bomb']);
+    assert.deepEqual(dailyTutorialProgress(first), { reverse: true, rotate: true, bomb: true });
+    const replay = beginDailyRun(first, challenge.entry, { reverse: true, rotate: true, bomb: true, multi: true, order: true });
     assert.equal(replay, first);
-    assert.deepEqual(replay?.tutorialBaseline, ['reverse', 'bomb']);
+    assert.deepEqual(replay?.tutorialBaseline, ['reverse', 'rotate', 'bomb']);
     const tomorrow = createDailyChallenge(new Date(2026, 7, 21, 9, 0, 0), CONTENT_VERSION);
-    const nextDay = beginDailyRun(first, tomorrow.entry, { reverse: true, bomb: true, multi: true });
-    assert.deepEqual(nextDay?.tutorialBaseline, ['reverse', 'multi', 'bomb']);
+    const nextDay = beginDailyRun(first, tomorrow.entry, { reverse: true, rotate: true, bomb: true, multi: true });
+    assert.deepEqual(nextDay?.tutorialBaseline, ['reverse', 'rotate', 'multi', 'bomb']);
 });
 
 test('expanded content catalog contains five times the recommended family counts', () => {
@@ -659,6 +675,17 @@ test('soft target separation is deterministic and capped for an invalid overlapp
     });
 });
 
+test('rotation rule spins targets deterministically after their entrance settles', () => {
+    const motion = {
+        startX: -400, targetX: 0, startY: 100, groundY: -500, ceilingY: 500,
+        duration: 3, velocityY: 200, gravity: -300, entranceAngle: 10, phase: 1, speed: 1,
+    };
+    assert.equal(evaluatePortraitTargetRotation(motion, 0, true), 10);
+    assert.equal(evaluatePortraitTargetRotation(motion, 1, false), 0);
+    assert.equal(evaluatePortraitTargetRotation(motion, 1, true), 120);
+    assert.equal(evaluatePortraitTargetRotation({ ...motion, phase: -1 }, 1, true), -120);
+});
+
 test('each phase schedules its intended themes and rule beats', () => {
     const warmup = pipeline('warmup');
     for (let i = 0; i < 20; i++) {
@@ -676,7 +703,7 @@ test('each phase schedules its intended themes and rule beats', () => {
 
     const twist = pipeline('twist');
     const twistRules = Array.from({ length: 6 }, () => twist.director.next(30_000).rules);
-    assert.deepEqual(twistRules.map((rules) => rules.join('+')).sort(), ['multi', 'reverse', 'reverse', 'standard', 'stroop', 'stroop']);
+    assert.deepEqual(twistRules.map((rules) => rules.join('+')).sort(), ['multi', 'reverse', 'reverse', 'rotate', 'standard', 'standard']);
 
     const climax = pipeline('climax');
     for (let i = 0; i < 15; i++) {
@@ -863,7 +890,23 @@ test('tower exposes the fixed 60-second 1-30 progression and unlock schedule', (
     }
     assert.deepEqual(unlockedRulesForTower(2), ['standard']);
     assert.deepEqual(unlockedRulesForTower(3), ['standard', 'bomb']);
-    assert.deepEqual(unlockedRulesForTower(13), ['standard', 'bomb', 'multi', 'order', 'reverse', 'stroop']);
+    assert.deepEqual(unlockedRulesForTower(13), ['standard', 'bomb', 'multi', 'order', 'reverse', 'rotate']);
+    assert.deepEqual(unlockedRulesForTower(14), ['standard', 'bomb', 'multi', 'order', 'reverse', 'rotate']);
+    assert.equal(towerFloorConfig(14).unlockedRule, undefined);
+    assert.deepEqual(towerFloorConfig(14).familyKinds, ['vision-stroop']);
+});
+
+test('color identification remains a question family without becoming a rule unlock', () => {
+    const tower = new TowerDirector(new SeededRng('floor-14-color-family'), 14);
+    for (let index = 0; index < 30; index++) {
+        const directive = tower.next(index * 1_000);
+        assert.equal(directive.family.kind, 'vision-stroop');
+        assert.ok(directive.rules.every((rule) => rule === 'standard' || rule === 'bomb'));
+    }
+    const daily = new Brawl60Director(new SeededRng('daily-color-family'), 'color-trick');
+    for (let index = 0; index < 30; index++) {
+        assert.equal(daily.next((index * 1_997) % 60_000).family.kind, 'vision-stroop');
+    }
 });
 
 test('tower bombs add a hazard without replacing answer candidates', () => {
@@ -905,6 +948,10 @@ test('tower director is deterministic per attempt and legal across 100 seeds and
                 const secondDirective = secondDirector.next(index * 2_000);
                 assert.deepEqual(firstDirective, secondDirective);
                 assert.equal(familySupportsRules(firstDirective.family, firstDirective.rules), true);
+                if (firstDirective.rules.includes('rotate')) {
+                    assert.equal(firstDirective.rules.includes('reverse'), false);
+                    assert.equal(isDirectionSensitiveFamily(firstDirective.family.kind), false);
+                }
                 const first = firstGenerator.next(firstDirective);
                 const second = secondGenerator.next(secondDirective);
                 assert.deepEqual(first, second);
@@ -970,12 +1017,13 @@ test('save v1 migration preserves player settings daily-compatible fields and ad
         schemaVersion: 1,
         player: { level: 4, xp: 1_560, bestScore: 8_800 },
         settings: { music: false, sfx: true, vibration: false, quality: 'low' },
-        tutorials: { bomb: true },
+        tutorials: { bomb: true, rotate: true },
     });
     assert.equal(migrated.schemaVersion, 2);
     assert.deepEqual(migrated.player, { level: 4, xp: 1_560, bestScore: 8_800 });
     assert.equal(migrated.settings.music, false);
     assert.equal(migrated.tutorials.bomb, true);
+    assert.equal(migrated.tutorials.rotate, true);
     assert.deepEqual(migrated.tower, DEFAULT_TOWER_PROGRESS);
 });
 

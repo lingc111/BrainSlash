@@ -47,13 +47,16 @@ export const BRAWL_PHASES: readonly BrawlPhaseSettings[] = [
         id: 'twist', startMs: 25_000, endMs: 45_000, difficultyStage: 2,
         targetCount: 5, questionTimeMs: 2_250, speed: 1.15,
         themeWeights: { math: 2, vision: 3, hanzi: 2, english: 2, life: 1, geography: 1 },
-        ruleSequence: [['reverse'], ['stroop'], ['standard'], ['reverse'], ['multi'], ['stroop']], reuseSeenFamilies: false,
+        ruleSequence: [['reverse'], ['rotate'], ['standard'], ['reverse'], ['multi'], ['standard']], reuseSeenFamilies: false,
     },
     {
         id: 'climax', startMs: 45_000, endMs: 60_001, difficultyStage: 2,
         targetCount: 6, questionTimeMs: 1_850, speed: 1.38,
         themeWeights: { math: 3, vision: 3, hanzi: 2, english: 2, life: 1, geography: 1 },
-        ruleSequence: [['bomb', 'multi'], ['bomb', 'reverse'], ['bomb', 'order'], ['bomb', 'stroop'], ['multi', 'reverse']], reuseSeenFamilies: true,
+        ruleSequence: [
+            ['bomb', 'multi'], ['bomb', 'reverse'], ['bomb', 'order'], ['bomb', 'rotate'],
+            ['multi', 'reverse'], ['multi', 'rotate'], ['order', 'rotate'],
+        ], reuseSeenFamilies: true,
     },
 ];
 
@@ -67,7 +70,7 @@ const RULE_SUPPORT: Readonly<Record<ContentFamilyKind, readonly string[]>> = {
     'vision-direction': ['standard', 'reverse', 'bomb', 'bomb+reverse'],
     'vision-odd': ['standard', 'reverse', 'bomb', 'bomb+reverse'],
     'vision-count': ['standard', 'reverse', 'bomb', 'bomb+reverse'],
-    'vision-stroop': ['standard', 'stroop', 'bomb+stroop'],
+    'vision-stroop': ['standard', 'bomb'],
     'vision-pattern': ['standard', 'reverse', 'bomb', 'bomb+reverse'],
     'hanzi-fill': ['standard', 'reverse', 'bomb', 'bomb+reverse'],
     'hanzi-valid': ['standard', 'reverse', 'bomb', 'bomb+reverse'],
@@ -122,7 +125,16 @@ export function phaseAt(elapsedMs: number): BrawlPhaseSettings {
 }
 
 export function familySupportsRules(family: ContentFamilySpec, rules: readonly RuleId[]): boolean {
+    if (rules.includes('rotate')) {
+        if (rules.includes('reverse') || isDirectionSensitiveFamily(family.kind)) return false;
+        const underlyingRules = rules.filter((rule) => rule !== 'rotate' && rule !== 'standard');
+        return RULE_SUPPORT[family.kind].includes(ruleKey(underlyingRules.length ? underlyingRules : ['standard']));
+    }
     return RULE_SUPPORT[family.kind].includes(ruleKey(rules));
+}
+
+export function isDirectionSensitiveFamily(kind: ContentFamilyKind): boolean {
+    return kind === 'vision-direction' || kind === 'vision-pattern';
 }
 
 export class Brawl60Director {
@@ -144,8 +156,11 @@ export class Brawl60Director {
     public next(elapsedMs: number): BrawlQuestionDirective {
         const phase = filterPhaseRules(phaseForRecipe(phaseAt(elapsedMs), this.recipeId), this.allowedRules, this.allowCompoundRules);
         const requestedRules = this.pickRules(phase);
+        const preferredFamilyKind = dailyRecipeById(this.recipeId)?.preferredFamilyKind;
         const compatible = CONTENT_FAMILIES.filter((family) =>
-            (phase.themeWeights[family.theme] ?? 0) > 0 && familySupportsRules(family, requestedRules),
+            (phase.themeWeights[family.theme] ?? 0) > 0
+            && (!preferredFamilyKind || family.kind === preferredFamilyKind)
+            && familySupportsRules(family, requestedRules),
         );
         const family = this.pickFamily(phase, requestedRules, compatible);
         this.recordSelection(family);
@@ -264,7 +279,16 @@ function ruleKey(rules: readonly RuleId[]): string {
 
 function phaseForRecipe(phase: BrawlPhaseSettings, recipeId: string): BrawlPhaseSettings {
     const recipe = dailyRecipeById(recipeId);
-    if (!recipe || phase.id === 'warmup') return phase;
+    if (!recipe) return phase;
+    if (recipe.preferredFamilyKind) {
+        return {
+            ...phase,
+            speed: phase.speed * recipe.speedMultiplier,
+            themeWeights: recipe.themeWeights,
+            ruleSequence: phase.id === 'warmup' ? [['standard']] : [['standard'], ['bomb'], ['rotate']],
+        };
+    }
+    if (phase.id === 'warmup') return phase;
     let ruleSequence = phase.ruleSequence;
     if (recipe.preferredRule && recipe.preferredRule !== 'bomb') {
         const preferred = recipe.preferredRule;
@@ -285,7 +309,7 @@ function phaseForRecipe(phase: BrawlPhaseSettings, recipeId: string): BrawlPhase
 function filterPhaseRules(phase: BrawlPhaseSettings, allowedRules?: ReadonlySet<RuleId>, allowCompoundRules = true): BrawlPhaseSettings {
     if (!allowedRules) return phase;
     const ruleSequence = phase.ruleSequence.filter((rules) =>
-        (allowCompoundRules || rules.filter((rule) => rule !== 'standard').length <= 1)
+        (allowCompoundRules || slashRuleCount(rules) <= 1)
         && rules.every((rule) => rule === 'standard' || allowedRules.has(rule)),
     );
     return { ...phase, ruleSequence: ruleSequence.length ? ruleSequence : [['standard']] };

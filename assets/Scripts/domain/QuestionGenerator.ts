@@ -263,7 +263,7 @@ export class QuestionGenerator {
             value: color,
         }));
         this.appendBomb(targets);
-        return this.make(family, `字体颜色·${wanted}`, targets, [targets.find((target) => target.value === wanted)!.id], ['stroop'], stage);
+        return this.make(family, `字体颜色·${wanted}`, targets, [targets.find((target) => target.value === wanted)!.id], this.directive.rules, stage);
     }
 
     private visionPattern(family: ContentFamilySpec, stage: Stage): QuestionInstance {

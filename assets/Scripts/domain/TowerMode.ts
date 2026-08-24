@@ -1,4 +1,5 @@
 import type { RuleId, RunResult, ThemeId } from './Models';
+import type { ContentFamilyKind } from './ContentCatalog';
 
 export const TOWER_LAST_FLOOR = 30;
 export const TOWER_DURATION_MS = 60_000;
@@ -47,6 +48,7 @@ export interface TowerFloorConfig {
     questionTimeMs: number;
     speed: number;
     themeWeights: Readonly<Partial<Record<ThemeId, number>>>;
+    familyKinds?: readonly ContentFamilyKind[];
     ruleSequence: readonly (readonly RuleId[])[];
     unlockedRule?: Exclude<RuleId, 'standard'>;
 }
@@ -71,15 +73,17 @@ const RULE_UNLOCKS: readonly { floor: number; rule: Exclude<RuleId, 'standard'> 
     { floor: 5, rule: 'multi' },
     { floor: 7, rule: 'order' },
     { floor: 10, rule: 'reverse' },
-    { floor: 13, rule: 'stroop' },
+    { floor: 13, rule: 'rotate' },
 ];
 
 const DOUBLE_RULES: readonly (readonly RuleId[])[] = [
     ['bomb', 'multi'],
     ['bomb', 'order'],
     ['bomb', 'reverse'],
-    ['bomb', 'stroop'],
+    ['bomb', 'rotate'],
     ['multi', 'reverse'],
+    ['multi', 'rotate'],
+    ['order', 'rotate'],
 ];
 
 export function towerFloorConfig(requestedFloor: number): TowerFloorConfig {
@@ -89,9 +93,10 @@ export function towerFloorConfig(requestedFloor: number): TowerFloorConfig {
     if (floor <= 6) return makeConfig(floor, 9, 1, 4, 2_800, 0.85, { math: 3, english: 2, life: 2 }, [['multi'], ['bomb'], ['multi']]);
     if (floor <= 9) return makeConfig(floor, 10, 1, 4, 2_700, 0.90, { math: 3, hanzi: 3 }, [['order'], ['multi'], ['bomb'], ['order']]);
     if (floor <= 12) return makeConfig(floor, 10, 1, 4, 2_650, 0.95, allThemes(), [['reverse'], ['bomb'], ['multi'], ['reverse']]);
-    if (floor <= 14) return makeConfig(floor, 10, 1, 4, 2_600, 1.00, { vision: 5 }, [['stroop'], ['bomb'], ['stroop']]);
+    if (floor === 13) return makeConfig(floor, 10, 1, 4, 2_600, 1.00, allThemes(), [['rotate'], ['bomb'], ['rotate']]);
+    if (floor === 14) return makeConfig(floor, 10, 1, 4, 2_600, 1.00, { vision: 5 }, [['standard'], ['bomb'], ['standard']], ['vision-stroop']);
     if (floor <= 19) return makeConfig(floor, 11, 2, 4, 2_500, 1.05, allThemes(), DOUBLE_RULES);
-    if (floor <= 24) return makeConfig(floor, 12, 2, 5, 2_350, 1.12, allThemes(), [...DOUBLE_RULES, ['reverse'], ['multi'], ['order'], ['stroop']]);
+    if (floor <= 24) return makeConfig(floor, 12, 2, 5, 2_350, 1.12, allThemes(), [...DOUBLE_RULES, ['reverse'], ['rotate'], ['multi'], ['order']]);
     if (floor <= 29) return makeConfig(floor, 13, 2, 5, 2_250, 1.18, allThemes(), [...DOUBLE_RULES, ['bomb', 'reverse'], ['multi', 'reverse']]);
     return makeConfig(floor, 15, 2, 4, 2_100, 1.25, allThemes(), DOUBLE_RULES);
 }
@@ -104,7 +109,7 @@ export function unlockedRulesForTower(highestClearedFloor: number): RuleId[] {
 
 export function allowedBrawlRules(progress: TowerProgress, tutorials: Readonly<Partial<Record<RuleId, boolean>>>): ReadonlySet<RuleId> {
     const result = new Set<RuleId>(unlockedRulesForTower(progress.highestClearedFloor));
-    for (const rule of ['reverse', 'multi', 'order', 'stroop', 'bomb'] as const) if (tutorials[rule]) result.add(rule);
+    for (const rule of ['reverse', 'rotate', 'multi', 'order', 'bomb'] as const) if (tutorials[rule]) result.add(rule);
     return result;
 }
 
@@ -117,17 +122,18 @@ export function nextTowerUnlock(currentFloor: number): { floor: number; label: s
 }
 
 export function towerRuleLabel(rule: RuleId): string {
-    return ({ standard: '单选', reverse: '反向', multi: '多选', order: '顺序', stroop: '颜色骗局', bomb: '禁区' } as const)[rule];
+    return ({ standard: '单选', reverse: '反向', rotate: '旋转', multi: '多选', order: '顺序', bomb: '禁区' } as const)[rule];
 }
 
 export function towerFloorLabel(floor: number): string {
     const config = towerFloorConfig(floor);
     if (floor === 30) return '首章终点';
+    if (floor === 14) return '颜色题';
     if (config.unlockedRule) return towerRuleLabel(config.unlockedRule);
     if (floor >= 15) return floor >= 25 ? '精英混合' : '双规则试炼';
     return config.ruleSequence.some((rules) => rules.includes('order')) ? '顺序试炼'
         : config.ruleSequence.some((rules) => rules.includes('reverse')) ? '反向试炼'
-        : config.ruleSequence.some((rules) => rules.includes('stroop')) ? '颜色试炼'
+        : config.ruleSequence.some((rules) => rules.includes('rotate')) ? '旋转试炼'
         : config.ruleSequence.some((rules) => rules.includes('multi')) ? '多选试炼'
         : config.ruleSequence.some((rules) => rules.includes('bomb')) ? '禁区试炼' : '基础试炼';
 }
@@ -208,10 +214,11 @@ function makeConfig(
     speed: number,
     themeWeights: Readonly<Partial<Record<ThemeId, number>>>,
     ruleSequence: readonly (readonly RuleId[])[],
+    familyKinds?: readonly ContentFamilyKind[],
 ): TowerFloorConfig {
     return {
         floor, durationMs: TOWER_DURATION_MS, requiredCorrect, difficultyStage, targetCount, questionTimeMs, speed,
-        themeWeights, ruleSequence, unlockedRule: RULE_UNLOCKS.find((unlock) => unlock.floor === floor)?.rule,
+        themeWeights, ruleSequence, familyKinds, unlockedRule: RULE_UNLOCKS.find((unlock) => unlock.floor === floor)?.rule,
     };
 }
 

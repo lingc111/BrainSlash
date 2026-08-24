@@ -1,4 +1,5 @@
 import type { DailyChallengeResult, GameEntryParams, RuleId, RunResult, ThemeId } from './Models';
+import type { ContentFamilyKind } from './ContentCatalog';
 
 export type DailyRecipeId = 'even-hunt' | 'reverse-day' | 'flag-hunter' | 'idiom-rush' | 'color-trick' | 'life-instinct' | 'speed-mix';
 
@@ -8,6 +9,7 @@ export interface DailyRecipe {
     accent: string;
     themeWeights: Readonly<Record<ThemeId, number>>;
     preferredRule?: Exclude<RuleId, 'standard'>;
+    preferredFamilyKind?: ContentFamilyKind;
     speedMultiplier: number;
 }
 
@@ -41,7 +43,7 @@ const RECIPES: readonly DailyRecipe[] = [
     { id: 'reverse-day', title: '反向日', accent: '反', themeWeights: weights({ math: 3, vision: 3, english: 2, hanzi: 2, geography: 2, life: 2 }), preferredRule: 'reverse', speedMultiplier: 1 },
     { id: 'flag-hunter', title: '国旗猎人', accent: '旗', themeWeights: weights({ geography: 7, vision: 3 }), preferredRule: 'multi', speedMultiplier: 1 },
     { id: 'idiom-rush', title: '成语连斩', accent: '成', themeWeights: weights({ hanzi: 7, vision: 2 }), preferredRule: 'order', speedMultiplier: 1 },
-    { id: 'color-trick', title: '颜色骗局', accent: '色', themeWeights: weights({ vision: 7, english: 3 }), preferredRule: 'stroop', speedMultiplier: 1 },
+    { id: 'color-trick', title: '色彩辨识', accent: '色', themeWeights: weights({ vision: 7 }), preferredFamilyKind: 'vision-stroop', speedMultiplier: 1 },
     { id: 'life-instinct', title: '生活快手', accent: '快', themeWeights: weights({ life: 7, vision: 3 }), preferredRule: 'bomb', speedMultiplier: 1 },
     { id: 'speed-mix', title: '极速混战', accent: '速', themeWeights: weights({ math: 2, vision: 2, english: 2, hanzi: 2, geography: 2, life: 2 }), speedMultiplier: 1.12 },
 ];
@@ -103,7 +105,7 @@ export function beginDailyRun(
     const recipe = dailyRecipeById(entry.recipeId);
     if (!dateKey || !recipe) return null;
     if (previous?.dateKey === dateKey && previous.recipeId === recipe.id) return previous;
-    const tutorialBaseline = (['reverse', 'multi', 'order', 'stroop', 'bomb'] as const).filter((rule) => learned[rule]);
+    const tutorialBaseline = (['reverse', 'rotate', 'multi', 'order', 'bomb'] as const).filter((rule) => learned[rule]);
     return { dateKey, recipeId: recipe.id, attempts: 0, bestScore: 0, lastScore: 0, completed: false, tutorialBaseline };
 }
 

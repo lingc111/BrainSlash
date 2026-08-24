@@ -3,9 +3,9 @@ import type { ActionConstraint, QuestionInstance, RuleId } from './Models';
 
 const SLASH_RULE_LABELS: Readonly<Partial<Record<RuleId, string>>> = {
     reverse: '反向',
+    rotate: '旋转',
     multi: '多选',
     order: '顺序',
-    stroop: '颜色骗局',
 };
 
 export function slashRuleCount(rules: readonly RuleId[]): number {
