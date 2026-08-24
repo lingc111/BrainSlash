@@ -148,8 +148,11 @@ export class GameplayTarget extends Component {
             const image = makeNode('ImageContent', root, this.radius, this.radius).addComponent(Sprite);
             image.spriteFrame = this.data.spriteFrame;
         } else {
-            const content = label(root, this.data.contentType === TargetContentType.ICON ? 'IconContent' : 'TextContent', this.data.text ?? '', this.data.text && this.data.text.length > 2 ? 38 : 52, this.data.contentColor ?? INK);
+            const targetText = this.data.text ?? '';
+            const content = label(root, this.data.contentType === TargetContentType.ICON ? 'IconContent' : 'TextContent', targetText, targetText.length > 4 ? 30 : targetText.length > 2 ? 38 : 52, this.data.contentColor ?? INK);
             content.isBold = true;
+            ui(content.node, this.radius * 1.9, this.radius * 1.15);
+            content.overflow = Label.Overflow.SHRINK;
         }
     }
 

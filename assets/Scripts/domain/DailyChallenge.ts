@@ -1,15 +1,22 @@
 import type { DailyChallengeResult, GameEntryParams, RuleId, RunResult, ThemeId } from './Models';
 import type { ContentFamilyKind } from './ContentCatalog';
 
-export type DailyRecipeId = 'even-hunt' | 'reverse-day' | 'flag-hunter' | 'idiom-rush' | 'color-trick' | 'life-instinct' | 'speed-mix';
+export type DailyRecipeId =
+    | 'number-lab'
+    | 'logic-detective'
+    | 'word-case'
+    | 'world-tour'
+    | 'common-knowledge'
+    | 'history-adventure'
+    | 'english-sprint';
 
 export interface DailyRecipe {
     id: DailyRecipeId;
     title: string;
     accent: string;
     themeWeights: Readonly<Record<ThemeId, number>>;
-    preferredRule?: Exclude<RuleId, 'standard'>;
-    preferredFamilyKind?: ContentFamilyKind;
+    familyKinds: readonly ContentFamilyKind[];
+    allowedRules: readonly RuleId[];
     speedMultiplier: number;
 }
 
@@ -39,13 +46,41 @@ export interface DailyHomePresentation {
 }
 
 const RECIPES: readonly DailyRecipe[] = [
-    { id: 'even-hunt', title: '偶数猎杀', accent: '偶', themeWeights: weights({ math: 7, vision: 4 }), preferredRule: 'multi', speedMultiplier: 1 },
-    { id: 'reverse-day', title: '反向日', accent: '反', themeWeights: weights({ math: 3, vision: 3, english: 2, hanzi: 2, geography: 2, life: 2 }), preferredRule: 'reverse', speedMultiplier: 1 },
-    { id: 'flag-hunter', title: '国旗猎人', accent: '旗', themeWeights: weights({ geography: 7, vision: 3 }), preferredRule: 'multi', speedMultiplier: 1 },
-    { id: 'idiom-rush', title: '成语连斩', accent: '成', themeWeights: weights({ hanzi: 7, vision: 2 }), preferredRule: 'order', speedMultiplier: 1 },
-    { id: 'color-trick', title: '色彩辨识', accent: '色', themeWeights: weights({ vision: 7 }), preferredFamilyKind: 'vision-stroop', speedMultiplier: 1 },
-    { id: 'life-instinct', title: '生活快手', accent: '快', themeWeights: weights({ life: 7, vision: 3 }), preferredRule: 'bomb', speedMultiplier: 1 },
-    { id: 'speed-mix', title: '极速混战', accent: '速', themeWeights: weights({ math: 2, vision: 2, english: 2, hanzi: 2, geography: 2, life: 2 }), speedMultiplier: 1.12 },
+    {
+        id: 'number-lab', title: '数字训练营', accent: '数', themeWeights: weights({ math: 8 }),
+        familyKinds: ['math-add', 'math-subtract', 'math-multiply', 'math-property', 'math-compare', 'math-sequence'],
+        allowedRules: ['standard', 'bomb', 'multi', 'order', 'reverse', 'rotate'], speedMultiplier: 1,
+    },
+    {
+        id: 'logic-detective', title: '逻辑侦探社', accent: '探', themeWeights: weights({ math: 4, vision: 6 }),
+        familyKinds: ['math-property', 'math-compare', 'math-sequence', 'vision-odd', 'vision-count', 'vision-stroop', 'vision-pattern'],
+        allowedRules: ['standard', 'bomb', 'multi', 'order', 'reverse', 'rotate'], speedMultiplier: 1,
+    },
+    {
+        id: 'word-case', title: '文字谜案局', accent: '字', themeWeights: weights({ hanzi: 8 }),
+        familyKinds: ['hanzi-fill', 'hanzi-valid', 'hanzi-order'],
+        allowedRules: ['standard', 'bomb', 'order', 'reverse', 'rotate'], speedMultiplier: 1,
+    },
+    {
+        id: 'world-tour', title: '世界漫游记', accent: '游', themeWeights: weights({ geography: 8 }),
+        familyKinds: ['geography-capital', 'geography-country'],
+        allowedRules: ['standard', 'bomb', 'reverse', 'rotate'], speedMultiplier: 1,
+    },
+    {
+        id: 'common-knowledge', title: '常识万花筒', accent: '知', themeWeights: weights({ knowledge: 8 }),
+        familyKinds: ['knowledge-science', 'knowledge-nature', 'knowledge-culture'],
+        allowedRules: ['standard', 'bomb', 'reverse', 'rotate'], speedMultiplier: 1,
+    },
+    {
+        id: 'history-adventure', title: '历史奇遇记', accent: '史', themeWeights: weights({ history: 8 }),
+        familyKinds: ['history-modern-opening', 'history-modern-awakening', 'history-modern-resistance', 'history-ancient', 'history-myth'],
+        allowedRules: ['standard', 'bomb', 'reverse', 'rotate'], speedMultiplier: 1,
+    },
+    {
+        id: 'english-sprint', title: '双语快问', accent: '译', themeWeights: weights({ english: 8 }),
+        familyKinds: ['english-meaning', 'english-category', 'english-antonym'],
+        allowedRules: ['standard', 'bomb', 'multi', 'reverse', 'rotate'], speedMultiplier: 1,
+    },
 ];
 
 export function localDateKey(now: Date): string {
@@ -132,6 +167,8 @@ function weights(preferred: Partial<Record<ThemeId, number>>): Readonly<Record<T
         hanzi: preferred.hanzi ?? 1,
         geography: preferred.geography ?? 1,
         life: preferred.life ?? 1,
+        knowledge: preferred.knowledge ?? 1,
+        history: preferred.history ?? 1,
     };
 }
 

@@ -16,6 +16,12 @@ export function questionPreviewDurationSeconds(rules: readonly RuleId[]): number
     return slashRuleCount(rules) >= 2 ? 0.7 : 0.3;
 }
 
+/** Extra airborne time for rules that require mentally remapping the choices. */
+export function questionFlightDurationSeconds(baseSeconds: number, rules: readonly RuleId[]): number {
+    const safeBase = Math.max(0.9, baseSeconds);
+    return rules.includes('reverse') || rules.includes('rotate') ? safeBase + 0.85 : safeBase;
+}
+
 export function slashRuleLabel(rules: readonly RuleId[]): string {
     const labels = rules
         .filter((rule) => rule !== 'standard' && rule !== 'bomb')

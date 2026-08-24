@@ -82,6 +82,14 @@ const RULE_SUPPORT: Readonly<Record<ContentFamilyKind, readonly string[]>> = {
     'life-category': ['standard', 'multi', 'reverse', 'bomb+multi', 'multi+reverse'],
     'geography-capital': ['standard', 'reverse', 'bomb', 'bomb+reverse'],
     'geography-country': ['standard', 'reverse', 'bomb', 'bomb+reverse'],
+    'knowledge-science': ['standard', 'reverse', 'bomb', 'bomb+reverse'],
+    'knowledge-nature': ['standard', 'reverse', 'bomb', 'bomb+reverse'],
+    'knowledge-culture': ['standard', 'reverse', 'bomb', 'bomb+reverse'],
+    'history-modern-opening': ['standard', 'reverse', 'bomb', 'bomb+reverse'],
+    'history-modern-awakening': ['standard', 'reverse', 'bomb', 'bomb+reverse'],
+    'history-modern-resistance': ['standard', 'reverse', 'bomb', 'bomb+reverse'],
+    'history-ancient': ['standard', 'reverse', 'bomb', 'bomb+reverse'],
+    'history-myth': ['standard', 'reverse', 'bomb', 'bomb+reverse'],
 };
 
 const TARGET_CAP_BY_KIND: Readonly<Record<ContentFamilyKind, number>> = {
@@ -106,6 +114,14 @@ const TARGET_CAP_BY_KIND: Readonly<Record<ContentFamilyKind, number>> = {
     'life-category': 5,
     'geography-capital': 4,
     'geography-country': 4,
+    'knowledge-science': 4,
+    'knowledge-nature': 4,
+    'knowledge-culture': 4,
+    'history-modern-opening': 4,
+    'history-modern-awakening': 4,
+    'history-modern-resistance': 4,
+    'history-ancient': 4,
+    'history-myth': 4,
 };
 
 export function targetCountForFamily(baseCount: number, kind: ContentFamilyKind, rules: readonly RuleId[]): number {
@@ -156,10 +172,11 @@ export class Brawl60Director {
     public next(elapsedMs: number): BrawlQuestionDirective {
         const phase = filterPhaseRules(phaseForRecipe(phaseAt(elapsedMs), this.recipeId), this.allowedRules, this.allowCompoundRules);
         const requestedRules = this.pickRules(phase);
-        const preferredFamilyKind = dailyRecipeById(this.recipeId)?.preferredFamilyKind;
+        const recipe = dailyRecipeById(this.recipeId);
+        const familyKinds = recipe ? new Set(recipe.familyKinds) : undefined;
         const compatible = CONTENT_FAMILIES.filter((family) =>
             (phase.themeWeights[family.theme] ?? 0) > 0
-            && (!preferredFamilyKind || family.kind === preferredFamilyKind)
+            && (!familyKinds || familyKinds.has(family.kind))
             && familySupportsRules(family, requestedRules),
         );
         const family = this.pickFamily(phase, requestedRules, compatible);
@@ -280,29 +297,13 @@ function ruleKey(rules: readonly RuleId[]): string {
 function phaseForRecipe(phase: BrawlPhaseSettings, recipeId: string): BrawlPhaseSettings {
     const recipe = dailyRecipeById(recipeId);
     if (!recipe) return phase;
-    if (recipe.preferredFamilyKind) {
-        return {
-            ...phase,
-            speed: phase.speed * recipe.speedMultiplier,
-            themeWeights: recipe.themeWeights,
-            ruleSequence: phase.id === 'warmup' ? [['standard']] : [['standard'], ['bomb'], ['rotate']],
-        };
-    }
-    if (phase.id === 'warmup') return phase;
-    let ruleSequence = phase.ruleSequence;
-    if (recipe.preferredRule && recipe.preferredRule !== 'bomb') {
-        const preferred = recipe.preferredRule;
-        ruleSequence = phase.id === 'climax'
-            ? [[preferred], ['bomb', preferred], ['standard'], [preferred], ['bomb', preferred]]
-            : phase.ruleSequence.map((rules, index) => index % 2 === 0 ? [preferred] : rules);
-    } else if (recipe.preferredRule === 'bomb') {
-        ruleSequence = phase.ruleSequence.map((rules, index) => index % 2 === 0 ? ['bomb'] : rules);
-    }
+    const allowedRules = new Set(recipe.allowedRules);
+    const ruleSequence = phase.ruleSequence.filter((rules) => rules.every((rule) => allowedRules.has(rule)));
     return {
         ...phase,
         speed: phase.speed * recipe.speedMultiplier,
         themeWeights: recipe.themeWeights,
-        ruleSequence,
+        ruleSequence: ruleSequence.length ? ruleSequence : [['standard']],
     };
 }
 

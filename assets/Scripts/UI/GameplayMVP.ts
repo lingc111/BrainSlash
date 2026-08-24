@@ -9,7 +9,7 @@ import { countdownWarningSecond, failureFeedback, successFeedback } from '../dom
 import { GestureResolver, GestureProgress, shouldKeepIncompleteGesture } from '../domain/GestureResolver';
 import type { ActionConstraint, FailureKind, QuestionInstance, RuleId, RunResult, TargetSpec } from '../domain/Models';
 import { QuestionGenerator } from '../domain/QuestionGenerator';
-import { evaluateRules, questionPreviewDurationSeconds, slashRuleLabel } from '../domain/Rules';
+import { evaluateRules, questionFlightDurationSeconds, questionPreviewDurationSeconds, slashRuleLabel } from '../domain/Rules';
 import { prepareRuleTutorial, tutorialRetryInstruction, type RuleTutorialSpec } from '../domain/RuleTutorial';
 import { SeededRng } from '../domain/SeededRng';
 import { TowerDirector } from '../domain/TowerDirector';
@@ -97,7 +97,7 @@ export class GameplayMVP extends Component {
         for(const key of [...SKINS,'bomb'] as EffectKey[])resources.load(`textures/gameplay/effects/slash/${key}_slash/spriteFrame`,SpriteFrame,(e,f)=>{if(!e&&f?.isValid)this.frames.set(key,f);});
     }
     private applyVisibleLayout():void{const background=this.node.getChildByName('Background')?.getComponent(Sprite);if(!background||!this.score)return;const v=view.getVisibleSize();ui(this.node,v.width,v.height);for(const layer of [background.node,this.targets,this.trail.node,this.effects,this.floats])ui(layer,v.width,v.height);this.layoutStaticHud(v.width,v.height);this.layoutHandDrawnChrome(v.width,v.height);}
-    private layoutStaticHud(width:number,height:number):void{const y=height/2-150;this.score.node.active=false;this.combo.node.active=true;this.combo.fontSize=44;this.combo.lineHeight=53;this.combo.color=INK;this.combo.node.setPosition(-width/2+96,y+3);this.prompt.node.setPosition(0,y);this.ruleBadge?.setPosition(0,y-55);this.rule.node.setPosition(0,y-55);this.timer.node.setPosition(width/2-68,y+4);this.life.node.active=false;}
+    private layoutStaticHud(width:number,height:number):void{const y=height/2-150;this.score.node.active=false;this.combo.node.active=true;this.combo.fontSize=44;this.combo.lineHeight=53;this.combo.color=INK;this.combo.node.setPosition(-width/2+96,y+3);this.prompt.node.setPosition(0,y);ui(this.prompt.node,Math.max(280,width-330),66);this.prompt.overflow=Label.Overflow.SHRINK;this.ruleBadge?.setPosition(0,y-55);this.rule.node.setPosition(0,y-55);this.timer.node.setPosition(width/2-68,y+4);this.life.node.active=false;}
     private prepareRuleBadge():void{
         let badge=this.node.getChildByName('RuleBadge')??this.rule.node.getChildByName('Badge');
         if(badge?.parent===this.rule.node){const ruleIndex=this.rule.node.getSiblingIndex();badge.removeFromParent();badge.name='RuleBadge';this.node.addChild(badge);badge.setSiblingIndex(ruleIndex);}
@@ -162,7 +162,7 @@ export class GameplayMVP extends Component {
     private revealCurrentTargets(token:number):void{
         if(token!==this.revealToken||!this.question||!this.currentDirective||this.session.state.phase!=='playing')return;
         this.targetRevealPending=false;this.constraint=evaluateRules(this.question);this.session.beginQuestion();
-        const positions=this.layout(this.question.targets.length),v=view.getVisibleSize(),duration=Math.max(.9,(this.question.timeLimitMs??3000)/1000),plans=createPortraitTargetMotionPlans(positions,this.currentMotionPhases,{visibleWidth:v.width,visibleHeight:v.height,duration,speed:this.currentDirective.speed,topInset:FRAME_TOP_INSET,visualRadius:TARGET_VISUAL_RADIUS});
+        const positions=this.layout(this.question.targets.length),v=view.getVisibleSize(),duration=questionFlightDurationSeconds((this.question.timeLimitMs??3000)/1000,this.question.activeRules),plans=createPortraitTargetMotionPlans(positions,this.currentMotionPhases,{visibleWidth:v.width,visibleHeight:v.height,duration,speed:this.currentDirective.speed,topInset:FRAME_TOP_INSET,visualRadius:TARGET_VISUAL_RADIUS});
         this.question.targets.forEach((s,i)=>this.createTarget(s,positions[i],plans[i],this.currentSkins[i%this.currentSkins.length],i));this.refresh();
     }
     private createTarget(spec:TargetSpec,pos:PortraitTargetPosition,motion:PortraitTargetMotionPlan,skin:typeof SKINS[number],i:number):void {

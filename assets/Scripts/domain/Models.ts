@@ -1,5 +1,5 @@
 export type GameMode = 'brawl60' | 'daily' | 'friendChallenge' | 'tower';
-export type ThemeId = 'math' | 'vision' | 'english' | 'hanzi' | 'geography' | 'life';
+export type ThemeId = 'math' | 'vision' | 'english' | 'hanzi' | 'geography' | 'life' | 'knowledge' | 'history';
 export type RuleId = 'standard' | 'reverse' | 'rotate' | 'multi' | 'order' | 'bomb';
 export type SessionPhase = 'ready' | 'playing' | 'resolving' | 'finished';
 

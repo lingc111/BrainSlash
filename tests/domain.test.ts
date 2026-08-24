@@ -7,7 +7,15 @@ import {
     CONTENT_FAMILY_TARGETS,
     ENGLISH_WORDS,
     GEOGRAPHY_FACTS,
+    HISTORY_ANCIENT_FACTS,
+    HISTORY_MODERN_AWAKENING_FACTS,
+    HISTORY_MODERN_OPENING_FACTS,
+    HISTORY_MODERN_RESISTANCE_FACTS,
+    HISTORY_MYTH_FACTS,
     IDIOMS,
+    KNOWLEDGE_CULTURE_FACTS,
+    KNOWLEDGE_NATURE_FACTS,
+    KNOWLEDGE_SCIENCE_FACTS,
     LIFE_FACTS,
 } from '../assets/Scripts/domain/ContentCatalog.ts';
 import { GameSession } from '../assets/Scripts/domain/GameSession.ts';
@@ -24,7 +32,7 @@ import { GestureResolver, shouldKeepIncompleteGesture } from '../assets/Scripts/
 import type { PlayerProgress, QuestionInstance, RunResult } from '../assets/Scripts/domain/Models.ts';
 import { QuestionGenerator } from '../assets/Scripts/domain/QuestionGenerator.ts';
 import { createResultPresentation, finalizeResult } from '../assets/Scripts/domain/ResultSummary.ts';
-import { evaluateRules, questionPreviewDurationSeconds, slashRuleCount, slashRuleLabel } from '../assets/Scripts/domain/Rules.ts';
+import { evaluateRules, questionFlightDurationSeconds, questionPreviewDurationSeconds, slashRuleCount, slashRuleLabel } from '../assets/Scripts/domain/Rules.ts';
 import { SeededRng } from '../assets/Scripts/domain/SeededRng.ts';
 import { prepareRuleTutorial, tutorialRetryInstruction } from '../assets/Scripts/domain/RuleTutorial.ts';
 import { validateQuestion } from '../assets/Scripts/domain/FairnessValidator.ts';
@@ -320,6 +328,12 @@ test('slash rule labels describe the gesture and ignore bomb distractors', () =>
     assert.equal(slashRuleCount(['multi', 'reverse']), 2);
     assert.equal(questionPreviewDurationSeconds(['bomb', 'multi']), 0.3);
     assert.equal(questionPreviewDurationSeconds(['multi', 'reverse']), 0.7);
+    assert.equal(questionFlightDurationSeconds(2.5, ['standard']), 2.5);
+    assert.equal(questionFlightDurationSeconds(2.5, ['multi']), 2.5);
+    assert.equal(questionFlightDurationSeconds(2.5, ['reverse']), 3.35);
+    assert.equal(questionFlightDurationSeconds(2.5, ['multi', 'reverse']), 3.35);
+    assert.equal(questionFlightDurationSeconds(2.5, ['rotate']), 3.35);
+    assert.equal(questionFlightDurationSeconds(2.5, ['multi', 'rotate']), 3.35);
 });
 
 test('order and multi gestures resolve once and reject incomplete strokes', () => {
@@ -547,7 +561,7 @@ test('expanded content catalog contains five times the recommended family counts
     const counts = Object.fromEntries(Object.keys(CONTENT_FAMILY_TARGETS).map((theme) => [theme, 0])) as Record<keyof typeof CONTENT_FAMILY_TARGETS, number>;
     for (const family of CONTENT_FAMILIES) counts[family.theme] += 1;
     assert.deepEqual(counts, CONTENT_FAMILY_TARGETS);
-    assert.equal(CONTENT_FAMILIES.length, 105);
+    assert.equal(CONTENT_FAMILIES.length, 145);
     assert.equal(new Set(CONTENT_FAMILIES.map((family) => family.id)).size, CONTENT_FAMILIES.length);
 });
 
@@ -562,6 +576,18 @@ test('reviewed fact pools contain unique answers and safe idiom distractors', ()
     assert.equal(new Set(LIFE_FACTS.map((fact) => fact.item)).size, LIFE_FACTS.length);
     assert.equal(new Set(GEOGRAPHY_FACTS.map((fact) => fact.country)).size, GEOGRAPHY_FACTS.length);
     assert.equal(new Set(GEOGRAPHY_FACTS.map((fact) => fact.capital)).size, GEOGRAPHY_FACTS.length);
+    const triviaPools = [
+        KNOWLEDGE_SCIENCE_FACTS, KNOWLEDGE_NATURE_FACTS, KNOWLEDGE_CULTURE_FACTS,
+        HISTORY_MODERN_OPENING_FACTS, HISTORY_MODERN_AWAKENING_FACTS, HISTORY_MODERN_RESISTANCE_FACTS,
+        HISTORY_ANCIENT_FACTS, HISTORY_MYTH_FACTS,
+    ];
+    for (const pool of triviaPools) {
+        assert.equal(new Set(pool.map((fact) => fact.prompt)).size, pool.length);
+        for (const fact of pool) {
+            assert.equal(new Set(fact.wrong).size, fact.wrong.length);
+            assert.ok(!fact.wrong.includes(fact.answer));
+        }
+    }
 });
 
 test('brawl director exposes exact four-phase boundaries and rising pressure', () => {
@@ -903,9 +929,39 @@ test('color identification remains a question family without becoming a rule unl
         assert.equal(directive.family.kind, 'vision-stroop');
         assert.ok(directive.rules.every((rule) => rule === 'standard' || rule === 'bomb'));
     }
-    const daily = new Brawl60Director(new SeededRng('daily-color-family'), 'color-trick');
-    for (let index = 0; index < 30; index++) {
-        assert.equal(daily.next((index * 1_997) % 60_000).family.kind, 'vision-stroop');
+    assert.ok(dailyRecipeById('logic-detective')?.familyKinds.includes('vision-stroop'));
+});
+
+test('daily topics merge logic and vision while keeping common knowledge and history dedicated', () => {
+    const logic = dailyRecipeById('logic-detective');
+    assert.ok(logic?.familyKinds.some((kind) => kind.startsWith('math-')));
+    assert.ok(logic?.familyKinds.some((kind) => kind.startsWith('vision-')));
+    assert.equal(dailyRecipeById('common-knowledge')?.title, '常识万花筒');
+    assert.equal(dailyRecipeById('life-instinct'), undefined);
+
+    const knowledge = new Brawl60Director(new SeededRng('daily-knowledge-topic'), 'common-knowledge');
+    for (let index = 0; index < 80; index++) {
+        assert.equal(knowledge.next((index * 1_997) % 60_000).family.theme, 'knowledge');
+    }
+
+    const history = new Brawl60Director(new SeededRng('daily-history-topic'), 'history-adventure');
+    let modern = 0;
+    for (let index = 0; index < 100; index++) {
+        const family = history.next((index * 1_997) % 60_000).family;
+        assert.equal(family.theme, 'history');
+        if (family.kind.startsWith('history-modern-')) modern++;
+    }
+    assert.ok(modern >= 50);
+
+    const ordinary = new Brawl60Director(new SeededRng('ordinary-excludes-daily-topics'));
+    for (let index = 0; index < 120; index++) {
+        assert.ok(!['knowledge', 'history'].includes(ordinary.next((index * 1_997) % 60_000).family.theme));
+    }
+    for (const floor of [1, 15, 30]) {
+        const tower = new TowerDirector(new SeededRng(`tower-excludes-daily-topics-${floor}`), floor);
+        for (let index = 0; index < 30; index++) {
+            assert.ok(!['knowledge', 'history'].includes(tower.next(index * 1_000).family.theme));
+        }
     }
 });
 

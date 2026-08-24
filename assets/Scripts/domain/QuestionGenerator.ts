@@ -4,9 +4,18 @@ import {
     ENGLISH_ANTONYMS,
     ENGLISH_WORDS,
     GEOGRAPHY_FACTS,
+    HISTORY_ANCIENT_FACTS,
+    HISTORY_MODERN_AWAKENING_FACTS,
+    HISTORY_MODERN_OPENING_FACTS,
+    HISTORY_MODERN_RESISTANCE_FACTS,
+    HISTORY_MYTH_FACTS,
     IDIOMS,
+    KNOWLEDGE_CULTURE_FACTS,
+    KNOWLEDGE_NATURE_FACTS,
+    KNOWLEDGE_SCIENCE_FACTS,
     LIFE_FACTS,
     type ContentFamilySpec,
+    type TriviaFact,
 } from './ContentCatalog';
 import { validateQuestion } from './FairnessValidator';
 import type { QuestionInstance, RuleId, TargetSpec, ThemeId } from './Models';
@@ -76,6 +85,14 @@ export class QuestionGenerator {
             case 'life-category': return this.lifeCategory(family, stage);
             case 'geography-capital': return this.geographyCapital(family, stage);
             case 'geography-country': return this.geographyCountry(family, stage);
+            case 'knowledge-science': return this.trivia(family, stage, 'knowledge-science', KNOWLEDGE_SCIENCE_FACTS);
+            case 'knowledge-nature': return this.trivia(family, stage, 'knowledge-nature', KNOWLEDGE_NATURE_FACTS);
+            case 'knowledge-culture': return this.trivia(family, stage, 'knowledge-culture', KNOWLEDGE_CULTURE_FACTS);
+            case 'history-modern-opening': return this.trivia(family, stage, 'history-modern-opening', HISTORY_MODERN_OPENING_FACTS);
+            case 'history-modern-awakening': return this.trivia(family, stage, 'history-modern-awakening', HISTORY_MODERN_AWAKENING_FACTS);
+            case 'history-modern-resistance': return this.trivia(family, stage, 'history-modern-resistance', HISTORY_MODERN_RESISTANCE_FACTS);
+            case 'history-ancient': return this.trivia(family, stage, 'history-ancient', HISTORY_ANCIENT_FACTS);
+            case 'history-myth': return this.trivia(family, stage, 'history-myth', HISTORY_MYTH_FACTS);
             default: return this.makeChoice(family, '偶数', 2, [3, 4, 5, 6], stage);
         }
     }
@@ -364,6 +381,11 @@ export class QuestionGenerator {
         const fact = this.pickFact('geography-facts', GEOGRAPHY_FACTS, (item) => `geography:${item.country}`);
         const candidates = GEOGRAPHY_FACTS.filter((candidate) => candidate.country !== fact.country).map((candidate) => candidate.country);
         return this.makeChoice(family, `${fact.capital}在哪国`, fact.country, candidates, stage);
+    }
+
+    private trivia(family: ContentFamilySpec, stage: Stage, poolId: string, facts: readonly TriviaFact[]): QuestionInstance {
+        const fact = this.pickFact(poolId, facts, (item) => `${poolId}:${item.prompt}`);
+        return this.makeChoice(family, fact.prompt, fact.answer, fact.wrong, stage);
     }
 
     private uniqueNumbers(count: number, min: number, max: number): number[] {

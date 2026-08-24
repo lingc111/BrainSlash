@@ -21,7 +21,15 @@ export type ContentFamilyKind =
     | 'life-use'
     | 'life-category'
     | 'geography-capital'
-    | 'geography-country';
+    | 'geography-country'
+    | 'knowledge-science'
+    | 'knowledge-nature'
+    | 'knowledge-culture'
+    | 'history-modern-opening'
+    | 'history-modern-awakening'
+    | 'history-modern-resistance'
+    | 'history-ancient'
+    | 'history-myth';
 
 export interface ContentFamilySpec {
     id: string;
@@ -37,6 +45,8 @@ export const CONTENT_FAMILY_TARGETS: Readonly<Record<ThemeId, number>> = {
     english: 15,
     life: 10,
     geography: 10,
+    knowledge: 15,
+    history: 25,
 };
 
 const FAMILY_GROUPS: ReadonlyArray<readonly [ThemeId, ContentFamilyKind]> = [
@@ -61,6 +71,14 @@ const FAMILY_GROUPS: ReadonlyArray<readonly [ThemeId, ContentFamilyKind]> = [
     ['life', 'life-category'],
     ['geography', 'geography-capital'],
     ['geography', 'geography-country'],
+    ['knowledge', 'knowledge-science'],
+    ['knowledge', 'knowledge-nature'],
+    ['knowledge', 'knowledge-culture'],
+    ['history', 'history-modern-opening'],
+    ['history', 'history-modern-awakening'],
+    ['history', 'history-modern-resistance'],
+    ['history', 'history-ancient'],
+    ['history', 'history-myth'],
 ];
 
 const contentFamilies: ContentFamilySpec[] = [];
@@ -212,4 +230,118 @@ export const GEOGRAPHY_FACTS: readonly GeographyFact[] = [
     { country: '土耳其', capital: '安卡拉' }, { country: '瑞典', capital: '斯德哥尔摩' },
     { country: '挪威', capital: '奥斯陆' }, { country: '芬兰', capital: '赫尔辛基' },
     { country: '奥地利', capital: '维也纳' }, { country: '瑞士', capital: '伯尔尼' },
+];
+
+export interface TriviaFact {
+    prompt: string;
+    answer: string;
+    wrong: readonly string[];
+}
+
+export const KNOWLEDGE_SCIENCE_FACTS: readonly TriviaFact[] = [
+    { prompt: '人体最大的器官', answer: '皮肤', wrong: ['心脏', '肝脏', '肺'] },
+    { prompt: '血液呈红色主要因为', answer: '血红蛋白', wrong: ['血小板', '胆红素', '葡萄糖'] },
+    { prompt: '植物光合作用吸收', answer: '二氧化碳', wrong: ['氧气', '氮气', '氢气'] },
+    { prompt: '声音无法传播的地方', answer: '真空', wrong: ['水中', '钢铁中', '空气中'] },
+    { prompt: '标准气压下水的沸点', answer: '100℃', wrong: ['0℃', '50℃', '120℃'] },
+    { prompt: '有“红色星球”之称', answer: '火星', wrong: ['金星', '木星', '水星'] },
+    { prompt: '月亮发光的真相', answer: '反射阳光', wrong: ['自身燃烧', '储存闪电', '释放岩浆'] },
+    { prompt: '磁铁同名磁极相遇', answer: '互相排斥', wrong: ['互相吸引', '失去磁性', '开始发热'] },
+    { prompt: '晒太阳有助合成', answer: '维生素D', wrong: ['维生素A', '维生素C', '维生素K'] },
+    { prompt: '成年人通常有几颗牙', answer: '32颗', wrong: ['20颗', '24颗', '40颗'] },
+];
+
+export const KNOWLEDGE_NATURE_FACTS: readonly TriviaFact[] = [
+    { prompt: '鲸鱼其实属于', answer: '哺乳动物', wrong: ['鱼类', '两栖动物', '软体动物'] },
+    { prompt: '真正会飞的哺乳动物', answer: '蝙蝠', wrong: ['鼯鼠', '企鹅', '鸵鸟'] },
+    { prompt: '大熊猫的“第六指”', answer: '腕骨突起', wrong: ['真正拇指', '尾骨', '爪鞘'] },
+    { prompt: '章鱼有几颗心脏', answer: '3颗', wrong: ['1颗', '2颗', '8颗'] },
+    { prompt: '骆驼驼峰主要储存', answer: '脂肪', wrong: ['清水', '空气', '血液'] },
+    { prompt: '野生企鹅主要生活在', answer: '南半球', wrong: ['北极点', '撒哈拉', '青藏高原'] },
+    { prompt: '考拉最爱吃', answer: '桉树叶', wrong: ['竹子', '松果', '仙人掌'] },
+    { prompt: '能倒着飞的鸟', answer: '蜂鸟', wrong: ['麻雀', '海鸥', '孔雀'] },
+    { prompt: '鲨鱼的骨架主要是', answer: '软骨', wrong: ['硬骨', '甲壳', '角质'] },
+    { prompt: '变色本领出名的爬行动物', answer: '变色龙', wrong: ['壁虎', '鳄鱼', '陆龟'] },
+];
+
+export const KNOWLEDGE_CULTURE_FACTS: readonly TriviaFact[] = [
+    { prompt: '奥运五环有几环', answer: '5环', wrong: ['4环', '6环', '7环'] },
+    { prompt: '标准钢琴有几键', answer: '88键', wrong: ['66键', '72键', '108键'] },
+    { prompt: '《蒙娜丽莎》作者', answer: '达·芬奇', wrong: ['梵高', '莫奈', '毕加索'] },
+    { prompt: '“命运交响曲”是第几部', answer: '第五部', wrong: ['第三部', '第六部', '第九部'] },
+    { prompt: '象棋棋盘中间写着', answer: '楚河汉界', wrong: ['天圆地方', '泾渭分明', '龙争虎斗'] },
+    { prompt: '标准围棋棋盘纵横各', answer: '19路', wrong: ['9路', '13路', '21路'] },
+    { prompt: '和平奖颁奖城市', answer: '奥斯陆', wrong: ['斯德哥尔摩', '日内瓦', '哥本哈根'] },
+    { prompt: '世界读书日是', answer: '4月23日', wrong: ['3月12日', '5月1日', '9月10日'] },
+    { prompt: '万维网发明者', answer: '伯纳斯-李', wrong: ['乔布斯', '图灵', '爱迪生'] },
+    { prompt: '飞机“黑匣子”通常是', answer: '橙红色', wrong: ['纯黑色', '天蓝色', '透明色'] },
+];
+
+export const HISTORY_MODERN_OPENING_FACTS: readonly TriviaFact[] = [
+    { prompt: '虎门销烟的主角', answer: '林则徐', wrong: ['魏源', '曾国藩', '左宗棠'] },
+    { prompt: '鸦片战争爆发于', answer: '1840年', wrong: ['1839年', '1860年', '1894年'] },
+    { prompt: '近代首个不平等条约', answer: '《南京条约》', wrong: ['《北京条约》', '《马关条约》', '《辛丑条约》'] },
+    { prompt: '洋务运动的口号', answer: '自强求富', wrong: ['师夷长技', '实业救国', '民主科学'] },
+    { prompt: '北洋水师最终覆没于', answer: '威海卫', wrong: ['旅顺', '天津', '厦门'] },
+    { prompt: '“公车上书”领衔者', answer: '康有为', wrong: ['孙中山', '陈独秀', '李大钊'] },
+    { prompt: '百日维新时的皇帝', answer: '光绪帝', wrong: ['同治帝', '宣统帝', '道光帝'] },
+    { prompt: '辛亥革命首义之城', answer: '武昌', wrong: ['广州', '南京', '长沙'] },
+    { prompt: '民国临时政府设在', answer: '南京', wrong: ['北京', '上海', '武汉'] },
+    { prompt: '清帝退位发生于', answer: '1912年', wrong: ['1898年', '1911年', '1919年'] },
+];
+
+export const HISTORY_MODERN_AWAKENING_FACTS: readonly TriviaFact[] = [
+    { prompt: '《新青年》创办人', answer: '陈独秀', wrong: ['鲁迅', '胡适', '蔡元培'] },
+    { prompt: '《狂人日记》作者', answer: '鲁迅', wrong: ['郭沫若', '老舍', '巴金'] },
+    { prompt: '五四运动首先爆发在', answer: '北京', wrong: ['上海', '广州', '天津'] },
+    { prompt: '五四运动导火索', answer: '巴黎和会', wrong: ['武昌起义', '九一八事变', '北伐开始'] },
+    { prompt: '中共一大最初开会城市', answer: '上海', wrong: ['北京', '广州', '武汉'] },
+    { prompt: '南湖红船所在城市', answer: '嘉兴', wrong: ['杭州', '绍兴', '苏州'] },
+    { prompt: '首个农村革命根据地', answer: '井冈山', wrong: ['延安', '西柏坡', '大别山'] },
+    { prompt: '中央红军长征集结出发地', answer: '江西于都', wrong: ['陕西延安', '贵州遵义', '河北西柏坡'] },
+    { prompt: '遵义会议所在省份', answer: '贵州', wrong: ['四川', '云南', '湖南'] },
+    { prompt: '“为中华崛起而读书”', answer: '周恩来', wrong: ['蔡元培', '闻一多', '詹天佑'] },
+];
+
+export const HISTORY_MODERN_RESISTANCE_FACTS: readonly TriviaFact[] = [
+    { prompt: '九一八事变发生地', answer: '沈阳', wrong: ['北平', '南京', '武汉'] },
+    { prompt: '卢沟桥事变发生在', answer: '北京', wrong: ['天津', '上海', '西安'] },
+    { prompt: '平型关大捷主力', answer: '八路军', wrong: ['新四军', '东北军', '北洋军'] },
+    { prompt: '台儿庄大捷指挥者', answer: '李宗仁', wrong: ['张自忠', '佟麟阁', '谢晋元'] },
+    { prompt: '南京大屠杀发生于', answer: '1937年', wrong: ['1931年', '1935年', '1941年'] },
+    { prompt: '地道战故事多发生在', answer: '冀中平原', wrong: ['河西走廊', '江南水乡', '云贵高原'] },
+    { prompt: '百团大战主要指挥者', answer: '彭德怀', wrong: ['叶挺', '左权', '聂荣臻'] },
+    { prompt: '“飞虎队”创建者', answer: '陈纳德', wrong: ['白求恩', '史迪威', '柯棣华'] },
+    { prompt: '日本宣布投降年份', answer: '1945年', wrong: ['1937年', '1943年', '1949年'] },
+    { prompt: '中国抗战胜利纪念日', answer: '9月3日', wrong: ['7月7日', '8月15日', '9月18日'] },
+];
+
+export const HISTORY_ANCIENT_FACTS: readonly TriviaFact[] = [
+    { prompt: '秦统一后推行的文字', answer: '小篆', wrong: ['甲骨文', '楷书', '行书'] },
+    { prompt: '“凿空西域”的使者', answer: '张骞', wrong: ['班超', '苏武', '甘英'] },
+    { prompt: '《史记》的作者', answer: '司马迁', wrong: ['班固', '司马光', '陈寿'] },
+    { prompt: '“投笔从戎”的主角', answer: '班超', wrong: ['霍去病', '卫青', '祖逖'] },
+    { prompt: '《三国演义》草船借箭者', answer: '诸葛亮', wrong: ['周瑜', '鲁肃', '司马懿'] },
+    { prompt: '被称为“诗仙”', answer: '李白', wrong: ['杜甫', '白居易', '王维'] },
+    { prompt: '玄奘取经前往古称', answer: '天竺', wrong: ['大秦', '安息', '扶桑'] },
+    { prompt: '活字印刷术发明者', answer: '毕昇', wrong: ['蔡伦', '沈括', '祖冲之'] },
+    { prompt: '郑和船队远航称为', answer: '下西洋', wrong: ['通西域', '渡东瀛', '征漠北'] },
+    { prompt: '“杯酒释兵权”的皇帝', answer: '宋太祖', wrong: ['唐太宗', '汉武帝', '明成祖'] },
+    { prompt: '兵马俑所在城市', answer: '西安', wrong: ['洛阳', '开封', '南京'] },
+    { prompt: '鸿门宴上舞剑的是', answer: '项庄', wrong: ['项伯', '樊哙', '韩信'] },
+];
+
+export const HISTORY_MYTH_FACTS: readonly TriviaFact[] = [
+    { prompt: '开天辟地的巨人', answer: '盘古', wrong: ['夸父', '刑天', '共工'] },
+    { prompt: '女娲补天使用', answer: '五色石', wrong: ['定海针', '息壤', '昆仑玉'] },
+    { prompt: '后羿一共射落几个太阳', answer: '9个', wrong: ['7个', '8个', '10个'] },
+    { prompt: '嫦娥奔月住进', answer: '广寒宫', wrong: ['兜率宫', '水晶宫', '碧游宫'] },
+    { prompt: '追着太阳奔跑的巨人', answer: '夸父', wrong: ['盘古', '刑天', '愚公'] },
+    { prompt: '精卫衔石要填平', answer: '东海', wrong: ['南海', '西湖', '黄河'] },
+    { prompt: '大禹治水几过家门不入', answer: '3次', wrong: ['1次', '5次', '9次'] },
+    { prompt: '尝百草的始祖', answer: '神农', wrong: ['伏羲', '祝融', '后稷'] },
+    { prompt: '失去头颅仍挥舞干戚', answer: '刑天', wrong: ['蚩尤', '共工', '相柳'] },
+    { prompt: '哪吒重获身体靠', answer: '莲花化身', wrong: ['蟠桃化身', '仙草化身', '神木化身'] },
+    { prompt: '筋斗云一个跟头十万八千里', answer: '孙悟空', wrong: ['猪八戒', '二郎神', '哪吒'] },
+    { prompt: '八仙过海比拼的是', answer: '各显神通', wrong: ['力拔山河', '点石成金', '呼风唤雨'] },
 ];
