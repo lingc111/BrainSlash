@@ -66,6 +66,7 @@ import {
     PORTRAIT_TARGET_MIN_SEPARATION,
     resolveSoftTargetSeparation,
 } from '../assets/Scripts/UI/PortraitTargetMotion.ts';
+import { targetSkinPixelScale } from '../assets/Scripts/UI/TargetSkinSizing.ts';
 
 function pipeline(seed: string): { director: Brawl60Director; generator: QuestionGenerator } {
     return {
@@ -699,6 +700,18 @@ test('portrait target formations use at most two targets per row with clear spac
     }
     assert.deepEqual(calculatePortraitTargetLayout(5, 750, 1624).map((position) => position.row), [0, 0, 1, 2, 2]);
     assert.deepEqual(calculatePortraitTargetLayout(6, 750, 1624).map((position) => position.row), [0, 0, 1, 1, 2, 2]);
+});
+
+test('target skins use their source canvas instead of auto-trim bounds for visual sizing', () => {
+    const targetExtent = 184.8;
+    const sourceCanvas = 384;
+    const scale = targetSkinPixelScale(sourceCanvas, sourceCanvas, targetExtent);
+
+    assert.equal(scale * sourceCanvas, targetExtent);
+    // These skins have very different imported trim bounds (hexagon 324,
+    // trapezoid 379), but both now receive the same source-canvas scale.
+    assert.equal(scale, targetSkinPixelScale(384, 384, targetExtent));
+    assert.equal(targetSkinPixelScale(0, 0, targetExtent), targetExtent);
 });
 
 test('portrait target motion preserves lanes and separates every phase throughout flight', () => {
