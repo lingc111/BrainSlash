@@ -319,24 +319,22 @@ export class HomeController extends Component {
         const area = this.makeNode(parent, 'EventArea', 0, 0, 820, 476);
         const cardScale = 1.13;
 
-        const reverse = this.makeNode(area, 'ReverseDayCard', -192, 0, 336, 420);
-        const pink = this.makeNode(reverse, 'Paper', 0, 0, 336, 420);
+        const reverse = this.makeNode(area, 'ReverseDayCard', -208, 0, 336, 420);
+        // Keep the replacement artwork at its native 1182:1330 ratio so its
+        // paper edge and baked-in shadow are not stretched.
+        const pink = this.makeNode(reverse, 'Paper', 0, 0, 373, 420);
         this.attachResourceTexture(pink, 'textures/home/ui/friend_challenge/spriteFrame');
         const pinkSprite = pink.getChildByName('TextureSprite')?.getComponent(Sprite);
         if (pinkSprite) pinkSprite.trim = false;
-        this.label(reverse, 'TitleLabel', '反向日', -4, -105, 280, 68, 48, C.ink, 'center');
         this.bindButton(reverse, this.onReverseDayClick.bind(this));
         reverse.setScale(cardScale, cardScale, 1);
 
-        const flag = this.makeNode(area, 'DailyChallengeCard', 192, 0, 336, 420);
-        const polaroid = this.makeNode(flag, 'Polaroid', 0, 0, 336, 420);
+        const flag = this.makeNode(area, 'DailyChallengeCard', 208, 0, 336, 420);
+        const polaroid = this.makeNode(flag, 'Polaroid', 0, 0, 373, 420);
         this.attachResourceTexture(polaroid, 'textures/home/ui/limited_activity/spriteFrame');
         const polaroidSprite = polaroid.getChildByName('TextureSprite')?.getComponent(Sprite);
         if (polaroidSprite) polaroidSprite.trim = false;
-        this.label(flag, 'DailyCaption', '今日挑战', 0, -72, 280, 44, 25, C.ink, 'center');
-        this.dailyEventTitleLabel = this.label(flag, 'TitleLabel', '颜色骗局', 0, -120, 300, 60, 38, C.blue, 'center');
-        this.dailyEventStatusLabel = this.label(flag, 'StatusLabel', '今日首战', 0, -164, 300, 42, 20, C.ink, 'center');
-        this.dailyEventCountdownLabel = this.label(flag, 'CountdownLabel', '00:00:00', 0, 160, 210, 42, 23, C.red, 'center');
+        this.dailyEventTitleLabel = this.label(flag, 'TitleLabel', '颜色骗局', 0, -122, 300, 44, 30, C.blue, 'center');
         this.bindButton(flag, this.onFlagHunterClick.bind(this));
         flag.setScale(cardScale, cardScale, 1);
         return area;
