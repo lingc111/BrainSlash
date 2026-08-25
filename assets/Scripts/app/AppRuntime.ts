@@ -84,8 +84,8 @@ class AppRuntimeState {
     }
     public replay(): void {
         if (this.transitioning) return;
-        // Free-play refreshes every run. Daily recreates the local-day entry:
-        // the seed stays fixed before midnight and rolls over afterwards.
+        // Free-play, tower and daily theme battles all refresh their attempt seed.
+        // Daily still keeps the local-day recipe and target score unchanged.
         if (this.entry.mode === 'brawl60' || this.entry.mode === 'daily' || this.entry.mode === 'tower') {
             this.entry = this.seedFactory.create(this.entry.mode, CONTENT_VERSION, this.entry.towerFloor);
             if (this.entry.mode === 'daily') this.save.beginDaily(this.entry);

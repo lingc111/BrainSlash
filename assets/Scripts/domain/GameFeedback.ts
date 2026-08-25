@@ -25,7 +25,7 @@ export function successFeedback(kind: 'correct' | 'master', combo: number): Succ
 
 export function failureFeedback(kind: FailureKind, brokenCombo: number): FailureFeedback {
     const labels: Readonly<Record<FailureKind, string>> = {
-        wrong: '斩错了',
+        wrong: '',
         bomb: '炸弹！',
         miss: '漏斩',
         orderError: '顺序错误',

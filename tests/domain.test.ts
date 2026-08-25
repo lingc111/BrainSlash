@@ -234,6 +234,7 @@ test('game feedback policy maps master, combo, failures and final countdown', ()
     assert.deepEqual(successFeedback('master', 10), { sound: 'master', haptic: 'medium', hitStopMs: 100, comboMilestone: true });
     assert.deepEqual(failureFeedback('bomb', 6), { sound: 'bomb', haptic: 'heavy', label: '炸弹！', showComboBreak: true });
     assert.deepEqual(failureFeedback('orderError', 2), { sound: 'error', haptic: 'medium', label: '顺序错误', showComboBreak: false });
+    assert.deepEqual(failureFeedback('wrong', 0), { sound: 'error', haptic: 'medium', label: '', showComboBreak: false });
     assert.equal(countdownWarningSecond(5_000, 6), 5);
     assert.equal(countdownWarningSecond(4_999, 5), null);
     assert.equal(countdownWarningSecond(4_000, 5), 4);
@@ -827,7 +828,7 @@ test('brawl topic and question-family order varies across fresh session seeds', 
     assert.ok(signatures.size > 24);
 });
 
-test('run seed factory refreshes free-play but keeps the daily recipe reproducible', () => {
+test('run seed factory refreshes every attempt while keeping the daily recipe stable', () => {
     const fixedDate = new Date(2026, 7, 20, 12, 0, 0);
     const factory = new RunSeedFactory(() => fixedDate, () => 123_456_789);
     const first = factory.create('brawl60', CONTENT_VERSION);
@@ -837,11 +838,13 @@ test('run seed factory refreshes free-play but keeps the daily recipe reproducib
 
     const dailyA = factory.create('daily', CONTENT_VERSION);
     const dailyB = factory.create('daily', CONTENT_VERSION);
-    assert.equal(dailyA.seed, dailyB.seed);
+    assert.notEqual(dailyA.seed, dailyB.seed);
+    assert.equal(dailyA.recipeId, dailyB.recipeId);
+    assert.equal(dailyA.dailyTargetScore, dailyB.dailyTargetScore);
     assert.equal(dailyA.dailyDate, '2026-08-20');
     assert.ok(dailyRecipeById(dailyA.recipeId));
     assert.equal(dailyA.dailyTargetScore, dailyRecipeById(dailyA.recipeId)?.targetScore);
-    assert.match(dailyA.seed, /^daily:[^:]+:2026-08-20:[a-z-]+$/);
+    assert.match(dailyA.seed, /^daily:[^:]+:2026-08-20:[a-z-]+:attempt:[a-z0-9]+:[a-z0-9]+:[a-z0-9]+$/);
 });
 
 test('local daily challenge rotates seven recipes and rolls over at local midnight', () => {
