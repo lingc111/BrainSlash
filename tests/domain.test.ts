@@ -517,7 +517,7 @@ test('result presentation keeps replay and share actions contextual across modes
     }, player).result;
     const presentation = createResultPresentation(daily);
     assert.equal(presentation.modeLabel, '今日挑战');
-    assert.equal(presentation.headline, '今日挑战完成');
+    assert.equal(presentation.headline, '挑战未达成');
     assert.equal(presentation.fastestReaction, '—');
     assert.equal(presentation.replayLabel, '再战今日');
     assert.equal(presentation.shareLabel, '挑战好友');
@@ -533,10 +533,12 @@ test('daily completion records attempts and compares against the local daily bes
     assert.ok(first);
     if (!first) return;
     assert.deepEqual(first.record, {
-        dateKey: '2026-08-20', recipeId: challenge.recipe.id, attempts: 1, bestScore: 620, lastScore: 620, completed: true, tutorialBaseline: [],
+        dateKey: '2026-08-20', recipeId: challenge.recipe.id, attempts: 1, bestScore: 620, lastScore: 620, completed: true,
+        targetScore: challenge.targetScore, targetAchieved: false, tutorialBaseline: [],
     });
     assert.deepEqual(first.result, {
         dateKey: '2026-08-20', recipeId: challenge.recipe.id, attempts: 1, previousBestScore: 0, bestScore: 620, isNewBest: true,
+        targetScore: challenge.targetScore, targetAchieved: false, firstAchievement: false,
     });
     const second = recordDailyRun(first.record, run(580));
     assert.ok(second);
@@ -547,12 +549,26 @@ test('daily completion records attempts and compares against the local daily bes
     const result = { ...finalizeResult(run(580), { level: 2, xp: 500, bestScore: 900 }).result, daily: second.result };
     const presentation = createResultPresentation(result);
     assert.equal(presentation.modeLabel, `今日挑战 · ${challenge.recipe.title}`);
-    assert.equal(presentation.headline, '今日挑战完成');
-    assert.equal(presentation.comparison, '距离今日最佳 40 分');
+    assert.equal(presentation.headline, '挑战未达成');
+    assert.equal(presentation.comparison, `距离今日目标 ${challenge.targetScore - 580} 分`);
     assert.equal(presentation.replayLabel, '再战今日');
     const home = createDailyHomePresentation(challenge, second.record);
-    assert.equal(home.status, '今日最佳 620 · 已战 2 次');
-    assert.equal(home.actionLabel, '再战今日');
+    assert.equal(home.status, `最佳 620 · 还差 ${challenge.targetScore - 620}`);
+    assert.equal(home.goal, `目标 ${challenge.targetScore} 分`);
+    assert.equal(home.achieved, false);
+
+    const achieved = recordDailyRun(second.record, run(challenge.targetScore + 100));
+    assert.ok(achieved);
+    if (!achieved) return;
+    assert.equal(achieved.result.targetAchieved, true);
+    assert.equal(achieved.result.firstAchievement, true);
+    assert.equal(achieved.record.targetAchieved, true);
+    assert.equal(typeof achieved.record.achievedAt, 'number');
+    const achievedResult = { ...finalizeResult(run(challenge.targetScore + 100), { level: 2, xp: 500, bestScore: 900 }).result, daily: achieved.result };
+    const achievedPresentation = createResultPresentation(achievedResult);
+    assert.equal(achievedPresentation.headline, '今日目标达成！');
+    assert.equal(achievedPresentation.comparison, `目标 ${challenge.targetScore} 分 · 已达成`);
+    assert.equal(createDailyHomePresentation(challenge, achieved.record).status, `已达标 · 最佳 ${challenge.targetScore + 100}`);
 });
 
 test('daily challenge starts without tutorial state and reuses the same-day record', () => {
@@ -824,6 +840,7 @@ test('run seed factory refreshes free-play but keeps the daily recipe reproducib
     assert.equal(dailyA.seed, dailyB.seed);
     assert.equal(dailyA.dailyDate, '2026-08-20');
     assert.ok(dailyRecipeById(dailyA.recipeId));
+    assert.equal(dailyA.dailyTargetScore, dailyRecipeById(dailyA.recipeId)?.targetScore);
     assert.match(dailyA.seed, /^daily:[^:]+:2026-08-20:[a-z-]+$/);
 });
 
@@ -1172,12 +1189,18 @@ test('save v1 migration preserves player settings daily-compatible fields and ad
         player: { level: 4, xp: 1_560, bestScore: 8_800 },
         settings: { music: false, sfx: true, vibration: false, quality: 'low' },
         tutorials: { bomb: true, rotate: true },
+        daily: {
+            dateKey: '2026-08-20', recipeId: 'number-lab', attempts: 2, bestScore: 1700,
+            lastScore: 1700, completed: true, tutorialBaseline: [],
+        } as any,
     });
     assert.equal(migrated.schemaVersion, 2);
     assert.deepEqual(migrated.player, { level: 4, xp: 1_560, bestScore: 8_800 });
     assert.equal(migrated.settings.music, false);
     assert.equal(migrated.tutorials.bomb, true);
     assert.equal(migrated.tutorials.rotate, true);
+    assert.equal(migrated.daily?.targetScore, dailyRecipeById('number-lab')?.targetScore);
+    assert.equal(migrated.daily?.targetAchieved, true);
     assert.deepEqual(migrated.tower, DEFAULT_TOWER_PROGRESS);
 });
 

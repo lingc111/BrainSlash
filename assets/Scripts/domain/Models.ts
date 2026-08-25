@@ -3,7 +3,7 @@ export type ThemeId = 'math' | 'vision' | 'english' | 'hanzi' | 'geography' | 'l
 export type RuleId = 'standard' | 'reverse' | 'rotate' | 'multi' | 'order' | 'bomb';
 export type SessionPhase = 'ready' | 'playing' | 'resolving' | 'finished';
 
-export interface GameEntryParams { mode: GameMode; seed: string; contentVersion: string; recipeId?: string; targetScore?: number; dailyDate?: string; towerFloor?: number; }
+export interface GameEntryParams { mode: GameMode; seed: string; contentVersion: string; recipeId?: string; targetScore?: number; dailyDate?: string; dailyTargetScore?: number; towerFloor?: number; }
 export interface PromptSpec { text: string; }
 export interface TargetSpec { id: string; text: string; value?: string | number; colorName?: string; isBomb?: boolean; }
 export interface QuestionInstance {
@@ -43,6 +43,7 @@ export interface FriendChallengeResult {
 }
 export interface DailyChallengeResult {
     dateKey: string; recipeId: string; attempts: number; previousBestScore: number; bestScore: number; isNewBest: boolean;
+    targetScore: number; targetAchieved: boolean; firstAchievement: boolean;
 }
 export interface GameResult extends RunResult {
     previousBestScore: number; isNewRecord: boolean; growth: ResultGrowth;

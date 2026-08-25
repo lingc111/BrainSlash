@@ -51,7 +51,7 @@ export function normalizeV2(parsed: Partial<SaveDataV2>): SaveDataV2 {
         player: normalizePlayer(parsed.player),
         settings: { ...DEFAULT_SETTINGS, ...parsed.settings },
         tutorials: validTutorials(parsed.tutorials),
-        daily: validDailyRecord(parsed.daily) ? { ...parsed.daily, tutorialBaseline: normalizeTutorialBaseline(parsed.daily.tutorialBaseline) } : undefined,
+        daily: validDailyRecord(parsed.daily) ? normalizeDailyRecord(parsed.daily) : undefined,
         tower: normalizeTowerProgress(parsed.tower),
     };
 }
@@ -85,6 +85,18 @@ function validDailyRecord(value: unknown): value is LocalDailyRecord {
         && (record.tutorialBaseline === undefined || Array.isArray(record.tutorialBaseline));
 }
 
+function normalizeDailyRecord(record: LocalDailyRecord): LocalDailyRecord {
+    const recipe = dailyRecipeById(record.recipeId);
+    const targetScore = finitePositive(record.targetScore) ?? recipe?.targetScore ?? 1200;
+    return {
+        ...record,
+        targetScore,
+        targetAchieved: record.targetAchieved === true || record.bestScore >= targetScore,
+        achievedAt: typeof record.achievedAt === 'number' && Number.isFinite(record.achievedAt) ? record.achievedAt : undefined,
+        tutorialBaseline: normalizeTutorialBaseline(record.tutorialBaseline),
+    };
+}
+
 function normalizeTutorialBaseline(value: unknown): Exclude<RuleId, 'standard'>[] {
     if (!Array.isArray(value)) return [];
     const valid = new Set<Exclude<RuleId, 'standard'>>(['reverse', 'rotate', 'multi', 'order', 'bomb']);
@@ -93,6 +105,10 @@ function normalizeTutorialBaseline(value: unknown): Exclude<RuleId, 'standard'>[
 
 function finiteNonNegative(value: unknown): number {
     return typeof value === 'number' && Number.isFinite(value) ? Math.max(0, Math.floor(value)) : 0;
+}
+
+function finitePositive(value: unknown): number | undefined {
+    return typeof value === 'number' && Number.isFinite(value) && value > 0 ? Math.floor(value) : undefined;
 }
 
 function clone<T>(value: T): T { return JSON.parse(JSON.stringify(value)) as T; }

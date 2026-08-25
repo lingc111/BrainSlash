@@ -11,6 +11,7 @@ library/
 temp/
 local/
 build/
+build-templates/
 profiles/
 native
 .creator/

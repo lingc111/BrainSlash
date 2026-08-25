@@ -65,8 +65,8 @@ export class HomeController extends Component {
     private dailyStatusLabel: Label | null = null;
     private countdownLabel: Label | null = null;
     private dailyEventTitleLabel: Label | null = null;
-    private dailyEventStatusLabel: Label | null = null;
-    private dailyEventCountdownLabel: Label | null = null;
+    private dailyEventGoalLabel: Label | null = null;
+    private dailyEventAccentLabel: Label | null = null;
     private progressValueLabel: Label | null = null;
     private progressCells: Node[] = [];
     private navSelectionMarkers: Node[] = [];
@@ -92,6 +92,8 @@ export class HomeController extends Component {
                 dailyAccent: dailyView.accent,
                 dailyTitle: dailyView.title,
                 dailyStatus: dailyView.status,
+                dailyGoal: dailyView.goal,
+                dailyAchieved: dailyView.achieved,
                 challengeEndTime: dailyView.endTime,
                 towerFloor: save.tower.currentFloor,
                 towerHighestFloor: save.tower.highestClearedFloor,
@@ -132,9 +134,7 @@ export class HomeController extends Component {
         this.scheduleOnce(this.applyLayout, 0);
         this.countdown.start(
             this.data.challengeEndTime,
-            (formatted) => {
-                if (this.dailyEventCountdownLabel?.isValid) this.dailyEventCountdownLabel.string = formatted;
-            },
+            () => undefined,
             this.onChallengeExpired.bind(this),
         );
     }
@@ -158,7 +158,14 @@ export class HomeController extends Component {
         if (this.dailyStatusLabel) this.dailyStatusLabel.string = `最高 ${data.towerHighestFloor} 层 · 塔积分 ${data.towerPoints}`;
         if (this.countdownLabel) this.countdownLabel.string = data.towerHint;
         if (this.dailyEventTitleLabel) this.dailyEventTitleLabel.string = data.dailyTitle;
-        if (this.dailyEventStatusLabel) this.dailyEventStatusLabel.string = data.dailyStatus;
+        if (this.dailyEventTitleLabel) this.dailyEventTitleLabel.color = data.dailyAchieved ? C.green : C.blue;
+        if (this.dailyEventGoalLabel) {
+            this.dailyEventGoalLabel.string = data.dailyAchieved
+                ? data.dailyStatus
+                : data.dailyStatus.startsWith('最佳') ? data.dailyStatus : `${data.dailyGoal} · 首战待斩`;
+            this.dailyEventGoalLabel.color = data.dailyAchieved ? C.green : C.inkSoft;
+        }
+        if (this.dailyEventAccentLabel) this.dailyEventAccentLabel.string = data.dailyAchieved ? '✓' : data.dailyAccent;
         if (this.progressValueLabel) {
             this.progressValueLabel.string = `${data.rankProgress}/${data.rankProgressMax}`;
         }
@@ -167,9 +174,7 @@ export class HomeController extends Component {
         if (!EDITOR && this.enabled && this.node.activeInHierarchy) {
             this.countdown.start(
                 data.challengeEndTime,
-                (formatted) => {
-                    if (this.dailyEventCountdownLabel?.isValid) this.dailyEventCountdownLabel.string = formatted;
-                },
+                () => undefined,
                 this.onChallengeExpired.bind(this),
             );
         }
@@ -215,7 +220,6 @@ export class HomeController extends Component {
     }
 
     public onChallengeExpired(): void {
-        if (this.dailyEventCountdownLabel) this.dailyEventCountdownLabel.string = '00:00:00';
         if (!EDITOR) this.scheduleOnce(() => this.refreshLocalDaily(), 0);
     }
 
@@ -227,6 +231,8 @@ export class HomeController extends Component {
             dailyAccent: viewData.accent,
             dailyTitle: viewData.title,
             dailyStatus: viewData.status,
+            dailyGoal: viewData.goal,
+            dailyAchieved: viewData.achieved,
             challengeEndTime: viewData.endTime,
         });
     }
@@ -334,7 +340,9 @@ export class HomeController extends Component {
         this.attachResourceTexture(polaroid, 'textures/home/ui/limited_activity/spriteFrame');
         const polaroidSprite = polaroid.getChildByName('TextureSprite')?.getComponent(Sprite);
         if (polaroidSprite) polaroidSprite.trim = false;
-        this.dailyEventTitleLabel = this.label(flag, 'TitleLabel', '颜色骗局', 0, -122, 300, 44, 30, C.blue, 'center');
+        this.dailyEventAccentLabel = this.label(flag, 'AccentLabel', '知', -126, 158, 54, 46, 28, C.red, 'center');
+        this.dailyEventTitleLabel = this.label(flag, 'TitleLabel', '常识万花筒', 0, -108, 300, 40, 27, C.blue, 'center');
+        this.dailyEventGoalLabel = this.label(flag, 'ChallengeSummary', '目标 1300 分 · 首战待斩', 0, -149, 304, 30, 18, C.inkSoft, 'center');
         this.bindButton(flag, this.onFlagHunterClick.bind(this));
         flag.setScale(cardScale, cardScale, 1);
         return area;

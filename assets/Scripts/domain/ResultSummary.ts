@@ -60,14 +60,16 @@ export function finalizeResult(run: RunResult, playerBefore: PlayerProgress): Re
 export function createResultPresentation(result: GameResult): ResultPresentation {
     const challenge = result.challenge;
     const daily = result.daily;
-    const sharePrimary = daily ? daily.isNewBest : result.isNewRecord || challenge?.outcome === 'won';
+    const sharePrimary = daily ? daily.targetAchieved && daily.isNewBest : result.isNewRecord || challenge?.outcome === 'won';
     return {
         modeLabel: modeLabel(result),
         headline: challenge
             ? challenge.outcome === 'won' ? '挑战成功！' : challenge.outcome === 'tied' ? '势均力敌！' : '就差一点！'
-            : daily?.isNewBest ? '今日新纪录！' : result.entry.mode === 'daily' ? '今日挑战完成' : result.isNewRecord ? '新纪录！' : '本局完成',
+            : daily?.firstAchievement ? '今日目标达成！'
+            : daily?.targetAchieved ? daily.isNewBest ? '今日新纪录！' : '今日挑战达标'
+            : result.entry.mode === 'daily' ? '挑战未达成' : result.isNewRecord ? '新纪录！' : '本局完成',
         comparison: comparisonText(result),
-        comparisonTone: challenge?.outcome === 'won' ? 'positive' : daily?.isNewBest || result.isNewRecord ? 'highlight' : 'neutral',
+        comparisonTone: challenge?.outcome === 'won' || daily?.firstAchievement ? 'positive' : daily?.isNewBest || result.isNewRecord ? 'highlight' : 'neutral',
         accuracy: `${Math.round(Math.max(0, Math.min(1, result.accuracy)) * 100)}%`,
         maxCombo: String(result.maxCombo),
         fastestReaction: formatReaction(result.bestReactionMs),
@@ -109,6 +111,8 @@ function comparisonText(result: GameResult): string {
         return `追平好友 ${result.challenge.targetScore} 分`;
     }
     if (result.daily) {
+        if (!result.daily.targetAchieved) return `距离今日目标 ${Math.max(0, result.daily.targetScore - result.score)} 分`;
+        if (result.daily.firstAchievement) return `目标 ${result.daily.targetScore} 分 · 已达成`;
         if (result.daily.attempts === 1) return `今日首战 · ${result.score} 分`;
         if (result.daily.isNewBest) return `刷新今日最佳 +${result.score - result.daily.previousBestScore}`;
         if (result.score === result.daily.bestScore) return '追平今日最佳';
