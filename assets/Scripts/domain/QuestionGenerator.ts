@@ -59,7 +59,6 @@ export class QuestionGenerator {
             baseCorrectTargetIds: ['safe-2'],
             activeRules: ['standard'],
             timeLimitMs: directive.questionTimeMs,
-            tutorialSafe: directive.difficultyStage === 0,
         };
     }
 
@@ -105,7 +104,7 @@ export class QuestionGenerator {
         targets: TargetSpec[],
         correct: string[],
         _rules: RuleId[],
-        stage: Stage,
+        _stage: Stage,
         orderedTargetIds?: string[],
     ): QuestionInstance {
         const activeRules = [...this.directive.rules];
@@ -120,7 +119,6 @@ export class QuestionGenerator {
             orderedTargetIds,
             activeRules,
             timeLimitMs: this.directive.questionTimeMs,
-            tutorialSafe: stage === 0,
         };
     }
 

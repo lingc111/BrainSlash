@@ -82,7 +82,7 @@ export class HomeController extends Component {
             const nextUnlock = nextTowerUnlock(save.tower.currentFloor);
             const floorConfig = towerFloorConfig(save.tower.currentFloor);
             const currentUnlock = floorConfig.unlockedRule ? towerRuleLabel(floorConfig.unlockedRule)
-                : save.tower.currentFloor === 15 ? '双规则' : undefined;
+                : floorConfig.unlocksCompoundRules ? '双规则' : undefined;
             this.data = {
                 ...createMockHomeViewData(),
                 level: save.player.level,

@@ -21,7 +21,7 @@ import {
 } from '../assets/Scripts/domain/ContentCatalog.ts';
 import { GameSession } from '../assets/Scripts/domain/GameSession.ts';
 import { countdownWarningSecond, failureFeedback, successFeedback } from '../assets/Scripts/domain/GameFeedback.ts';
-import { beginDailyRun, createDailyChallenge, createDailyHomePresentation, dailyRecipeById, dailyTutorialProgress, localDateKey, recordDailyRun } from '../assets/Scripts/domain/DailyChallenge.ts';
+import { beginDailyRun, createDailyChallenge, createDailyHomePresentation, dailyRecipeById, localDateKey, recordDailyRun } from '../assets/Scripts/domain/DailyChallenge.ts';
 import {
     canStartFriendChallenge,
     createFriendChallengePayload,
@@ -35,7 +35,6 @@ import { QuestionGenerator } from '../assets/Scripts/domain/QuestionGenerator.ts
 import { createResultPresentation, finalizeResult } from '../assets/Scripts/domain/ResultSummary.ts';
 import { evaluateRules, questionFlightDurationSeconds, questionPreviewDurationSeconds, rulesForReadableTargets, slashRuleCount, slashRuleLabel } from '../assets/Scripts/domain/Rules.ts';
 import { SeededRng } from '../assets/Scripts/domain/SeededRng.ts';
-import { prepareRuleTutorial, tutorialRetryInstruction } from '../assets/Scripts/domain/RuleTutorial.ts';
 import { validateQuestion } from '../assets/Scripts/domain/FairnessValidator.ts';
 import { difficultyAt } from '../assets/Scripts/domain/DifficultyDirector.ts';
 import {
@@ -66,7 +65,7 @@ import {
     PORTRAIT_TARGET_MIN_SEPARATION,
     resolveSoftTargetSeparation,
 } from '../assets/Scripts/UI/PortraitTargetMotion.ts';
-import { targetSkinPixelScale } from '../assets/Scripts/UI/TargetSkinSizing.ts';
+import { TARGET_SKIN_VISUAL_SCALE, targetSkinPixelScale, targetSkinVisualScale } from '../assets/Scripts/UI/TargetSkinSizing.ts';
 
 function pipeline(seed: string): { director: Brawl60Director; generator: QuestionGenerator } {
     return {
@@ -241,27 +240,6 @@ test('game feedback policy maps master, combo, failures and final countdown', ()
     assert.equal(countdownWarningSecond(0, 1), null);
 });
 
-test('every complex rule first appears as a readable single-rule safe tutorial', () => {
-    const { director, generator } = pipeline('tutorial-coverage');
-    const learned: Partial<Record<'reverse' | 'rotate' | 'multi' | 'order' | 'bomb', boolean>> = {};
-    const elapsedSequence = [12_000, 28_000, 48_000];
-    for (let index = 0; index < 160 && Object.keys(learned).length < 5; index++) {
-        const prepared = prepareRuleTutorial(director.next(elapsedSequence[index % elapsedSequence.length]), learned);
-        if (!prepared.tutorial) continue;
-        const { directive, tutorial } = prepared;
-        assert.deepEqual(directive.rules, [tutorial.rule]);
-        assert.ok(familySupportsRules(directive.family, directive.rules));
-        assert.ok(directive.targetCount <= 4);
-        assert.ok(directive.questionTimeMs >= 3_400);
-        assert.ok(directive.speed <= 0.76);
-        const question = generator.next(directive);
-        question.tutorialSafe = true;
-        assert.equal(validateQuestion(question, evaluateRules(question)).length, 0);
-        learned[tutorial.rule] = true;
-    }
-    assert.deepEqual(Object.keys(learned).sort(), ['bomb', 'multi', 'order', 'reverse', 'rotate']);
-});
-
 test('numeric comparison targets remain primitive numbers with readable labels', () => {
     const family = CONTENT_FAMILIES.find((candidate) => candidate.kind === 'math-compare')!;
     const generator = new QuestionGenerator(new SeededRng('wechat-set-spread-regression'), GAMEPLAY_CONFIG);
@@ -296,45 +274,11 @@ test('rotation excludes reverse and every direction-sensitive family', () => {
     assert.equal(familySupportsRules(math, ['bomb', 'rotate']), true);
 });
 
-test('learned rule pairs stay combined while tutorial retry copy explains the failure', () => {
-    const { director } = pipeline('tutorial-pairs');
-    let directive = director.next(50_000);
-    for (let index = 0; directive.rules.length < 2 && index < 20; index++) directive = director.next(50_000);
-    assert.equal(directive.rules.length, 2);
-    const first = prepareRuleTutorial(directive, {});
-    assert.ok(first.tutorial);
-    if (!first.tutorial) return;
-    const second = prepareRuleTutorial(directive, { [first.tutorial.rule]: true });
-    assert.ok(second.tutorial);
-    if (!second.tutorial) return;
-    const learned = prepareRuleTutorial(directive, { [first.tutorial.rule]: true, [second.tutorial.rule]: true });
-    assert.equal(learned.tutorial, null);
-    assert.deepEqual(learned.directive.rules, directive.rules);
-    assert.match(tutorialRetryInstruction(first.tutorial, 'wrong'), /再斩一次/);
-    assert.equal(tutorialRetryInstruction(first.tutorial, 'bomb'), '避开炸弹 · 再斩一次');
-    assert.equal(tutorialRetryInstruction(second.tutorial, 'orderError'), '顺序不对 · 再斩一次');
-    assert.match(tutorialRetryInstruction(second.tutorial, 'miss'), /别漏目标/);
-});
-
-test('tutorials switch to a compatible safe family when only the remaining rule needs it', () => {
-    const { director, generator } = pipeline('tutorial-fallback');
-    const base = director.next(50_000);
-    const orderFamily = CONTENT_FAMILIES.find((family) => family.kind === 'hanzi-order');
-    assert.ok(orderFamily);
-    if (!orderFamily) return;
-    const prepared = prepareRuleTutorial({ ...base, family: orderFamily, rules: ['bomb', 'order'] }, { order: true });
-    assert.equal(prepared.tutorial?.rule, 'bomb');
-    assert.notEqual(prepared.directive.family.id, orderFamily.id);
-    assert.equal(familySupportsRules(prepared.directive.family, ['bomb']), true);
-    const question = generator.next(prepared.directive);
-    assert.equal(validateQuestion(question, evaluateRules(question)).length, 0);
-});
-
 test('reverse never turns a bomb into a required target', () => {
     const question: QuestionInstance = {
         id: 'reverse', theme: 'math', prompt: { text: '反向' },
         targets: [{ id: 'right', text: '2' }, { id: 'wrong', text: '3' }, { id: 'bomb', text: '爆', isBomb: true }],
-        baseCorrectTargetIds: ['right'], activeRules: ['reverse', 'bomb'], timeLimitMs: 3000, tutorialSafe: false,
+        baseCorrectTargetIds: ['right'], activeRules: ['reverse', 'bomb'], timeLimitMs: 3000,
     };
     const constraint = evaluateRules(question);
     assert.deepEqual(constraint.requiredTargetIds, ['wrong']);
@@ -407,7 +351,7 @@ test('standard parity accepts either even while multi parity requires all evens'
     const base: QuestionInstance = {
         id: 'parity', theme: 'math', prompt: { text: '斩偶数' },
         targets: [{ id: '6', text: '6', value: 6 }, { id: '12', text: '12', value: 12 }, { id: '13', text: '13', value: 13 }],
-        baseCorrectTargetIds: ['6', '12'], activeRules: ['standard'], timeLimitMs: 3000, tutorialSafe: false,
+        baseCorrectTargetIds: ['6', '12'], activeRules: ['standard'], timeLimitMs: 3000,
     };
     const standard = evaluateRules(base);
     assert.equal(standard.matchMode, 'any');
@@ -446,7 +390,7 @@ test('reverse selection may still accept any one of multiple reversed targets', 
     const question: QuestionInstance = {
         id: 'reverse-single', theme: 'math', prompt: { text: '奇数' },
         targets: [{ id: '3', text: '3', value: 3 }, { id: '4', text: '4', value: 4 }, { id: '6', text: '6', value: 6 }],
-        baseCorrectTargetIds: ['3'], activeRules: ['reverse'], timeLimitMs: 3_000, tutorialSafe: false,
+        baseCorrectTargetIds: ['3'], activeRules: ['reverse'], timeLimitMs: 3_000,
     };
     const constraint = evaluateRules(question);
     assert.deepEqual(constraint.requiredTargetIds, ['4', '6']);
@@ -491,28 +435,15 @@ test('generated multi-step questions keep progress until every required target i
 test('session applies a question result only once', () => {
     const entry = { mode: 'brawl60' as const, seed: 's', contentVersion: 'v' };
     const session = new GameSession(entry, GAMEPLAY_CONFIG); session.start(); session.beginQuestion();
-    const q: QuestionInstance = { id: 'q', theme: 'math', prompt: { text: 'x' }, targets: [{ id: 'a', text: '1' }, { id: 'b', text: '2' }], baseCorrectTargetIds: ['a'], activeRules: ['standard'], timeLimitMs: 3000, tutorialSafe: true };
+    const q: QuestionInstance = { id: 'q', theme: 'math', prompt: { text: 'x' }, targets: [{ id: 'a', text: '1' }, { id: 'b', text: '2' }], baseCorrectTargetIds: ['a'], activeRules: ['standard'], timeLimitMs: 3000 };
     assert.ok(session.resolveSuccess(q)); assert.equal(session.resolveSuccess(q), null); assert.equal(session.state.correctCount, 1);
 });
 
 test('question preview time does not reduce the measured answer window', () => {
     const entry = { mode: 'brawl60' as const, seed: 'preview-window', contentVersion: 'v' };
     const session = new GameSession(entry, GAMEPLAY_CONFIG); session.start(); session.tick(300); session.beginQuestion(); session.tick(120);
-    const q: QuestionInstance = { id: 'preview-q', theme: 'math', prompt: { text: '1+1=?' }, targets: [{ id: 'a', text: '2' }, { id: 'b', text: '3' }], baseCorrectTargetIds: ['a'], activeRules: ['standard'], timeLimitMs: 3000, tutorialSafe: false };
+    const q: QuestionInstance = { id: 'preview-q', theme: 'math', prompt: { text: '1+1=?' }, targets: [{ id: 'a', text: '2' }, { id: 'b', text: '3' }], baseCorrectTargetIds: ['a'], activeRules: ['standard'], timeLimitMs: 3000 };
     assert.equal(session.resolveSuccess(q)?.reactionMs, 120);
-});
-
-test('tutorial retry resets the same question window without life, combo or error penalties', () => {
-    const entry = { mode: 'brawl60' as const, seed: 'retry', contentVersion: 'v' };
-    const session = new GameSession(entry, GAMEPLAY_CONFIG); session.start(); session.tick(120); session.beginQuestion(); session.tick(480);
-    session.state.combo = 4; session.state.score = 700;
-    session.cancelQuestion();
-    assert.equal(session.state.phase, 'resolving');
-    assert.equal(session.retryQuestion(), true);
-    assert.equal(session.state.phase, 'playing');
-    assert.equal(session.questionElapsedMs(), 0);
-    assert.deepEqual({ life: session.state.life, combo: session.state.combo, score: session.state.score, errors: session.state.errorCount }, { life: 3, combo: 4, score: 700, errors: 0 });
-    assert.equal(session.retryQuestion(), false);
 });
 
 test('result finalization atomically records growth, level-up and new best score', () => {
@@ -606,19 +537,18 @@ test('daily completion records attempts and compares against the local daily bes
     assert.equal(home.actionLabel, '再战今日');
 });
 
-test('daily challenge freezes the first-attempt tutorial baseline for same-day replays', () => {
+test('daily challenge starts without tutorial state and reuses the same-day record', () => {
     const challenge = createDailyChallenge(new Date(2026, 7, 20, 9, 0, 0), CONTENT_VERSION);
     const first = beginDailyRun(undefined, challenge.entry, { reverse: true, rotate: true, bomb: true });
     assert.ok(first);
     if (!first) return;
-    assert.deepEqual(first.tutorialBaseline, ['reverse', 'rotate', 'bomb']);
-    assert.deepEqual(dailyTutorialProgress(first), { reverse: true, rotate: true, bomb: true });
+    assert.deepEqual(first.tutorialBaseline, []);
     const replay = beginDailyRun(first, challenge.entry, { reverse: true, rotate: true, bomb: true, multi: true, order: true });
     assert.equal(replay, first);
-    assert.deepEqual(replay?.tutorialBaseline, ['reverse', 'rotate', 'bomb']);
+    assert.deepEqual(replay?.tutorialBaseline, []);
     const tomorrow = createDailyChallenge(new Date(2026, 7, 21, 9, 0, 0), CONTENT_VERSION);
     const nextDay = beginDailyRun(first, tomorrow.entry, { reverse: true, rotate: true, bomb: true, multi: true });
-    assert.deepEqual(nextDay?.tutorialBaseline, ['reverse', 'rotate', 'multi', 'bomb']);
+    assert.deepEqual(nextDay?.tutorialBaseline, []);
 });
 
 test('expanded content catalog contains five times the recommended family counts', () => {
@@ -708,10 +638,28 @@ test('target skins use their source canvas instead of auto-trim bounds for visua
     const scale = targetSkinPixelScale(sourceCanvas, sourceCanvas, targetExtent);
 
     assert.equal(scale * sourceCanvas, targetExtent);
-    // These skins have very different imported trim bounds (hexagon 324,
-    // trapezoid 379), but both now receive the same source-canvas scale.
-    assert.equal(scale, targetSkinPixelScale(384, 384, targetExtent));
     assert.equal(targetSkinPixelScale(0, 0, targetExtent), targetExtent);
+});
+
+test('target skin optical scales keep visible subject areas within a small error', () => {
+    // Opaque-area ratios measured from the imported, auto-trimmed sprite frames.
+    const visibleAreaRatios: Record<keyof typeof TARGET_SKIN_VISUAL_SCALE, number> = {
+        blue_square: 0.559,
+        green_triangle: 0.421,
+        orange_circle: 0.699,
+        pink_diamond: 0.474,
+        purple_hexagon: 0.688,
+        red_trapezoid: 0.600,
+        yellow_circle: 0.586,
+    };
+    const correctedAreas = Object.entries(visibleAreaRatios).map(([skin, area]) =>
+        area * targetSkinVisualScale(skin) ** 2,
+    );
+    const nonTriangleAreas = correctedAreas.filter((_, index) => Object.keys(visibleAreaRatios)[index] !== 'green_triangle');
+
+    assert.ok(Math.max(...nonTriangleAreas) / Math.min(...nonTriangleAreas) < 1.02);
+    assert.ok(Math.max(...correctedAreas) / Math.min(...correctedAreas) < 1.13);
+    assert.equal(targetSkinVisualScale('unknown_skin'), 1);
 });
 
 test('portrait target motion preserves lanes and separates every phase throughout flight', () => {
@@ -969,22 +917,6 @@ test('1000 seeds survive full multi-round deterministic legality regression', ()
     assert.ok(multiStepQuestions > 10_000);
 });
 
-test('tower tutorial can reset the session before the formal 60-second floor starts', () => {
-    const entry = { mode: 'tower' as const, seed: 'tower-tutorial', contentVersion: CONTENT_VERSION, towerFloor: 3 };
-    const session = new GameSession(entry, GAMEPLAY_CONFIG);
-    session.start();
-    session.tick(900);
-    session.beginQuestion();
-    session.cancelQuestion();
-    session.resetForTimedRun();
-    assert.equal(session.state.phase, 'ready');
-    assert.equal(session.state.elapsedMs, 0);
-    assert.equal(session.state.remainingMs, 60_000);
-    assert.equal(session.state.score, 0);
-    assert.equal(session.state.correctCount, 0);
-    assert.equal(session.state.life, 3);
-});
-
 test('tower exposes the fixed 60-second 1-30 progression and unlock schedule', () => {
     const expectedRequired = [
         [1, 8], [2, 8], [3, 9], [4, 9], [5, 9], [6, 9], [7, 10], [9, 10],
@@ -998,12 +930,24 @@ test('tower exposes the fixed 60-second 1-30 progression and unlock schedule', (
         assert.equal(config.requiredCorrect, required);
         assert.ok(config.targetCount >= 3 && config.targetCount <= 5);
     }
-    assert.deepEqual(unlockedRulesForTower(2), ['standard']);
-    assert.deepEqual(unlockedRulesForTower(3), ['standard', 'bomb']);
+    assert.deepEqual(unlockedRulesForTower(0), ['standard', 'bomb']);
+    assert.deepEqual(unlockedRulesForTower(1), ['standard', 'bomb']);
+    assert.deepEqual(unlockedRulesForTower(2), ['standard', 'bomb', 'multi']);
+    assert.deepEqual(unlockedRulesForTower(3), ['standard', 'bomb', 'multi', 'order']);
+    assert.deepEqual(unlockedRulesForTower(4), ['standard', 'bomb', 'multi', 'order', 'reverse']);
+    assert.deepEqual(unlockedRulesForTower(5), ['standard', 'bomb', 'multi', 'order', 'reverse', 'rotate']);
     assert.deepEqual(unlockedRulesForTower(13), ['standard', 'bomb', 'multi', 'order', 'reverse', 'rotate']);
     assert.deepEqual(unlockedRulesForTower(14), ['standard', 'bomb', 'multi', 'order', 'reverse', 'rotate']);
     assert.equal(towerFloorConfig(14).unlockedRule, undefined);
     assert.deepEqual(towerFloorConfig(14).familyKinds, ['vision-stroop']);
+    assert.equal(towerFloorConfig(6).unlocksCompoundRules, true);
+    assert.equal(towerFloorConfig(15).unlocksCompoundRules, false);
+
+    assert.deepEqual(new TowerDirector(new SeededRng('floor-2-unlock'), 2).next(0).rules, ['multi']);
+    assert.deepEqual(new TowerDirector(new SeededRng('floor-3-unlock'), 3).next(0).rules, ['order']);
+    assert.deepEqual(new TowerDirector(new SeededRng('floor-4-unlock'), 4).next(0).rules, ['reverse']);
+    assert.deepEqual(new TowerDirector(new SeededRng('floor-5-unlock'), 5).next(0).rules, ['rotate']);
+    assert.deepEqual(new TowerDirector(new SeededRng('floor-6-unlock'), 6).next(0).rules, ['multi', 'reverse']);
 });
 
 test('color identification remains a question family without becoming a rule unlock', () => {
@@ -1051,10 +995,13 @@ test('daily topics merge logic and vision while common knowledge and history als
 });
 
 test('tower bombs add a hazard without replacing answer candidates', () => {
-    const seed = 'tower-floor-3-bomb-regression';
-    const director = new TowerDirector(new SeededRng(`${seed}:director`), 3);
+    const seed = 'tower-floor-1-bomb-regression';
+    const director = new TowerDirector(new SeededRng(`${seed}:director`), 1);
     const generator = new QuestionGenerator(new SeededRng(`${seed}:gameplay`), GAMEPLAY_CONFIG);
-    const directive = director.next(0);
+    let directive = director.next(0);
+    for (let index = 1; !directive.rules.includes('bomb') && index < 4; index++) {
+        directive = director.next(index * 1_000);
+    }
     assert.deepEqual(directive.rules, ['bomb']);
     assert.equal(directive.targetCount, 3);
     const question = generator.next(directive);
@@ -1066,10 +1013,14 @@ test('tower bombs add a hazard without replacing answer candidates', () => {
 test('tower bomb placement varies by seed instead of staying in the final slot', () => {
     const positions = new Set<number>();
     for (let seedIndex = 0; seedIndex < 40; seedIndex++) {
-        const seed = `tower-floor-3-bomb-position-${seedIndex}`;
-        const director = new TowerDirector(new SeededRng(`${seed}:director`), 3);
+        const seed = `tower-floor-1-bomb-position-${seedIndex}`;
+        const director = new TowerDirector(new SeededRng(`${seed}:director`), 1);
         const generator = new QuestionGenerator(new SeededRng(`${seed}:gameplay`), GAMEPLAY_CONFIG);
-        const question = generator.next(director.next(0));
+        let directive = director.next(0);
+        for (let index = 1; !directive.rules.includes('bomb') && index < 4; index++) {
+            directive = director.next(index * 1_000);
+        }
+        const question = generator.next(directive);
         positions.add(question.targets.findIndex((target) => target.isBomb));
     }
     assert.ok(positions.size > 1);
@@ -1132,9 +1083,9 @@ test('tower progress rewards first clears once and restores the latest checkpoin
     assert.equal(repeat.result.firstClear, false);
     assert.equal(repeat.result.towerPointsGained, 10);
     assert.equal(repeat.result.runTotalScore, 180);
-    const floor15Run: RunResult = { ...run, entry: { ...entry, seed: 'tower-floor-15', towerFloor: 15 }, correctCount: 12 };
-    const floor15 = commitTowerFloor({ ...first.progress, highestClearedFloor: 14, currentFloor: 15 }, floor15Run, 2);
-    assert.equal(floor15.result.unlockedLabel, '双规则');
+    const floor6Run: RunResult = { ...run, entry: { ...entry, seed: 'tower-floor-6', towerFloor: 6 }, correctCount: 12 };
+    const floor6 = commitTowerFloor({ ...first.progress, highestClearedFloor: 5, currentFloor: 6 }, floor6Run, 2);
+    assert.equal(floor6.result.unlockedLabel, '双规则');
 });
 
 test('tower scoring stays near a ten-thousand-point chapter scale and migrates inflated totals', () => {
@@ -1185,12 +1136,12 @@ test('tower retries receive fresh seeds while a supplied seed remains reproducib
 
 test('brawl rule pool follows tower unlocks and learned legacy tutorials', () => {
     const allowed = allowedBrawlRules(DEFAULT_TOWER_PROGRESS, { reverse: true });
-    assert.deepEqual([...allowed].sort(), ['reverse', 'standard']);
+    assert.deepEqual([...allowed].sort(), ['bomb', 'reverse', 'standard']);
     const director = new Brawl60Director(new SeededRng('locked-brawl'), 'mixed', allowed, false);
     for (let index = 0; index < 80; index++) {
         const directive = director.next((index * 997) % 60_000);
         assert.ok(directive.rules.every((rule) => rule === 'standard' || allowed.has(rule)));
-        assert.ok(directive.rules.filter((rule) => rule !== 'standard').length <= 1);
+        assert.ok(directive.rules.filter((rule) => rule !== 'standard' && rule !== 'bomb').length <= 1);
     }
 });
 

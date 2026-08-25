@@ -1,6 +1,6 @@
 import { sys } from 'cc';
 import { beginDailyRun, recordDailyRun } from '../domain/DailyChallenge';
-import type { GameEntryParams, GameResult, RuleId, RunResult } from '../domain/Models';
+import type { GameEntryParams, GameResult, RunResult } from '../domain/Models';
 import { finalizeResult, XP_PER_CORRECT, XP_PER_LEVEL } from '../domain/ResultSummary';
 import { commitTowerFloor, type TowerFloorResult } from '../domain/TowerMode';
 import {
@@ -52,8 +52,6 @@ export class SaveService {
         this.persist();
         return commit.result;
     }
-
-    public markTutorial(rule: RuleId): void { this.data.tutorials[rule] = true; this.persist(); }
 
     public beginDaily(entry: GameEntryParams): void {
         const record = beginDailyRun(this.data.daily, entry, this.data.tutorials);

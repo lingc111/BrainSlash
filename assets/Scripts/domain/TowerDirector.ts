@@ -38,6 +38,7 @@ export class TowerDirector {
 
     private pickRules(): RuleId[] {
         if (this.questionIndex === 0 && this.config.unlockedRule) return [this.config.unlockedRule];
+        if (this.questionIndex === 0 && this.config.unlocksCompoundRules) return ['multi', 'reverse'];
         if (!this.ruleBag.length) this.ruleBag = this.rng.shuffle(this.config.ruleSequence.map((rules) => [...rules]));
         return this.ruleBag.pop() ?? ['standard'];
     }

@@ -133,19 +133,14 @@ export function recordDailyRun(previous: LocalDailyRecord | undefined, run: RunR
 export function beginDailyRun(
     previous: LocalDailyRecord | undefined,
     entry: GameEntryParams,
-    learned: Readonly<Partial<Record<RuleId, boolean>>>,
+    _learned: Readonly<Partial<Record<RuleId, boolean>>>,
 ): LocalDailyRecord | null {
     if (entry.mode !== 'daily') return null;
     const dateKey = entry.dailyDate ?? dateKeyFromSeed(entry.seed);
     const recipe = dailyRecipeById(entry.recipeId);
     if (!dateKey || !recipe) return null;
     if (previous?.dateKey === dateKey && previous.recipeId === recipe.id) return previous;
-    const tutorialBaseline = (['reverse', 'rotate', 'multi', 'order', 'bomb'] as const).filter((rule) => learned[rule]);
-    return { dateKey, recipeId: recipe.id, attempts: 0, bestScore: 0, lastScore: 0, completed: false, tutorialBaseline };
-}
-
-export function dailyTutorialProgress(record: LocalDailyRecord | undefined): Partial<Record<RuleId, boolean>> {
-    return Object.fromEntries((record?.tutorialBaseline ?? []).map((rule) => [rule, true]));
+    return { dateKey, recipeId: recipe.id, attempts: 0, bestScore: 0, lastScore: 0, completed: false, tutorialBaseline: [] };
 }
 
 export function createDailyHomePresentation(challenge: DailyChallengeDefinition, record?: LocalDailyRecord): DailyHomePresentation {

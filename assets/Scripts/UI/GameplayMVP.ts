@@ -3,14 +3,12 @@ import { AppRuntime } from '../app/AppRuntime';
 import { GAMEPLAY_CONFIG } from '../configs/GameConfig';
 import { Brawl60Director, type BrawlQuestionDirective } from '../domain/Brawl60Director';
 import { GameSession } from '../domain/GameSession';
-import { dailyTutorialProgress } from '../domain/DailyChallenge';
 import { friendTargetPresentation } from '../domain/FriendChallenge';
 import { countdownWarningSecond, failureFeedback, successFeedback } from '../domain/GameFeedback';
 import { GestureResolver, GestureProgress, shouldKeepIncompleteGesture } from '../domain/GestureResolver';
-import type { ActionConstraint, FailureKind, QuestionInstance, RuleId, RunResult, TargetSpec } from '../domain/Models';
+import type { ActionConstraint, FailureKind, QuestionInstance, RunResult, TargetSpec } from '../domain/Models';
 import { QuestionGenerator } from '../domain/QuestionGenerator';
 import { evaluateRules, questionFlightDurationSeconds, questionPreviewDurationSeconds, slashRuleLabel } from '../domain/Rules';
-import { prepareRuleTutorial, tutorialRetryInstruction, type RuleTutorialSpec } from '../domain/RuleTutorial';
 import { SeededRng } from '../domain/SeededRng';
 import { TowerDirector } from '../domain/TowerDirector';
 import { allowedBrawlRules, towerFloorConfig } from '../domain/TowerMode';
@@ -48,16 +46,15 @@ export class GameplayMVP extends Component {
     private question:QuestionInstance|null=null; private constraint:ActionConstraint|null=null; private gesture:GestureResolver|null=null;
     private targets!:Node; private effects!:Node; private floats!:Node; private trail!:Graphics;
     private score!:Label; private combo!:Label; private prompt!:Label; private rule!:Label; private ruleBadge:Node|null=null; private timer!:Label; private life!:Label;
-    private friendTarget:Label|null=null; private friendTargetCard:Node|null=null; private tutorialCoach:Label|null=null;
-    private towerProgress:Label|null=null; private towerProgressCard:Node|null=null; private towerTutorialPreflight=false;
+    private friendTarget:Label|null=null; private friendTargetCard:Node|null=null;
+    private towerProgress:Label|null=null; private towerProgressCard:Node|null=null;
     private handDrawnChrome:Node|null=null; private handDrawnFrame:Graphics|null=null;
     private readonly lifeHearts:Sprite[]=[]; private renderedLife=-1;
     private points:Vec2[]=[]; private pendingTouchPoint:Vec2|null=null; private lastQueuedTouchPoint:Vec2|null=null; private touchActive=false;
     private trailAge=1; private trailVisible=false; private readonly trailOuterColor=new Color(148,187,199,95); private readonly trailInnerColor=new Color(255,253,241,235);
     private finished=false; private reverseFrame:Node|null=null;
     private paused=false; private hidden=false; private hitStopActive=false; private targetRevealPending=false; private revealToken=0; private lastCountdownSecond=-1;
-    private currentDirective:BrawlQuestionDirective|null=null; private tutorial:RuleTutorialSpec|null=null;
-    private learnedTutorials:Partial<Record<Exclude<RuleId,'standard'>,boolean>>={};
+    private currentDirective:BrawlQuestionDirective|null=null;
     private currentSkins:(typeof SKINS[number])[]=[]; private currentMotionPhases:number[]=[];
     private readonly handleResize=():void=>this.applyVisibleLayout();
     private readonly effectByNode=new Map<Node,EffectKey>(); private readonly frames=new Map<EffectKey,SpriteFrame>(); private readonly pool=new NodePool();
@@ -65,7 +62,7 @@ export class GameplayMVP extends Component {
     protected onLoad():void {
         view.setDesignResolutionSize(DESIGN_WIDTH,DESIGN_HEIGHT,ResolutionPolicy.SHOW_ALL);
         const editorPreview=this.node.getChildByName('TargetContainer')?.getChildByName('EditorPreviewTargets');if(editorPreview){editorPreview.active=false;editorPreview.destroy();}
-        AppRuntime.initialize();if(!AppRuntime.consumeGameplayLaunch()){AppRuntime.home();return;}AppRuntime.consumePendingFriendChallenge();const saved=AppRuntime.save.snapshot();this.learnedTutorials=AppRuntime.entry.mode==='daily'?dailyTutorialProgress(saved.daily):{...saved.tutorials};this.session=new GameSession(AppRuntime.entry,GAMEPLAY_CONFIG);
+        AppRuntime.initialize();if(!AppRuntime.consumeGameplayLaunch()){AppRuntime.home();return;}AppRuntime.consumePendingFriendChallenge();const saved=AppRuntime.save.snapshot();this.session=new GameSession(AppRuntime.entry,GAMEPLAY_CONFIG);
         this.generator=new QuestionGenerator(new SeededRng(`${AppRuntime.entry.seed}:gameplay`),GAMEPLAY_CONFIG);this.director=AppRuntime.entry.mode==='tower'?new TowerDirector(new SeededRng(`${AppRuntime.entry.seed}:director`),AppRuntime.entry.towerFloor??saved.tower.currentFloor):new Brawl60Director(new SeededRng(`${AppRuntime.entry.seed}:director`),AppRuntime.entry.recipeId,AppRuntime.entry.mode==='brawl60'?allowedBrawlRules(saved.tower,saved.tutorials):undefined,AppRuntime.entry.mode!=='brawl60'||saved.tower.highestClearedFloor>=15);this.visual=new SeededRng(`${AppRuntime.entry.seed}:visual`);
         this.bindStaticView();screen.on('window-resize',this.handleResize,this);game.on(Game.EVENT_HIDE,this.onHide,this);game.on(Game.EVENT_SHOW,this.onShow,this);this.scheduleOnce(this.handleResize,0);
         this.scheduleOnce(()=>{this.node.getChildByName('Ready')?.destroy();AppRuntime.audio.play('ui');this.session.start();this.spawn();},GAMEPLAY_CONFIG.readyMs/1000);
@@ -74,7 +71,7 @@ export class GameplayMVP extends Component {
     protected update(dt:number):void {
         if(this.finished||this.paused)return;
         const moved=this.processPendingTouchMoves();
-        if(!this.towerTutorialPreflight)this.session.tick(dt*1000);
+        this.session.tick(dt*1000);
         if(this.session.state.phase==='playing'&&this.question&&!this.targetRevealPending&&!this.session.isQuestionResolved()&&this.updateTargetMotions())this.fail('miss');
         if(this.session.state.phase==='finished')this.finish(); this.refresh(); this.trailAge=moved?0:this.trailAge+dt;if(this.trailAge<.14)this.drawTrail(1-this.trailAge/.14);else if(this.trailVisible){this.trail.clear();this.trailVisible=false;}
     }
@@ -120,7 +117,6 @@ export class GameplayMVP extends Component {
         const timerCard=this.makeArtworkCard(chrome,'TimerPaperCard','gameplay_time',176,176,1.1);this.makeLifeHearts(timerCard);
         const friendCard=node('FriendChallengeTarget',chrome,430,44),badge=friendCard.addComponent(Graphics);badge.fillColor=new Color(255,250,236,245);badge.strokeColor=INK;badge.lineWidth=2.5;badge.roundRect(-215,-22,430,44,15);badge.fill();badge.stroke();const friend=text(friendCard,'Label','',21,INK);ui(friend.node,410,40);friend.overflow=Label.Overflow.SHRINK;friendCard.active=this.session?.entry.mode==='friendChallenge';this.friendTarget=friend;this.friendTargetCard=friendCard;
         const towerCard=node('TowerFloorProgress',chrome,430,48),towerBadge=towerCard.addComponent(Graphics);towerBadge.fillColor=new Color(255,250,236,245);towerBadge.strokeColor=RED;towerBadge.lineWidth=3;towerBadge.roundRect(-215,-24,430,48,16);towerBadge.fill();towerBadge.stroke();const tower=text(towerCard,'Label','',22,INK);ui(tower.node,410,44);tower.overflow=Label.Overflow.SHRINK;towerCard.active=this.session?.entry.mode==='tower';this.towerProgress=tower;this.towerProgressCard=towerCard;
-        const coachCard=node('TutorialCoach',chrome,430,48),coachBadge=coachCard.addComponent(Graphics);coachBadge.fillColor=new Color(255,244,194,250);coachBadge.strokeColor=YELLOW;coachBadge.lineWidth=3;coachBadge.roundRect(-215,-24,430,48,16);coachBadge.fill();coachBadge.stroke();const coach=text(coachCard,'Label','',22,INK);ui(coach.node,410,44);coach.overflow=Label.Overflow.SHRINK;coachCard.active=false;this.tutorialCoach=coach;
     }
     private makeComboCard(parent:Node):Node{
         const card=node('ComboPaperCard',parent,164,212);card.angle=-1.2;const artwork=image(card,'ComboArtwork',164,212);
@@ -141,7 +137,6 @@ export class GameplayMVP extends Component {
         chrome.getChildByName('TimerPaperCard')?.setPosition(width/2-96,hudY);
         chrome.getChildByName('FriendChallengeTarget')?.setPosition(0,hudY-100);
         chrome.getChildByName('TowerFloorProgress')?.setPosition(0,hudY-100);
-        chrome.getChildByName('TutorialCoach')?.setPosition(0,hudY-100);
         const frame=this.handDrawnFrame;if(!frame?.isValid)return;const frameLayer=frame.node.parent;if(frameLayer)ui(frameLayer,width,height);
         const frameTop=height/2-FRAME_TOP_INSET,frameBottom=-height/2+FRAME_BOTTOM_INSET,frameWidth=width-38,frameHeight=frameTop-frameBottom;ui(frame.node,frameWidth,frameHeight);frame.node.setPosition(0,(frameTop+frameBottom)/2);this.drawHandDrawnFrame(frame,frameWidth,frameHeight);
     }
@@ -152,14 +147,14 @@ export class GameplayMVP extends Component {
     }
     private spawn():void {
         if(this.session.state.phase!=='playing')return;
-        const prepared=prepareRuleTutorial(this.director.next(this.session.state.elapsedMs),this.learnedTutorials);this.currentDirective=prepared.directive;this.question=this.generator.next(prepared.directive);this.tutorial=prepared.tutorial&&this.question.activeRules.includes(prepared.tutorial.rule)?prepared.tutorial:null;this.towerTutorialPreflight=AppRuntime.entry.mode==='tower'&&!!this.tutorial&&this.session.state.elapsedMs===0&&this.session.state.correctCount===0;this.question.tutorialSafe=!!this.tutorial;this.presentCurrentQuestion(false);
+        this.currentDirective=this.director.next(this.session.state.elapsedMs);this.question=this.generator.next(this.currentDirective);this.presentCurrentQuestion();
     }
-    private presentCurrentQuestion(retry:boolean,retryCopy?:string):void{
+    private presentCurrentQuestion():void{
         if(!this.question||!this.currentDirective||this.session.state.phase!=='playing')return;
         for(const c of [...this.targets.children]){c.removeFromParent();c.destroy();}
         this.effectByNode.clear();this.motions.length=0;this.gesture=null;this.constraint=null;this.pendingTouchPoint=null;this.lastQueuedTouchPoint=null;
-        if(!retry){this.currentSkins=this.visual.shuffle(SKINS);this.currentMotionPhases=this.question.targets.map(()=>this.visual.next()*Math.PI*2);}
-        this.prompt.string=this.question.prompt.text;this.rule.string=slashRuleLabel(this.question.activeRules);this.updateTutorialCoach(retryCopy);this.showReverse(this.question.activeRules.includes('reverse'));
+        this.currentSkins=this.visual.shuffle(SKINS);this.currentMotionPhases=this.question.targets.map(()=>this.visual.next()*Math.PI*2);
+        this.prompt.string=this.question.prompt.text;this.rule.string=slashRuleLabel(this.question.activeRules);this.showReverse(this.question.activeRules.includes('reverse'));
         this.targetRevealPending=true;const token=++this.revealToken;this.refresh();
         this.scheduleOnce(()=>this.revealCurrentTargets(token),questionPreviewDurationSeconds(this.question.activeRules));
     }
@@ -171,12 +166,11 @@ export class GameplayMVP extends Component {
     }
     private createTarget(spec:TargetSpec,pos:PortraitTargetPosition,motion:PortraitTargetMotionPlan,skin:typeof SKINS[number],i:number):void {
         const n=node(spec.isBomb?'BombTarget':`Target_${spec.id}`,this.targets,168,168);const row=Math.max(0,pos.row),delay=portraitTargetEntranceDelay({x:pos.x,y:pos.y,row});
-        if(this.towerTutorialPreflight){n.setPosition(pos.x,pos.y);n.setScale(Vec3.ONE);n.angle=0;}else{n.setPosition(motion.startX,motion.startY);n.setScale(.68,.68,1);n.angle=motion.entranceAngle;}
+        n.setPosition(motion.startX,motion.startY);n.setScale(.68,.68,1);n.angle=motion.entranceAngle;
         const wordColors:Record<string,Color>={红:RED,蓝:BLUE,绿:GREEN,黄:YELLOW};
         const data:GameplayTargetData={id:spec.id,contentType:TargetContentType.TEXT,text:spec.text,value:spec.value,shape:(['roundedSquare','triangle','hexagon','circle','pentagon'] as TargetShape[])[i%5],isBomb:spec.isBomb,color:COLORS[i%COLORS.length],contentColor:spec.colorName?wordColors[spec.colorName]:undefined};const target=n.addComponent(GameplayTarget);target.configure(data);
         const key:EffectKey=spec.isBomb?'bomb':skin;this.effectByNode.set(n,key);resources.load(`textures/gameplay/targets/${key}/spriteFrame`,SpriteFrame,(e,f)=>{if(!e&&n.isValid&&n.active)target.applySkin(f);});
-        if(!this.towerTutorialPreflight){this.motions.push({node:n,...motion,delay});tween(n).delay(delay).to(.18,{scale:new Vec3(1.12,1.12,1)},{easing:'backOut'}).to(.16,{scale:Vec3.ONE},{easing:'quadOut'}).start();}
-        else if(this.question?.activeRules.includes('rotate')){const direction=i%2===0?1:-1;tween(n).by(3,{angle:360*direction}).repeatForever().start();}
+        this.motions.push({node:n,...motion,delay});tween(n).delay(delay).to(.18,{scale:new Vec3(1.12,1.12,1)},{easing:'backOut'}).to(.16,{scale:Vec3.ONE},{easing:'quadOut'}).start();
     }
     private layout(count:number):PortraitTargetPosition[]{const v=view.getVisibleSize();return calculatePortraitTargetLayout(count,v.width,v.height);}
     private startTouch(e:EventTouch):void{if(this.finished||this.paused)return;if(this.touchActive){const moved=this.processPendingTouchMoves();if(moved)this.drawTrail(1);this.finishTouchGesture();}const p=this.point(e);this.touchActive=true;this.points=[p];this.pendingTouchPoint=null;this.lastQueuedTouchPoint=p;if(!this.gesture&&this.canResolveTouch())this.gesture=new GestureResolver(this.constraint!);this.trailAge=0;}
@@ -189,14 +183,12 @@ export class GameplayMVP extends Component {
     private sweep(a:Vec2,b:Vec2):void{if(!this.gesture)return;for(const n of this.targets.children){const t=n.getComponent(GameplayTarget);if(!t||t.hit||!t.segmentHit(a,b))continue;t.hit=true;const p=this.gesture.hit(t.data.id);this.slash(t,a,b);this.progress(p,t);if(p.status!=='continue'){this.gesture=null;break;}}}
     private progress(p:GestureProgress,t:GameplayTarget|null):void{if(p.status==='success')this.success(t);else if(p.status==='failure')this.fail(p.kind,t);}
     private keepsIncompleteGesture():boolean{return !!this.constraint&&shouldKeepIncompleteGesture(this.constraint);}
-    private success(t:GameplayTarget|null):void{if(!this.question)return;if(this.towerTutorialPreflight&&this.tutorial){const pos=t?.node.position??Vec3.ZERO,name=this.tutorial.name;this.session.cancelQuestion();this.learnedTutorials[this.tutorial.rule]=true;AppRuntime.save.markTutorial(this.tutorial.rule);AppRuntime.audio.play('correct');AppRuntime.platform.vibrate(AppRuntime.save.snapshot().settings.vibration,'light');this.hitSparks(pos,GREEN,false);this.float(pos,'已掌握',GREEN);this.updateTutorialCoach(`已掌握 · ${name}`);this.scheduleOnce(()=>this.beginTowerTimedRun(),.45);return;}const r=this.session.resolveSuccess(this.question);if(!r)return;const pos=t?.node.position??Vec3.ZERO,feedback=successFeedback(r.kind,this.session.state.combo),vibration=AppRuntime.save.snapshot().settings.vibration;AppRuntime.audio.play(feedback.sound,{variant:this.session.state.combo});AppRuntime.platform.vibrate(vibration,feedback.haptic);if(feedback.comboMilestone&&r.kind!=='master')AppRuntime.audio.play('combo',{variant:this.session.state.combo});this.animateCombo(this.session.state.combo,feedback.comboMilestone);this.hitSparks(pos,r.kind==='master'?YELLOW:GREEN,r.kind==='master');if(feedback.hitStopMs)this.applyHitStop(feedback.hitStopMs);if(this.tutorial){this.learnedTutorials[this.tutorial.rule]=true;AppRuntime.save.markTutorial(this.tutorial.rule);this.updateTutorialCoach(`已掌握 · ${this.tutorial.name}`);}this.float(pos,`+${r.scoreDelta}${r.kind==='master'?' MASTER':''}`,r.kind==='master'?YELLOW:GREEN);this.scheduleOnce(()=>{this.session.continueAfterFeedback();this.spawn();},r.kind==='master'?.32:.28);}
-    private fail(kind:FailureKind,t:GameplayTarget|null=null):void{const pos=t?.node.position??Vec3.ZERO,vibration=AppRuntime.save.snapshot().settings.vibration;if(this.question?.tutorialSafe&&this.tutorial){this.session.cancelQuestion();const retryCopy=tutorialRetryInstruction(this.tutorial,kind);AppRuntime.audio.play('warning');AppRuntime.platform.vibrate(vibration,'light');this.float(pos,'再斩一次',YELLOW);this.updateTutorialCoach(retryCopy,true);this.scheduleOnce(()=>{if(this.session.retryQuestion())this.presentCurrentQuestion(true,retryCopy);},.38);return;}const brokenCombo=this.session.state.combo;if(!this.session.resolveFailure(kind))return;const feedback=failureFeedback(kind,brokenCombo);AppRuntime.audio.play(feedback.sound);AppRuntime.platform.vibrate(vibration,feedback.haptic);this.error(pos);this.float(pos,feedback.label,RED);if(feedback.showComboBreak)this.breakCombo(brokenCombo);if(this.session.state.phase!=='finished')this.scheduleOnce(()=>{this.session.continueAfterFeedback();this.spawn();},.3);}
+    private success(t:GameplayTarget|null):void{if(!this.question)return;const r=this.session.resolveSuccess(this.question);if(!r)return;const pos=t?.node.position??Vec3.ZERO,feedback=successFeedback(r.kind,this.session.state.combo),vibration=AppRuntime.save.snapshot().settings.vibration;AppRuntime.audio.play(feedback.sound,{variant:this.session.state.combo});AppRuntime.platform.vibrate(vibration,feedback.haptic);if(feedback.comboMilestone&&r.kind!=='master')AppRuntime.audio.play('combo',{variant:this.session.state.combo});this.animateCombo(this.session.state.combo,feedback.comboMilestone);this.hitSparks(pos,r.kind==='master'?YELLOW:GREEN,r.kind==='master');if(feedback.hitStopMs)this.applyHitStop(feedback.hitStopMs);this.float(pos,`+${r.scoreDelta}${r.kind==='master'?' MASTER':''}`,r.kind==='master'?YELLOW:GREEN);this.scheduleOnce(()=>{this.session.continueAfterFeedback();this.spawn();},r.kind==='master'?.32:.28);}
+    private fail(kind:FailureKind,t:GameplayTarget|null=null):void{const pos=t?.node.position??Vec3.ZERO,vibration=AppRuntime.save.snapshot().settings.vibration;const brokenCombo=this.session.state.combo;if(!this.session.resolveFailure(kind))return;const feedback=failureFeedback(kind,brokenCombo);AppRuntime.audio.play(feedback.sound);AppRuntime.platform.vibrate(vibration,feedback.haptic);this.error(pos);this.float(pos,feedback.label,RED);if(feedback.showComboBreak)this.breakCombo(brokenCombo);if(this.session.state.phase!=='finished')this.scheduleOnce(()=>{this.session.continueAfterFeedback();this.spawn();},.3);}
     private finish():void{if(this.finished)return;this.finished=true;AppRuntime.audio.play('finish');const s=this.session.state,total=s.correctCount+s.errorCount;const run:RunResult={entry:this.session.entry,score:s.score,maxCombo:s.maxCombo,correctCount:s.correctCount,errorCount:s.errorCount,accuracy:total?s.correctCount/total:0,bestReactionMs:s.bestReactionMs};if(this.session.entry.mode==='tower'){const result=AppRuntime.finishTower(run,s.life);showTowerResultOverlay(this.node,result,{next:()=>AppRuntime.nextTowerFloor(),retry:()=>AppRuntime.retryTowerFloor(),home:()=>AppRuntime.home()});return;}const result=AppRuntime.finish(run);showResultOverlay(this.node,result,{replay:()=>AppRuntime.replay(),share:()=>AppRuntime.share(),home:()=>AppRuntime.home()});}
-    private refresh():void{if(!this.score)return;const s=this.session.state,seconds=Math.ceil(s.remainingMs/1000);this.score.string=String(s.score);this.combo.string=String(s.combo);this.timer.string=`${seconds}s`;this.updateLifeHearts(s.life);this.updateFriendTarget(s.score);this.updateTowerProgress(s.correctCount);if(!this.towerTutorialPreflight)this.updateCountdownFeedback(s.remainingMs);}
-    private updateTowerProgress(correct:number):void{const label=this.towerProgress,card=this.towerProgressCard;if(!label||!card)return;if(this.session.entry.mode!=='tower'||this.towerTutorialPreflight||this.tutorial){card.active=false;return;}const floor=this.session.entry.towerFloor??1,required=towerFloorConfig(floor).requiredCorrect;card.active=true;label.string=`第 ${floor} 层 · 正确 ${correct}/${required}${correct>=required?' ✓':''}`;}
-    private beginTowerTimedRun():void{this.towerTutorialPreflight=false;this.tutorial=null;for(const child of [...this.targets.children])child.destroy();this.session.resetForTimedRun();this.paused=true;const ready=text(this.node,'TowerReady','READY',68,RED);this.scheduleOnce(()=>{if(ready.isValid)ready.node.destroy();this.session.start();if(!this.hidden)this.paused=false;this.spawn();},GAMEPLAY_CONFIG.readyMs/1000);}
-    private updateFriendTarget(score:number):void{const label=this.friendTarget,card=this.friendTargetCard,target=this.session.entry.targetScore;if(!label||!card)return;if(this.tutorial||this.session.entry.mode!=='friendChallenge'||target===undefined){card.active=false;return;}const state=friendTargetPresentation(score,target);card.active=true;label.string=state.text;label.color=state.tone==='ahead'?GREEN:state.tone==='tied'?BLUE:INK;}
-    private updateTutorialCoach(copy?:string,pulse=false):void{const label=this.tutorialCoach,card=label?.node.parent;if(!label||!card)return;if(!this.tutorial){card.active=false;return;}card.active=true;const prefix=this.tutorial.rule==='bomb'?'注意干扰':'新规则';label.string=copy??`${prefix} · ${this.tutorial.instruction}`;if(!pulse)return;Tween.stopAllByTarget(card);card.setScale(Vec3.ONE);tween(card).to(.08,{scale:new Vec3(1.06,1.06,1)},{easing:'backOut'}).to(.14,{scale:Vec3.ONE},{easing:'quadOut'}).start();}
+    private refresh():void{if(!this.score)return;const s=this.session.state,seconds=Math.ceil(s.remainingMs/1000);this.score.string=String(s.score);this.combo.string=String(s.combo);this.timer.string=`${seconds}s`;this.updateLifeHearts(s.life);this.updateFriendTarget(s.score);this.updateTowerProgress(s.correctCount);this.updateCountdownFeedback(s.remainingMs);}
+    private updateTowerProgress(correct:number):void{const label=this.towerProgress,card=this.towerProgressCard;if(!label||!card)return;if(this.session.entry.mode!=='tower'){card.active=false;return;}const floor=this.session.entry.towerFloor??1,required=towerFloorConfig(floor).requiredCorrect;card.active=true;label.string=`第 ${floor} 层 · 正确 ${correct}/${required}${correct>=required?' ✓':''}`;}
+    private updateFriendTarget(score:number):void{const label=this.friendTarget,card=this.friendTargetCard,target=this.session.entry.targetScore;if(!label||!card)return;if(this.session.entry.mode!=='friendChallenge'||target===undefined){card.active=false;return;}const state=friendTargetPresentation(score,target);card.active=true;label.string=state.text;label.color=state.tone==='ahead'?GREEN:state.tone==='tied'?BLUE:INK;}
     private updateLifeHearts(life:number):void{
         if(life===this.renderedLife)return;const previous=this.renderedLife,lit=new Color(255,255,255,255),off=new Color(92,88,82,125);
         this.lifeHearts.forEach((heart,i)=>{Tween.stopAllByTarget(heart.node);heart.node.setScale(Vec3.ONE);const alive=i<life;if(previous>=0&&!alive&&i<previous){heart.color=lit;tween(heart.node).to(.09,{scale:new Vec3(.78,.78,1)}).call(()=>{if(heart.isValid)heart.color=off;}).to(.14,{scale:Vec3.ONE},{easing:'backOut'}).start();}else heart.color=alive?lit:off;});

@@ -9,7 +9,7 @@ export interface TargetSpec { id: string; text: string; value?: string | number;
 export interface QuestionInstance {
     id: string; theme: ThemeId; familyId?: string; factIds?: string[]; prompt: PromptSpec; targets: TargetSpec[];
     baseCorrectTargetIds: string[]; orderedTargetIds?: string[]; activeRules: RuleId[];
-    timeLimitMs: number; tutorialSafe: boolean;
+    timeLimitMs: number;
 }
 export interface ActionConstraint { requiredTargetIds: string[]; forbiddenTargetIds: string[]; matchMode: 'any' | 'all'; ordered: boolean; allowExtraHits: boolean; }
 export interface GameSessionState {

@@ -4,6 +4,7 @@ import type { ContentFamilyKind } from './ContentCatalog';
 export const TOWER_LAST_FLOOR = 30;
 export const TOWER_DURATION_MS = 60_000;
 export const TOWER_SCORING_VERSION = 2;
+export const TOWER_COMPOUND_RULE_FLOOR = 6;
 
 export interface TowerActiveRun {
     startFloor: number;
@@ -53,6 +54,7 @@ export interface TowerFloorConfig {
     familyKinds?: readonly ContentFamilyKind[];
     ruleSequence: readonly (readonly RuleId[])[];
     unlockedRule?: Exclude<RuleId, 'standard'>;
+    unlocksCompoundRules?: boolean;
 }
 
 export interface TowerCommit {
@@ -72,11 +74,10 @@ export const DEFAULT_TOWER_PROGRESS: TowerProgress = {
 };
 
 const RULE_UNLOCKS: readonly { floor: number; rule: Exclude<RuleId, 'standard'> }[] = [
-    { floor: 3, rule: 'bomb' },
-    { floor: 5, rule: 'multi' },
-    { floor: 7, rule: 'order' },
-    { floor: 10, rule: 'reverse' },
-    { floor: 13, rule: 'rotate' },
+    { floor: 2, rule: 'multi' },
+    { floor: 3, rule: 'order' },
+    { floor: 4, rule: 'reverse' },
+    { floor: 5, rule: 'rotate' },
 ];
 
 const DOUBLE_RULES: readonly (readonly RuleId[])[] = [
@@ -91,12 +92,14 @@ const DOUBLE_RULES: readonly (readonly RuleId[])[] = [
 
 export function towerFloorConfig(requestedFloor: number): TowerFloorConfig {
     const floor = clampFloor(requestedFloor);
-    if (floor <= 2) return makeConfig(floor, 8, 0, 3, 3_000, 0.72, { math: 3, vision: 2 }, [['standard']]);
-    if (floor <= 4) return makeConfig(floor, 9, 0, 3, 2_950, 0.78, { math: 3, vision: 2, life: 1 }, [['bomb'], ['standard'], ['bomb']]);
-    if (floor <= 6) return makeConfig(floor, 9, 1, 4, 2_800, 0.85, { math: 3, english: 2, life: 2 }, [['multi'], ['bomb'], ['multi']]);
-    if (floor <= 9) return makeConfig(floor, 10, 1, 4, 2_700, 0.90, { math: 3, hanzi: 3 }, [['order'], ['multi'], ['bomb'], ['order']]);
-    if (floor <= 12) return makeConfig(floor, 10, 1, 4, 2_650, 0.95, allThemes(), [['reverse'], ['bomb'], ['multi'], ['reverse']]);
-    if (floor === 13) return makeConfig(floor, 10, 1, 4, 2_600, 1.00, allThemes(), [['rotate'], ['bomb'], ['rotate']]);
+    if (floor === 1) return makeConfig(floor, 8, 0, 3, 3_000, 0.72, { math: 3, vision: 2 }, [['standard'], ['bomb'], ['standard']]);
+    if (floor === 2) return makeConfig(floor, 8, 0, 4, 2_950, 0.76, { math: 3, english: 2, life: 2 }, [['multi'], ['bomb'], ['standard'], ['multi']]);
+    if (floor === 3) return makeConfig(floor, 9, 1, 4, 2_900, 0.80, { math: 3, hanzi: 3 }, [['order'], ['bomb'], ['standard'], ['order']]);
+    if (floor === 4) return makeConfig(floor, 9, 1, 4, 2_850, 0.84, allThemes(), [['reverse'], ['bomb'], ['standard'], ['reverse']]);
+    if (floor === 5) return makeConfig(floor, 9, 1, 4, 2_800, 0.87, allThemes(), [['rotate'], ['bomb'], ['standard'], ['rotate']]);
+    if (floor === TOWER_COMPOUND_RULE_FLOOR) return makeConfig(floor, 9, 1, 4, 2_750, 0.88, allThemes(), DOUBLE_RULES);
+    if (floor <= 9) return makeConfig(floor, 10, 1, 4, 2_700, 0.90, allThemes(), [...DOUBLE_RULES, ['standard'], ['bomb'], ['multi'], ['order'], ['reverse'], ['rotate']]);
+    if (floor <= 13) return makeConfig(floor, 10, 1, 4, 2_600, 1.00, allThemes(), [...DOUBLE_RULES, ['standard'], ['bomb'], ['multi'], ['order'], ['reverse'], ['rotate']]);
     if (floor === 14) return makeConfig(floor, 10, 1, 4, 2_600, 1.00, { vision: 5 }, [['standard'], ['bomb'], ['standard']], ['vision-stroop']);
     if (floor <= 19) return makeConfig(floor, 11, 2, 4, 2_500, 1.05, allThemes(), DOUBLE_RULES);
     if (floor <= 24) return makeConfig(floor, 12, 2, 5, 2_350, 1.12, allThemes(), [...DOUBLE_RULES, ['reverse'], ['rotate'], ['multi'], ['order']]);
@@ -105,21 +108,22 @@ export function towerFloorConfig(requestedFloor: number): TowerFloorConfig {
 }
 
 export function unlockedRulesForTower(highestClearedFloor: number): RuleId[] {
-    const rules: RuleId[] = ['standard'];
+    // Bombs are a baseline distractor, not a learned slash rule.
+    const rules: RuleId[] = ['standard', 'bomb'];
     for (const unlock of RULE_UNLOCKS) if (highestClearedFloor >= unlock.floor) rules.push(unlock.rule);
     return rules;
 }
 
 export function allowedBrawlRules(progress: TowerProgress, tutorials: Readonly<Partial<Record<RuleId, boolean>>>): ReadonlySet<RuleId> {
     const result = new Set<RuleId>(unlockedRulesForTower(progress.highestClearedFloor));
-    for (const rule of ['reverse', 'rotate', 'multi', 'order', 'bomb'] as const) if (tutorials[rule]) result.add(rule);
+    for (const rule of ['reverse', 'rotate', 'multi', 'order'] as const) if (tutorials[rule]) result.add(rule);
     return result;
 }
 
 export function nextTowerUnlock(currentFloor: number): { floor: number; label: string } | null {
     const next = RULE_UNLOCKS.find((unlock) => unlock.floor > currentFloor);
     if (next) return { floor: next.floor, label: towerRuleLabel(next.rule) };
-    if (currentFloor < 15) return { floor: 15, label: '双规则' };
+    if (currentFloor < TOWER_COMPOUND_RULE_FLOOR) return { floor: TOWER_COMPOUND_RULE_FLOOR, label: '双规则' };
     if (currentFloor < 30) return { floor: 30, label: '首章终点' };
     return null;
 }
@@ -133,12 +137,11 @@ export function towerFloorLabel(floor: number): string {
     if (floor === 30) return '首章终点';
     if (floor === 14) return '颜色题';
     if (config.unlockedRule) return towerRuleLabel(config.unlockedRule);
-    if (floor >= 15) return floor >= 25 ? '精英混合' : '双规则试炼';
+    if (floor >= TOWER_COMPOUND_RULE_FLOOR) return floor >= 25 ? '精英混合' : '双规则试炼';
     return config.ruleSequence.some((rules) => rules.includes('order')) ? '顺序试炼'
         : config.ruleSequence.some((rules) => rules.includes('reverse')) ? '反向试炼'
         : config.ruleSequence.some((rules) => rules.includes('rotate')) ? '旋转试炼'
-        : config.ruleSequence.some((rules) => rules.includes('multi')) ? '多选试炼'
-        : config.ruleSequence.some((rules) => rules.includes('bomb')) ? '禁区试炼' : '基础试炼';
+        : config.ruleSequence.some((rules) => rules.includes('multi')) ? '多选试炼' : '基础试炼';
 }
 
 export function commitTowerFloor(progressBefore: TowerProgress, run: RunResult, life: number): TowerCommit {
@@ -185,7 +188,7 @@ export function commitTowerFloor(progressBefore: TowerProgress, run: RunResult, 
             checkpointReached,
             chapterOneCompleted,
             unlockedRule: firstClear ? config.unlockedRule : undefined,
-            unlockedLabel: firstClear ? (floor === 15 ? '双规则' : config.unlockedRule ? towerRuleLabel(config.unlockedRule) : undefined) : undefined,
+            unlockedLabel: firstClear ? (config.unlocksCompoundRules ? '双规则' : config.unlockedRule ? towerRuleLabel(config.unlockedRule) : undefined) : undefined,
         },
     };
 }
@@ -232,7 +235,9 @@ function makeConfig(
 ): TowerFloorConfig {
     return {
         floor, durationMs: TOWER_DURATION_MS, requiredCorrect, difficultyStage, targetCount, questionTimeMs, speed,
-        themeWeights, ruleSequence, familyKinds, unlockedRule: RULE_UNLOCKS.find((unlock) => unlock.floor === floor)?.rule,
+        themeWeights, ruleSequence, familyKinds,
+        unlockedRule: RULE_UNLOCKS.find((unlock) => unlock.floor === floor)?.rule,
+        unlocksCompoundRules: floor === TOWER_COMPOUND_RULE_FLOOR,
     };
 }
 

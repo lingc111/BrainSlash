@@ -10,3 +10,22 @@ export function targetSkinPixelScale(
 ): number {
     return targetExtent / Math.max(1, originalWidth, originalHeight);
 }
+
+/**
+ * Per-skin optical correction measured from the opaque subject area after
+ * Cocos' sprite-frame trimming. Values are intentionally capped at 1.12 so a
+ * low-fill shape (notably the triangle) cannot gain an oversized hit visual.
+ */
+export const TARGET_SKIN_VISUAL_SCALE: Readonly<Record<string, number>> = {
+    blue_square: 1.03,
+    green_triangle: 1.12,
+    orange_circle: 0.92,
+    pink_diamond: 1.12,
+    purple_hexagon: 0.93,
+    red_trapezoid: 0.99,
+    yellow_circle: 1,
+};
+
+export function targetSkinVisualScale(skinName: string): number {
+    return TARGET_SKIN_VISUAL_SCALE[skinName] ?? 1;
+}

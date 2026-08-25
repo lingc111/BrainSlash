@@ -1,5 +1,5 @@
 import { _decorator, Color, Component, Graphics, Label, Node, Sprite, SpriteFrame, UITransform, Vec2 } from 'cc';
-import { targetSkinPixelScale } from './TargetSkinSizing';
+import { targetSkinPixelScale, targetSkinVisualScale } from './TargetSkinSizing';
 
 const { ccclass } = _decorator;
 
@@ -218,7 +218,8 @@ export class GameplayTarget extends Component {
     private drawNormalizedSkin(name: string, frame: SpriteFrame): Sprite {
         const original = frame.originalSize;
         const targetExtent = this.radius * 2.64;
-        const pixelScale = targetSkinPixelScale(original.width, original.height, targetExtent);
+        const pixelScale = targetSkinPixelScale(original.width, original.height, targetExtent)
+            * targetSkinVisualScale(frame.name);
         const skin = makeNode(name, this.node, original.width * pixelScale, original.height * pixelScale).addComponent(Sprite);
         skin.sizeMode = Sprite.SizeMode.CUSTOM;
         skin.spriteFrame = frame;
