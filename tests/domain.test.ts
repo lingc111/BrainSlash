@@ -465,6 +465,49 @@ test('question preview time does not reduce the measured answer window', () => {
     assert.equal(session.resolveSuccess(q)?.reactionMs, 120);
 });
 
+test('endless brawl only ends on life depletion and heals every fifth consecutive correct answer', () => {
+    const question: QuestionInstance = { id: 'endless-q', theme: 'math', prompt: { text: '1+1=?' }, targets: [{ id: 'a', text: '2' }, { id: 'b', text: '3' }], baseCorrectTargetIds: ['a'], activeRules: ['standard'], timeLimitMs: 3_000 };
+    const session = new GameSession({ mode: 'brawl60', seed: 'endless', contentVersion: 'v' }, GAMEPLAY_CONFIG);
+    session.start();
+    session.tick(10 * 60_000);
+    assert.equal(session.state.phase, 'playing');
+    assert.equal(session.state.remainingMs, 0);
+    assert.equal(session.state.elapsedMs, 10 * 60_000);
+
+    session.beginQuestion();
+    session.resolveFailure('wrong');
+    session.continueAfterFeedback();
+    assert.equal(session.state.life, 2);
+
+    let fifthLifeDelta = 0;
+    for (let index = 1; index <= 5; index++) {
+        session.beginQuestion();
+        fifthLifeDelta = session.resolveSuccess(question)?.lifeDelta ?? 0;
+        session.continueAfterFeedback();
+    }
+    assert.equal(fifthLifeDelta, 1);
+    assert.equal(session.state.combo, 5);
+    assert.equal(session.state.life, 3);
+
+    for (let index = 6; index <= 10; index++) {
+        session.beginQuestion();
+        const result = session.resolveSuccess(question);
+        if (index === 10) assert.equal(result?.lifeDelta, 0);
+        session.continueAfterFeedback();
+    }
+    assert.equal(session.state.life, 3);
+
+    const timed = new GameSession({ mode: 'daily', seed: 'timed', contentVersion: 'v' }, GAMEPLAY_CONFIG);
+    timed.start();
+    timed.beginQuestion(); timed.resolveFailure('wrong'); timed.continueAfterFeedback();
+    for (let index = 0; index < 5; index++) {
+        timed.beginQuestion(); timed.resolveSuccess(question); timed.continueAfterFeedback();
+    }
+    assert.equal(timed.state.life, 2);
+    timed.tick(60_000);
+    assert.equal(timed.state.phase, 'finished');
+});
+
 test('result finalization atomically records growth, level-up and new best score', () => {
     const player: PlayerProgress = { level: 1, xp: 495, bestScore: 500 };
     const run: RunResult = {
@@ -484,7 +527,8 @@ test('result finalization atomically records growth, level-up and new best score
         levelTarget: 500,
     });
     const presentation = createResultPresentation(committed.result);
-    assert.equal(presentation.headline, '新纪录！');
+    assert.equal(presentation.modeLabel, '无尽乱斗');
+    assert.equal(presentation.headline, '极限新纪录！');
     assert.equal(presentation.comparison, '刷新纪录 +120');
     assert.equal(presentation.fastestReaction, '384ms');
     assert.equal(presentation.sharePrimary, true);

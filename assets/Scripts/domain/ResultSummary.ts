@@ -67,7 +67,9 @@ export function createResultPresentation(result: GameResult): ResultPresentation
             ? challenge.outcome === 'won' ? '挑战成功！' : challenge.outcome === 'tied' ? '势均力敌！' : '就差一点！'
             : daily?.firstAchievement ? '今日目标达成！'
             : daily?.targetAchieved ? daily.isNewBest ? '今日新纪录！' : '今日挑战达标'
-            : result.entry.mode === 'daily' ? '挑战未达成' : result.isNewRecord ? '新纪录！' : '本局完成',
+            : result.entry.mode === 'daily' ? '挑战未达成'
+            : result.entry.mode === 'brawl60' ? result.isNewRecord ? '极限新纪录！' : '极限止步'
+            : result.isNewRecord ? '新纪录！' : '本局完成',
         comparison: comparisonText(result),
         comparisonTone: challenge?.outcome === 'won' || daily?.firstAchievement ? 'positive' : daily?.isNewBest || result.isNewRecord ? 'highlight' : 'neutral',
         accuracy: `${Math.round(Math.max(0, Math.min(1, result.accuracy)) * 100)}%`,
@@ -101,7 +103,7 @@ function modeLabel(result: GameResult): string {
         return title ? `今日挑战 · ${title}` : '今日挑战';
     }
     if (result.entry.mode === 'friendChallenge') return '好友挑战';
-    return '60 秒乱斗';
+    return '无尽乱斗';
 }
 
 function comparisonText(result: GameResult): string {

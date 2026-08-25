@@ -27,7 +27,7 @@ export interface MistakeRecord {
     correctAnswer: string;
 }
 export type HitResult =
-    | { kind: 'correct' | 'master'; scoreDelta: number; reactionMs: number }
+    | { kind: 'correct' | 'master'; scoreDelta: number; reactionMs: number; lifeDelta: 0 | 1 }
     | { kind: FailureKind; lifeDelta: -1 };
 export interface PlayerProgress { level: number; xp: number; bestScore: number; }
 export interface RunResult {

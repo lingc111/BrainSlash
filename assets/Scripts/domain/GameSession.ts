@@ -3,16 +3,18 @@ import type { FailureKind, GameEntryParams, GameSessionState, HitResult, Questio
 import { calculateScore } from './ScoreSystem';
 
 export class GameSession {
+    public static readonly ENDLESS_HEAL_STREAK = 5;
     public readonly state: GameSessionState;
     private questionStartedAt = 0;
     private questionResolved = true;
     public constructor(public readonly entry: GameEntryParams, private readonly config: GameplayConfig) {
-        this.state = { sessionId: `${entry.seed}-${Date.now()}`, seed: entry.seed, mode: entry.mode, contentVersion: entry.contentVersion, elapsedMs: 0, remainingMs: config.durationMs, life: config.maxLife, score: 0, combo: 0, maxCombo: 0, correctCount: 0, errorCount: 0, phase: 'ready' };
+        this.state = { sessionId: `${entry.seed}-${Date.now()}`, seed: entry.seed, mode: entry.mode, contentVersion: entry.contentVersion, elapsedMs: 0, remainingMs: entry.mode === 'brawl60' ? 0 : config.durationMs, life: config.maxLife, score: 0, combo: 0, maxCombo: 0, correctCount: 0, errorCount: 0, phase: 'ready' };
     }
     public start(): void { if (this.state.phase === 'ready') this.state.phase = 'playing'; }
     public tick(deltaMs: number): boolean {
         if (this.state.phase !== 'playing' && this.state.phase !== 'resolving') return false;
         this.state.elapsedMs += deltaMs;
+        if (this.entry.mode === 'brawl60') return false;
         this.state.remainingMs = Math.max(0, this.config.durationMs - this.state.elapsedMs);
         if (!this.state.remainingMs) this.finish();
         return this.state.remainingMs === 0;
@@ -26,8 +28,12 @@ export class GameSession {
         const reactionMs = this.questionElapsedMs(), master = reactionMs <= this.config.masterWindowMs;
         const scoreDelta = calculateScore(this.config, this.state.combo, question.activeRules.filter((rule) => rule !== 'standard').length, master);
         this.state.score += scoreDelta; this.state.combo++; this.state.maxCombo = Math.max(this.state.maxCombo, this.state.combo); this.state.correctCount++;
+        const lifeDelta = this.entry.mode === 'brawl60'
+            && this.state.combo % GameSession.ENDLESS_HEAL_STREAK === 0
+            && this.state.life < this.config.maxLife ? 1 : 0;
+        this.state.life = Math.min(this.config.maxLife, this.state.life + lifeDelta);
         this.state.bestReactionMs = Math.min(this.state.bestReactionMs ?? reactionMs, reactionMs); this.state.phase = 'resolving';
-        return { kind: master ? 'master' : 'correct', scoreDelta, reactionMs };
+        return { kind: master ? 'master' : 'correct', scoreDelta, reactionMs, lifeDelta };
     }
     public resolveFailure(kind: FailureKind): Extract<HitResult, { kind: FailureKind }> | null {
         if (this.questionResolved || this.state.phase !== 'playing') return null;
