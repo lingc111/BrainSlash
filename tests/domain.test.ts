@@ -33,7 +33,7 @@ import { GestureResolver, shouldKeepIncompleteGesture } from '../assets/Scripts/
 import type { PlayerProgress, QuestionInstance, RunResult } from '../assets/Scripts/domain/Models.ts';
 import { QuestionGenerator } from '../assets/Scripts/domain/QuestionGenerator.ts';
 import { createResultPresentation, finalizeResult } from '../assets/Scripts/domain/ResultSummary.ts';
-import { evaluateRules, questionFlightDurationSeconds, questionPreviewDurationSeconds, rulesForReadableTargets, slashRuleCount, slashRuleLabel } from '../assets/Scripts/domain/Rules.ts';
+import { createMistakeRecord, evaluateRules, questionFlightDurationSeconds, questionPreviewDurationSeconds, rulesForReadableTargets, slashRuleCount, slashRuleLabel } from '../assets/Scripts/domain/Rules.ts';
 import { SeededRng } from '../assets/Scripts/domain/SeededRng.ts';
 import { validateQuestion } from '../assets/Scripts/domain/FairnessValidator.ts';
 import { difficultyAt } from '../assets/Scripts/domain/DifficultyDirector.ts';
@@ -54,6 +54,7 @@ import {
     normalizeTowerProgress,
     towerFloorConfig,
     towerPointsForClear,
+    towerTimeBonus,
     unlockedRulesForTower,
 } from '../assets/Scripts/domain/TowerMode.ts';
 import { calculatePortraitTargetLayout, portraitTargetEntranceDelay } from '../assets/Scripts/UI/PortraitTargetLayout.ts';
@@ -285,6 +286,21 @@ test('reverse never turns a bomb into a required target', () => {
     assert.deepEqual(constraint.forbiddenTargetIds, ['bomb']);
 });
 
+test('mistake review records the effective answer after applying rules', () => {
+    const question: QuestionInstance = {
+        id: 'mistake-reverse', theme: 'math', prompt: { text: '偶数' },
+        targets: [{ id: 'even', text: '2' }, { id: 'odd', text: '3' }, { id: 'bomb', text: '爆', isBomb: true }],
+        baseCorrectTargetIds: ['even'], activeRules: ['reverse', 'bomb'], timeLimitMs: 3_000,
+    };
+    const constraint = evaluateRules(question);
+    const mistake = createMistakeRecord(question, constraint, 'wrong', 'even');
+    assert.deepEqual(mistake, {
+        questionId: 'mistake-reverse', prompt: '偶数', ruleLabel: '反向', failureKind: 'wrong',
+        selectedAnswer: '2', correctAnswer: '3',
+    });
+    assert.equal(createMistakeRecord(question, constraint, 'miss').selectedAnswer, '超时未完成');
+});
+
 test('slash rule labels describe the gesture and ignore bomb distractors', () => {
     assert.equal(slashRuleLabel(['standard']), '单选');
     assert.equal(slashRuleLabel(['bomb']), '单选');
@@ -296,13 +312,15 @@ test('slash rule labels describe the gesture and ignore bomb distractors', () =>
     assert.equal(questionPreviewDurationSeconds(['bomb', 'multi']), 0.3);
     assert.equal(questionPreviewDurationSeconds(['multi', 'reverse']), 0.7);
     assert.equal(questionFlightDurationSeconds(2.5, ['standard']), 2.5);
-    assert.equal(questionFlightDurationSeconds(2.5, ['multi']), 3.45);
-    assert.equal(questionFlightDurationSeconds(2.5, ['reverse']), 3.45);
-    assert.equal(questionFlightDurationSeconds(2.5, ['multi', 'reverse']), 3.45);
-    assert.equal(questionFlightDurationSeconds(2.5, ['rotate']), 3.45);
-    assert.equal(questionFlightDurationSeconds(2.5, ['multi', 'rotate']), 3.45);
-    assert.equal(questionFlightDurationSeconds(2.5, ['multi', 'order']), 3.45);
-    assert.equal(questionFlightDurationSeconds(2.5, ['bomb', 'multi']), 3.45);
+    assert.equal(questionFlightDurationSeconds(2.5, ['bomb']), 2.5);
+    assert.equal(questionFlightDurationSeconds(2.5, ['multi']), 3.85);
+    assert.equal(questionFlightDurationSeconds(2.5, ['order']), 3.85);
+    assert.equal(questionFlightDurationSeconds(2.5, ['reverse']), 3.85);
+    assert.equal(questionFlightDurationSeconds(2.5, ['rotate']), 3.85);
+    assert.equal(questionFlightDurationSeconds(2.5, ['multi', 'reverse']), 4.15);
+    assert.equal(questionFlightDurationSeconds(2.5, ['multi', 'rotate']), 4.15);
+    assert.equal(questionFlightDurationSeconds(2.5, ['multi', 'order']), 4.15);
+    assert.equal(questionFlightDurationSeconds(2.5, ['bomb', 'multi']), 3.85);
     const shortTargets = [{ id: 'a', text: '三字内' }, { id: 'b', text: '答案' }];
     const longTargets = [{ id: 'a', text: '四字答案' }, { id: 'b', text: '答案' }];
     assert.deepEqual(rulesForReadableTargets(['rotate'], shortTargets), ['rotate']);
@@ -1071,29 +1089,32 @@ test('category question pools exclude context-dependent items and polysemous Eng
 
 test('tower progress rewards first clears once and restores the latest checkpoint', () => {
     const entry = { mode: 'tower' as const, seed: 'tower-attempt-a', contentVersion: CONTENT_VERSION, towerFloor: 5 };
-    const run: RunResult = { entry, score: 1_000, maxCombo: 7, correctCount: 10, errorCount: 1, accuracy: 10 / 11 };
+    const run: RunResult = { entry, score: 1_000, maxCombo: 7, correctCount: 10, errorCount: 1, accuracy: 10 / 11, remainingMs: 30_000 };
     const first = commitTowerFloor(DEFAULT_TOWER_PROGRESS, run, 2);
     assert.equal(first.result.cleared, true);
     assert.equal(first.result.firstClear, true);
-    assert.equal(first.result.towerPointsGained, 170);
-    assert.equal(first.result.runTotalScore, 170);
+    assert.equal(first.result.timeBonus, 60);
+    assert.equal(first.result.towerPointsGained, 220);
+    assert.equal(first.result.runTotalScore, 220);
     assert.equal(first.progress.highestClearedFloor, 5);
     assert.equal(first.progress.lastCheckpointFloor, 5);
     const repeat = commitTowerFloor(first.progress, run, 2);
     assert.equal(repeat.result.firstClear, false);
-    assert.equal(repeat.result.towerPointsGained, 10);
-    assert.equal(repeat.result.runTotalScore, 180);
+    assert.equal(repeat.result.towerPointsGained, 14);
+    assert.equal(repeat.result.runTotalScore, 234);
     const floor6Run: RunResult = { ...run, entry: { ...entry, seed: 'tower-floor-6', towerFloor: 6 }, correctCount: 12 };
     const floor6 = commitTowerFloor({ ...first.progress, highestClearedFloor: 5, currentFloor: 6 }, floor6Run, 2);
     assert.equal(floor6.result.unlockedLabel, '双规则');
 });
 
-test('tower scoring stays near a ten-thousand-point chapter scale and migrates inflated totals', () => {
+test('tower scoring rewards faster clears while staying near a chapter-scale total', () => {
     const maximumFirstClearTotal = Array.from({ length: 30 }, (_, index) =>
-        towerPointsForClear(999_999, index + 1, true),
+        towerPointsForClear(999_999, index + 1, true, 60_000),
     ).reduce((sum, points) => sum + points, 0);
-    assert.equal(maximumFirstClearTotal, 10_650);
-    assert.equal(towerPointsForClear(999_999, 30, false), 30);
+    assert.equal(maximumFirstClearTotal, 12_750);
+    assert.equal(towerTimeBonus(30_999), 60);
+    assert.ok(towerPointsForClear(1_000, 10, true, 40_000) > towerPointsForClear(1_000, 10, true, 10_000));
+    assert.equal(towerPointsForClear(999_999, 30, false, 60_000), 50);
 
     const migrated = normalizeTowerProgress({
         currentFloor: 17,
@@ -1105,9 +1126,9 @@ test('tower scoring stays near a ten-thousand-point chapter scale and migrates i
         chapterOneCompleted: false,
         activeRun: { startFloor: 1, totalScore: 51_096, maxCombo: 18 },
     });
-    assert.equal(migrated.scoringVersion, 2);
-    assert.equal(migrated.totalTowerPoints, 3_600);
-    assert.equal(migrated.activeRun?.totalScore, 3_600);
+    assert.equal(migrated.scoringVersion, 3);
+    assert.equal(migrated.totalTowerPoints, 4_400);
+    assert.equal(migrated.activeRun?.totalScore, 4_400);
     assert.equal(migrated.highestClearedFloor, 16);
 });
 

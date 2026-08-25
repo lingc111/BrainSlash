@@ -1,6 +1,6 @@
 import { BlockInputEvents, Button, Color, Graphics, Label, Node, UIOpacity, UITransform, Vec3, tween, view } from 'cc';
 import { AppRuntime } from '../app/AppRuntime';
-import type { GameResult } from '../domain/Models';
+import type { GameResult, MistakeRecord } from '../domain/Models';
 import type { TowerFloorResult } from '../domain/TowerMode';
 import { createResultPresentation, type ResultPresentation } from '../domain/ResultSummary';
 
@@ -40,6 +40,7 @@ export function showResultOverlay(parent: Node, result: GameResult, actions: Res
     buildHeader(card, result, presentation);
     buildStats(card, presentation);
     buildGrowth(card, presentation);
+    makeMistakeButton(card, overlay, result.mistakes ?? [], -250);
     makeActionButton(card, presentation.replayLabel, -390, !presentation.sharePrimary, actions.replay);
     makeActionButton(card, presentation.shareLabel, -500, presentation.sharePrimary, actions.share);
     makeHomeLink(card, -610, actions.home);
@@ -87,7 +88,7 @@ export function showTowerResultOverlay(parent: Node, result: TowerFloorResult, a
     const row = makeNode('TowerStats', card, 630, 132);
     row.setPosition(0, 145);
     makeStat(row, 'Points', -210, `+${result.towerPointsGained}`, '本层塔积分');
-    makeStat(row, 'Run', 0, String(result.runTotalScore), '本轮塔积分');
+    makeStat(row, 'Time', 0, `+${result.timeBonus}`, '剩余时间奖励');
     makeStat(row, 'Highest', 210, String(result.highestClearedFloor), '最高层');
 
     const growth = makeNode('TowerGrowthCard', card, 630, 160);
@@ -96,8 +97,9 @@ export function showTowerResultOverlay(parent: Node, result: TowerFloorResult, a
     growthGraphic.fillColor = new Color(246, 238, 217, 255);
     growthGraphic.strokeColor = INK; growthGraphic.lineWidth = 3;
     growthGraphic.roundRect(-315, -80, 630, 160, 20); growthGraphic.fill(); growthGraphic.stroke();
-    makeLabel(growth, 'Title', `累计塔积分 ${result.totalTowerPoints}`, 30, INK, 560).node.setPosition(0, 32);
-    makeLabel(growth, 'Detail', result.cleared ? (result.floor === 30 ? '首章完成 · 可重战第30层' : '下一层已开放') : '重试会换一组新题', 23, result.cleared ? GREEN : RED, 560).node.setPosition(0, -30);
+    makeLabel(growth, 'Title', `本轮 ${result.runTotalScore} · 累计 ${result.totalTowerPoints}`, 30, INK, 560).node.setPosition(0, 32);
+    makeLabel(growth, 'Detail', result.cleared ? (result.floor === 30 ? '首章完成 · 可重战第30层' : `剩余 ${Math.ceil((result.remainingMs ?? 0) / 1_000)} 秒 · 下一层已开放`) : '重试会换一组新题', 23, result.cleared ? GREEN : RED, 560).node.setPosition(0, -30);
+    makeMistakeButton(card, overlay, result.mistakes ?? [], -250);
 
     if (result.cleared && result.floor < 30) {
         makeActionButton(card, '下一层', -390, true, actions.next);
@@ -210,6 +212,87 @@ function makeHomeLink(parent: Node, y: number, action: () => void): void {
     makeLabel(link, 'Label', '返回首页', 24, BLUE, 250);
     link.addComponent(Button);
     link.on(Node.EventType.TOUCH_END, () => { AppRuntime.audio.play('ui'); action(); });
+}
+
+function makeMistakeButton(parent: Node, overlay: Node, mistakes: readonly MistakeRecord[], y: number): void {
+    const button = makeNode('Button_错题回顾', parent, 560, 76);
+    button.setPosition(0, y);
+    const graphic = button.addComponent(Graphics);
+    graphic.fillColor = mistakes.length ? PAPER_RAISED : new Color(225, 239, 216, 255);
+    graphic.strokeColor = mistakes.length ? RED : GREEN;
+    graphic.lineWidth = 3;
+    graphic.roundRect(-280, -38, 560, 76, 18);
+    graphic.fill(); graphic.stroke();
+    makeLabel(button, 'Label', mistakes.length ? `错题回顾 · ${mistakes.length} 题` : '错题回顾 · 本轮全对', 27, INK, 510);
+    if (!mistakes.length) return;
+    button.addComponent(Button);
+    button.on(Node.EventType.TOUCH_END, () => { AppRuntime.audio.play('ui'); showMistakeReview(overlay, mistakes); });
+}
+
+function showMistakeReview(parent: Node, mistakes: readonly MistakeRecord[]): void {
+    parent.getChildByName('MistakeReview')?.destroy();
+    const visible = view.getVisibleSize();
+    const layer = makeNode('MistakeReview', parent, visible.width, visible.height);
+    layer.addComponent(BlockInputEvents);
+    const shade = layer.addComponent(Graphics);
+    shade.fillColor = new Color(29, 26, 23, 225);
+    shade.rect(-visible.width / 2, -visible.height / 2, visible.width, visible.height);
+    shade.fill();
+    const card = makeNode('MistakeCard', layer, 650, 1000);
+    const fitScale = Math.min(1, (visible.width - 36) / 650, (visible.height - 72) / 1000);
+    card.setScale(fitScale, fitScale, 1);
+    drawResultCard(card.addComponent(Graphics), 650, 1000);
+    let index = 0;
+    const render = (): void => {
+        const previous = card.getChildByName('MistakePage');
+        if (previous) previous.destroy();
+        const page = makeNode('MistakePage', card, 610, 940);
+        const item = mistakes[index];
+        makeLabel(page, 'Title', `错题回顾 ${index + 1}/${mistakes.length}`, 34, RED, 560).node.setPosition(0, 400);
+        makeLabel(page, 'Rule', `规则 · ${item.ruleLabel}`, 24, BLUE, 540).node.setPosition(0, 342);
+        makeLabel(page, 'QuestionCaption', '题目', 22, BLUE, 520).node.setPosition(0, 285);
+        makeWrappedLabel(page, 'Question', item.prompt, 32, INK, 540, 100).node.setPosition(0, 220);
+        makeLabel(page, 'SelectedCaption', '你的答案', 22, RED, 520).node.setPosition(0, 135);
+        makeWrappedLabel(page, 'Selected', item.selectedAnswer, 29, INK, 540, 76).node.setPosition(0, 85);
+        makeLabel(page, 'CorrectCaption', '正确答案', 22, GREEN, 520).node.setPosition(0, 10);
+        makeWrappedLabel(page, 'Correct', item.correctAnswer, 31, INK, 540, 96).node.setPosition(0, -52);
+        makeLabel(page, 'Reason', mistakeReason(item.failureKind), 23, RED, 520).node.setPosition(0, -135);
+        makeSmallButton(page, '上一题', -150, -260, () => { index = (index - 1 + mistakes.length) % mistakes.length; render(); });
+        makeSmallButton(page, '下一题', 150, -260, () => { index = (index + 1) % mistakes.length; render(); });
+        makeSmallButton(page, '关闭', 0, -370, () => layer.destroy());
+    };
+    render();
+}
+
+function makeSmallButton(parent: Node, value: string, x: number, y: number, action: () => void): void {
+    const button = makeNode(`Button_${value}`, parent, 240, 72);
+    button.setPosition(x, y);
+    const graphic = button.addComponent(Graphics);
+    graphic.fillColor = value === '关闭' ? YELLOW : PAPER_RAISED;
+    graphic.strokeColor = INK;
+    graphic.lineWidth = 3;
+    graphic.roundRect(-120, -36, 240, 72, 16);
+    graphic.fill(); graphic.stroke();
+    makeLabel(button, 'Label', value, 25, INK, 210);
+    button.addComponent(Button);
+    button.on(Node.EventType.TOUCH_END, () => { AppRuntime.audio.play('ui'); action(); });
+}
+
+function makeWrappedLabel(parent: Node, name: string, value: string, size: number, color: Color, width: number, height: number): Label {
+    const result = makeNode(name, parent, width, height).addComponent(Label);
+    result.string = value;
+    result.fontSize = size;
+    result.lineHeight = Math.ceil(size * 1.25);
+    result.color = color;
+    result.horizontalAlign = Label.HorizontalAlign.CENTER;
+    result.verticalAlign = Label.VerticalAlign.CENTER;
+    result.overflow = Label.Overflow.SHRINK;
+    result.enableWrapText = true;
+    return result;
+}
+
+function mistakeReason(kind: MistakeRecord['failureKind']): string {
+    return ({ wrong: '斩中了错误选项', bomb: '误斩炸弹', miss: '答案落地前未完成', orderError: '斩击顺序错误' } as const)[kind];
 }
 
 function drawResultCard(graphic: Graphics, width: number, height: number): void {

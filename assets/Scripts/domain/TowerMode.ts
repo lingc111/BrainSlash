@@ -3,7 +3,7 @@ import type { ContentFamilyKind } from './ContentCatalog';
 
 export const TOWER_LAST_FLOOR = 30;
 export const TOWER_DURATION_MS = 60_000;
-export const TOWER_SCORING_VERSION = 2;
+export const TOWER_SCORING_VERSION = 3;
 export const TOWER_COMPOUND_RULE_FLOOR = 6;
 
 export interface TowerActiveRun {
@@ -33,6 +33,7 @@ export interface TowerFloorResult extends RunResult {
     requiredCorrect: number;
     firstClear: boolean;
     towerPointsGained: number;
+    timeBonus: number;
     totalTowerPoints: number;
     runTotalScore: number;
     highestClearedFloor: number;
@@ -147,11 +148,12 @@ export function towerFloorLabel(floor: number): string {
 export function commitTowerFloor(progressBefore: TowerProgress, run: RunResult, life: number): TowerCommit {
     const floor = clampFloor(run.entry.towerFloor ?? progressBefore.currentFloor);
     const config = towerFloorConfig(floor);
-    // Reaching the floor target secures the clear. Remaining time is a bonus
-    // scoring window, so losing the last life afterwards must not revoke it.
+    // Gameplay ends as soon as the target is reached; remaining time is kept
+    // on the run result and converted into a clear-speed bonus.
     const cleared = run.correctCount >= config.requiredCorrect;
     const firstClear = cleared && floor > progressBefore.highestClearedFloor;
-    const towerPointsGained = cleared ? towerPointsForClear(run.score, floor, firstClear) : 0;
+    const timeBonus = cleared ? towerTimeBonus(run.remainingMs) : 0;
+    const towerPointsGained = cleared ? towerPointsForClear(run.score, floor, firstClear, run.remainingMs) : 0;
     const activeRun = progressBefore.activeRun ?? { startFloor: floor, totalScore: 0, maxCombo: 0 };
     // The run summary tracks normalized tower points. Raw battle scores remain
     // useful per floor, but summing them across 30 floors creates unreadable totals.
@@ -182,6 +184,7 @@ export function commitTowerFloor(progressBefore: TowerProgress, run: RunResult, 
             requiredCorrect: config.requiredCorrect,
             firstClear,
             towerPointsGained,
+            timeBonus,
             totalTowerPoints: progress.totalTowerPoints,
             runTotalScore,
             highestClearedFloor: progress.highestClearedFloor,
@@ -245,12 +248,18 @@ function allThemes(): Readonly<Partial<Record<ThemeId, number>>> {
     return { math: 3, vision: 3, hanzi: 2, english: 2, life: 1, geography: 1, knowledge: 2, history: 2 };
 }
 
-export function towerPointsForClear(score: number, floor: number, firstClear: boolean): number {
+export function towerTimeBonus(remainingMs: number | undefined): number {
+    const seconds = Math.max(0, Math.min(60, Math.floor((remainingMs ?? 0) / 1_000)));
+    return seconds * 2;
+}
+
+export function towerPointsForClear(score: number, floor: number, firstClear: boolean, remainingMs = 0): number {
     const safeScore = Math.max(0, Math.floor(score));
     const safeFloor = clampFloor(floor);
-    if (!firstClear) return Math.min(30, Math.floor(safeScore / 100));
-    const performanceBonus = Math.min(100, Math.floor(safeScore / 50));
-    return 100 + safeFloor * 10 + performanceBonus;
+    const remainingSeconds = Math.max(0, Math.min(60, Math.floor(remainingMs / 1_000)));
+    if (!firstClear) return Math.min(30, Math.floor(safeScore / 250)) + Math.min(20, Math.floor(remainingSeconds / 3));
+    const performanceBonus = Math.min(50, Math.floor(safeScore / 100));
+    return 100 + safeFloor * 10 + performanceBonus + towerTimeBonus(remainingMs);
 }
 
 function estimatedLegacyPoints(startFloor: number, highestFloor: number): number {
@@ -258,9 +267,9 @@ function estimatedLegacyPoints(startFloor: number, highestFloor: number): number
     const end = Math.max(0, Math.min(TOWER_LAST_FLOOR, Math.floor(highestFloor || 0)));
     if (end < start) return 0;
     let result = 0;
-    // Forty points approximates a healthy mid-run performance bonus while
+    // Thirty performance points and sixty time points approximate a healthy clear while
     // preserving cleared-floor progress during the one-time score migration.
-    for (let floor = start; floor <= end; floor++) result += 100 + floor * 10 + 40;
+    for (let floor = start; floor <= end; floor++) result += 100 + floor * 10 + 30 + 60;
     return result;
 }
 

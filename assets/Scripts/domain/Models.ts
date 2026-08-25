@@ -18,13 +18,21 @@ export interface GameSessionState {
     correctCount: number; errorCount: number; bestReactionMs?: number; phase: SessionPhase;
 }
 export type FailureKind = 'wrong' | 'bomb' | 'miss' | 'orderError';
+export interface MistakeRecord {
+    questionId: string;
+    prompt: string;
+    ruleLabel: string;
+    failureKind: FailureKind;
+    selectedAnswer: string;
+    correctAnswer: string;
+}
 export type HitResult =
     | { kind: 'correct' | 'master'; scoreDelta: number; reactionMs: number }
     | { kind: FailureKind; lifeDelta: -1 };
 export interface PlayerProgress { level: number; xp: number; bestScore: number; }
 export interface RunResult {
     entry: GameEntryParams; score: number; maxCombo: number; correctCount: number; errorCount: number;
-    accuracy: number; bestReactionMs?: number;
+    accuracy: number; bestReactionMs?: number; remainingMs?: number; mistakes?: MistakeRecord[];
 }
 export interface ResultGrowth {
     xpGained: number; levelBefore: number; levelAfter: number;

@@ -1,5 +1,5 @@
 import { validateRuleSet } from '../configs/GameConfig';
-import type { ActionConstraint, QuestionInstance, RuleId, TargetSpec } from './Models';
+import type { ActionConstraint, FailureKind, MistakeRecord, QuestionInstance, RuleId, TargetSpec } from './Models';
 
 const SLASH_RULE_LABELS: Readonly<Partial<Record<RuleId, string>>> = {
     reverse: '反向',
@@ -19,8 +19,9 @@ export function questionPreviewDurationSeconds(rules: readonly RuleId[]): number
 /** Extra airborne time for rules that require mentally remapping the choices. */
 export function questionFlightDurationSeconds(baseSeconds: number, rules: readonly RuleId[]): number {
     const safeBase = Math.max(0.9, baseSeconds);
-    const needsThinkingBuffer = rules.includes('multi') || rules.includes('reverse') || rules.includes('rotate') || slashRuleCount(rules) >= 2;
-    return needsThinkingBuffer ? safeBase + 0.95 : safeBase;
+    const ruleCount = slashRuleCount(rules);
+    if (ruleCount === 0) return safeBase;
+    return safeBase + (ruleCount >= 2 ? 1.65 : 1.35);
 }
 
 export function rulesForReadableTargets(rules: readonly RuleId[], targets: readonly TargetSpec[]): RuleId[] {
@@ -51,4 +52,28 @@ export function evaluateRules(question: QuestionInstance): ActionConstraint {
     if (question.activeRules.includes('order') && order?.length) required = order;
     const ordered = question.activeRules.includes('order');
     return { requiredTargetIds: required, forbiddenTargetIds: question.targets.filter((t) => t.isBomb).map((t) => t.id), matchMode: question.activeRules.includes('multi') || ordered ? 'all' : 'any', ordered, allowExtraHits: false };
+}
+
+export function createMistakeRecord(
+    question: QuestionInstance,
+    constraint: ActionConstraint,
+    failureKind: FailureKind,
+    selectedTargetId?: string,
+): MistakeRecord {
+    const textById = new Map(question.targets.map((target) => [target.id, target.text]));
+    const correct = constraint.requiredTargetIds.map((id) => textById.get(id) ?? id);
+    const correctAnswer = constraint.ordered
+        ? correct.join(' → ')
+        : constraint.matchMode === 'any' && correct.length > 1
+            ? `任一：${correct.join(' / ')}`
+            : correct.join('、');
+    const selected = selectedTargetId ? textById.get(selectedTargetId) : undefined;
+    return {
+        questionId: question.id,
+        prompt: question.prompt.text,
+        ruleLabel: slashRuleLabel(question.activeRules),
+        failureKind,
+        selectedAnswer: failureKind === 'miss' ? '超时未完成' : selected ?? (failureKind === 'bomb' ? '炸弹' : '未记录'),
+        correctAnswer: correctAnswer || '无可斩目标',
+    };
 }
