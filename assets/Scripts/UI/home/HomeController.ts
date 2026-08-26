@@ -1,10 +1,12 @@
 import {
     _decorator,
+    BlockInputEvents,
     Button,
     Camera,
     Color,
     Component,
     Graphics,
+    ImageAsset,
     Label,
     Layers,
     Node,
@@ -15,6 +17,7 @@ import {
     SpriteFrame,
     tween,
     Tween,
+    UIOpacity,
     UITransform,
     Vec3,
     view,
@@ -23,6 +26,14 @@ import { EDITOR } from 'cc/env';
 import { HOME_HAND_DRAWN as C } from '../DesignTokens';
 import { CONTENT_VERSION } from '../../configs/GameConfig';
 import { createDailyChallenge, createDailyHomePresentation } from '../../domain/DailyChallenge';
+import {
+    FRIEND_CHALLENGE_DURATIONS,
+    FRIEND_CHALLENGE_RULES,
+    FRIEND_CHALLENGE_THEMES,
+    friendChallengeConfigSummary,
+    normalizeFriendChallengeConfig,
+} from '../../domain/FriendChallenge';
+import type { FriendChallengeConfig, FriendChallengeDurationMs, RuleId, ThemeId } from '../../domain/Models';
 import { nextTowerUnlock, towerFloorConfig, towerFloorLabel, towerRuleLabel } from '../../domain/TowerMode';
 import { CountdownTimer } from './CountdownTimer';
 import { calculateHomePortraitLayout } from './HomePortraitLayout';
@@ -57,6 +68,8 @@ export class HomeController extends Component {
     private rankProgress: Node | null = null;
     private bottomNavigation: Node | null = null;
     private settingsModal: Node | null = null;
+    private friendChallengeModal: Node | null = null;
+    private removePendingChallengeListener: (() => void) | null = null;
 
     private levelLabel: Label | null = null;
     private energyLabel: Label | null = null;
@@ -115,13 +128,7 @@ export class HomeController extends Component {
             child.removeFromParent();
             child.destroy();
         }
-        this.buildView();
-        this.refresh(this.data);
-        if (!EDITOR && AppRuntime.hasPendingFriendChallenge()) {
-            this.scheduleOnce(() => {
-                if (AppRuntime.consumePendingFriendChallenge()) AppRuntime.start('friendChallenge');
-            }, 0);
-        }
+        this.finishBuildingView();
     }
 
     protected onEnable(): void {
@@ -146,6 +153,8 @@ export class HomeController extends Component {
 
     protected onDestroy(): void {
         this.countdown.stop();
+        this.removePendingChallengeListener?.();
+        this.removePendingChallengeListener = null;
         if (this.dailyChallenge) Tween.stopAllByTarget(this.dailyChallenge);
     }
 
@@ -196,7 +205,9 @@ export class HomeController extends Component {
     }
 
     public onReverseDayClick(): void {
-        console.log('[Home] Friend challenge: 反向日');
+        this.pulseHaptic();
+        if (AppRuntime.hasPendingFriendChallenge()) this.showPendingFriendChallenge();
+        else this.showFriendChallengeSetup();
     }
 
     public onFlagHunterClick(): void {
@@ -204,14 +215,17 @@ export class HomeController extends Component {
     }
 
     public onHomeClick(): void {
+        this.closeSettings();
         console.log('[Home] Home');
     }
 
     public onTopicClick(): void {
+        this.closeSettings();
         console.log('[Home] Topic');
     }
 
     public onRankClick(): void {
+        this.closeSettings();
         console.log('[Home] Rank');
     }
 
@@ -251,6 +265,19 @@ export class HomeController extends Component {
 
         this.applyLayout();
         if (!EDITOR) this.startIdleMotion();
+    }
+
+    private finishBuildingView(): void {
+        if (!this.node.isValid || this.safeArea) return;
+        this.buildView();
+        this.refresh(this.data);
+        if (EDITOR) return;
+
+        this.removePendingChallengeListener = AppRuntime.onPendingFriendChallenge(() => {
+            this.scheduleOnce(() => this.showPendingFriendChallenge(), 0);
+        });
+        if (AppRuntime.hasPendingFriendChallenge()) this.scheduleOnce(() => this.showPendingFriendChallenge(), 0);
+        else if (AppRuntime.consumeFriendChallengeSetupRequest()) this.scheduleOnce(() => this.showFriendChallengeSetup(), 0);
     }
 
     private buildHeader(parent: Node): Node {
@@ -523,15 +550,20 @@ export class HomeController extends Component {
 
     private toggleSettings(): void {
         if (this.settingsModal?.isValid) {
-            this.settingsModal.destroy();
-            this.settingsModal = null;
+            this.closeSettings();
             return;
         }
-        const modal = this.makeNode(this.node, 'SettingsModal', 0, 0, C.designWidth, C.designHeight);
+        const modalParent = this.safeArea ?? this.node;
+        const visible = modalParent.getComponent(UITransform)?.contentSize ?? { width: C.designWidth, height: C.designHeight };
+        const modal = this.makeNode(modalParent, 'SettingsModal', 0, 0, visible.width, visible.height);
+        modal.addComponent(BlockInputEvents);
+        if (this.bottomNavigation?.parent === modalParent) {
+            modal.setSiblingIndex(this.bottomNavigation.getSiblingIndex());
+        }
         this.settingsModal = modal;
         const shade = modal.addComponent(Graphics);
         shade.fillColor = new Color(31, 29, 25, 170);
-        shade.rect(-C.designWidth / 2, -C.designHeight / 2, C.designWidth, C.designHeight);
+        shade.rect(-visible.width / 2, -visible.height / 2, visible.width, visible.height);
         shade.fill();
         const panel = this.graphics(modal, 'SettingsPaper', 0, 0, 650, 700);
         this.drawIrregularPaper(panel, 650, 700, C.paperRaised, C.ink, 5);
@@ -560,6 +592,175 @@ export class HomeController extends Component {
         const closeG = close.addComponent(Graphics); closeG.fillColor = C.yellow; closeG.strokeColor = C.ink; closeG.lineWidth = 4; closeG.roundRect(-150, -38, 300, 76, 14); closeG.fill(); closeG.stroke();
         this.label(close, 'Label', '完成', 0, 0, 260, 60, 30, C.ink, 'center');
         this.bindButton(close, () => this.toggleSettings());
+    }
+
+    private closeSettings(): void {
+        if (this.settingsModal?.isValid) this.settingsModal.destroy();
+        this.settingsModal = null;
+    }
+
+    private showFriendChallengeSetup(): void {
+        this.closeFriendChallengeModal();
+        const saved = AppRuntime.save.snapshot().lastFriendChallengeConfig;
+        const draft: FriendChallengeConfig = {
+            themeIds: [...saved.themeIds], enabledRules: [...saved.enabledRules], durationMs: saved.durationMs,
+        };
+        const { modal, panel } = this.makeChallengeModal('FriendChallengeSetup', 820, 1440);
+        this.friendChallengeModal = modal;
+        this.label(panel, 'Title', '好友挑战', 0, 625, 560, 76, 48, C.ink, 'center');
+        this.label(panel, 'Subtitle', '先定规则，再打出你的目标分', 0, 570, 620, 48, 24, C.inkSoft, 'center');
+        this.makeChallengeClose(panel, -340, 625);
+
+        this.label(panel, 'ThemeTitle', '1  选择主题', -235, 492, 300, 50, 31, C.ink, 'left');
+        const allThemes = this.makeChoiceButton(panel, 'ThemeAll', '乱斗 · 全部题库', 236, 492, 250, 64);
+        const themeLabels: Record<ThemeId, string> = { math: '数学', vision: '眼力', english: '英语', hanzi: '汉字', geography: '地理', life: '生活', knowledge: '常识', history: '历史' };
+        const themeButtons = new Map<ThemeId, ReturnType<HomeController['makeChoiceButton']>>();
+        FRIEND_CHALLENGE_THEMES.forEach((theme, index) => {
+            const x = -270 + (index % 4) * 180;
+            const y = 395 - Math.floor(index / 4) * 82;
+            themeButtons.set(theme, this.makeChoiceButton(panel, `Theme_${theme}`, themeLabels[theme], x, y, 156, 66));
+        });
+
+        this.label(panel, 'RuleTitle', '2  选择规则池', -235, 215, 330, 50, 31, C.ink, 'left');
+        const allRules = this.makeChoiceButton(panel, 'RuleAll', '全部开启', 236, 215, 250, 64);
+        const ruleLabels: Record<RuleId, string> = { standard: '标准', reverse: '反向', rotate: '旋转', multi: '多选', order: '顺序', bomb: '炸弹' };
+        const ruleButtons = new Map<RuleId, ReturnType<HomeController['makeChoiceButton']>>();
+        FRIEND_CHALLENGE_RULES.forEach((rule, index) => {
+            const x = -240 + (index % 3) * 240;
+            const y = 125 - Math.floor(index / 3) * 82;
+            ruleButtons.set(rule, this.makeChoiceButton(panel, `Rule_${rule}`, ruleLabels[rule], x, y, 205, 66));
+        });
+
+        this.label(panel, 'DurationTitle', '3  选择时间', -235, -100, 300, 50, 31, C.ink, 'left');
+        const durationButtons = new Map<FriendChallengeDurationMs, ReturnType<HomeController['makeChoiceButton']>>();
+        FRIEND_CHALLENGE_DURATIONS.forEach((duration, index) => {
+            durationButtons.set(duration, this.makeChoiceButton(panel, `Duration_${duration}`, `${duration / 1_000} 秒`, -240 + index * 240, -180, 205, 70));
+        });
+
+        const summary = this.label(panel, 'Summary', '', 0, -335, 680, 126, 24, C.ink, 'center');
+        summary.lineHeight = 34;
+        const validationLabel = this.label(panel, 'Validation', '', 0, -420, 680, 48, 22, C.red, 'center');
+        const start = this.makeChoiceButton(panel, 'StartChallenge', '开始挑战', 0, -535, 560, 94);
+        start.setSelected(true);
+
+        const refresh = (): void => {
+            themeButtons.forEach((choice, theme) => choice.setSelected(draft.themeIds.includes(theme)));
+            ruleButtons.forEach((choice, rule) => choice.setSelected(draft.enabledRules.includes(rule)));
+            durationButtons.forEach((choice, duration) => choice.setSelected(draft.durationMs === duration));
+            allThemes.setSelected(draft.themeIds.length === FRIEND_CHALLENGE_THEMES.length);
+            allRules.setSelected(draft.enabledRules.length === FRIEND_CHALLENGE_RULES.length);
+            const validation = normalizeFriendChallengeConfig(draft);
+            if (validation.valid) {
+                const value = friendChallengeConfigSummary(validation.config);
+                const themes = value.themes === '全部题库 · 乱斗' ? '全部题库（乱斗）' : value.themes;
+                summary.string = `主题：${themes}\n规则：${value.rules}\n时间：${value.duration}`;
+                validationLabel.string = '双方使用相同题序与配置';
+                validationLabel.color = C.green;
+            } else {
+                const reason = 'reason' in validation ? validation.reason : 'duration';
+                summary.string = '配置尚未完成';
+                validationLabel.string = reason === 'themes' ? '请至少选择一个主题'
+                    : reason === 'rules' ? '请至少开启一个规则'
+                    : reason === 'incompatible' ? '部分主题不支持当前规则，请调整选择' : '请选择有效时长';
+                validationLabel.color = C.red;
+            }
+            const button = start.node.getComponent(Button);
+            if (button) button.interactable = validation.valid;
+            const opacity = start.node.getComponent(UIOpacity) ?? start.node.addComponent(UIOpacity);
+            opacity.opacity = validation.valid ? 255 : 130;
+        };
+
+        this.bindButton(allThemes.node, () => {
+            draft.themeIds = [...FRIEND_CHALLENGE_THEMES]; refresh();
+        });
+        themeButtons.forEach((choice, theme) => this.bindButton(choice.node, () => { toggleToken(draft.themeIds, theme); refresh(); }));
+        this.bindButton(allRules.node, () => {
+            draft.enabledRules = [...FRIEND_CHALLENGE_RULES]; refresh();
+        });
+        ruleButtons.forEach((choice, rule) => this.bindButton(choice.node, () => { toggleToken(draft.enabledRules, rule); refresh(); }));
+        durationButtons.forEach((choice, duration) => this.bindButton(choice.node, () => { draft.durationMs = duration; refresh(); }));
+        this.bindButton(start.node, () => {
+            const validation = normalizeFriendChallengeConfig(draft);
+            if (!validation.valid) return;
+            if (AppRuntime.startConfiguredFriendChallenge(validation.config)) this.closeFriendChallengeModal();
+        });
+        refresh();
+    }
+
+    private showPendingFriendChallenge(): void {
+        const entry = AppRuntime.pendingFriendChallengeEntry();
+        if (!entry) return;
+        this.closeFriendChallengeModal();
+        const config = entry.challengeConfig;
+        const { modal, panel } = this.makeChallengeModal('PendingFriendChallenge', 760, 980);
+        this.friendChallengeModal = modal;
+        this.makeChallengeClose(panel, -310, 385);
+        this.label(panel, 'Title', '好友向你发起挑战', 0, 350, 620, 72, 43, C.ink, 'center');
+        this.label(panel, 'TargetCaption', '目标分数', 0, 245, 300, 42, 23, C.blue, 'center');
+        this.label(panel, 'TargetScore', String(entry.targetScore ?? 0), 0, 160, 500, 110, 82, C.red, 'center');
+        if (config) {
+            const value = friendChallengeConfigSummary(config);
+            this.makeReadOnlyChallengeRow(panel, '主题', value.themes, 55);
+            this.makeReadOnlyChallengeRow(panel, '规则', value.rules, -35);
+            this.makeReadOnlyChallengeRow(panel, '时间', value.duration, -125);
+        } else {
+            this.makeReadOnlyChallengeRow(panel, '模式', '经典同题挑战', 10);
+            this.makeReadOnlyChallengeRow(panel, '时间', '60 秒', -90);
+        }
+        this.label(panel, 'Fairness', '双方使用相同题序 · 3 条生命', 0, -235, 620, 50, 23, C.green, 'center');
+        const start = this.makeChoiceButton(panel, 'AcceptChallenge', '拔刀应战', 0, -335, 540, 92);
+        start.setSelected(true);
+        this.bindButton(start.node, () => {
+            if (AppRuntime.startPendingFriendChallenge()) this.closeFriendChallengeModal();
+        });
+    }
+
+    private makeChallengeModal(name: string, panelWidth: number, panelHeight: number): { modal: Node; panel: Node } {
+        const visible = this.node.getComponent(UITransform)?.contentSize ?? { width: C.designWidth, height: C.designHeight };
+        const modal = this.makeNode(this.node, name, 0, 0, visible.width, visible.height);
+        modal.addComponent(BlockInputEvents);
+        const shade = modal.addComponent(Graphics);
+        shade.fillColor = new Color(31, 29, 25, 205);
+        shade.rect(-visible.width / 2, -visible.height / 2, visible.width, visible.height);
+        shade.fill();
+        const panel = this.makeNode(modal, 'ChallengePaper', 0, 0, panelWidth, panelHeight);
+        const panelGraphic = panel.addComponent(Graphics);
+        this.drawIrregularPaper(panelGraphic, panelWidth, panelHeight, C.paperRaised, C.ink, 5);
+        const fit = Math.min(1, (visible.width - 32) / panelWidth, (visible.height - this.getTopInset(visible.height) - this.getBottomInset(visible.height) - 24) / panelHeight);
+        panel.setScale(fit, fit, 1);
+        return { modal, panel };
+    }
+
+    private makeChallengeClose(parent: Node, x: number, y: number): void {
+        const close = this.makeChoiceButton(parent, 'CloseChallenge', '关闭', x, y, 120, 68);
+        this.bindButton(close.node, () => this.closeFriendChallengeModal());
+    }
+
+    private closeFriendChallengeModal(): void {
+        if (this.friendChallengeModal?.isValid) this.friendChallengeModal.destroy();
+        this.friendChallengeModal = null;
+    }
+
+    private makeChoiceButton(parent: Node, name: string, value: string, x: number, y: number, width: number, height: number): {
+        node: Node; graphic: Graphics; label: Label; setSelected: (selected: boolean) => void;
+    } {
+        const choice = this.makeNode(parent, name, x, y, width, height);
+        const graphic = choice.addComponent(Graphics);
+        const label = this.label(choice, 'Label', value, 0, 0, width - 20, height - 8, Math.min(28, height * 0.4), C.ink, 'center');
+        const setSelected = (selected: boolean): void => {
+            graphic.clear(); graphic.fillColor = selected ? C.yellow : C.paper; graphic.strokeColor = C.ink; graphic.lineWidth = selected ? 4 : 2.5;
+            graphic.roundRect(-width / 2, -height / 2, width, height, 14); graphic.fill(); graphic.stroke();
+        };
+        setSelected(false);
+        return { node: choice, graphic, label, setSelected };
+    }
+
+    private makeReadOnlyChallengeRow(parent: Node, caption: string, value: string, y: number): void {
+        const row = this.makeNode(parent, `Challenge_${caption}`, 0, y, 620, 70);
+        const g = row.addComponent(Graphics); g.fillColor = C.paper; g.strokeColor = C.inkSoft; g.lineWidth = 2;
+        g.roundRect(-310, -35, 620, 70, 12); g.fill(); g.stroke();
+        this.label(row, 'Caption', caption, -245, 0, 90, 52, 23, C.blue, 'left');
+        this.label(row, 'Value', value, 45, 0, 470, 52, 24, C.ink, 'center');
     }
 
     private makeNode(parent: Node, name: string, x: number, y: number, width: number, height: number): Node {
@@ -592,12 +793,20 @@ export class HomeController extends Component {
         sprite.sizeMode = Sprite.SizeMode.CUSTOM;
         sprite.type = tiled ? Sprite.Type.TILED : Sprite.Type.SIMPLE;
 
-        resources.load(resourcePath, SpriteFrame, (error, frame) => {
-            if (error || !frame || !visual.isValid) {
+        const imagePath = resourcePath.endsWith('/spriteFrame')
+            ? resourcePath.slice(0, -'/spriteFrame'.length)
+            : resourcePath;
+        resources.load(imagePath, ImageAsset, (error, image) => {
+            if (error || !image || !visual.isValid) {
                 console.warn(`[Home] Paper texture failed to load: ${resourcePath}`, error);
                 if (visual.isValid) visual.destroy();
                 return;
             }
+            // Cocos 3.8.8 can resolve a SpriteFrame sub-asset from a WeChat
+            // subpackage without producing a usable texture. Loading the source
+            // ImageAsset and constructing the frame here bypasses that mapping.
+            const frame = SpriteFrame.createWithImage(image);
+            frame.packable = false;
             sprite.spriteFrame = frame;
             if (cover) this.resizeCoverTexture(visual, parentTransform.contentSize.width, parentTransform.contentSize.height);
             const fallback = parent.getComponent(Graphics);
@@ -1138,4 +1347,10 @@ export class HomeController extends Component {
         if (!AppRuntime.save.snapshot().settings.vibration) return;
         AppRuntime.platform.vibrate(true, 'light');
     }
+}
+
+function toggleToken<T>(values: T[], value: T): void {
+    const index = values.indexOf(value);
+    if (index >= 0) values.splice(index, 1);
+    else values.push(value);
 }

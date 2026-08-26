@@ -1,4 +1,4 @@
-import type { GameEntryParams, GameMode } from '../domain/Models';
+import type { FriendChallengeConfig, GameEntryParams, GameMode } from '../domain/Models';
 import { createDailyChallenge } from '../domain/DailyChallenge';
 
 type Clock = () => Date;
@@ -54,4 +54,11 @@ export class RunSeedFactory {
         ].join(':');
         return { mode, seed, contentVersion, recipeId: 'mixed', towerFloor: floor };
     }
+
+    public createFriendChallenge(config: FriendChallengeConfig, contentVersion: string): GameEntryParams {
+        const entry = this.create('friendChallenge', contentVersion);
+        return { ...entry, recipeId: undefined, challengeConfig: clone(config), challengeRole: 'creator' };
+    }
 }
+
+function clone<T>(value: T): T { return JSON.parse(JSON.stringify(value)) as T; }

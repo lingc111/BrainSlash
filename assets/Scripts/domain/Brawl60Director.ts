@@ -1,6 +1,7 @@
+import { RULE_PAIR_WHITELIST, validateRuleSet } from '../configs/GameConfig';
 import { CONTENT_FAMILIES, type ContentFamilyKind, type ContentFamilySpec } from './ContentCatalog';
 import { dailyRecipeById } from './DailyChallenge';
-import type { RuleId, ThemeId } from './Models';
+import type { FriendChallengeConfig, RuleId, ThemeId } from './Models';
 import { slashRuleCount } from './Rules';
 import { SeededRng } from './SeededRng';
 
@@ -151,6 +152,80 @@ export function familySupportsRules(family: ContentFamilySpec, rules: readonly R
 
 export function isDirectionSensitiveFamily(kind: ContentFamilyKind): boolean {
     return kind === 'vision-direction' || kind === 'vision-pattern';
+}
+
+const RULE_ORDER: readonly RuleId[] = ['standard', 'reverse', 'rotate', 'multi', 'order', 'bomb'];
+
+/** Returns every enabled rule set that at least one family in the theme can safely generate. */
+export function legalRuleSetsForTheme(theme: ThemeId, enabledRules: readonly RuleId[]): RuleId[][] {
+    const enabled = new Set(enabledRules);
+    const candidates: RuleId[][] = [];
+    if (enabled.has('standard')) candidates.push(['standard']);
+    for (const rule of RULE_ORDER) if (rule !== 'standard' && enabled.has(rule)) candidates.push([rule]);
+    for (const pair of RULE_PAIR_WHITELIST) {
+        const rules = pair.split('+') as RuleId[];
+        if (rules.every((rule) => enabled.has(rule))) candidates.push(rules);
+    }
+    const families = CONTENT_FAMILIES.filter((family) => family.theme === theme);
+    return candidates
+        .filter((rules) => validateRuleSet(rules) && families.some((family) => familySupportsRules(family, rules)))
+        .map((rules) => [...rules].sort((a, b) => RULE_ORDER.indexOf(a) - RULE_ORDER.indexOf(b)));
+}
+
+/** Deterministic director for configurable asynchronous friend challenges. */
+export class FriendChallengeDirector {
+    private themeBag: ThemeId[] = [];
+    private readonly ruleBags = new Map<ThemeId, RuleId[][]>();
+    private readonly familyBags = new Map<string, ContentFamilySpec[]>();
+
+    public constructor(private readonly rng: SeededRng, private readonly config: FriendChallengeConfig) {}
+
+    public next(elapsedMs: number): BrawlQuestionDirective {
+        const normalizedElapsed = Math.max(0, Math.min(60_000, elapsedMs * 60_000 / this.config.durationMs));
+        const phase = phaseAt(normalizedElapsed);
+        const theme = this.pickTheme();
+        const rules = this.pickRules(theme);
+        const compatible = CONTENT_FAMILIES.filter((family) => family.theme === theme && familySupportsRules(family, rules));
+        if (!compatible.length) throw new Error(`No family supports friend challenge ${theme}:${ruleKey(rules)}`);
+        const family = this.pickFamily(theme, rules, compatible);
+        return {
+            phase: phase.id,
+            difficultyStage: phase.difficultyStage,
+            targetCount: targetCountForFamily(phase.targetCount, family.kind, rules),
+            questionTimeMs: phase.questionTimeMs,
+            speed: phase.speed,
+            family,
+            rules: [...rules],
+        };
+    }
+
+    private pickTheme(): ThemeId {
+        if (!this.themeBag.length) this.themeBag = this.rng.shuffle(this.config.themeIds);
+        const theme = this.themeBag.pop();
+        if (!theme) throw new Error('Friend challenge has no selectable theme');
+        return theme;
+    }
+
+    private pickRules(theme: ThemeId): RuleId[] {
+        let bag = this.ruleBags.get(theme);
+        if (!bag?.length) {
+            const legal = legalRuleSetsForTheme(theme, this.config.enabledRules);
+            if (!legal.length) throw new Error(`Friend challenge theme ${theme} has no legal rule set`);
+            bag = this.rng.shuffle(legal.map((rules) => [...rules]));
+            this.ruleBags.set(theme, bag);
+        }
+        return [...bag.pop()!];
+    }
+
+    private pickFamily(theme: ThemeId, rules: readonly RuleId[], compatible: readonly ContentFamilySpec[]): ContentFamilySpec {
+        const key = `${theme}:${ruleKey(rules)}`;
+        let bag = this.familyBags.get(key);
+        if (!bag?.length) {
+            bag = this.rng.shuffle(compatible);
+            this.familyBags.set(key, bag);
+        }
+        return bag.pop()!;
+    }
 }
 
 export class Brawl60Director {

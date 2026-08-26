@@ -5,17 +5,19 @@ import { calculateScore } from './ScoreSystem';
 export class GameSession {
     public static readonly ENDLESS_HEAL_STREAK = 5;
     public readonly state: GameSessionState;
+    private readonly durationMs: number;
     private questionStartedAt = 0;
     private questionResolved = true;
     public constructor(public readonly entry: GameEntryParams, private readonly config: GameplayConfig) {
-        this.state = { sessionId: `${entry.seed}-${Date.now()}`, seed: entry.seed, mode: entry.mode, contentVersion: entry.contentVersion, elapsedMs: 0, remainingMs: entry.mode === 'brawl60' ? 0 : config.durationMs, life: config.maxLife, score: 0, combo: 0, maxCombo: 0, correctCount: 0, errorCount: 0, phase: 'ready' };
+        this.durationMs = entry.challengeConfig?.durationMs ?? config.durationMs;
+        this.state = { sessionId: `${entry.seed}-${Date.now()}`, seed: entry.seed, mode: entry.mode, contentVersion: entry.contentVersion, elapsedMs: 0, remainingMs: entry.mode === 'brawl60' ? 0 : this.durationMs, life: config.maxLife, score: 0, combo: 0, maxCombo: 0, correctCount: 0, errorCount: 0, phase: 'ready' };
     }
     public start(): void { if (this.state.phase === 'ready') this.state.phase = 'playing'; }
     public tick(deltaMs: number): boolean {
         if (this.state.phase !== 'playing' && this.state.phase !== 'resolving') return false;
         this.state.elapsedMs += deltaMs;
         if (this.entry.mode === 'brawl60') return false;
-        this.state.remainingMs = Math.max(0, this.config.durationMs - this.state.elapsedMs);
+        this.state.remainingMs = Math.max(0, this.durationMs - this.state.elapsedMs);
         if (!this.state.remainingMs) this.finish();
         return this.state.remainingMs === 0;
     }

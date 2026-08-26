@@ -1,5 +1,5 @@
 import type { FriendChallengePayload } from '../domain/Models';
-import { encodeFriendChallengeQuery, parseFriendChallengeQuery, type FriendChallengeParseResult } from '../domain/FriendChallenge';
+import { encodeFriendChallengeQuery, friendChallengeConfigSummary, parseFriendChallengeQuery, type FriendChallengeParseResult } from '../domain/FriendChallenge';
 
 type WxApi = {
     vibrateShort?: (options?: { type?: 'light' | 'medium' | 'heavy' }) => void;
@@ -13,7 +13,8 @@ export class PlatformService {
     public vibrate(enabled: boolean, type: 'light' | 'medium' | 'heavy' = 'light'): void { if (enabled) this.wx?.vibrateShort?.({ type }); }
     public share(payload: FriendChallengePayload): void {
         const query = encodeFriendChallengeQuery(payload);
-        this.wx?.shareAppMessage?.({ title: `我在脑斩拿到 ${payload.targetScore} 分，敢来挑战吗？`, query });
+        const suffix = payload.v === 2 ? ` · ${friendChallengeConfigSummary(payload.config).duration}` : '';
+        this.wx?.shareAppMessage?.({ title: `我在脑斩拿到 ${payload.targetScore} 分${suffix}，敢来挑战吗？`, query });
     }
     public readChallenge(contentVersion: string): FriendChallengeParseResult {
         try {

@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
 import { CONTENT_VERSION, GAMEPLAY_CONFIG, validateRuleSet } from '../assets/Scripts/configs/GameConfig.ts';
-import { Brawl60Director, familySupportsRules, isDirectionSensitiveFamily, phaseAt, targetCountForFamily } from '../assets/Scripts/domain/Brawl60Director.ts';
+import { Brawl60Director, FriendChallengeDirector, familySupportsRules, isDirectionSensitiveFamily, legalRuleSetsForTheme, phaseAt, targetCountForFamily } from '../assets/Scripts/domain/Brawl60Director.ts';
 import {
     CONTENT_FAMILIES,
     CONTENT_FAMILY_TARGETS,
@@ -25,12 +25,14 @@ import { beginDailyRun, createDailyChallenge, createDailyHomePresentation, daily
 import {
     canStartFriendChallenge,
     createFriendChallengePayload,
+    DEFAULT_FRIEND_CHALLENGE_CONFIG,
     encodeFriendChallengeQuery,
     friendTargetPresentation,
+    normalizeFriendChallengeConfig,
     parseFriendChallengeQuery,
 } from '../assets/Scripts/domain/FriendChallenge.ts';
 import { GestureResolver, shouldKeepIncompleteGesture } from '../assets/Scripts/domain/GestureResolver.ts';
-import type { PlayerProgress, QuestionInstance, RunResult } from '../assets/Scripts/domain/Models.ts';
+import type { FriendChallengeConfig, PlayerProgress, QuestionInstance, RunResult } from '../assets/Scripts/domain/Models.ts';
 import { QuestionGenerator } from '../assets/Scripts/domain/QuestionGenerator.ts';
 import { createResultPresentation, finalizeResult } from '../assets/Scripts/domain/ResultSummary.ts';
 import { createMistakeRecord, evaluateRules, questionFlightDurationSeconds, questionPreviewDurationSeconds, rulesForReadableTargets, slashRuleCount, slashRuleLabel } from '../assets/Scripts/domain/Rules.ts';
@@ -45,7 +47,7 @@ import {
 import { RunSeedFactory } from '../assets/Scripts/app/RunSeedFactory.ts';
 import { PlatformService } from '../assets/Scripts/infrastructure/PlatformService.ts';
 import { AudioService, SoundThrottle } from '../assets/Scripts/infrastructure/AudioService.ts';
-import { migrateV1ToV2 } from '../assets/Scripts/infrastructure/SaveData.ts';
+import { migrateV1ToV2, migrateV2ToV3 } from '../assets/Scripts/infrastructure/SaveData.ts';
 import { TowerDirector } from '../assets/Scripts/domain/TowerDirector.ts';
 import {
     DEFAULT_TOWER_PROGRESS,
@@ -105,7 +107,8 @@ test('friend challenge payload round-trips and rebuilds the same question sequen
     assert.equal(parsed.status, 'valid');
     if (parsed.status !== 'valid') return;
     assert.deepEqual(parsed.entry, {
-        mode: 'friendChallenge', seed: 'shared:/?seed&1', contentVersion: CONTENT_VERSION, recipeId: 'mixed', targetScore: 987,
+        mode: 'friendChallenge', seed: 'shared:/?seed&1', contentVersion: CONTENT_VERSION,
+        recipeId: 'mixed', challengeRole: 'responder', targetScore: 987,
     });
     const first = pipeline(parsed.entry.seed), second = pipeline(parsed.entry.seed);
     for (let index = 0; index < 64; index++) {
@@ -258,6 +261,79 @@ test('numeric comparison targets remain primitive numbers with readable labels',
     for (const target of question.targets) {
         assert.equal(typeof target.value, 'number');
         assert.match(target.text, /^\d+$/);
+    }
+});
+
+test('friend challenge config validates canonical themes, rules, durations and compatibility', () => {
+    assert.equal(normalizeFriendChallengeConfig({ themeIds: [], enabledRules: ['standard'], durationMs: 60_000 }).valid, false);
+    assert.equal(normalizeFriendChallengeConfig({ themeIds: ['math'], enabledRules: [], durationMs: 60_000 }).valid, false);
+    assert.equal(normalizeFriendChallengeConfig({ themeIds: ['math', 'math'], enabledRules: ['standard'], durationMs: 60_000 }).valid, false);
+    assert.equal(normalizeFriendChallengeConfig({ themeIds: ['math'], enabledRules: ['standard'], durationMs: 75_000 }).valid, false);
+    const incompatible = normalizeFriendChallengeConfig({ themeIds: ['geography'], enabledRules: ['multi'], durationMs: 90_000 });
+    assert.deepEqual(incompatible, { valid: false, reason: 'incompatible' });
+    const valid = normalizeFriendChallengeConfig({ themeIds: ['history', 'math'], enabledRules: ['bomb', 'reverse'], durationMs: 120_000 });
+    assert.deepEqual(valid, {
+        valid: true,
+        config: { themeIds: ['math', 'history'], enabledRules: ['reverse', 'bomb'], durationMs: 120_000 },
+    });
+});
+
+test('friend challenge V2 parser rejects tampering and preserves custom configuration', () => {
+    const config: FriendChallengeConfig = { themeIds: ['math', 'english'], enabledRules: ['standard', 'reverse', 'bomb'], durationMs: 90_000 };
+    const payload = createFriendChallengePayload({
+        entry: { mode: 'friendChallenge', seed: 'custom-seed', contentVersion: CONTENT_VERSION, challengeConfig: config, challengeRole: 'creator' },
+        score: 1_234,
+    });
+    const query = decodeQuery(encodeFriendChallengeQuery(payload));
+    const parsed = parseFriendChallengeQuery(query, CONTENT_VERSION);
+    assert.equal(parsed.status, 'valid');
+    if (parsed.status === 'valid') {
+        assert.deepEqual(parsed.entry.challengeConfig, config);
+        assert.equal(parsed.entry.challengeRole, 'responder');
+        assert.equal(parsed.entry.targetScore, 1_234);
+    }
+    assert.equal(parseFriendChallengeQuery({ ...query, duration: '75000' }, CONTENT_VERSION).status, 'invalid');
+    assert.equal(parseFriendChallengeQuery({ ...query, themes: 'math,math' }, CONTENT_VERSION).status, 'invalid');
+    assert.equal(parseFriendChallengeQuery({ ...query, rules: 'multi', themes: 'geography' }, CONTENT_VERSION).status, 'invalid');
+});
+
+test('friend challenge director balances themes and remains deterministic with legal rules', () => {
+    const config: FriendChallengeConfig = {
+        themeIds: ['math', 'english', 'history'],
+        enabledRules: ['standard', 'reverse', 'rotate', 'multi', 'order', 'bomb'],
+        durationMs: 120_000,
+    };
+    const a = new FriendChallengeDirector(new SeededRng('friend-director'), config);
+    const b = new FriendChallengeDirector(new SeededRng('friend-director'), config);
+    for (let cycle = 0; cycle < 8; cycle++) {
+        const seen = new Set<string>();
+        for (let offset = 0; offset < config.themeIds.length; offset++) {
+            const elapsed = (cycle * config.themeIds.length + offset) * 3_777;
+            const left = a.next(elapsed);
+            const right = b.next(elapsed);
+            assert.deepEqual(left, right);
+            seen.add(left.family.theme);
+            const legalKeys = legalRuleSetsForTheme(left.family.theme, config.enabledRules).map((rules) => [...rules].sort().join('+'));
+            assert.ok(legalKeys.includes([...left.rules].sort().join('+')));
+        }
+        assert.deepEqual([...seen].sort(), [...config.themeIds].sort());
+    }
+});
+
+test('friend challenge sessions honor 60, 90 and 120 second durations with three lives', () => {
+    for (const durationMs of [60_000, 90_000, 120_000] as const) {
+        const session = new GameSession({
+            mode: 'friendChallenge', seed: `duration-${durationMs}`, contentVersion: CONTENT_VERSION,
+            challengeRole: 'creator', challengeConfig: { themeIds: ['math'], enabledRules: ['standard'], durationMs },
+        }, GAMEPLAY_CONFIG);
+        assert.equal(session.state.life, 3);
+        assert.equal(session.state.remainingMs, durationMs);
+        session.start();
+        session.tick(durationMs - 1);
+        assert.equal(session.state.phase, 'playing');
+        session.tick(1);
+        assert.equal(session.state.phase, 'finished');
+        assert.equal(session.state.remainingMs, 0);
     }
 });
 
@@ -709,6 +785,24 @@ test('portrait target formations use at most two targets per row with clear spac
     }
     assert.deepEqual(calculatePortraitTargetLayout(5, 750, 1624).map((position) => position.row), [0, 0, 1, 2, 2]);
     assert.deepEqual(calculatePortraitTargetLayout(6, 750, 1624).map((position) => position.row), [0, 0, 1, 1, 2, 2]);
+});
+
+test('friend challenge creator result is shareable without comparing against a target', () => {
+    const config: FriendChallengeConfig = { themeIds: ['math', 'vision'], enabledRules: ['reverse', 'bomb'], durationMs: 90_000 };
+    const commit = finalizeResult({
+        entry: { mode: 'friendChallenge', seed: 'creator', contentVersion: CONTENT_VERSION, challengeConfig: config, challengeRole: 'creator' },
+        score: 980, maxCombo: 8, correctCount: 9, errorCount: 2, accuracy: 9 / 11,
+    }, { level: 1, xp: 0, bestScore: 800 });
+    const result = commit.result;
+    assert.equal(commit.player.bestScore, 800);
+    assert.equal(result.isNewRecord, false);
+    assert.equal(result.challenge, undefined);
+    const presentation = createResultPresentation(result);
+    assert.equal(presentation.modeLabel, '好友挑战 · 90 秒');
+    assert.equal(presentation.headline, '挑战成绩已生成！');
+    assert.equal(presentation.replayLabel, '同配置再来一局');
+    assert.equal(presentation.shareLabel, '分享挑战');
+    assert.equal(presentation.sharePrimary, true);
 });
 
 test('target skins use their source canvas instead of auto-trim bounds for visual sizing', () => {
@@ -1249,6 +1343,18 @@ test('save v1 migration preserves player settings daily-compatible fields and ad
     assert.equal(migrated.daily?.targetScore, dailyRecipeById('number-lab')?.targetScore);
     assert.equal(migrated.daily?.targetAchieved, true);
     assert.deepEqual(migrated.tower, DEFAULT_TOWER_PROGRESS);
+});
+
+test('save v2 migration adds a valid default friend challenge configuration', () => {
+    const migrated = migrateV2ToV3({
+        schemaVersion: 2,
+        player: { level: 2, xp: 700, bestScore: 900 },
+        settings: { music: true, sfx: true, vibration: true, quality: 'auto' },
+        tutorials: {},
+        tower: DEFAULT_TOWER_PROGRESS,
+    });
+    assert.equal(migrated.schemaVersion, 3);
+    assert.deepEqual(migrated.lastFriendChallengeConfig, DEFAULT_FRIEND_CHALLENGE_CONFIG);
 });
 
 test('home portrait layout keeps every section separated across common safe areas', () => {

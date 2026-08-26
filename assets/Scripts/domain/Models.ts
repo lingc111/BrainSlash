@@ -1,9 +1,20 @@
 export type GameMode = 'brawl60' | 'daily' | 'friendChallenge' | 'tower';
 export type ThemeId = 'math' | 'vision' | 'english' | 'hanzi' | 'geography' | 'life' | 'knowledge' | 'history';
 export type RuleId = 'standard' | 'reverse' | 'rotate' | 'multi' | 'order' | 'bomb';
+export type FriendChallengeDurationMs = 60_000 | 90_000 | 120_000;
+export type FriendChallengeRole = 'creator' | 'responder';
 export type SessionPhase = 'ready' | 'playing' | 'resolving' | 'finished';
 
-export interface GameEntryParams { mode: GameMode; seed: string; contentVersion: string; recipeId?: string; targetScore?: number; dailyDate?: string; dailyTargetScore?: number; towerFloor?: number; }
+export interface FriendChallengeConfig {
+    themeIds: ThemeId[];
+    enabledRules: RuleId[];
+    durationMs: FriendChallengeDurationMs;
+}
+export interface GameEntryParams {
+    mode: GameMode; seed: string; contentVersion: string; recipeId?: string; targetScore?: number;
+    challengeConfig?: FriendChallengeConfig; challengeRole?: FriendChallengeRole;
+    dailyDate?: string; dailyTargetScore?: number; towerFloor?: number;
+}
 export interface PromptSpec { text: string; }
 export interface TargetSpec { id: string; text: string; value?: string | number; colorName?: string; isBomb?: boolean; }
 export interface QuestionInstance {
@@ -50,6 +61,10 @@ export interface GameResult extends RunResult {
     challenge?: FriendChallengeResult;
     daily?: DailyChallengeResult;
 }
-export interface FriendChallengePayload {
+export interface FriendChallengePayloadV1 {
     v: 1; seed: string; contentVersion: string; mode: 'brawl60'; recipeId: string; targetScore: number;
 }
+export interface FriendChallengePayloadV2 {
+    v: 2; seed: string; contentVersion: string; mode: 'friendChallenge'; config: FriendChallengeConfig; targetScore: number;
+}
+export type FriendChallengePayload = FriendChallengePayloadV1 | FriendChallengePayloadV2;

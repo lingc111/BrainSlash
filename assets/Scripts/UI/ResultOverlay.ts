@@ -122,7 +122,7 @@ export function showTowerResultOverlay(parent: Node, result: TowerFloorResult, a
 function buildHeader(card: Node, result: GameResult, presentation: ResultPresentation): void {
     makeLabel(card, 'Mode', presentation.modeLabel, 24, RED, 460).node.setPosition(0, 615);
     makeLabel(card, 'Headline', presentation.headline, 50, INK, 590).node.setPosition(0, 552);
-    makeLabel(card, 'ScoreCaption', result.entry.mode === 'daily' ? '今日得分' : '本局得分', 22, BLUE, 300).node.setPosition(0, 482);
+    makeLabel(card, 'ScoreCaption', result.entry.mode === 'daily' ? '今日得分' : result.entry.mode === 'friendChallenge' ? '挑战得分' : '本局得分', 22, BLUE, 300).node.setPosition(0, 482);
     makeLabel(card, 'Score', String(result.score), 104, INK, 600).node.setPosition(0, 395);
 
     const comparison = makeNode('ComparisonBadge', card, 470, 62);

@@ -1,7 +1,7 @@
 import { _decorator, Color, Component, director, EventTouch, game, Game, Graphics, Label, Mask, Node, NodePool, ResolutionPolicy, resources, screen, Sprite, SpriteFrame, tween, Tween, UIOpacity, UITransform, Vec2, Vec3, view } from 'cc';
 import { AppRuntime } from '../app/AppRuntime';
 import { GAMEPLAY_CONFIG } from '../configs/GameConfig';
-import { Brawl60Director, type BrawlQuestionDirective } from '../domain/Brawl60Director';
+import { Brawl60Director, FriendChallengeDirector, type BrawlQuestionDirective } from '../domain/Brawl60Director';
 import { dailyRecipeById } from '../domain/DailyChallenge';
 import { GameSession } from '../domain/GameSession';
 import { friendTargetPresentation } from '../domain/FriendChallenge';
@@ -43,7 +43,7 @@ function image(parent:Node,name:string,w:number,h:number):Sprite { const s=node(
 
 @ccclass('GameplayMVP')
 export class GameplayMVP extends Component {
-    private session!:GameSession; private generator!:QuestionGenerator; private director!:Brawl60Director|TowerDirector; private visual!:SeededRng;
+    private session!:GameSession; private generator!:QuestionGenerator; private director!:Brawl60Director|FriendChallengeDirector|TowerDirector; private visual!:SeededRng;
     private question:QuestionInstance|null=null; private constraint:ActionConstraint|null=null; private gesture:GestureResolver|null=null;
     private targets!:Node; private effects!:Node; private floats!:Node; private trail!:Graphics;
     private score!:Label; private combo!:Label; private prompt!:Label; private rule!:Label; private ruleBadge:Node|null=null; private timer!:Label; private life!:Label;
@@ -67,7 +67,7 @@ export class GameplayMVP extends Component {
         view.setDesignResolutionSize(DESIGN_WIDTH,DESIGN_HEIGHT,ResolutionPolicy.SHOW_ALL);
         const editorPreview=this.node.getChildByName('TargetContainer')?.getChildByName('EditorPreviewTargets');if(editorPreview){editorPreview.active=false;editorPreview.destroy();}
         AppRuntime.initialize();if(!AppRuntime.consumeGameplayLaunch()){AppRuntime.home();return;}AppRuntime.consumePendingFriendChallenge();const saved=AppRuntime.save.snapshot();this.session=new GameSession(AppRuntime.entry,GAMEPLAY_CONFIG);const daily=saved.daily;this.dailyBest=AppRuntime.entry.mode==='daily'&&daily?.dateKey===AppRuntime.entry.dailyDate&&daily.recipeId===AppRuntime.entry.recipeId?daily.bestScore:0;
-        this.generator=new QuestionGenerator(new SeededRng(`${AppRuntime.entry.seed}:gameplay`),GAMEPLAY_CONFIG);this.director=AppRuntime.entry.mode==='tower'?new TowerDirector(new SeededRng(`${AppRuntime.entry.seed}:director`),AppRuntime.entry.towerFloor??saved.tower.currentFloor):new Brawl60Director(new SeededRng(`${AppRuntime.entry.seed}:director`),AppRuntime.entry.recipeId,AppRuntime.entry.mode==='brawl60'?allowedBrawlRules(saved.tower,saved.tutorials):undefined,AppRuntime.entry.mode!=='brawl60'||saved.tower.highestClearedFloor>=15);this.visual=new SeededRng(`${AppRuntime.entry.seed}:visual`);
+        this.generator=new QuestionGenerator(new SeededRng(`${AppRuntime.entry.seed}:gameplay`),GAMEPLAY_CONFIG);this.director=AppRuntime.entry.mode==='tower'?new TowerDirector(new SeededRng(`${AppRuntime.entry.seed}:director`),AppRuntime.entry.towerFloor??saved.tower.currentFloor):AppRuntime.entry.mode==='friendChallenge'&&AppRuntime.entry.challengeConfig?new FriendChallengeDirector(new SeededRng(`${AppRuntime.entry.seed}:director`),AppRuntime.entry.challengeConfig):new Brawl60Director(new SeededRng(`${AppRuntime.entry.seed}:director`),AppRuntime.entry.recipeId,AppRuntime.entry.mode==='brawl60'?allowedBrawlRules(saved.tower,saved.tutorials):undefined,AppRuntime.entry.mode!=='brawl60'||saved.tower.highestClearedFloor>=15);this.visual=new SeededRng(`${AppRuntime.entry.seed}:visual`);
         this.bindStaticView();screen.on('window-resize',this.handleResize,this);game.on(Game.EVENT_HIDE,this.onHide,this);game.on(Game.EVENT_SHOW,this.onShow,this);this.scheduleOnce(this.handleResize,0);
         this.scheduleOnce(()=>{this.node.getChildByName('Ready')?.destroy();AppRuntime.audio.play('ui');this.session.start();this.spawn();},GAMEPLAY_CONFIG.readyMs/1000);
     }
@@ -121,7 +121,7 @@ export class GameplayMVP extends Component {
         this.makeComboCard(chrome);
         this.makeArtworkCard(chrome,'PromptPaperCard','gameplay_mid_title',306,230);
         const timerCard=this.makeArtworkCard(chrome,'TimerPaperCard','gameplay_time',176,176,1.1);this.makeLifeHearts(timerCard);
-        const friendCard=node('FriendChallengeTarget',chrome,286,32),friend=text(friendCard,'Label','',18,INK);ui(friend.node,278,30);friend.overflow=Label.Overflow.SHRINK;friendCard.active=this.session?.entry.mode==='friendChallenge';this.friendTarget=friend;this.friendTargetCard=friendCard;
+        const friendCard=node('FriendChallengeTarget',chrome,286,32),friend=text(friendCard,'Label','',18,INK);ui(friend.node,278,30);friend.overflow=Label.Overflow.SHRINK;friendCard.active=this.session?.entry.mode==='friendChallenge'&&this.session.entry.challengeRole==='responder';this.friendTarget=friend;this.friendTargetCard=friendCard;
         const towerCard=node('TowerFloorProgress',chrome,286,32),tower=text(towerCard,'Label','',19,INK);ui(tower.node,278,30);tower.overflow=Label.Overflow.SHRINK;towerCard.active=this.session?.entry.mode==='tower';this.towerProgress=tower;this.towerProgressCard=towerCard;
         const dailyCard=node('DailyChallengeProgress',chrome,286,32),dailyLabel=text(dailyCard,'Label','',18,INK);ui(dailyLabel.node,278,30);dailyLabel.overflow=Label.Overflow.SHRINK;dailyCard.active=this.session?.entry.mode==='daily';this.dailyTarget=dailyLabel;this.dailyTargetCard=dailyCard;
     }

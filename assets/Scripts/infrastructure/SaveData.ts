@@ -1,5 +1,6 @@
 import { dailyRecipeById, type LocalDailyRecord } from '../domain/DailyChallenge';
-import type { PlayerProgress, RuleId } from '../domain/Models';
+import { DEFAULT_FRIEND_CHALLENGE_CONFIG, normalizeFriendChallengeConfig } from '../domain/FriendChallenge';
+import type { FriendChallengeConfig, PlayerProgress, RuleId } from '../domain/Models';
 import { DEFAULT_TOWER_PROGRESS, normalizeTowerProgress, type TowerProgress } from '../domain/TowerMode';
 
 export interface SaveSettings {
@@ -26,15 +27,26 @@ export interface SaveDataV2 {
     tower: TowerProgress;
 }
 
+export interface SaveDataV3 {
+    schemaVersion: 3;
+    player: PlayerProgress;
+    settings: SaveSettings;
+    tutorials: Partial<Record<RuleId, boolean>>;
+    daily?: LocalDailyRecord;
+    tower: TowerProgress;
+    lastFriendChallengeConfig: FriendChallengeConfig;
+}
+
 const DEFAULT_SETTINGS: SaveSettings = { music: true, sfx: true, vibration: true, quality: 'auto' };
 
-export function createDefaultSave(): SaveDataV2 {
+export function createDefaultSave(): SaveDataV3 {
     return {
-        schemaVersion: 2,
+        schemaVersion: 3,
         player: { level: 1, xp: 0, bestScore: 0 },
         settings: { ...DEFAULT_SETTINGS },
         tutorials: {},
         tower: clone(DEFAULT_TOWER_PROGRESS),
+        lastFriendChallengeConfig: clone(DEFAULT_FRIEND_CHALLENGE_CONFIG),
     };
 }
 
@@ -43,16 +55,34 @@ export function migrateV1ToV2(value: Partial<SaveDataV1>): SaveDataV2 {
 }
 
 export function normalizeV2(parsed: Partial<SaveDataV2>): SaveDataV2 {
-    const defaults = createDefaultSave();
     return {
-        ...defaults,
-        ...parsed,
         schemaVersion: 2,
         player: normalizePlayer(parsed.player),
         settings: { ...DEFAULT_SETTINGS, ...parsed.settings },
         tutorials: validTutorials(parsed.tutorials),
         daily: validDailyRecord(parsed.daily) ? normalizeDailyRecord(parsed.daily) : undefined,
         tower: normalizeTowerProgress(parsed.tower),
+    };
+}
+
+export function migrateV2ToV3(value: Partial<SaveDataV2>): SaveDataV3 {
+    return normalizeV3({ ...normalizeV2(value), schemaVersion: 3 });
+}
+
+export function migrateV1ToV3(value: Partial<SaveDataV1>): SaveDataV3 {
+    return migrateV2ToV3(migrateV1ToV2(value));
+}
+
+export function normalizeV3(parsed: Partial<SaveDataV3>): SaveDataV3 {
+    const challenge = normalizeFriendChallengeConfig(parsed.lastFriendChallengeConfig ?? DEFAULT_FRIEND_CHALLENGE_CONFIG);
+    return {
+        schemaVersion: 3,
+        player: normalizePlayer(parsed.player),
+        settings: { ...DEFAULT_SETTINGS, ...parsed.settings },
+        tutorials: validTutorials(parsed.tutorials),
+        daily: validDailyRecord(parsed.daily) ? normalizeDailyRecord(parsed.daily) : undefined,
+        tower: normalizeTowerProgress(parsed.tower),
+        lastFriendChallengeConfig: challenge.valid ? challenge.config : clone(DEFAULT_FRIEND_CHALLENGE_CONFIG),
     };
 }
 
