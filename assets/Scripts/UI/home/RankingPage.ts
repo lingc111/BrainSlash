@@ -41,7 +41,7 @@ const RANKINGS: readonly RankingEntry[] = [
     { name: '咸鱼翻身', brawl: 720, trial: 56 },
 ] as const;
 
-const ROW_Y = [-50, -126, -202, -278, -354, -430, -506] as const;
+const ROW_Y = [-28, -104, -180, -256, -332, -408, -484] as const;
 
 /** Runtime-built ranking page that shares Home's header and bottom navigation. */
 @ccclass('RankingPage')
@@ -76,7 +76,7 @@ export class RankingPage extends Component {
 
         // The paper reaches behind the tabs. Create it first so its opaque top
         // edge cannot cover the tab artwork and touch targets.
-        const paper = this.makeNode(this.node, 'RankingPaper', 0, -80, 842, 1052);
+        const paper = this.makeNode(this.node, 'RankingPaper', 0, -58, 842, 1052);
         this.attachTexture(paper, 'textures/rank/ui/ranking_paper');
 
         const tabs = this.makeNode(this.node, 'RankingTabs', 0, 345, 820, 188);
