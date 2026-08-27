@@ -84,6 +84,7 @@ export class HomeController extends Component {
     private progressValueLabel: Label | null = null;
     private progressCells: Node[] = [];
     private navSelectionMarkers: Node[] = [];
+    private navIconOpacities: UIOpacity[] = [];
 
     private readonly handleResize = (): void => this.applyLayout();
 
@@ -308,31 +309,32 @@ export class HomeController extends Component {
 
     private buildTowerChallenge(parent: Node): Node {
         const root = this.makeNode(parent, 'TowerChallenge', 0, 0, 790, 600);
-        const paper = this.makeNode(root, 'PaperBackground', 0, 0, 788, 591);
+        // Keep the source's 4:3 ratio while enlarging the complete paper by
+        // roughly 13%, giving the title and status rows enough breathing room.
+        const paper = this.makeNode(root, 'PaperBackground', 0, 0, 890, 668);
         this.attachResourceTexture(paper, 'textures/home/ui/home_slash_paper/spriteFrame');
 
-        const titleGroup = this.makeNode(root, 'TitleImagePlaceholder', -100, 118, 450, 162);
-        this.dailyAccentLabel = this.label(titleGroup, 'AccentCharacter', '答', -176, 42, 92, 76, 58, C.red, 'center');
-        this.label(titleGroup, 'TitleLine1', '题试炼塔', -34, 42, 310, 76, 50, C.ink, 'left');
-        this.dailyTitleLabel = this.label(titleGroup, 'TitleLine2', '第1层 · 基础试炼', -14, -43, 470, 84, 54, C.ink, 'center');
-        this.drawUnderline(titleGroup, 'TitleRedUnderline', 0, -82, 430, C.red, -4);
+        const titleGroup = this.makeNode(root, 'TitleImagePlaceholder', -85, 122, 610, 175);
+        this.dailyAccentLabel = this.label(titleGroup, 'AccentCharacter', '答', -245, 42, 72, 78, 58, C.red, 'center');
+        this.label(titleGroup, 'TitleLine1', '题试炼塔', 25, 42, 420, 76, 50, C.ink, 'left');
+        this.dailyTitleLabel = this.label(titleGroup, 'TitleLine2', '第1层 · 基础试炼', -20, -43, 570, 84, 52, C.ink, 'center');
+        this.drawUnderline(titleGroup, 'TitleRedUnderline', -18, -82, 520, C.red, -4);
 
-        const towerIcon = this.makeNode(root, 'TowerIcon', 263, 112, 130, 150);
+        const towerIcon = this.makeNode(root, 'TowerIcon', 300, 110, 130, 150);
         this.drawTowerIcon(towerIcon);
 
-        const friend = this.makeNode(root, 'FriendBubble', -105, -34, 440, 78);
-        this.drawSmallFriend(friend, -188, 0);
-        const bubble = this.graphics(friend, 'BubbleOutline', 30, 0, 360, 68);
-        this.roundedRect(bubble, -180, -32, 360, 64, C.paperRaised, C.ink, 2.5, 14);
-        this.dailyStatusLabel = this.label(friend, 'TowerStatus', '', 31, 0, 326, 56, 24, C.ink, 'center');
+        const friend = this.makeNode(root, 'FriendBubble', -120, -42, 480, 78);
+        const bubble = this.graphics(friend, 'BubbleOutline', -10, 0, 420, 68);
+        this.roundedRect(bubble, -210, -32, 420, 64, C.paperRaised, C.ink, 2.5, 14);
+        this.dailyStatusLabel = this.label(friend, 'TowerStatus', '', -9, 0, 386, 56, 24, C.ink, 'center');
 
-        this.countdownLabel = this.label(root, 'TowerHint', '第3层解锁禁区', 266, -34, 250, 58, 25, C.ink, 'center');
-        this.drawUnderline(root, 'CountdownUnderline', 266, -68, 210, C.red, -1);
+        this.countdownLabel = this.label(root, 'TowerHint', '第3层解锁禁区', 285, -42, 270, 58, 25, C.ink, 'center');
+        this.drawUnderline(root, 'CountdownUnderline', 285, -76, 230, C.red, -1);
 
-        const start = this.makeNode(root, 'StartButton', 0, -190, 600, 126);
+        const start = this.makeNode(root, 'StartButton', 0, -195, 650, 136);
         // The source keeps generous transparent margins around the hand-drawn stroke.
         // Preserve its native ratio so the brush texture and lettering are not squeezed.
-        const artwork = this.makeNode(start, 'ButtonArtwork', 0, 0, 565, 210);
+        const artwork = this.makeNode(start, 'ButtonArtwork', 0, 0, 610, 226);
         this.attachResourceTexture(artwork, 'textures/home/ui/draw_sword/spriteFrame');
         const artworkSprite = artwork.getChildByName('TextureSprite')?.getComponent(Sprite);
         // The transparent asset is auto-trimmed on import. Render against its
@@ -344,8 +346,10 @@ export class HomeController extends Component {
     }
 
     private buildBrawlButton(parent: Node): Node {
-        const root = this.makeNode(parent, 'BrawlButton', 0, 0, 800, 266);
-        const paper = this.makeNode(root, 'YellowPaper', 0, 0, 798, 266);
+        // Enlarge the complete artwork and hit target by 15% while preserving
+        // the source's long paper-strip aspect ratio.
+        const root = this.makeNode(parent, 'BrawlButton', 0, 0, 918, 306);
+        const paper = this.makeNode(root, 'YellowPaper', 0, 0, 918, 306);
         this.attachResourceTexture(paper, 'textures/home/ui/home_60s/spriteFrame');
         this.bindButton(root, this.onBrawlClick.bind(this));
         return root;
@@ -400,6 +404,7 @@ export class HomeController extends Component {
         separator.stroke();
 
         this.navSelectionMarkers = [];
+        this.navIconOpacities = [];
         // The source canvases are equal, but each drawing occupies a different
         // pixel range. Per-item size and baseline offsets normalize the visible
         // icon scale while keeping every caption on the same horizontal line.
@@ -417,9 +422,13 @@ export class HomeController extends Component {
             this.navSelectionMarkers.push(marker);
 
             const artwork = this.makeNode(item, 'NavArtwork', 0, artworkY, artworkSize, artworkSize);
+            if (index === 0) this.drawHomeIconPaperFill(artwork);
             this.attachResourceTexture(artwork, `textures/home/ui/${assetName}/spriteFrame`);
             const artworkSprite = artwork.getChildByName('TextureSprite')?.getComponent(Sprite);
             if (artworkSprite) artworkSprite.trim = false;
+            const iconOpacity = artwork.addComponent(UIOpacity);
+            iconOpacity.opacity = index === 0 ? 255 : 170;
+            this.navIconOpacities.push(iconOpacity);
             this.bindButton(item, () => {
                 this.setSelectedNavigation(index);
                 callback();
@@ -432,6 +441,26 @@ export class HomeController extends Component {
         this.navSelectionMarkers.forEach((marker, index) => {
             if (marker.isValid) marker.active = index === selectedIndex;
         });
+        this.navIconOpacities.forEach((opacity, index) => {
+            if (opacity.isValid) opacity.opacity = index === selectedIndex ? 255 : 170;
+        });
+    }
+
+    private drawHomeIconPaperFill(parent: Node): void {
+        // Unlike the other three source icons, nav_home contains transparent
+        // space inside the drawing. Add the same paper fill used by those
+        // assets so inactive navigation items share one visual weight.
+        const g = this.graphics(parent, 'HomePaperFill', 0, 13, 92, 78);
+        g.fillColor = C.paperRaised;
+        g.moveTo(-35, 4);
+        g.lineTo(0, 34);
+        g.lineTo(35, 4);
+        g.lineTo(29, 4);
+        g.lineTo(29, -28);
+        g.lineTo(-29, -28);
+        g.lineTo(-29, 4);
+        g.close();
+        g.fill();
     }
 
     private showPage(page: 'home' | 'rank'): void {
@@ -1104,26 +1133,6 @@ export class HomeController extends Component {
         g.moveTo(-7, -20);
         g.quadraticCurveTo(0, -24, 7, -20);
         g.stroke();
-    }
-
-    private drawSmallFriend(parent: Node, x: number, y: number): void {
-        const g = this.graphics(parent, 'FriendAvatar', x, y, 64, 64);
-        g.strokeColor = C.ink;
-        g.lineWidth = 2.4;
-        g.fillColor = C.paperRaised;
-        g.circle(0, -3, 25);
-        g.fill();
-        g.stroke();
-        g.moveTo(-24, 7);
-        g.lineTo(-14, 24);
-        g.lineTo(-3, 18);
-        g.lineTo(8, 27);
-        g.lineTo(20, 12);
-        g.stroke();
-        g.fillColor = C.ink;
-        g.circle(-8, -5, 2);
-        g.circle(8, -5, 2);
-        g.fill();
     }
 
     private drawLightning(parent: Node, x: number, y: number, size: number): void {
