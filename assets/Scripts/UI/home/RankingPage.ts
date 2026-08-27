@@ -48,6 +48,7 @@ const ROW_Y = [-28, -104, -180, -256, -332, -408, -484] as const;
 @executeInEditMode(true)
 export class RankingPage extends Component {
     private mode: RankingMode = 'brawl';
+    private brawlSelection: Node | null = null;
     private trialSelection: Node | null = null;
     private scoreLabels: Label[] = [];
     private selfRankLabel: Label | null = null;
@@ -61,6 +62,7 @@ export class RankingPage extends Component {
     public selectMode(mode: RankingMode): void {
         if (this.mode === mode) return;
         this.mode = mode;
+        if (this.brawlSelection) this.brawlSelection.active = mode === 'brawl';
         if (this.trialSelection) this.trialSelection.active = mode === 'trial';
         this.refreshScores();
         if (!EDITOR) AppRuntime.audio.play('ui');
@@ -81,6 +83,7 @@ export class RankingPage extends Component {
 
         const tabs = this.makeNode(this.node, 'RankingTabs', 0, 345, 820, 188);
         this.attachTexture(tabs, 'textures/rank/ui/ranking_tabs');
+        this.brawlSelection = tabs.getChildByName('TextureSprite');
         this.buildTrialSelection(tabs);
 
         const brawlButton = this.makeNode(tabs, 'BrawlTabButton', -205, 4, 380, 132);
@@ -94,17 +97,11 @@ export class RankingPage extends Component {
     }
 
     private buildTrialSelection(parent: Node): void {
-        const overlay = this.makeNode(parent, 'TrialSelectedOverlay', 0, 9, 790, 120);
-        const left = this.graphics(overlay, 'LeftPaperCover', -203, 0, 336, 100);
-        left.fillColor = new Color(0xfb, 0xf5, 0xe9, 0xf2);
-        left.roundRect(-168, -50, 336, 100, 24);
-        left.fill();
-        const right = this.graphics(overlay, 'RightCrayon', 203, 0, 336, 100);
-        right.fillColor = new Color(C.yellow.r, C.yellow.g, C.yellow.b, 0xe8);
-        right.roundRect(-168, -50, 336, 100, 24);
-        right.fill();
-        this.label(overlay, 'BrawlLabel', '乱斗榜', -203, 0, 320, 84, 44, C.ink);
-        this.label(overlay, 'TrialLabel', '试炼榜', 203, 0, 320, 84, 44, C.ink);
+        // Use a pixel-preserving variant of the original artwork. It moves
+        // only the yellow brush and scales the baked-in Trial text slightly,
+        // so no system-font labels or replacement tab shapes are introduced.
+        const overlay = this.makeNode(parent, 'TrialSelectedOverlay', 0, 0, 820, 188);
+        this.attachTexture(overlay, 'textures/rank/ui/ranking_tabs_trial');
         overlay.active = false;
         this.trialSelection = overlay;
     }
