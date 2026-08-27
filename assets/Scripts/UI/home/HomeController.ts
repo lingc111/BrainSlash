@@ -38,6 +38,7 @@ import { nextTowerUnlock, towerFloorConfig, towerFloorLabel, towerRuleLabel } fr
 import { CountdownTimer } from './CountdownTimer';
 import { calculateHomePortraitLayout } from './HomePortraitLayout';
 import { createMockHomeViewData, HomeViewData } from './HomeViewData';
+import { RankingPage } from './RankingPage';
 import { AppRuntime } from '../../app/AppRuntime';
 
 const { ccclass, executeInEditMode } = _decorator;
@@ -66,6 +67,7 @@ export class HomeController extends Component {
     private brawlButton: Node | null = null;
     private eventArea: Node | null = null;
     private rankProgress: Node | null = null;
+    private rankingPage: Node | null = null;
     private bottomNavigation: Node | null = null;
     private settingsModal: Node | null = null;
     private friendChallengeModal: Node | null = null;
@@ -79,7 +81,6 @@ export class HomeController extends Component {
     private countdownLabel: Label | null = null;
     private dailyEventTitleLabel: Label | null = null;
     private dailyEventGoalLabel: Label | null = null;
-    private dailyEventAccentLabel: Label | null = null;
     private progressValueLabel: Label | null = null;
     private progressCells: Node[] = [];
     private navSelectionMarkers: Node[] = [];
@@ -174,7 +175,6 @@ export class HomeController extends Component {
                 : data.dailyStatus.startsWith('最佳') ? data.dailyStatus : `${data.dailyGoal} · 首战待斩`;
             this.dailyEventGoalLabel.color = data.dailyAchieved ? C.green : C.inkSoft;
         }
-        if (this.dailyEventAccentLabel) this.dailyEventAccentLabel.string = data.dailyAchieved ? '✓' : data.dailyAccent;
         if (this.progressValueLabel) {
             this.progressValueLabel.string = `${data.rankProgress}/${data.rankProgressMax}`;
         }
@@ -216,7 +216,7 @@ export class HomeController extends Component {
 
     public onHomeClick(): void {
         this.closeSettings();
-        console.log('[Home] Home');
+        this.showPage('home');
     }
 
     public onTopicClick(): void {
@@ -226,7 +226,7 @@ export class HomeController extends Component {
 
     public onRankClick(): void {
         this.closeSettings();
-        console.log('[Home] Rank');
+        this.showPage('rank');
     }
 
     public onProfileClick(): void {
@@ -261,6 +261,9 @@ export class HomeController extends Component {
         this.brawlButton = this.buildBrawlButton(this.safeArea);
         this.eventArea = this.buildEvents(this.safeArea);
         this.rankProgress = this.buildRankProgress(this.safeArea);
+        this.rankingPage = this.makeNode(this.safeArea, 'RankingPage', 0, 0, C.designWidth, 1450);
+        this.rankingPage.addComponent(RankingPage);
+        this.rankingPage.active = false;
         this.bottomNavigation = this.buildBottomNavigation(this.safeArea);
 
         this.applyLayout();
@@ -367,7 +370,6 @@ export class HomeController extends Component {
         this.attachResourceTexture(polaroid, 'textures/home/ui/limited_activity/spriteFrame');
         const polaroidSprite = polaroid.getChildByName('TextureSprite')?.getComponent(Sprite);
         if (polaroidSprite) polaroidSprite.trim = false;
-        this.dailyEventAccentLabel = this.label(flag, 'AccentLabel', '知', -126, 158, 54, 46, 28, C.red, 'center');
         this.dailyEventTitleLabel = this.label(flag, 'TitleLabel', '常识万花筒', 0, -108, 300, 40, 27, C.blue, 'center');
         this.dailyEventGoalLabel = this.label(flag, 'ChallengeSummary', '目标 1300 分 · 首战待斩', 0, -149, 304, 30, 18, C.inkSoft, 'center');
         this.bindButton(flag, this.onFlagHunterClick.bind(this));
@@ -432,6 +434,14 @@ export class HomeController extends Component {
         });
     }
 
+    private showPage(page: 'home' | 'rank'): void {
+        const showHome = page === 'home';
+        for (const section of [this.dailyChallenge, this.brawlButton, this.eventArea, this.rankProgress]) {
+            if (section?.isValid) section.active = showHome;
+        }
+        if (this.rankingPage?.isValid) this.rankingPage.active = !showHome;
+    }
+
     private applyLayout = (): void => {
         if (!this.background || !this.safeArea) return;
 
@@ -462,11 +472,16 @@ export class HomeController extends Component {
         this.brawlButton?.setPosition(0, layout.sectionY.brawl, 0);
         this.eventArea?.setPosition(0, layout.sectionY.events, 0);
         this.rankProgress?.setPosition(0, layout.sectionY.rank, 0);
+        // Ranking has fewer top-level sections than Home. Lift the complete
+        // composition to close the oversized gap below the shared header while
+        // preserving the title/tab/paper proportions and bottom-nav clearance.
+        this.rankingPage?.setPosition(0, 78, 0);
         this.bottomNavigation?.setPosition(0, layout.navigationY, 0);
 
         for (const section of [this.header, this.dailyChallenge, this.brawlButton, this.eventArea, this.rankProgress]) {
             section?.setScale(layout.contentScale, layout.contentScale, 1);
         }
+        this.rankingPage?.setScale(layout.contentScale, layout.contentScale, 1);
     };
 
     private redrawBackground(width: number, height: number): void {
