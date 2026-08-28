@@ -5,11 +5,14 @@ const context = sharedCanvas.getContext('2d');
 
 const WIDTH = 941;
 const HEIGHT = 1450;
+// RankingPage moves the SubContextView down by the same amount. Compensating
+// all drawing coordinates here preserves every screen position while leaving
+// extra canvas space below the self-avatar mask.
+const VIEW_OFFSET_Y = 20;
 const ROW_Y = [-28, -104, -180, -256, -332, -408, -484];
 const DISPLAY_ORDER = [1, 0, 2, 3, 4, 5, 6, 7, 8, 9];
 const KEYS = ['bs_brawl_score', 'bs_brawl_detail', 'bs_trial_floor', 'bs_trial_detail'];
 const images = Object.create(null);
-const DEFAULT_AVATAR_URL = 'default_avatar.png';
 
 let visible = false;
 let mode = 'brawl';
@@ -155,29 +158,29 @@ function sameUser(a, b) {
 
 function drawPodium(entry, displayIndex) {
     const x = [-250, 0, 250][displayIndex];
-    const avatarY = [203, 222, 203][displayIndex];
-    drawAvatar(entry.avatarUrl, x, avatarY, displayIndex === 1 ? 52 : 47);
+    const avatarX = [-248, -3, 250][displayIndex];
+    const avatarY = [204, 219, 204][displayIndex];
+    const avatarDiameter = [88, 112, 92][displayIndex];
+    drawAvatar(entry.avatarUrl, avatarX, avatarY, avatarDiameter, false);
     drawText(entry.name, x, 101, 31, '#1f1d19', 'center', true, 190);
     drawText(scoreText(entry), x, 59, 30, '#1f1d19', 'center', true, 176);
-    drawText(detailText(entry), x + 12, 27, 16, '#59544b', 'center', true, 218);
+    drawText(detailText(entry), x + 12, 27, 20, '#59544b', 'center', true, 242);
 }
 
 function drawRow(entry, rowIndex) {
     const y = ROW_Y[rowIndex];
     drawText(String(entry.rank || rowIndex + 4), -300, y, 29, '#1f1d19', 'center', true, 56);
-    drawAvatar(entry.avatarUrl, -242, y, 34);
+    drawAvatar(entry.avatarUrl, -242, y, 40, true);
     drawText(entry.name, -207, y + 13, 25, '#1f1d19', 'left', true, 250);
-    drawText(detailText(entry), -207, y - 16, 16, '#59544b', 'left', true, 312);
+    drawText(detailText(entry), -207, y - 16, 20, '#59544b', 'left', true, 330);
     drawText(scoreText(entry), 244, y, 25, '#1f1d19', 'center', true, 154);
 }
 
 function drawSelf(entry, rank) {
     drawText(String(rank), -333, -643, 42, '#1f1d19', 'center', true, 90);
-    // Cover the legacy avatar baked into ranking_self.png as well as drawing
-    // the current profile/default avatar.
-    drawAvatar(entry.avatarUrl, -250, -643, 110);
+    drawAvatar(entry.avatarUrl, -253, -680, 114, false);
     drawText(entry.name || '我', -30, -620, 34, '#1f1d19', 'center', true, 275);
-    drawText(detailText(entry), -5, -671, 20, '#59544b', 'center', true, 385);
+    drawText(detailText(entry), -5, -671, 22, '#59544b', 'center', true, 385);
     drawText(scoreText(entry), 244, -676, 31, '#1f1d19', 'center', true, 178);
 }
 
@@ -188,7 +191,7 @@ function scoreText(entry) {
 function detailText(entry) {
     if (mode === 'trial') return `${entry.trial.answeredCount}题 · ${percent(entry.trial.accuracy)}`;
     const data = entry.brawl;
-    return `存活 ${duration(data.survivalMs)} · ${data.answeredCount}题 · C${data.maxCombo} · ${percent(data.accuracy)}`;
+    return `${data.answeredCount}题 · C${data.maxCombo} · ${percent(data.accuracy)}`;
 }
 
 function drawText(value, x, y, size, color, align, bold, maxWidth) {
@@ -205,30 +208,40 @@ function drawText(value, x, y, size, color, align, bold, maxWidth) {
     context.restore();
 }
 
-function drawAvatar(url, x, y, diameter) {
+function drawAvatar(url, x, y, diameter, drawOutline) {
     const scale = drawingScale();
     const px = canvasX(x);
     const py = canvasY(y);
     const radius = diameter * scale / 2;
+    const cached = url && images[url];
+    if (!url) {
+        if (drawOutline) {
+            context.fillStyle = '#fffaf0';
+            context.strokeStyle = '#59544b';
+            context.lineWidth = Math.max(1, 2 * scale);
+            context.beginPath();
+            context.arc(px, py, radius, 0, Math.PI * 2);
+            context.fill();
+            context.stroke();
+        }
+        return;
+    }
     context.save();
     context.beginPath();
     context.arc(px, py, radius, 0, Math.PI * 2);
     context.clip();
     context.fillStyle = '#fffaf0';
     context.fillRect(px - radius, py - radius, radius * 2, radius * 2);
-    const sourceUrl = url || DEFAULT_AVATAR_URL;
-    const cached = images[sourceUrl];
-    if (cached && cached.ready) {
-        const zoom = url ? 1 : 1.55;
-        context.drawImage(cached.image, px - radius * zoom, py - radius * zoom, radius * 2 * zoom, radius * 2 * zoom);
-    }
+    if (cached && cached.ready) context.drawImage(cached.image, px - radius, py - radius, radius * 2, radius * 2);
     context.restore();
-    context.strokeStyle = '#1f1d19';
-    context.lineWidth = Math.max(1, 2 * scale);
-    context.beginPath();
-    context.arc(px, py, radius, 0, Math.PI * 2);
-    context.stroke();
-    if (!cached) loadAvatar(sourceUrl);
+    if (drawOutline) {
+        context.strokeStyle = '#59544b';
+        context.lineWidth = Math.max(1, 2 * scale);
+        context.beginPath();
+        context.arc(px, py, radius, 0, Math.PI * 2);
+        context.stroke();
+    }
+    if (url && !cached) loadAvatar(url);
 }
 
 function loadAvatar(url) {
@@ -241,10 +254,9 @@ function loadAvatar(url) {
 
 function clear() { context.clearRect(0, 0, sharedCanvas.width, sharedCanvas.height); }
 function canvasX(x) { return (x + WIDTH / 2) * sharedCanvas.width / WIDTH; }
-function canvasY(y) { return (HEIGHT / 2 - y) * sharedCanvas.height / HEIGHT; }
+function canvasY(y) { return (HEIGHT / 2 - (y + VIEW_OFFSET_Y)) * sharedCanvas.height / HEIGHT; }
 function drawingScale() { return Math.min(sharedCanvas.width / WIDTH, sharedCanvas.height / HEIGHT); }
 function integer(value) { const number = Number(value); return Number.isFinite(number) ? Math.max(0, Math.floor(number)) : 0; }
 function ratio(value) { const number = Number(value); return Number.isFinite(number) ? Math.max(0, Math.min(1, number)) : 0; }
 function parseJson(value) { try { const result = JSON.parse(value || '{}'); return result && typeof result === 'object' ? result : {}; } catch (_) { return {}; } }
 function percent(value) { return `${Math.round(ratio(value) * 100)}%`; }
-function duration(milliseconds) { const seconds = integer(milliseconds) / 1000 | 0; const minutes = seconds / 60 | 0; return minutes > 0 ? `${minutes}:${String(seconds % 60).padStart(2, '0')}` : `${seconds}s`; }

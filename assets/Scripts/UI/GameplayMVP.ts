@@ -172,7 +172,8 @@ export class GameplayMVP extends Component {
     private revealCurrentTargets(token:number):void{
         if(token!==this.revealToken||!this.question||!this.currentDirective||this.session.state.phase!=='playing')return;
         this.targetRevealPending=false;this.constraint=evaluateRules(this.question);this.session.beginQuestion();
-        const positions=this.layout(this.question.targets.length),v=view.getVisibleSize(),duration=questionFlightDurationSeconds((this.question.timeLimitMs??3000)/1000,this.question.activeRules),plans=createPortraitTargetMotionPlans(positions,this.currentMotionPhases,{visibleWidth:v.width,visibleHeight:v.height,duration,speed:this.currentDirective.speed,topInset:FRAME_TOP_INSET,visualRadius:TARGET_VISUAL_RADIUS});
+        const answerCount=this.question.targets.filter((target)=>!target.isBomb).length;
+        const positions=this.layout(this.question.targets.length),v=view.getVisibleSize(),duration=questionFlightDurationSeconds((this.question.timeLimitMs??3000)/1000,this.question.activeRules,answerCount),plans=createPortraitTargetMotionPlans(positions,this.currentMotionPhases,{visibleWidth:v.width,visibleHeight:v.height,duration,speed:this.currentDirective.speed,topInset:FRAME_TOP_INSET,visualRadius:TARGET_VISUAL_RADIUS});
         this.question.targets.forEach((s,i)=>this.createTarget(s,positions[i],plans[i],this.currentSkins[i%this.currentSkins.length],i));this.refresh();
     }
     private createTarget(spec:TargetSpec,pos:PortraitTargetPosition,motion:PortraitTargetMotionPlan,skin:typeof SKINS[number],i:number):void {

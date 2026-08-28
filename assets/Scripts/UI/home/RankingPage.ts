@@ -26,6 +26,9 @@ const { ccclass, executeInEditMode } = _decorator;
 
 const ROW_Y = [-28, -104, -180, -256, -332, -408, -484] as const;
 const DISPLAY_ORDER = [1, 0, 2, 3, 4, 5, 6, 7, 8, 9] as const;
+const BOARD_SCALE = 1.08;
+// Keep the paper's upper edge in place and let the enlarged board grow downwards.
+const BOARD_Y = -38;
 
 /** Runtime-built ranking page that shares Home's header and bottom navigation. */
 @ccclass('RankingPage')
@@ -81,6 +84,11 @@ export class RankingPage extends Component {
         if (!EDITOR) AppRuntime.audio.play('ui');
     }
 
+    public refreshFriendData(): void {
+        this.refreshScores();
+        this.refreshOpenDataLeaderboard();
+    }
+
     private buildView(): void {
         this.node.name = 'RankingPage';
         this.node.layer = Layers.Enum.UI_2D;
@@ -89,12 +97,15 @@ export class RankingPage extends Component {
         const title = this.makeNode(this.node, 'RankingTitle', 0, 505, 590, 308);
         this.attachTexture(title, 'textures/rank/ui/ranking_title');
 
+        const board = this.makeNode(this.node, 'RankingBoard', 0, BOARD_Y, C.designWidth, 1250);
+        board.setScale(BOARD_SCALE, BOARD_SCALE, 1);
+
         // The paper reaches behind the tabs. Create it first so its opaque top
         // edge cannot cover the tab artwork and touch targets.
-        const paper = this.makeNode(this.node, 'RankingPaper', 0, -58, 842, 1052);
+        const paper = this.makeNode(board, 'RankingPaper', 0, -58, 842, 1052);
         this.attachTexture(paper, 'textures/rank/ui/ranking_paper');
 
-        const tabs = this.makeNode(this.node, 'RankingTabs', 0, 345, 820, 188);
+        const tabs = this.makeNode(board, 'RankingTabs', 0, 345, 820, 188);
         this.attachTexture(tabs, 'textures/rank/ui/ranking_tabs');
         this.brawlSelection = tabs.getChildByName('TextureSprite');
         this.buildTrialSelection(tabs);
@@ -104,10 +115,10 @@ export class RankingPage extends Component {
         this.bindButton(brawlButton, () => this.selectMode('brawl'));
         this.bindButton(trialButton, () => this.selectMode('trial'));
 
-        this.buildPodium(this.node);
-        this.buildRows(this.node);
-        this.buildSelfRanking(this.node);
-        this.setupOpenDataLeaderboard();
+        this.buildPodium(board);
+        this.buildRows(board);
+        this.buildSelfRanking(board);
+        this.setupOpenDataLeaderboard(board);
     }
 
     private buildTrialSelection(parent: Node): void {
@@ -122,15 +133,15 @@ export class RankingPage extends Component {
 
     private buildPodium(parent: Node): void {
         const podium = [
-            { asset: 'ranking_silver', x: -250, y: 207, size: [186, 190] as [number, number], faceY: 203 },
-            { asset: 'ranking_gold', x: 0, y: 232, size: [212, 236] as [number, number], faceY: 222 },
-            { asset: 'ranking_bronze', x: 250, y: 207, size: [186, 190] as [number, number], faceY: 203 },
+            { asset: 'ranking_silver', x: -250, y: 207, size: [156, 190] as [number, number], faceX: -248, faceY: 204, avatarSize: 88 },
+            { asset: 'ranking_gold', x: 0, y: 232, size: [210, 236] as [number, number], faceX: -3, faceY: 219, avatarSize: 112 },
+            { asset: 'ranking_bronze', x: 250, y: 207, size: [156, 190] as [number, number], faceX: 250, faceY: 204, avatarSize: 92 },
         ];
 
         podium.forEach((item, index) => {
             const medal = this.makeNode(parent, `PodiumMedal_${index + 1}`, item.x, item.y, item.size[0], item.size[1]);
             this.attachTexture(medal, `textures/rank/ui/${item.asset}`);
-            const avatar = this.drawAvatar(parent, `PodiumAvatar_${index + 1}`, item.x, item.faceY, index === 1 ? 72 : 66, index);
+            const avatar = this.drawAvatar(parent, `PodiumAvatar_${index + 1}`, item.faceX, item.faceY, item.avatarSize);
             this.avatarSlots.push(avatar);
             this.localDataNodes.push(avatar);
             const name = this.label(parent, `PodiumName_${index + 1}`, '', item.x, 101, 210, 46, 31, C.ink);
@@ -139,7 +150,7 @@ export class RankingPage extends Component {
             const score = this.label(parent, `PodiumScore_${index + 1}`, '', item.x, 59, 180, 44, 30, C.ink);
             this.scoreLabels.push(score);
             this.localDataNodes.push(score.node);
-            const detail = this.label(parent, `PodiumDetail_${index + 1}`, '', item.x + 12, 27, 220, 28, 16, C.inkSoft);
+            const detail = this.label(parent, `PodiumDetail_${index + 1}`, '', item.x + 12, 27, 242, 32, 20, C.inkSoft);
             this.detailLabels.push(detail);
             this.localDataNodes.push(detail.node);
         });
@@ -148,9 +159,9 @@ export class RankingPage extends Component {
     private buildRows(parent: Node): void {
         ROW_Y.forEach((y, index) => {
             const rank = this.label(parent, `Rank_${index + 4}`, `${index + 4}`, -300, y, 60, 56, 29, C.ink);
-            const avatar = this.drawAvatar(parent, `RowAvatar_${index + 4}`, -242, y, 48, index + 3);
+            const avatar = this.drawAvatar(parent, `RowAvatar_${index + 4}`, -242, y, 40, true);
             const name = this.label(parent, `Name_${index + 4}`, '', -78, y + 13, 258, 34, 25, C.ink, 'left');
-            const detail = this.label(parent, `Detail_${index + 4}`, '', -51, y - 16, 312, 24, 16, C.inkSoft, 'left');
+            const detail = this.label(parent, `Detail_${index + 4}`, '', -42, y - 16, 330, 28, 20, C.inkSoft, 'left');
             this.avatarSlots.push(avatar);
             this.nameLabels.push(name);
             this.detailLabels.push(detail);
@@ -162,22 +173,22 @@ export class RankingPage extends Component {
     }
 
     private buildSelfRanking(parent: Node): void {
-        const card = this.makeNode(parent, 'MyRankingCard', 0, -638, 842, 300);
+        const card = this.makeNode(parent, 'MyRankingCard', 0, -638, 842, 252);
         this.attachTexture(card, 'textures/rank/ui/ranking_self');
         this.selfRankLabel = this.label(card, 'MyRank', '', -333, -5, 92, 92, 42, C.ink);
-        // The source card contains an old baked-in avatar. The larger paper
-        // cover and default avatar replace it completely without regenerating
-        // the surrounding card artwork.
-        this.selfAvatar = this.drawAvatar(card, 'MyAvatar', -250, -5, 118, 6, true);
+        this.selfAvatar = this.drawAvatar(card, 'MyAvatar', -253, -42, 114);
         const selfName = this.label(card, 'MyName', '我', -30, 18, 280, 52, 34, C.ink);
-        this.selfDetailLabel = this.label(card, 'MyDetail', '', -5, -33, 390, 32, 20, C.inkSoft);
+        this.selfDetailLabel = this.label(card, 'MyDetail', '', -5, -33, 390, 36, 22, C.inkSoft);
         this.selfScoreLabel = this.label(card, 'MyScore', '', 244, -38, 182, 72, 31, C.ink);
         this.localDataNodes.push(this.selfRankLabel.node, this.selfAvatar, selfName.node, this.selfDetailLabel.node, this.selfScoreLabel.node);
     }
 
-    private setupOpenDataLeaderboard(): void {
+    private setupOpenDataLeaderboard(parent: Node): void {
         if (EDITOR || !AppRuntime.platform.supportsFriendLeaderboard()) return;
-        const viewNode = this.makeNode(this.node, 'WechatFriendLeaderboard', 0, 0, C.designWidth, 1450);
+        // Shift the shared-canvas node down while its drawing coordinates are
+        // compensated upwards in openDataContext. Screen positions stay fixed,
+        // but the self avatar gains room below the former clipping boundary.
+        const viewNode = this.makeNode(parent, 'WechatFriendLeaderboard', 0, -20, C.designWidth, 1450);
         const view = viewNode.addComponent(SubContextView);
         view.fps = 10;
         this.openDataView = viewNode;
@@ -217,6 +228,7 @@ export class RankingPage extends Component {
             },
         });
         const authorizedAvatar = EDITOR ? undefined : AppRuntime.platform.authorizedUserProfile()?.avatarUrl;
+        const usesOpenData = Boolean(this.openDataView);
         DISPLAY_ORDER.forEach((rankIndex, displayIndex) => {
             const entry = snapshot.top[rankIndex];
             const scoreLabel = this.scoreLabels[displayIndex];
@@ -227,12 +239,12 @@ export class RankingPage extends Component {
             if (detailLabel) detailLabel.string = entry ? this.detailText(entry) : '';
             const avatarUrl = entry?.avatarUrl ?? (entry?.isSelf ? authorizedAvatar : undefined);
             const avatarSlot = this.avatarSlots[displayIndex];
-            if (avatarSlot) this.updateAvatar(avatarSlot, avatarUrl);
+            if (avatarSlot && !usesOpenData) this.updateAvatar(avatarSlot, avatarUrl);
         });
         if (this.selfRankLabel) this.selfRankLabel.string = `${snapshot.self.rank}`;
         if (this.selfScoreLabel) this.selfScoreLabel.string = this.scoreText(snapshot.self);
         if (this.selfDetailLabel) this.selfDetailLabel.string = this.detailText(snapshot.self);
-        if (this.selfAvatar) this.updateAvatar(this.selfAvatar, snapshot.self.avatarUrl ?? authorizedAvatar);
+        if (this.selfAvatar && !usesOpenData) this.updateAvatar(this.selfAvatar, snapshot.self.avatarUrl ?? authorizedAvatar);
     }
 
     private scoreText(entry: LeaderboardEntry): string {
@@ -242,7 +254,7 @@ export class RankingPage extends Component {
     private detailText(entry: LeaderboardEntry): string {
         if (this.mode === 'trial') return `${entry.trial?.answeredCount ?? 0}题 · ${percent(entry.trial?.accuracy ?? 0)}`;
         const data = entry.brawl!;
-        return `存活 ${duration(data.survivalMs)} · ${data.answeredCount}题 · C${data.maxCombo} · ${percent(data.accuracy)}`;
+        return `${data.answeredCount}题 · C${data.maxCombo} · ${percent(data.accuracy)}`;
     }
 
     private attachTexture(parent: Node, resourcePath: string): void {
@@ -264,58 +276,51 @@ export class RankingPage extends Component {
         });
     }
 
-    private drawAvatar(parent: Node, name: string, x: number, y: number, size: number, _variant: number, coverBaked = false): Node {
+    private drawAvatar(parent: Node, name: string, x: number, y: number, size: number, drawOutline = false): Node {
         const slot = this.makeNode(parent, name, x, y, size, size);
-        if (coverBaked) {
-            const cover = this.graphics(slot, 'BakedAvatarCover', 0, 0, size, size);
-            cover.fillColor = C.paperRaised;
-            cover.circle(0, 0, size * 0.5);
-            cover.fill();
+        if (drawOutline) {
+            const placeholder = this.graphics(slot, 'CircularPlaceholder', 0, 0, size, size);
+            placeholder.fillColor = C.paperRaised;
+            placeholder.strokeColor = C.inkSoft;
+            placeholder.lineWidth = 2;
+            placeholder.circle(0, 0, size * 0.46);
+            placeholder.fill();
+            placeholder.stroke();
         }
 
-        const cropSize = size * 0.82;
-        const maskNode = this.makeNode(slot, 'DefaultAvatarMask', 0, 0, cropSize, cropSize);
-        const mask = maskNode.addComponent(Mask);
-        mask.type = Mask.Type.GRAPHICS_ELLIPSE;
-        mask.segments = 48;
-        const artwork = this.makeNode(maskNode, 'Artwork', 0, 0, cropSize * 1.55, cropSize * 1.55);
-        const sprite = artwork.addComponent(Sprite);
-        sprite.sizeMode = Sprite.SizeMode.CUSTOM;
-        sprite.type = Sprite.Type.SIMPLE;
-        resources.load('textures/common/default_avatar', ImageAsset, (error, image) => {
-            if (error || !image || !artwork.isValid) {
-                console.warn('[Ranking] Default avatar failed to load', error);
-                return;
-            }
-            const frame = SpriteFrame.createWithImage(image);
-            frame.packable = false;
-            sprite.spriteFrame = frame;
-        });
+        // This node records the exact future avatar bounds. Do not add a Mask
+        // until an actual avatar exists: an empty GraphicsEllipse mask renders
+        // as an extra paper-colored disk on some WeChat devices.
+        const placeholder = this.makeNode(slot, 'AvatarPlaceholder', 0, 0, size, size);
+        placeholder.active = false;
         return slot;
     }
 
     private updateAvatar(slot: Node, avatarUrl: string | undefined): void {
-        const cropSize = slot.getComponent(UITransform)!.contentSize.width * 0.82;
-        let maskNode = slot.getChildByName('AuthorizedAvatarMask');
-        if (!maskNode) {
-            maskNode = this.makeNode(slot, 'AuthorizedAvatarMask', 0, -cropSize * 0.04, cropSize, cropSize);
-            const mask = maskNode.addComponent(Mask);
-            mask.type = Mask.Type.GRAPHICS_ELLIPSE;
-            mask.segments = 48;
-            const artwork = this.makeNode(maskNode, 'Artwork', 0, 0, cropSize, cropSize);
-            const sprite = artwork.addComponent(Sprite);
-            sprite.sizeMode = Sprite.SizeMode.CUSTOM;
-            sprite.type = Sprite.Type.SIMPLE;
-        }
+        const placeholder = slot.getChildByName('AvatarPlaceholder');
+        if (!placeholder) return;
         if (!avatarUrl) {
             this.avatarRequests.delete(slot);
-            maskNode.active = false;
+            placeholder.active = false;
             return;
         }
-        maskNode.active = true;
+        placeholder.active = true;
+        let mask = placeholder.getComponent(Mask);
+        if (!mask) {
+            mask = placeholder.addComponent(Mask);
+            mask.type = Mask.Type.GRAPHICS_ELLIPSE;
+            mask.segments = 48;
+        }
+        let artwork = placeholder.getChildByName('Artwork');
+        if (!artwork) {
+            const size = placeholder.getComponent(UITransform)!.contentSize;
+            artwork = this.makeNode(placeholder, 'Artwork', 0, 0, size.width, size.height);
+            const artworkSprite = artwork.addComponent(Sprite);
+            artworkSprite.sizeMode = Sprite.SizeMode.CUSTOM;
+            artworkSprite.type = Sprite.Type.SIMPLE;
+        }
+        const sprite = artwork.getComponent(Sprite)!;
         this.avatarRequests.set(slot, avatarUrl);
-        const sprite = maskNode.getChildByName('Artwork')?.getComponent(Sprite);
-        if (!sprite) return;
         const cached = this.avatarFrames.get(avatarUrl);
         if (cached) {
             sprite.spriteFrame = cached;
@@ -384,12 +389,6 @@ export class RankingPage extends Component {
         node.on(Node.EventType.TOUCH_END, release, this);
         node.on(Node.EventType.TOUCH_CANCEL, release, this);
     }
-}
-
-function duration(milliseconds: number): string {
-    const seconds = Math.max(0, Math.floor(milliseconds / 1_000));
-    const minutes = Math.floor(seconds / 60);
-    return minutes > 0 ? `${minutes}:${String(seconds % 60).padStart(2, '0')}` : `${seconds}s`;
 }
 
 function percent(value: number): string { return `${Math.round(Math.max(0, Math.min(1, value)) * 100)}%`; }

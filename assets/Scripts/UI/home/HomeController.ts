@@ -72,6 +72,7 @@ export class HomeController extends Component {
     private bottomNavigation: Node | null = null;
     private settingsModal: Node | null = null;
     private friendChallengeModal: Node | null = null;
+    private featureNoticeModal: Node | null = null;
     private removePendingChallengeListener: (() => void) | null = null;
 
     private levelLabel: Label | null = null;
@@ -224,12 +225,17 @@ export class HomeController extends Component {
 
     public onTopicClick(): void {
         this.closeSettings();
-        console.log('[Home] Topic');
+        this.pulseHaptic();
+        this.showFeatureUnavailable();
     }
 
     public onRankClick(): void {
         this.closeSettings();
         this.showPage('rank');
+        void AppRuntime.platform.authorizeFriendInteraction().then((result) => {
+            if (result.status === 'authorized') this.rankingPage?.getComponent(RankingPage)?.refreshFriendData();
+            else if (result.status !== 'unsupported') console.warn('[Home] Friend leaderboard authorization failed:', result.reason);
+        });
     }
 
     public onProfileClick(): void {
@@ -644,19 +650,10 @@ export class HomeController extends Component {
             authorizationLabel.string = message ?? (profile ? `微信头像　${profile.nickName || '已授权'}` : '微信头像　点击授权');
         };
         refreshAuthorization();
-        this.bindButton(authorization, () => {
-            authorizationLabel.string = '微信头像　授权中…';
-            void AppRuntime.platform.authorizeUserProfile().then((result) => {
-                if (!authorization.isValid) return;
-                if (result.status === 'authorized') {
-                    refreshAuthorization();
-                    void AppRuntime.syncLeaderboard();
-                } else if (result.status === 'unsupported') refreshAuthorization('微信头像　请在微信真机授权');
-                else refreshAuthorization('微信头像　未授权，点击重试');
-            });
-        });
-        if (!EDITOR) {
-            AppRuntime.platform.showUserAuthorizationButton({
+        const installWechatAuthorization = (): void => {
+            if (EDITOR || !authorization.isValid) return;
+            authorizationLabel.string = '微信头像　正在准备授权…';
+            const installed = AppRuntime.platform.showUserAuthorizationButton({
                 centerX: 0, centerY: -160, width: 500, height: 74,
                 viewportWidth: visible.width, viewportHeight: visible.height,
             }, (result) => {
@@ -664,9 +661,13 @@ export class HomeController extends Component {
                 if (result.status === 'authorized') {
                     refreshAuthorization();
                     void AppRuntime.syncLeaderboard();
-                } else refreshAuthorization('微信头像　未授权，点击重试');
+                } else if (result.status === 'unsupported') refreshAuthorization('微信授权接口不可用，请查看日志');
+                else refreshAuthorization(result.reason ?? '微信头像　未授权，点击重试');
             });
-        }
+            if (!installed) refreshAuthorization('微信授权接口不可用，请真机重试');
+        };
+        this.bindButton(authorization, installWechatAuthorization);
+        if (!EDITOR) this.scheduleOnce(installWechatAuthorization, 0);
         const close = this.makeNode(modal, 'CloseSettings', 0, -300, 300, 76);
         const closeG = close.addComponent(Graphics); closeG.fillColor = C.yellow; closeG.strokeColor = C.ink; closeG.lineWidth = 4; closeG.roundRect(-150, -38, 300, 76, 14); closeG.fill(); closeG.stroke();
         this.label(close, 'Label', '完成', 0, 0, 260, 60, 30, C.ink, 'center');
@@ -819,6 +820,22 @@ export class HomeController extends Component {
     private closeFriendChallengeModal(): void {
         if (this.friendChallengeModal?.isValid) this.friendChallengeModal.destroy();
         this.friendChallengeModal = null;
+    }
+
+    private showFeatureUnavailable(): void {
+        this.closeFeatureNotice();
+        const { modal, panel } = this.makeChallengeModal('FeatureUnavailable', 560, 400);
+        this.featureNoticeModal = modal;
+        this.label(panel, 'Title', '主题', 0, 92, 420, 70, 42, C.ink, 'center');
+        this.label(panel, 'Message', '功能暂未开放', 0, 18, 440, 56, 28, C.inkSoft, 'center');
+        const close = this.makeChoiceButton(panel, 'CloseFeatureNotice', '我知道了', 0, -100, 260, 72);
+        close.setSelected(true);
+        this.bindButton(close.node, () => this.closeFeatureNotice());
+    }
+
+    private closeFeatureNotice(): void {
+        if (this.featureNoticeModal?.isValid) this.featureNoticeModal.destroy();
+        this.featureNoticeModal = null;
     }
 
     private makeChoiceButton(parent: Node, name: string, value: string, x: number, y: number, width: number, height: number): {

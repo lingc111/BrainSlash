@@ -281,22 +281,22 @@ export class QuestionGenerator {
             const answer = this.rng.int(2, Math.min(12, 6 + stage * 3));
             const factor = this.rng.int(2, Math.min(12, 5 + stage * 3));
             const product = answer * factor;
-            return this.makeChoice(family, `□×${factor}=${product}`, answer, [answer - 2, answer - 1, answer + 1, answer + 2, factor], stage);
+            return this.makeChoice(family, `( )×${factor}=${product}`, answer, [answer - 2, answer - 1, answer + 1, answer + 2, factor], stage);
         }
         const left = this.rng.int(2, ceiling);
         const right = this.rng.int(2, ceiling);
         if (family.variant === 0) {
-            return this.makeChoice(family, `□+${right}=${left + right}`, left, [left - 2, left - 1, left + 1, left + 2], stage);
+            return this.makeChoice(family, `( )+${right}=${left + right}`, left, [left - 2, left - 1, left + 1, left + 2], stage);
         }
         if (family.variant === 1) {
-            return this.makeChoice(family, `${left}+□=${left + right}`, right, [right - 2, right - 1, right + 1, right + 2], stage);
+            return this.makeChoice(family, `${left}+( )=${left + right}`, right, [right - 2, right - 1, right + 1, right + 2], stage);
         }
         const result = this.rng.int(2, ceiling);
         const minuend = result + right;
         if (family.variant === 2) {
-            return this.makeChoice(family, `□-${right}=${result}`, minuend, [minuend - 2, minuend - 1, minuend + 1, minuend + 2], stage);
+            return this.makeChoice(family, `( )-${right}=${result}`, minuend, [minuend - 2, minuend - 1, minuend + 1, minuend + 2], stage);
         }
-        return this.makeChoice(family, `${minuend}-□=${result}`, right, [right - 2, right - 1, right + 1, right + 2], stage);
+        return this.makeChoice(family, `${minuend}-( )=${result}`, right, [right - 2, right - 1, right + 1, right + 2], stage);
     }
 
     private mathEquation(family: ContentFamilySpec, stage: Stage): QuestionInstance {
@@ -426,7 +426,7 @@ export class QuestionGenerator {
     private hanziFill(family: ContentFamilySpec, stage: Stage): QuestionInstance {
         const entry = this.pickFact('idioms', IDIOMS, (item) => `idiom:${item.text}`);
         const answer = entry.text[entry.missingIndex];
-        const prompt = `${entry.text.slice(0, entry.missingIndex)}□${entry.text.slice(entry.missingIndex + 1)}`;
+        const prompt = `${entry.text.slice(0, entry.missingIndex)}( )${entry.text.slice(entry.missingIndex + 1)}`;
         return this.makeChoice(family, prompt, answer, entry.wrong, stage);
     }
 
@@ -557,7 +557,7 @@ export class QuestionGenerator {
     }
 
     private appendBomb(targets: TargetSpec[]): void {
-        if (!this.directive.rules.includes('bomb')) return;
+        if (!(this.directive.bombEnabled ?? this.directive.rules.includes('bomb'))) return;
         const insertIndex = this.rng.int(0, targets.length);
         targets.splice(insertIndex, 0, { id: 'bomb', text: '爆', isBomb: true });
     }

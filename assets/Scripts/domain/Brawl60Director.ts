@@ -29,6 +29,8 @@ export interface BrawlQuestionDirective {
     speed: number;
     family: ContentFamilySpec;
     rules: RuleId[];
+    /** Bomb is a gameplay hazard, independent from the selectable slash rules. */
+    bombEnabled?: boolean;
 }
 
 export const BRAWL_PHASES: readonly BrawlPhaseSettings[] = [
@@ -133,12 +135,17 @@ const TARGET_CAP_BY_KIND: Readonly<Record<ContentFamilyKind, number>> = {
     'history-myth': 4,
 };
 
-export function targetCountForFamily(baseCount: number, kind: ContentFamilyKind, rules: readonly RuleId[]): number {
+export function targetCountForFamily(
+    baseCount: number,
+    kind: ContentFamilyKind,
+    rules: readonly RuleId[],
+    bombEnabled = rules.includes('bomb'),
+): number {
     const activeSlashRuleCount = slashRuleCount(rules);
     const contentMinimum = kind === 'hanzi-order' || (rules.includes('multi') && rules.includes('reverse')) ? 4 : 2;
     // Reserve one of the six portrait slots for an additive bomb while
     // retaining the requested number of answer candidates.
-    const bombCap = rules.includes('bomb') ? 5 : TARGET_CAP_BY_KIND[kind];
+    const bombCap = bombEnabled ? 5 : TARGET_CAP_BY_KIND[kind];
     const dualRuleCap = activeSlashRuleCount >= 2 ? 4 : TARGET_CAP_BY_KIND[kind];
     const readabilityCap = Math.min(TARGET_CAP_BY_KIND[kind], bombCap, dualRuleCap);
     return Math.max(contentMinimum, Math.min(baseCount, readabilityCap));
@@ -199,11 +206,12 @@ export class FriendChallengeDirector {
         return {
             phase: phase.id,
             difficultyStage: phase.difficultyStage,
-            targetCount: targetCountForFamily(phase.targetCount, family.kind, rules),
+            targetCount: targetCountForFamily(phase.targetCount, family.kind, rules, true),
             questionTimeMs: phase.questionTimeMs,
             speed: phase.speed,
             family,
             rules: [...rules],
+            bombEnabled: true,
         };
     }
 

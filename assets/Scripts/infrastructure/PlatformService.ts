@@ -12,6 +12,21 @@ type WxApi = {
         success: (result: { userInfo?: { nickName?: string; avatarUrl?: string } }) => void;
         fail: (error: unknown) => void;
     }) => void;
+    getSetting?: (options: {
+        success: (result: { authSetting?: Record<string, boolean> }) => void;
+        fail?: (error: unknown) => void;
+    }) => void;
+    authorize?: (options: {
+        scope: 'scope.WxFriendInteraction';
+        success: () => void;
+        fail: (error: unknown) => void;
+    }) => void;
+    getUserInfo?: (options: {
+        lang: 'zh_CN';
+        withCredentials: boolean;
+        success: (result: { userInfo?: { nickName?: string; avatarUrl?: string } }) => void;
+        fail?: (error: unknown) => void;
+    }) => void;
     setUserCloudStorage?: (options: {
         KVDataList: Array<{ key: string; value: string }>;
         success?: () => void;
@@ -29,7 +44,7 @@ type WxApi = {
         withCredentials: boolean;
         style: Record<string, string | number>;
     }) => {
-        onTap: (listener: (result: { userInfo?: { nickName?: string; avatarUrl?: string } }) => void) => void;
+        onTap: (listener: (result: { errMsg?: string; userInfo?: { nickName?: string; avatarUrl?: string } }) => void) => void;
         destroy: () => void;
     };
 };
@@ -60,12 +75,14 @@ export interface AuthorizedUserProfile {
 export interface AuthorizationResult {
     readonly status: 'authorized' | 'cancelled' | 'unsupported';
     readonly profile?: AuthorizedUserProfile;
+    readonly reason?: string;
 }
 
 export class PlatformService {
     private userProfile: AuthorizedUserProfile | null = this.readStoredProfile();
     private readonly userProfileListeners = new Set<() => void>();
     private userInfoButton: ReturnType<NonNullable<WxApi['createUserInfoButton']>> | null = null;
+    private authorizationSession = 0;
     private get wx(): WxApi | undefined { return (globalThis as { wx?: WxApi }).wx; }
     public vibrate(enabled: boolean, type: 'light' | 'medium' | 'heavy' = 'light'): void { if (enabled) this.wx?.vibrateShort?.({ type }); }
     public share(payload: FriendChallengePayload): void {
@@ -107,42 +124,104 @@ export class PlatformService {
         });
     }
 
+    /** Required before friend-cloud APIs are used in the open data context. */
+    public authorizeFriendInteraction(): Promise<AuthorizationResult> {
+        const wxApi = this.wx;
+        if (!wxApi?.authorize) return Promise.resolve({ status: 'unsupported', reason: '微信朋友信息授权接口不可用' });
+        return new Promise((resolve) => {
+            wxApi.authorize!({
+                scope: 'scope.WxFriendInteraction',
+                success: () => resolve({ status: 'authorized' }),
+                fail: (error) => {
+                    const reason = wxErrorMessage(error) || '微信朋友信息授权失败';
+                    console.warn('[Platform] scope.WxFriendInteraction authorization failed:', reason);
+                    resolve({ status: 'cancelled', reason: normalizeAuthorizationFailure(reason) });
+                },
+            });
+        });
+    }
+
     /** Places WeChat's required native authorization button over a Cocos UI row. */
     public showUserAuthorizationButton(rect: AuthorizationButtonRect, listener: (result: AuthorizationResult) => void): boolean {
         this.hideUserAuthorizationButton();
-        const createButton = this.wx?.createUserInfoButton;
-        const info = this.wx?.getSystemInfoSync?.();
-        if (!createButton || !info || rect.viewportWidth <= 0 || rect.viewportHeight <= 0) return false;
-        const left = (rect.centerX + rect.viewportWidth / 2 - rect.width / 2) / rect.viewportWidth * info.screenWidth;
-        const top = (rect.viewportHeight / 2 - rect.centerY - rect.height / 2) / rect.viewportHeight * info.screenHeight;
-        const button = createButton({
-            type: 'text', text: '微信头像授权', lang: 'zh_CN', withCredentials: true,
-            style: {
-                left, top,
-                width: rect.width / rect.viewportWidth * info.screenWidth,
-                height: rect.height / rect.viewportHeight * info.screenHeight,
-                lineHeight: rect.height / rect.viewportHeight * info.screenHeight,
-                backgroundColor: 'rgba(0,0,0,0)', borderColor: 'rgba(0,0,0,0)', borderWidth: 0,
-                borderRadius: 0, color: 'rgba(0,0,0,0)', fontSize: 1, textAlign: 'center',
-            },
-        });
-        this.userInfoButton = button;
-        button.onTap((result) => {
+        const wxApi = this.wx;
+        if (!wxApi?.createUserInfoButton || !wxApi.getSystemInfoSync || rect.viewportWidth <= 0 || rect.viewportHeight <= 0) {
+            console.warn('[Platform] wx.createUserInfoButton is unavailable');
+            return false;
+        }
+        const session = this.authorizationSession;
+        const finish = (result: { errMsg?: string; userInfo?: { nickName?: string; avatarUrl?: string } }): void => {
+            if (session !== this.authorizationSession) return;
             const nickName = result.userInfo?.nickName?.trim() ?? '';
             const avatarUrl = result.userInfo?.avatarUrl?.trim() ?? '';
             if (!avatarUrl) {
-                listener({ status: 'cancelled' });
+                const reason = result.errMsg || '微信未返回头像信息';
+                console.warn('[Platform] WeChat user authorization did not return a profile:', reason);
+                listener({ status: 'cancelled', reason: normalizeAuthorizationFailure(reason) });
                 return;
             }
             const profile = { nickName: nickName || '我', avatarUrl };
             this.setAuthorizedUserProfile(profile);
             this.hideUserAuthorizationButton();
             listener({ status: 'authorized', profile });
-        });
+        };
+        const createNativeButton = (): void => {
+            if (session !== this.authorizationSession) return;
+            try {
+                const info = wxApi.getSystemInfoSync!();
+                const left = (rect.centerX + rect.viewportWidth / 2 - rect.width / 2) / rect.viewportWidth * info.screenWidth;
+                const top = (rect.viewportHeight / 2 - rect.centerY - rect.height / 2) / rect.viewportHeight * info.screenHeight;
+                const height = rect.height / rect.viewportHeight * info.screenHeight;
+                const button = wxApi.createUserInfoButton!({
+                    type: 'text', text: '微信头像　点击授权', lang: 'zh_CN', withCredentials: true,
+                    style: {
+                        left, top,
+                        width: rect.width / rect.viewportWidth * info.screenWidth,
+                        height, lineHeight: height,
+                        backgroundColor: '#fffaf0', borderColor: '#1f1d19', borderWidth: 1,
+                        borderRadius: 6, color: '#1f1d19', fontSize: Math.max(14, Math.round(height * 0.38)), textAlign: 'center',
+                    },
+                });
+                this.userInfoButton = button;
+                button.onTap(finish);
+                console.info('[Platform] WeChat user-info button created', { left, top, height });
+            } catch (error) {
+                console.error('[Platform] Failed to create WeChat user-info button', error);
+                listener({ status: 'unsupported', reason: String(error) });
+            }
+        };
+        if (wxApi.getSetting && wxApi.getUserInfo) {
+            wxApi.getSetting({
+                success: (setting) => {
+                    if (session !== this.authorizationSession) return;
+                    if (setting.authSetting?.['scope.userInfo']) {
+                        wxApi.getUserInfo!({
+                            lang: 'zh_CN', withCredentials: true,
+                            success: finish,
+                            fail: (error) => {
+                                const reason = wxErrorMessage(error);
+                                if (isPrivacyUsageUndeclared(reason)) {
+                                    console.error('[Platform] WeChat privacy usage is not declared in mp.weixin.qq.com:', reason);
+                                    listener({ status: 'cancelled', reason: normalizeAuthorizationFailure(reason) });
+                                } else {
+                                    console.warn('[Platform] wx.getUserInfo failed; showing authorization button', error);
+                                    createNativeButton();
+                                }
+                            },
+                        });
+                    } else createNativeButton();
+                },
+                fail: (error) => {
+                    console.warn('[Platform] wx.getSetting failed; showing authorization button', error);
+                    createNativeButton();
+                },
+            });
+        } else createNativeButton();
         return true;
     }
 
     public hideUserAuthorizationButton(): void {
+        this.authorizationSession += 1;
         try { this.userInfoButton?.destroy(); } catch { /* The native button may already be destroyed by WeChat. */ }
         this.userInfoButton = null;
     }
@@ -216,4 +295,19 @@ export class PlatformService {
         if (this.wx?.removeStorageSync) this.wx.removeStorageSync(PROFILE_STORAGE_KEY);
         else (globalThis as { localStorage?: Storage }).localStorage?.removeItem(PROFILE_STORAGE_KEY);
     }
+}
+
+function wxErrorMessage(error: unknown): string {
+    if (typeof error === 'string') return error;
+    if (error && typeof error === 'object' && 'errMsg' in error) return String((error as { errMsg?: unknown }).errMsg ?? '');
+    return String(error ?? '');
+}
+
+function isPrivacyUsageUndeclared(reason: string): boolean {
+    const normalized = reason.toLowerCase();
+    return normalized.includes('announce your privacy usage') || normalized.includes('privacy usage');
+}
+
+function normalizeAuthorizationFailure(reason: string): string {
+    return isPrivacyUsageUndeclared(reason) ? '请先在微信公众平台配置隐私保护指引' : reason;
 }

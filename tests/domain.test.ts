@@ -35,6 +35,7 @@ import {
     createFriendChallengePayload,
     DEFAULT_FRIEND_CHALLENGE_CONFIG,
     encodeFriendChallengeQuery,
+    FRIEND_CHALLENGE_RULES,
     friendTargetPresentation,
     normalizeFriendChallengeConfig,
     parseFriendChallengeQuery,
@@ -78,6 +79,7 @@ import {
     resolveSoftTargetSeparation,
 } from '../assets/Scripts/UI/PortraitTargetMotion.ts';
 import { ACTIVE_TARGET_SKINS, ALL_TARGET_SKINS, COLOR_QUESTION_TARGET_SKIN, TARGET_SKIN_VISUAL_SCALE, targetContentLayout, targetShapeForSkin, targetSkinForAnswer, targetSkinPixelScale, targetSkinVisualScale, uniqueColorTargetSkins } from '../assets/Scripts/UI/TargetSkinSizing.ts';
+import { targetTextPresentation } from '../assets/Scripts/UI/TargetTypography.ts';
 
 function pipeline(seed: string): { director: Brawl60Director; generator: QuestionGenerator } {
     return {
@@ -285,12 +287,13 @@ test('friend challenge config validates canonical themes, rules, durations and c
     const valid = normalizeFriendChallengeConfig({ themeIds: ['history', 'math'], enabledRules: ['bomb', 'reverse'], durationMs: 120_000 });
     assert.deepEqual(valid, {
         valid: true,
-        config: { themeIds: ['math', 'history'], enabledRules: ['reverse', 'bomb'], durationMs: 120_000 },
+        config: { themeIds: ['math', 'history'], enabledRules: ['reverse'], durationMs: 120_000 },
     });
+    assert.deepEqual(FRIEND_CHALLENGE_RULES, ['standard', 'reverse', 'rotate', 'multi', 'order']);
 });
 
 test('friend challenge V2 parser rejects tampering and preserves custom configuration', () => {
-    const config: FriendChallengeConfig = { themeIds: ['math', 'english'], enabledRules: ['standard', 'reverse', 'bomb'], durationMs: 90_000 };
+    const config: FriendChallengeConfig = { themeIds: ['math', 'english'], enabledRules: ['standard', 'reverse'], durationMs: 90_000 };
     const payload = createFriendChallengePayload({
         entry: { mode: 'friendChallenge', seed: 'custom-seed', contentVersion: CONTENT_VERSION, challengeConfig: config, challengeRole: 'creator' },
         score: 1_234,
@@ -303,6 +306,9 @@ test('friend challenge V2 parser rejects tampering and preserves custom configur
         assert.equal(parsed.entry.challengeRole, 'responder');
         assert.equal(parsed.entry.targetScore, 1_234);
     }
+    const legacy = parseFriendChallengeQuery({ ...query, rules: 'standard,reverse,bomb' }, CONTENT_VERSION);
+    assert.equal(legacy.status, 'valid');
+    if (legacy.status === 'valid') assert.deepEqual(legacy.entry.challengeConfig, config);
     assert.equal(parseFriendChallengeQuery({ ...query, duration: '75000' }, CONTENT_VERSION).status, 'invalid');
     assert.equal(parseFriendChallengeQuery({ ...query, themes: 'math,math' }, CONTENT_VERSION).status, 'invalid');
     assert.equal(parseFriendChallengeQuery({ ...query, rules: 'multi', themes: 'geography' }, CONTENT_VERSION).status, 'invalid');
@@ -311,7 +317,7 @@ test('friend challenge V2 parser rejects tampering and preserves custom configur
 test('friend challenge director balances themes and remains deterministic with legal rules', () => {
     const config: FriendChallengeConfig = {
         themeIds: ['math', 'english', 'history'],
-        enabledRules: ['standard', 'reverse', 'rotate', 'multi', 'order', 'bomb'],
+        enabledRules: ['standard', 'reverse', 'rotate', 'multi', 'order'],
         durationMs: 120_000,
     };
     const a = new FriendChallengeDirector(new SeededRng('friend-director'), config);
@@ -323,11 +329,29 @@ test('friend challenge director balances themes and remains deterministic with l
             const left = a.next(elapsed);
             const right = b.next(elapsed);
             assert.deepEqual(left, right);
+            assert.equal(left.bombEnabled, true);
+            assert.ok(!left.rules.includes('bomb'));
             seen.add(left.family.theme);
             const legalKeys = legalRuleSetsForTheme(left.family.theme, config.enabledRules).map((rules) => [...rules].sort().join('+'));
             assert.ok(legalKeys.includes([...left.rules].sort().join('+')));
         }
         assert.deepEqual([...seen].sort(), [...config.themeIds].sort());
+    }
+});
+
+test('friend challenge treats bombs as an always-on mechanic instead of a configured rule', () => {
+    const config: FriendChallengeConfig = {
+        themeIds: ['math'], enabledRules: ['standard'], durationMs: 60_000,
+    };
+    const director = new FriendChallengeDirector(new SeededRng('friend-bomb-director'), config);
+    const generator = new QuestionGenerator(new SeededRng('friend-bomb-questions'), GAMEPLAY_CONFIG);
+
+    for (let index = 0; index < 20; index++) {
+        const directive = director.next(index * 2_000);
+        const question = generator.next(directive);
+        assert.equal(directive.bombEnabled, true);
+        assert.ok(!question.activeRules.includes('bomb'));
+        assert.equal(question.targets.filter((target) => target.isBomb).length, 1);
     }
 });
 
@@ -409,6 +433,8 @@ test('slash rule labels describe the gesture and ignore bomb distractors', () =>
     assert.equal(questionFlightDurationSeconds(2.5, ['multi', 'rotate']), 4.15);
     assert.equal(questionFlightDurationSeconds(2.5, ['multi', 'order']), 4.15);
     assert.equal(questionFlightDurationSeconds(2.5, ['bomb', 'multi']), 3.85);
+    assert.equal(questionFlightDurationSeconds(2.25, ['standard'], 5), 3);
+    assert.equal(questionFlightDurationSeconds(2.25, ['bomb'], 5), 3);
     const shortTargets = [{ id: 'a', text: '三字内' }, { id: 'b', text: '答案' }];
     const longTargets = [{ id: 'a', text: '四字答案' }, { id: 'b', text: '答案' }];
     assert.deepEqual(rulesForReadableTargets(['rotate'], shortTargets), ['rotate']);
@@ -416,6 +442,28 @@ test('slash rule labels describe the gesture and ignore bomb distractors', () =>
     assert.deepEqual(rulesForReadableTargets(['multi', 'rotate'], longTargets), ['multi']);
     assert.deepEqual(rulesForReadableTargets(['order', 'rotate'], longTargets), ['order']);
     assert.deepEqual(rulesForReadableTargets(['bomb', 'rotate'], [{ id: 'bomb', text: '四字炸弹', isBomb: true }, ...shortTargets]), ['bomb', 'rotate']);
+});
+
+test('four-character Chinese target answers use a large two-line layout', () => {
+    const presentation = targetTextPresentation('清洁工具');
+    assert.equal(presentation.displayText, '清洁\n工具');
+    assert.equal(presentation.fontSize, 42);
+    assert.ok(presentation.minimumHeightScale >= 1.3);
+    assert.equal(targetTextPresentation('book').displayText, 'book');
+});
+
+test('fill-in prompts show a spaced parenthesis placeholder', () => {
+    const fillFamilies = CONTENT_FAMILIES.filter((family) => family.kind === 'math-missing' || family.kind === 'hanzi-fill');
+    assert.ok(fillFamilies.length > 0);
+    for (const family of fillFamilies) {
+        const generator = new QuestionGenerator(new SeededRng(`placeholder-${family.id}`), GAMEPLAY_CONFIG);
+        const question = generator.next({
+            phase: 'action', difficultyStage: 1, targetCount: 4, questionTimeMs: 2_600,
+            speed: 1, family, rules: ['standard'],
+        });
+        assert.ok(question.prompt.text.includes('( )'), `${family.id}: ${question.prompt.text}`);
+        assert.equal(question.prompt.text.includes('□'), false, family.id);
+    }
 });
 
 test('order and multi gestures resolve once and reject incomplete strokes', () => {
@@ -915,7 +963,7 @@ test('portrait target formations use at most two targets per row with clear spac
 });
 
 test('friend challenge creator result is shareable without comparing against a target', () => {
-    const config: FriendChallengeConfig = { themeIds: ['math', 'vision'], enabledRules: ['reverse', 'bomb'], durationMs: 90_000 };
+    const config: FriendChallengeConfig = { themeIds: ['math', 'vision'], enabledRules: ['reverse'], durationMs: 90_000 };
     const commit = finalizeResult({
         entry: { mode: 'friendChallenge', seed: 'creator', contentVersion: CONTENT_VERSION, challengeConfig: config, challengeRole: 'creator' },
         score: 980, maxCombo: 8, correctCount: 9, errorCount: 2, accuracy: 9 / 11,

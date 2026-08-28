@@ -44,3 +44,17 @@ test('native WeChat authorization button normalizes and stores the approved prof
     assert.ok(storage.has('brain-slash.wechat-profile.v1'));
     delete (globalThis as { wx?: unknown }).wx;
 });
+
+test('friend leaderboard requests the dedicated WeChat friend-interaction scope', async () => {
+    let requestedScope = '';
+    (globalThis as { wx?: unknown }).wx = {
+        authorize(options: { scope: string; success: () => void }) {
+            requestedScope = options.scope;
+            options.success();
+        },
+    };
+    const result = await new PlatformService().authorizeFriendInteraction();
+    assert.equal(result.status, 'authorized');
+    assert.equal(requestedScope, 'scope.WxFriendInteraction');
+    delete (globalThis as { wx?: unknown }).wx;
+});

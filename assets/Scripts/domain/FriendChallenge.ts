@@ -16,7 +16,7 @@ const MAX_TARGET_SCORE = 100_000_000;
 export const FRIEND_CHALLENGE_THEMES: readonly ThemeId[] = [
     'math', 'vision', 'english', 'hanzi', 'geography', 'life', 'knowledge', 'history',
 ];
-export const FRIEND_CHALLENGE_RULES: readonly RuleId[] = ['standard', 'reverse', 'rotate', 'multi', 'order', 'bomb'];
+export const FRIEND_CHALLENGE_RULES: readonly Exclude<RuleId, 'bomb'>[] = ['standard', 'reverse', 'rotate', 'multi', 'order'];
 export const FRIEND_CHALLENGE_DURATIONS: readonly FriendChallengeDurationMs[] = [60_000, 90_000, 120_000];
 export const DEFAULT_FRIEND_CHALLENGE_CONFIG: Readonly<FriendChallengeConfig> = {
     themeIds: [...FRIEND_CHALLENGE_THEMES], enabledRules: [...FRIEND_CHALLENGE_RULES], durationMs: 60_000,
@@ -42,7 +42,7 @@ export function normalizeFriendChallengeConfig(value: unknown): FriendChallengeC
     const candidate = value as Partial<FriendChallengeConfig> | null | undefined;
     const themes = normalizeTokens(candidate?.themeIds, FRIEND_CHALLENGE_THEMES);
     if (!themes) return { valid: false, reason: 'themes' };
-    const rules = normalizeTokens(candidate?.enabledRules, FRIEND_CHALLENGE_RULES);
+    const rules = normalizeFriendChallengeRules(candidate?.enabledRules);
     if (!rules) return { valid: false, reason: 'rules' };
     if (!FRIEND_CHALLENGE_DURATIONS.includes(candidate?.durationMs as FriendChallengeDurationMs)) return { valid: false, reason: 'duration' };
     if (themes.some((theme) => legalRuleSetsForTheme(theme, rules).length === 0)) return { valid: false, reason: 'incompatible' };
@@ -143,6 +143,15 @@ function normalizeTokens<T extends string>(value: unknown, order: readonly T[]):
     const selected = value as string[];
     if (new Set(selected).size !== selected.length || selected.some((item) => !order.includes(item as T))) return null;
     return order.filter((item) => selected.includes(item));
+}
+
+function normalizeFriendChallengeRules(value: unknown): RuleId[] | null {
+    if (!Array.isArray(value) || value.length === 0 || value.some((item) => typeof item !== 'string')) return null;
+    const selected = value as string[];
+    const allowed = new Set<string>([...FRIEND_CHALLENGE_RULES, 'bomb']);
+    if (new Set(selected).size !== selected.length || selected.some((item) => !allowed.has(item))) return null;
+    const normalized = FRIEND_CHALLENGE_RULES.filter((rule) => selected.includes(rule));
+    return normalized.length ? normalized : null;
 }
 
 function splitTokens(value: string | undefined): string[] | null {

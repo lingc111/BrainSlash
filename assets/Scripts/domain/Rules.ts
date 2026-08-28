@@ -16,12 +16,13 @@ export function questionPreviewDurationSeconds(rules: readonly RuleId[]): number
     return slashRuleCount(rules) >= 2 ? 0.7 : 0.3;
 }
 
-/** Extra airborne time for rules that require mentally remapping the choices. */
-export function questionFlightDurationSeconds(baseSeconds: number, rules: readonly RuleId[]): number {
+/** Extra airborne time for dense choices or rules that require mental remapping. */
+export function questionFlightDurationSeconds(baseSeconds: number, rules: readonly RuleId[], answerCount = 0): number {
     const safeBase = Math.max(0.9, baseSeconds);
     const ruleCount = slashRuleCount(rules);
-    if (ruleCount === 0) return safeBase;
-    return safeBase + (ruleCount >= 2 ? 1.65 : 1.35);
+    const fiveAnswerReadabilityTime = answerCount === 5 ? 0.75 : 0;
+    if (ruleCount === 0) return safeBase + fiveAnswerReadabilityTime;
+    return safeBase + fiveAnswerReadabilityTime + (ruleCount >= 2 ? 1.65 : 1.35);
 }
 
 export function rulesForReadableTargets(rules: readonly RuleId[], targets: readonly TargetSpec[]): RuleId[] {

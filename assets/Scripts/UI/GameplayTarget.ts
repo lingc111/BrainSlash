@@ -1,5 +1,6 @@
 import { _decorator, Color, Component, Graphics, Label, Node, Sprite, SpriteFrame, UITransform, Vec2 } from 'cc';
 import { targetContentLayout, targetSkinPixelScale, targetSkinVisualScale } from './TargetSkinSizing';
+import { targetTextPresentation } from './TargetTypography';
 
 const { ccclass } = _decorator;
 
@@ -145,8 +146,10 @@ export class GameplayTarget extends Component {
         }
 
         const layout = targetContentLayout(this.data.skinSpriteFrame?.name, this.data.shape);
-        const contentWidth = this.radius * layout.width;
-        const contentHeight = this.radius * layout.height;
+        const targetText = (this.data.text ?? '').trim();
+        const presentation = targetTextPresentation(targetText);
+        const contentWidth = this.radius * Math.max(layout.width, presentation.minimumWidthScale);
+        const contentHeight = this.radius * Math.max(layout.height, presentation.minimumHeightScale);
         const root = makeNode('ContentRoot', this.node, contentWidth, contentHeight);
         root.setPosition(this.radius * layout.offsetX, this.radius * layout.offsetY);
         if (this.data.contentType === TargetContentType.IMAGE && this.data.spriteFrame) {
@@ -164,11 +167,9 @@ export class GameplayTarget extends Component {
             image.sizeMode = Sprite.SizeMode.CUSTOM;
             image.spriteFrame = this.data.spriteFrame;
         } else {
-            const targetText = (this.data.text ?? '').trim();
-            const characterCount = [...targetText].length;
-            const fontSize = characterCount > 6 ? 25 : characterCount > 4 ? 30 : characterCount > 2 ? 38 : 52;
-            const content = label(root, this.data.contentType === TargetContentType.ICON ? 'IconContent' : 'TextContent', targetText, fontSize, this.data.contentColor ?? INK);
+            const content = label(root, this.data.contentType === TargetContentType.ICON ? 'IconContent' : 'TextContent', presentation.displayText, presentation.fontSize, this.data.contentColor ?? INK);
             content.isBold = true;
+            content.lineHeight = presentation.lineHeight;
             ui(content.node, contentWidth, contentHeight);
             content.overflow = Label.Overflow.SHRINK;
         }
