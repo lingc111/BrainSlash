@@ -11,7 +11,10 @@ library/
 temp/
 local/
 build/
-build-templates/
+build-templates/*
+!build-templates/wechatgame/
+build-templates/wechatgame/*
+!build-templates/wechatgame/game.ejs
 profiles/
 native
 .creator/

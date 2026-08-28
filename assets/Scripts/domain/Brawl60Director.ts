@@ -41,19 +41,19 @@ export const BRAWL_PHASES: readonly BrawlPhaseSettings[] = [
     {
         id: 'action', startMs: 10_000, endMs: 25_000, difficultyStage: 1,
         targetCount: 4, questionTimeMs: 2_600, speed: 0.95,
-        themeWeights: { math: 3, vision: 3, hanzi: 1, english: 1, life: 1, knowledge: 2, history: 2 },
+        themeWeights: { math: 10, vision: 10, hanzi: 4, life: 1, knowledge: 16, history: 1 },
         ruleSequence: [['multi'], ['bomb'], ['standard'], ['order'], ['bomb']], reuseSeenFamilies: false,
     },
     {
         id: 'twist', startMs: 25_000, endMs: 45_000, difficultyStage: 2,
         targetCount: 5, questionTimeMs: 2_250, speed: 1.15,
-        themeWeights: { math: 2, vision: 3, hanzi: 2, english: 2, life: 1, geography: 1, knowledge: 2, history: 2 },
+        themeWeights: { math: 8, vision: 10, hanzi: 4, english: 1, life: 1, geography: 2, knowledge: 16, history: 1 },
         ruleSequence: [['reverse'], ['rotate'], ['standard'], ['reverse'], ['multi'], ['standard']], reuseSeenFamilies: false,
     },
     {
         id: 'climax', startMs: 45_000, endMs: 60_001, difficultyStage: 2,
         targetCount: 6, questionTimeMs: 1_850, speed: 1.38,
-        themeWeights: { math: 3, vision: 3, hanzi: 2, english: 2, life: 1, geography: 1, knowledge: 2, history: 2 },
+        themeWeights: { math: 10, vision: 10, hanzi: 4, english: 1, life: 1, geography: 2, knowledge: 20, history: 1 },
         ruleSequence: [
             ['bomb', 'multi'], ['bomb', 'reverse'], ['bomb', 'order'], ['bomb', 'rotate'],
             ['multi', 'reverse'], ['multi', 'rotate'], ['order', 'rotate'],
@@ -68,6 +68,7 @@ const RULE_SUPPORT: Readonly<Record<ContentFamilyKind, readonly string[]>> = {
     'math-property': ['standard', 'multi', 'reverse', 'bomb+multi', 'multi+reverse'],
     'math-compare': ['standard', 'reverse', 'bomb', 'bomb+reverse'],
     'math-sequence': ['standard', 'reverse', 'bomb', 'order', 'bomb+order'],
+    'math-missing': ['standard', 'reverse', 'bomb', 'bomb+reverse'],
     'vision-direction': ['standard', 'reverse', 'bomb', 'bomb+reverse'],
     'vision-odd': ['standard', 'reverse', 'bomb', 'bomb+reverse'],
     'vision-count': ['standard', 'reverse', 'bomb', 'bomb+reverse'],
@@ -79,7 +80,6 @@ const RULE_SUPPORT: Readonly<Record<ContentFamilyKind, readonly string[]>> = {
     'english-meaning': ['standard', 'reverse', 'bomb', 'bomb+reverse'],
     'english-category': ['standard', 'multi', 'reverse', 'bomb+multi', 'multi+reverse'],
     'english-antonym': ['standard', 'reverse', 'bomb', 'bomb+reverse'],
-    'life-use': ['standard', 'reverse', 'bomb', 'bomb+reverse'],
     'life-category': ['standard', 'multi', 'reverse', 'bomb+multi', 'multi+reverse'],
     'geography-capital': ['standard', 'reverse', 'bomb', 'bomb+reverse'],
     'geography-country': ['standard', 'reverse', 'bomb', 'bomb+reverse'],
@@ -100,6 +100,7 @@ const TARGET_CAP_BY_KIND: Readonly<Record<ContentFamilyKind, number>> = {
     'math-property': 5,
     'math-compare': 4,
     'math-sequence': 4,
+    'math-missing': 4,
     'vision-direction': 6,
     'vision-odd': 6,
     'vision-count': 6,
@@ -111,7 +112,6 @@ const TARGET_CAP_BY_KIND: Readonly<Record<ContentFamilyKind, number>> = {
     'english-meaning': 4,
     'english-category': 5,
     'english-antonym': 4,
-    'life-use': 4,
     'life-category': 5,
     'geography-capital': 4,
     'geography-country': 4,
@@ -360,7 +360,7 @@ export class Brawl60Director {
         this.recentThemes.push(family.theme);
         if (this.recentThemes.length > 2) this.recentThemes.shift();
         this.recentFamilyIds.push(family.id);
-        if (this.recentFamilyIds.length > 5) this.recentFamilyIds.shift();
+        if (this.recentFamilyIds.length > 8) this.recentFamilyIds.shift();
         this.seenFamilyIds.add(family.id);
     }
 }

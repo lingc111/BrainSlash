@@ -5,6 +5,7 @@ import { Brawl60Director, FriendChallengeDirector, familySupportsRules, isDirect
 import {
     CONTENT_FAMILIES,
     CONTENT_FAMILY_TARGETS,
+    ENGLISH_ANTONYMS,
     ENGLISH_WORDS,
     GEOGRAPHY_FACTS,
     HISTORY_ANCIENT_FACTS,
@@ -17,7 +18,6 @@ import {
     KNOWLEDGE_NATURE_FACTS,
     KNOWLEDGE_SCIENCE_FACTS,
     LIFE_CATEGORY_FACTS,
-    LIFE_FACTS,
 } from '../assets/Scripts/domain/ContentCatalog.ts';
 import { GameSession } from '../assets/Scripts/domain/GameSession.ts';
 import { countdownWarningSecond, failureFeedback, successFeedback } from '../assets/Scripts/domain/GameFeedback.ts';
@@ -68,7 +68,7 @@ import {
     PORTRAIT_TARGET_MIN_SEPARATION,
     resolveSoftTargetSeparation,
 } from '../assets/Scripts/UI/PortraitTargetMotion.ts';
-import { TARGET_SKIN_VISUAL_SCALE, targetSkinPixelScale, targetSkinVisualScale } from '../assets/Scripts/UI/TargetSkinSizing.ts';
+import { ACTIVE_TARGET_SKINS, TARGET_SKIN_VISUAL_SCALE, targetContentLayout, targetSkinPixelScale, targetSkinVisualScale } from '../assets/Scripts/UI/TargetSkinSizing.ts';
 
 function pipeline(seed: string): { director: Brawl60Director; generator: QuestionGenerator } {
     return {
@@ -238,6 +238,7 @@ test('game feedback policy maps master, combo, failures and final countdown', ()
     assert.deepEqual(failureFeedback('bomb', 6), { sound: 'bomb', haptic: 'heavy', label: '炸弹！', showComboBreak: true });
     assert.deepEqual(failureFeedback('orderError', 2), { sound: 'error', haptic: 'medium', label: '顺序错误', showComboBreak: false });
     assert.deepEqual(failureFeedback('wrong', 0), { sound: 'error', haptic: 'medium', label: '', showComboBreak: false });
+    assert.deepEqual(failureFeedback('miss', 0), { sound: 'error', haptic: 'medium', label: '', showComboBreak: false });
     assert.equal(countdownWarningSecond(5_000, 6), 5);
     assert.equal(countdownWarningSecond(4_999, 5), null);
     assert.equal(countdownWarningSecond(4_000, 5), 4);
@@ -712,6 +713,7 @@ test('expanded content catalog contains five times the recommended family counts
     assert.deepEqual(counts, CONTENT_FAMILY_TARGETS);
     assert.equal(CONTENT_FAMILIES.length, 145);
     assert.equal(new Set(CONTENT_FAMILIES.map((family) => family.id)).size, CONTENT_FAMILIES.length);
+    assert.ok(!CONTENT_FAMILIES.some((family) => family.kind === 'life-use'));
 });
 
 test('reviewed fact pools contain unique answers and safe idiom distractors', () => {
@@ -722,10 +724,17 @@ test('reviewed fact pools contain unique answers and safe idiom distractors', ()
         assert.ok(!idiom.wrong.includes(answer));
     }
     assert.equal(new Set(ENGLISH_WORDS.map((word) => word.en)).size, ENGLISH_WORDS.length);
-    assert.equal(new Set(LIFE_FACTS.map((fact) => fact.item)).size, LIFE_FACTS.length);
-    assert.equal(new Set(LIFE_FACTS.map((fact) => fact.use)).size, LIFE_FACTS.length);
+    assert.ok(ENGLISH_WORDS.length >= 96);
+    assert.ok(ENGLISH_ANTONYMS.length >= 40);
+    assert.ok(IDIOMS.length >= 100);
+    assert.equal(new Set(LIFE_CATEGORY_FACTS.map((fact) => fact.item)).size, LIFE_CATEGORY_FACTS.length);
     assert.equal(new Set(GEOGRAPHY_FACTS.map((fact) => fact.country)).size, GEOGRAPHY_FACTS.length);
     assert.equal(new Set(GEOGRAPHY_FACTS.map((fact) => fact.capital)).size, GEOGRAPHY_FACTS.length);
+    assert.ok(GEOGRAPHY_FACTS.length >= 60);
+    for (const fact of GEOGRAPHY_FACTS) {
+        assert.ok(Array.from(fact.country).length <= 4, fact.country);
+        assert.ok(Array.from(fact.capital).length <= 4, fact.capital);
+    }
     const triviaPools = [
         KNOWLEDGE_SCIENCE_FACTS, KNOWLEDGE_NATURE_FACTS, KNOWLEDGE_CULTURE_FACTS,
         HISTORY_MODERN_OPENING_FACTS, HISTORY_MODERN_AWAKENING_FACTS, HISTORY_MODERN_RESISTANCE_FACTS,
@@ -736,6 +745,14 @@ test('reviewed fact pools contain unique answers and safe idiom distractors', ()
         for (const fact of pool) {
             assert.equal(new Set(fact.wrong).size, fact.wrong.length);
             assert.ok(!fact.wrong.includes(fact.answer));
+            assert.ok(Array.from(fact.answer).length <= 4, `${fact.prompt}: ${fact.answer}`);
+        }
+    }
+    for (const pool of [KNOWLEDGE_SCIENCE_FACTS, KNOWLEDGE_NATURE_FACTS, KNOWLEDGE_CULTURE_FACTS]) {
+        assert.ok(pool.length >= 60);
+        for (const fact of pool) {
+            assert.ok(Array.from(fact.prompt).length <= 12, fact.prompt);
+            assert.ok(Array.from(fact.answer).length <= 4, `${fact.prompt}: ${fact.answer}`);
         }
     }
 });
@@ -833,6 +850,30 @@ test('target skin optical scales keep visible subject areas within a small error
     assert.ok(Math.max(...nonTriangleAreas) / Math.min(...nonTriangleAreas) < 1.02);
     assert.ok(Math.max(...correctedAreas) / Math.min(...correctedAreas) < 1.13);
     assert.equal(targetSkinVisualScale('unknown_skin'), 1);
+});
+
+test('target content layouts stay inside narrow skins and use optical centers', () => {
+    const triangle = targetContentLayout('green_triangle', 'roundedSquare');
+    const diamond = targetContentLayout('pink_diamond', 'roundedSquare');
+    const square = targetContentLayout('blue_square', 'triangle');
+
+    assert.ok(triangle.width <= 0.92);
+    assert.ok(triangle.height <= 0.58);
+    assert.ok(triangle.offsetY < 0);
+    assert.ok(diamond.width / 2 + diamond.height / 2 < 1);
+    assert.ok(square.width > triangle.width);
+    assert.deepEqual(targetContentLayout(undefined, 'triangle'), triangle);
+});
+
+test('active gameplay target skins temporarily exclude the triangle', () => {
+    assert.deepEqual(ACTIVE_TARGET_SKINS, [
+        'blue_square',
+        'orange_circle',
+        'pink_diamond',
+        'purple_hexagon',
+        'red_trapezoid',
+        'yellow_circle',
+    ]);
 });
 
 test('portrait target motion preserves lanes and separates every phase throughout flight', () => {
@@ -1093,6 +1134,23 @@ test('1000 seeds survive full multi-round deterministic legality regression', ()
     assert.ok(multiStepQuestions > 10_000);
 });
 
+test('question appearance keeps semantic questions and answers on rolling cooldowns', () => {
+    const family = CONTENT_FAMILIES.find((candidate) => candidate.kind === 'knowledge-science')!;
+    const generator = new QuestionGenerator(new SeededRng('semantic-question-cooldown'), GAMEPLAY_CONFIG);
+    const seen = new Set<string>();
+    for (let index = 0; index < 40; index++) {
+        const question = generator.next({
+            phase: 'action', difficultyStage: 1, targetCount: 4, questionTimeMs: 2_600,
+            speed: 1, family, rules: ['standard'],
+        });
+        const textById = new Map(question.targets.map((target) => [target.id, target.text]));
+        const answer = question.baseCorrectTargetIds.map((id) => textById.get(id)).sort().join('→');
+        const signature = `${question.prompt.text}|${answer}`;
+        assert.ok(!seen.has(signature), `semantic question repeated too soon: ${signature}`);
+        seen.add(signature);
+    }
+});
+
 test('tower exposes the fixed 60-second 1-30 progression and unlock schedule', () => {
     const expectedRequired = [
         [1, 8], [2, 8], [3, 9], [4, 9], [5, 9], [6, 9], [7, 10], [9, 10],
@@ -1230,6 +1288,20 @@ test('tower director is deterministic per attempt and legal across 100 seeds and
             }
         }
     }
+});
+
+test('ordinary brawl keeps English and history as rare accents', () => {
+    const director = new Brawl60Director(new SeededRng('reduced-language-history-weights'));
+    const counts = new Map<string, number>();
+    const elapsed = [15_000, 30_000, 50_000];
+    for (let index = 0; index < 3_000; index++) {
+        const theme = director.next(elapsed[index % elapsed.length]).family.theme;
+        counts.set(theme, (counts.get(theme) ?? 0) + 1);
+    }
+    assert.ok((counts.get('english') ?? 0) / 3_000 < 0.06);
+    assert.ok((counts.get('history') ?? 0) / 3_000 < 0.06);
+    assert.ok((counts.get('knowledge') ?? 0) > (counts.get('english') ?? 0));
+    assert.ok((counts.get('knowledge') ?? 0) > (counts.get('history') ?? 0));
 });
 
 test('category question pools exclude context-dependent items and polysemous English words', () => {

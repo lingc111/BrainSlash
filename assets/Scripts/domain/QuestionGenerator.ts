@@ -14,7 +14,6 @@ import {
     KNOWLEDGE_NATURE_FACTS,
     KNOWLEDGE_SCIENCE_FACTS,
     LIFE_CATEGORY_FACTS,
-    LIFE_FACTS,
     type ContentFamilySpec,
     type TriviaFact,
 } from './ContentCatalog';
@@ -33,18 +32,29 @@ export class QuestionGenerator {
     private directive!: BrawlQuestionDirective;
     private readonly factBags = new Map<string, number[]>();
     private readonly recentQuestionFacts: string[][] = [];
+    private readonly recentSemanticSignatures: string[] = [];
+    private readonly recentAnswerSignatures: string[] = [];
     private activeFactIds: string[] = [];
 
     public constructor(private readonly rng: SeededRng, _config: GameplayConfig) {}
 
     public next(directive: BrawlQuestionDirective): QuestionInstance {
         this.directive = directive;
-        for (let attempt = 0; attempt < 8; attempt++) {
+        for (let attempt = 0; attempt < 24; attempt++) {
             this.activeFactIds = [];
             const question = this.generate(directive.family, directive.difficultyStage);
             question.activeRules = rulesForReadableTargets(question.activeRules, question.targets);
-            if (!validateQuestion(question, evaluateRules(question)).length) {
+            if (validateQuestion(question, evaluateRules(question)).length) continue;
+            const semanticSignature = this.semanticSignature(question);
+            const answerSignature = this.answerSignature(question);
+            const semanticCooling = this.recentSemanticSignatures.includes(semanticSignature);
+            const answerCooling = this.recentAnswerSignatures.includes(answerSignature);
+            // Relax answer variety first, then semantic variety only as a final
+            // escape hatch for tiny visual pools. Fairness is never relaxed.
+            if ((!semanticCooling && (!answerCooling || attempt >= 16)) || attempt >= 22) {
                 this.recordQuestionFacts();
+                this.recordSignature(this.recentSemanticSignatures, semanticSignature, 60);
+                this.recordSignature(this.recentAnswerSignatures, answerSignature, 8);
                 return question;
             }
         }
@@ -71,6 +81,7 @@ export class QuestionGenerator {
             case 'math-property': return this.mathProperty(family, stage);
             case 'math-compare': return this.mathCompare(family, stage);
             case 'math-sequence': return this.mathSequence(family, stage);
+            case 'math-missing': return this.mathMissing(family, stage);
             case 'vision-direction': return this.visionDirection(family, stage);
             case 'vision-odd': return this.visionOdd(family, stage);
             case 'vision-count': return this.visionCount(family, stage);
@@ -82,7 +93,6 @@ export class QuestionGenerator {
             case 'english-meaning': return this.englishMeaning(family, stage);
             case 'english-category': return this.englishCategory(family, stage);
             case 'english-antonym': return this.englishAntonym(family, stage);
-            case 'life-use': return this.lifeUse(family, stage);
             case 'life-category': return this.lifeCategory(family, stage);
             case 'geography-capital': return this.geographyCapital(family, stage);
             case 'geography-country': return this.geographyCountry(family, stage);
@@ -249,6 +259,30 @@ export class QuestionGenerator {
         return this.makeChoice(family, `${start},${start + step},${start + step * 2},?`, answer, [answer - step, answer + step, answer + 1, answer - 1, answer + step * 2], stage);
     }
 
+    private mathMissing(family: ContentFamilySpec, stage: Stage): QuestionInstance {
+        const ceiling = 12 + family.variant * 8 + stage * 18;
+        if (family.variant === 4) {
+            const answer = this.rng.int(2, Math.min(12, 6 + stage * 3));
+            const factor = this.rng.int(2, Math.min(12, 5 + stage * 3));
+            const product = answer * factor;
+            return this.makeChoice(family, `□×${factor}=${product}`, answer, [answer - 2, answer - 1, answer + 1, answer + 2, factor], stage);
+        }
+        const left = this.rng.int(2, ceiling);
+        const right = this.rng.int(2, ceiling);
+        if (family.variant === 0) {
+            return this.makeChoice(family, `□+${right}=${left + right}`, left, [left - 2, left - 1, left + 1, left + 2], stage);
+        }
+        if (family.variant === 1) {
+            return this.makeChoice(family, `${left}+□=${left + right}`, right, [right - 2, right - 1, right + 1, right + 2], stage);
+        }
+        const result = this.rng.int(2, ceiling);
+        const minuend = result + right;
+        if (family.variant === 2) {
+            return this.makeChoice(family, `□-${right}=${result}`, minuend, [minuend - 2, minuend - 1, minuend + 1, minuend + 2], stage);
+        }
+        return this.makeChoice(family, `${minuend}-□=${result}`, right, [right - 2, right - 1, right + 1, right + 2], stage);
+    }
+
     private visionDirection(family: ContentFamilySpec, stage: Stage): QuestionInstance {
         const shown = this.rng.pick(ARROWS);
         const opposite = family.variant >= 3 && stage > 0;
@@ -291,15 +325,36 @@ export class QuestionGenerator {
     }
 
     private visionPattern(family: ContentFamilySpec, stage: Stage): QuestionInstance {
-        const patterns = [
-            { prompt: '○△○△?', answer: '○', wrong: ['△', '□', '◇', '☆'] },
-            { prompt: '↑→↓?', answer: '←', wrong: ['↑', '→', '↓', '↗'] },
-            { prompt: '■□□■□□?', answer: '■', wrong: ['□', '●', '▲', '◆'] },
-            { prompt: '1,2,1,2,?', answer: '1', wrong: ['2', '3', '0', '4'] },
-            { prompt: '小中大·小中?', answer: '大', wrong: ['小', '中', '特大', '相同'] },
-        ];
-        const pattern = patterns[family.variant];
-        return this.makeChoice(family, pattern.prompt, pattern.answer, pattern.wrong, stage, { allowBomb: false });
+        const symbols = ['○', '△', '□', '◇', '☆', '●', '▲', '■', '◆', '★'];
+        if (family.variant === 0) {
+            const first = this.rng.pick(symbols);
+            const second = this.rng.pick(symbols.filter((symbol) => symbol !== first));
+            return this.makeChoice(family, `${first}${second}${first}${second}?`, first, symbols, stage, { allowBomb: false });
+        }
+        if (family.variant === 1) {
+            const start = this.rng.int(0, ARROWS.length - 1);
+            const step = this.rng.next() < 0.5 ? 1 : -1;
+            const sequence = Array.from({ length: 4 }, (_, index) => ARROWS[(start + index * step + ARROWS.length * 2) % ARROWS.length]);
+            return this.makeChoice(family, `${sequence[0]}${sequence[1]}${sequence[2]}?`, sequence[3], [...ARROWS, '↗'], stage, { allowBomb: false });
+        }
+        if (family.variant === 2) {
+            const first = this.rng.pick(symbols);
+            const second = this.rng.pick(symbols.filter((symbol) => symbol !== first));
+            const run = this.rng.int(1, 3);
+            const block = `${first}${second.repeat(run)}`;
+            return this.makeChoice(family, `${block}${block}?`, first, symbols, stage, { allowBomb: false });
+        }
+        if (family.variant === 3) {
+            const first = this.rng.int(0, 9);
+            let second = this.rng.int(0, 9);
+            if (second === first) second = (second + 1) % 10;
+            return this.makeChoice(family, `${first},${second},${first},${second},?`, first, [0, 1, 2, 3, 4, 5, 6, 7, 8, 9], stage, { allowBomb: false });
+        }
+        const sizes = ['小', '中', '大'] as const;
+        const start = this.rng.int(0, sizes.length - 1);
+        const step = this.rng.next() < 0.5 ? 1 : -1;
+        const sequence = Array.from({ length: 6 }, (_, index) => sizes[(start + index * step + sizes.length * 3) % sizes.length]);
+        return this.makeChoice(family, `${sequence.slice(0, 5).join('')}?`, sequence[5], ['小', '中', '大', '特大'], stage, { allowBomb: false });
     }
 
     private hanziFill(family: ContentFamilySpec, stage: Stage): QuestionInstance {
@@ -357,12 +412,6 @@ export class QuestionGenerator {
         for (const item of ENGLISH_ANTONYMS) antonymWords.push(item[0], item[1]);
         const candidates = this.rng.shuffle(antonymWords).filter((word) => word !== promptWord);
         return this.makeChoice(family, `${promptWord} 的反义词`, answer, candidates, stage);
-    }
-
-    private lifeUse(family: ContentFamilySpec, stage: Stage): QuestionInstance {
-        const fact = this.pickFact('life-facts', LIFE_FACTS, (item) => `life:${item.item}`);
-        const candidates = LIFE_FACTS.filter((candidate) => candidate.item !== fact.item).map((candidate) => candidate.use);
-        return this.makeChoice(family, `${fact.item}主要用于`, fact.use, candidates, stage);
     }
 
     private lifeCategory(family: ContentFamilySpec, stage: Stage): QuestionInstance {
@@ -467,5 +516,31 @@ export class QuestionGenerator {
     private recordQuestionFacts(): void {
         this.recentQuestionFacts.push([...this.activeFactIds]);
         if (this.recentQuestionFacts.length > 20) this.recentQuestionFacts.shift();
+    }
+
+    private semanticSignature(question: QuestionInstance): string {
+        const familyKind = (question.familyId ?? '').replace(/\.v\d+$/, '');
+        return `${question.theme}|${familyKind}|${this.normalizePrompt(question.prompt.text)}|${this.answerSignature(question)}`;
+    }
+
+    private answerSignature(question: QuestionInstance): string {
+        const textById = new Map(question.targets.map((target) => [target.id, target.text.trim()]));
+        const answerIds = question.orderedTargetIds?.length ? question.orderedTargetIds : question.baseCorrectTargetIds;
+        const answers = answerIds.map((id) => textById.get(id) ?? id);
+        if (!question.orderedTargetIds?.length) answers.sort();
+        return answers.join('→');
+    }
+
+    private normalizePrompt(prompt: string): string {
+        const compact = prompt.replace(/\s+/g, '');
+        const arithmetic = compact.match(/^(\d+)([+×])(\d+)(?:\2(\d+))?=\?$/);
+        if (!arithmetic) return compact;
+        const operands = [arithmetic[1], arithmetic[3], arithmetic[4]].filter((value): value is string => !!value);
+        return `${operands.map(Number).sort((a, b) => a - b).join(arithmetic[2])}=?`;
+    }
+
+    private recordSignature(history: string[], signature: string, limit: number): void {
+        history.push(signature);
+        if (history.length > limit) history.shift();
     }
 }

@@ -1,5 +1,5 @@
 import { _decorator, Color, Component, Graphics, Label, Node, Sprite, SpriteFrame, UITransform, Vec2 } from 'cc';
-import { targetSkinPixelScale, targetSkinVisualScale } from './TargetSkinSizing';
+import { targetContentLayout, targetSkinPixelScale, targetSkinVisualScale } from './TargetSkinSizing';
 
 const { ccclass } = _decorator;
 
@@ -144,16 +144,32 @@ export class GameplayTarget extends Component {
 
         }
 
-        const root = makeNode('ContentRoot', this.node, this.radius * 1.3, this.radius * 1.3);
-        root.setPosition(0, 1);
+        const layout = targetContentLayout(this.data.skinSpriteFrame?.name, this.data.shape);
+        const contentWidth = this.radius * layout.width;
+        const contentHeight = this.radius * layout.height;
+        const root = makeNode('ContentRoot', this.node, contentWidth, contentHeight);
+        root.setPosition(this.radius * layout.offsetX, this.radius * layout.offsetY);
         if (this.data.contentType === TargetContentType.IMAGE && this.data.spriteFrame) {
-            const image = makeNode('ImageContent', root, this.radius, this.radius).addComponent(Sprite);
+            const original = this.data.spriteFrame.originalSize;
+            const imageScale = Math.min(
+                contentWidth / Math.max(1, original.width),
+                contentHeight / Math.max(1, original.height),
+            ) * 0.9;
+            const image = makeNode(
+                'ImageContent',
+                root,
+                original.width * imageScale,
+                original.height * imageScale,
+            ).addComponent(Sprite);
+            image.sizeMode = Sprite.SizeMode.CUSTOM;
             image.spriteFrame = this.data.spriteFrame;
         } else {
-            const targetText = this.data.text ?? '';
-            const content = label(root, this.data.contentType === TargetContentType.ICON ? 'IconContent' : 'TextContent', targetText, targetText.length > 4 ? 30 : targetText.length > 2 ? 38 : 52, this.data.contentColor ?? INK);
+            const targetText = (this.data.text ?? '').trim();
+            const characterCount = [...targetText].length;
+            const fontSize = characterCount > 6 ? 25 : characterCount > 4 ? 30 : characterCount > 2 ? 38 : 52;
+            const content = label(root, this.data.contentType === TargetContentType.ICON ? 'IconContent' : 'TextContent', targetText, fontSize, this.data.contentColor ?? INK);
             content.isBold = true;
-            ui(content.node, this.radius * 1.9, this.radius * 1.15);
+            ui(content.node, contentWidth, contentHeight);
             content.overflow = Label.Overflow.SHRINK;
         }
     }

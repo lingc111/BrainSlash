@@ -6,6 +6,7 @@ import {
 import { EDITOR } from 'cc/env';
 import { GameplayTarget, GameplayTargetData, TargetContentType } from './GameplayTarget';
 import { GameplayMVP } from './GameplayMVP';
+import { ACTIVE_TARGET_SKINS } from './TargetSkinSizing';
 
 const { ccclass, executeInEditMode } = _decorator;
 
@@ -21,8 +22,7 @@ export interface GameplayHUDState {
 type LayoutPoint = { x: number; y: number };
 
 const SLASH_EFFECT_KEYS = [
-    'blue_square', 'bomb', 'green_triangle', 'orange_circle',
-    'pink_diamond', 'purple_hexagon', 'red_trapezoid', 'yellow_circle',
+    'bomb', ...ACTIVE_TARGET_SKINS,
 ] as const;
 type SlashEffectKey = typeof SLASH_EFFECT_KEYS[number];
 
@@ -279,7 +279,7 @@ export class GameplayHUD extends Component {
         ];
         const data: GameplayTargetData[] = [
             { id: 'eight', contentType: TargetContentType.TEXT, text: '8', value: 8, shape: 'roundedSquare', color: YELLOW },
-            { id: 'seven', contentType: TargetContentType.TEXT, text: '7', value: 7, shape: 'triangle', color: GREEN },
+            { id: 'seven', contentType: TargetContentType.TEXT, text: '7', value: 7, shape: 'circle', color: GREEN },
             { id: 'twelve', contentType: TargetContentType.TEXT, text: '12', value: 12, shape: 'hexagon', color: BLUE },
             { id: 'three', contentType: TargetContentType.TEXT, text: '3', value: 3, shape: 'circle', color: PURPLE },
             { id: 'fourteen', contentType: TargetContentType.TEXT, text: '14', value: 14, shape: 'pentagon', color: ORANGE },
@@ -297,10 +297,7 @@ export class GameplayHUD extends Component {
     }
 
     private applyRandomTargetSkins(): void {
-        const skinNames = [
-            'blue_square', 'green_triangle', 'orange_circle',
-            'pink_diamond', 'purple_hexagon', 'red_trapezoid', 'yellow_circle',
-        ];
+        const skinNames = ACTIVE_TARGET_SKINS;
         const targets = this.targetContainer.children.filter((node) => node.name !== 'BombTarget');
         targets.forEach((node, index) => {
             const skinName = skinNames[index] as SlashEffectKey;
