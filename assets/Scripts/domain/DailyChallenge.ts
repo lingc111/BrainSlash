@@ -64,7 +64,7 @@ const RECIPES: readonly DailyRecipe[] = [
     },
     {
         id: 'word-case', title: '文字谜案局', accent: '字', themeWeights: weights({ hanzi: 8 }),
-        familyKinds: ['hanzi-fill', 'hanzi-valid', 'hanzi-order'],
+        familyKinds: ['hanzi-fill', 'hanzi-order', 'hanzi-antonym', 'hanzi-synonym'],
         allowedRules: ['standard', 'bomb', 'order', 'reverse', 'rotate'], speedMultiplier: 0.92, targetScore: 1200,
     },
     {
@@ -74,7 +74,7 @@ const RECIPES: readonly DailyRecipe[] = [
     },
     {
         id: 'common-knowledge', title: '常识万花筒', accent: '知', themeWeights: weights({ knowledge: 8 }),
-        familyKinds: ['knowledge-science', 'knowledge-nature', 'knowledge-culture'],
+        familyKinds: ['knowledge-science', 'knowledge-nature', 'knowledge-culture', 'knowledge-civic'],
         allowedRules: ['standard', 'bomb', 'reverse', 'rotate'], speedMultiplier: 0.96, targetScore: 1300,
     },
     {

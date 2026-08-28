@@ -26,7 +26,7 @@ export interface ActionConstraint { requiredTargetIds: string[]; forbiddenTarget
 export interface GameSessionState {
     sessionId: string; seed: string; mode: GameMode; contentVersion: string;
     elapsedMs: number; remainingMs: number; life: number; score: number; combo: number; maxCombo: number;
-    correctCount: number; errorCount: number; bestReactionMs?: number; phase: SessionPhase;
+    correctCount: number; errorCount: number; bestReactionMs?: number; masterSlashCount: number; phase: SessionPhase;
 }
 export type FailureKind = 'wrong' | 'bomb' | 'miss' | 'orderError';
 export interface MistakeRecord {
@@ -38,12 +38,12 @@ export interface MistakeRecord {
     correctAnswer: string;
 }
 export type HitResult =
-    | { kind: 'correct' | 'master'; scoreDelta: number; reactionMs: number; lifeDelta: 0 | 1 }
+    | { kind: 'correct' | 'master' | 'masterSlash'; scoreDelta: number; reactionMs: number; lifeDelta: 0 | 1; masterHit: boolean; masterSlash: boolean }
     | { kind: FailureKind; lifeDelta: -1 };
 export interface PlayerProgress { level: number; xp: number; bestScore: number; }
 export interface RunResult {
     entry: GameEntryParams; score: number; maxCombo: number; correctCount: number; errorCount: number;
-    accuracy: number; bestReactionMs?: number; remainingMs?: number; mistakes?: MistakeRecord[];
+    accuracy: number; bestReactionMs?: number; remainingMs?: number; elapsedMs?: number; masterSlashCount?: number; mistakes?: MistakeRecord[];
 }
 export interface ResultGrowth {
     xpGained: number; levelBefore: number; levelAfter: number;

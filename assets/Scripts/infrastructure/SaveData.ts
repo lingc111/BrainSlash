@@ -1,5 +1,6 @@
 import { dailyRecipeById, type LocalDailyRecord } from '../domain/DailyChallenge';
 import { DEFAULT_FRIEND_CHALLENGE_CONFIG, normalizeFriendChallengeConfig } from '../domain/FriendChallenge';
+import { emptyBrawlRecord, type BrawlLeaderboardRecord } from '../domain/Leaderboard';
 import type { FriendChallengeConfig, PlayerProgress, RuleId } from '../domain/Models';
 import { DEFAULT_TOWER_PROGRESS, normalizeTowerProgress, type TowerProgress } from '../domain/TowerMode';
 
@@ -37,16 +38,49 @@ export interface SaveDataV3 {
     lastFriendChallengeConfig: FriendChallengeConfig;
 }
 
+export interface SaveLeaderboard {
+    brawlBestScore: number;
+}
+
+export interface SaveDataV4 {
+    schemaVersion: 4;
+    player: PlayerProgress;
+    settings: SaveSettings;
+    tutorials: Partial<Record<RuleId, boolean>>;
+    daily?: LocalDailyRecord;
+    tower: TowerProgress;
+    lastFriendChallengeConfig: FriendChallengeConfig;
+    leaderboard: SaveLeaderboard;
+}
+
+export interface SaveLeaderboardV5 {
+    brawlBest: BrawlLeaderboardRecord;
+    trialAnsweredCount: number;
+    trialCorrectCount: number;
+}
+
+export interface SaveDataV5 {
+    schemaVersion: 5;
+    player: PlayerProgress;
+    settings: SaveSettings;
+    tutorials: Partial<Record<RuleId, boolean>>;
+    daily?: LocalDailyRecord;
+    tower: TowerProgress;
+    lastFriendChallengeConfig: FriendChallengeConfig;
+    leaderboard: SaveLeaderboardV5;
+}
+
 const DEFAULT_SETTINGS: SaveSettings = { music: true, sfx: true, vibration: true, quality: 'auto' };
 
-export function createDefaultSave(): SaveDataV3 {
+export function createDefaultSave(): SaveDataV5 {
     return {
-        schemaVersion: 3,
+        schemaVersion: 5,
         player: { level: 1, xp: 0, bestScore: 0 },
         settings: { ...DEFAULT_SETTINGS },
         tutorials: {},
         tower: clone(DEFAULT_TOWER_PROGRESS),
         lastFriendChallengeConfig: clone(DEFAULT_FRIEND_CHALLENGE_CONFIG),
+        leaderboard: { brawlBest: emptyBrawlRecord(), trialAnsweredCount: 0, trialCorrectCount: 0 },
     };
 }
 
@@ -73,6 +107,42 @@ export function migrateV1ToV3(value: Partial<SaveDataV1>): SaveDataV3 {
     return migrateV2ToV3(migrateV1ToV2(value));
 }
 
+export function migrateV3ToV4(value: Partial<SaveDataV3>): SaveDataV4 {
+    const v3 = normalizeV3(value);
+    return normalizeV4({
+        ...v3,
+        schemaVersion: 4,
+        // V3 only had one best-score field, so preserve it as the initial
+        // brawl record instead of discarding a player's existing achievement.
+        leaderboard: { brawlBestScore: v3.player.bestScore },
+    });
+}
+
+export function migrateV2ToV4(value: Partial<SaveDataV2>): SaveDataV4 {
+    return migrateV3ToV4(migrateV2ToV3(value));
+}
+
+export function migrateV1ToV4(value: Partial<SaveDataV1>): SaveDataV4 {
+    return migrateV3ToV4(migrateV1ToV3(value));
+}
+
+export function migrateV4ToV5(value: Partial<SaveDataV4>): SaveDataV5 {
+    const v4 = normalizeV4(value);
+    return normalizeV5({
+        ...v4,
+        schemaVersion: 5,
+        leaderboard: {
+            brawlBest: emptyBrawlRecord(v4.leaderboard.brawlBestScore),
+            trialAnsweredCount: 0,
+            trialCorrectCount: 0,
+        },
+    });
+}
+
+export function migrateV3ToV5(value: Partial<SaveDataV3>): SaveDataV5 { return migrateV4ToV5(migrateV3ToV4(value)); }
+export function migrateV2ToV5(value: Partial<SaveDataV2>): SaveDataV5 { return migrateV4ToV5(migrateV2ToV4(value)); }
+export function migrateV1ToV5(value: Partial<SaveDataV1>): SaveDataV5 { return migrateV4ToV5(migrateV1ToV4(value)); }
+
 export function normalizeV3(parsed: Partial<SaveDataV3>): SaveDataV3 {
     const challenge = normalizeFriendChallengeConfig(parsed.lastFriendChallengeConfig ?? DEFAULT_FRIEND_CHALLENGE_CONFIG);
     return {
@@ -83,6 +153,40 @@ export function normalizeV3(parsed: Partial<SaveDataV3>): SaveDataV3 {
         daily: validDailyRecord(parsed.daily) ? normalizeDailyRecord(parsed.daily) : undefined,
         tower: normalizeTowerProgress(parsed.tower),
         lastFriendChallengeConfig: challenge.valid ? challenge.config : clone(DEFAULT_FRIEND_CHALLENGE_CONFIG),
+    };
+}
+
+export function normalizeV4(parsed: Partial<SaveDataV4>): SaveDataV4 {
+    const v3 = normalizeV3({ ...parsed, schemaVersion: 3 });
+    return {
+        ...v3,
+        schemaVersion: 4,
+        leaderboard: { brawlBestScore: finiteNonNegative(parsed.leaderboard?.brawlBestScore) },
+    };
+}
+
+export function normalizeV5(parsed: Partial<SaveDataV5>): SaveDataV5 {
+    const v3 = normalizeV3({ ...parsed, schemaVersion: 3 });
+    const answered = finiteNonNegative(parsed.leaderboard?.trialAnsweredCount);
+    return {
+        ...v3,
+        schemaVersion: 5,
+        leaderboard: {
+            brawlBest: normalizeBrawlRecord(parsed.leaderboard?.brawlBest),
+            trialAnsweredCount: answered,
+            trialCorrectCount: Math.min(answered, finiteNonNegative(parsed.leaderboard?.trialCorrectCount)),
+        },
+    };
+}
+
+function normalizeBrawlRecord(value: Partial<BrawlLeaderboardRecord> | undefined): BrawlLeaderboardRecord {
+    return {
+        survivalMs: finiteNonNegative(value?.survivalMs),
+        answeredCount: finiteNonNegative(value?.answeredCount),
+        maxCombo: finiteNonNegative(value?.maxCombo),
+        accuracy: finiteRatio(value?.accuracy),
+        masterSlashCount: finiteNonNegative(value?.masterSlashCount),
+        rankScore: finiteNonNegative(value?.rankScore),
     };
 }
 
@@ -139,6 +243,10 @@ function finiteNonNegative(value: unknown): number {
 
 function finitePositive(value: unknown): number | undefined {
     return typeof value === 'number' && Number.isFinite(value) && value > 0 ? Math.floor(value) : undefined;
+}
+
+function finiteRatio(value: unknown): number {
+    return typeof value === 'number' && Number.isFinite(value) ? Math.max(0, Math.min(1, value)) : 0;
 }
 
 function clone<T>(value: T): T { return JSON.parse(JSON.stringify(value)) as T; }

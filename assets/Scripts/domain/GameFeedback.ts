@@ -14,11 +14,12 @@ export interface FailureFeedback {
     showComboBreak: boolean;
 }
 
-export function successFeedback(kind: 'correct' | 'master', combo: number): SuccessFeedback {
+export function successFeedback(kind: 'correct' | 'master' | 'masterSlash', combo: number): SuccessFeedback {
+    const master = kind === 'master' || kind === 'masterSlash';
     return {
-        sound: kind,
-        haptic: kind === 'master' ? 'medium' : 'light',
-        hitStopMs: kind === 'master' ? 100 : 0,
+        sound: master ? 'master' : 'correct',
+        haptic: master ? 'medium' : 'light',
+        hitStopMs: kind === 'masterSlash' ? 120 : kind === 'master' ? 100 : 0,
         comboMilestone: combo >= 5 && combo % 5 === 0,
     };
 }
@@ -26,7 +27,7 @@ export function successFeedback(kind: 'correct' | 'master', combo: number): Succ
 export function failureFeedback(kind: FailureKind, brokenCombo: number): FailureFeedback {
     const labels: Readonly<Record<FailureKind, string>> = {
         wrong: '',
-        bomb: '炸弹！',
+        bomb: '',
         miss: '',
         orderError: '顺序错误',
     };

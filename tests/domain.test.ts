@@ -19,6 +19,14 @@ import {
     KNOWLEDGE_SCIENCE_FACTS,
     LIFE_CATEGORY_FACTS,
 } from '../assets/Scripts/domain/ContentCatalog.ts';
+import { HANZI_ANTONYM_FACTS, HANZI_SYNONYM_FACTS } from '../assets/Scripts/domain/HanziRelationCatalog.ts';
+import {
+    KNOWLEDGE_CIVIC_FACTS,
+    KNOWLEDGE_CULTURE_EXPANSION,
+    KNOWLEDGE_NATURE_EXPANSION,
+    KNOWLEDGE_SCIENCE_EXPANSION,
+} from '../assets/Scripts/domain/KnowledgeExpansionCatalog.ts';
+import { getQuestionBankStats, QUESTION_BANK_PACKS } from '../assets/Scripts/domain/QuestionBankRegistry.ts';
 import { GameSession } from '../assets/Scripts/domain/GameSession.ts';
 import { countdownWarningSecond, failureFeedback, successFeedback } from '../assets/Scripts/domain/GameFeedback.ts';
 import { beginDailyRun, createDailyChallenge, createDailyHomePresentation, dailyRecipeById, localDateKey, recordDailyRun } from '../assets/Scripts/domain/DailyChallenge.ts';
@@ -47,7 +55,8 @@ import {
 import { RunSeedFactory } from '../assets/Scripts/app/RunSeedFactory.ts';
 import { PlatformService } from '../assets/Scripts/infrastructure/PlatformService.ts';
 import { AudioService, SoundThrottle } from '../assets/Scripts/infrastructure/AudioService.ts';
-import { migrateV1ToV2, migrateV2ToV3 } from '../assets/Scripts/infrastructure/SaveData.ts';
+import { migrateV1ToV2, migrateV2ToV3, migrateV3ToV4, migrateV4ToV5 } from '../assets/Scripts/infrastructure/SaveData.ts';
+import { brawlRecordFromRun, createLocalLeaderboard, emptyBrawlRecord } from '../assets/Scripts/domain/Leaderboard.ts';
 import { TowerDirector } from '../assets/Scripts/domain/TowerDirector.ts';
 import {
     DEFAULT_TOWER_PROGRESS,
@@ -68,7 +77,7 @@ import {
     PORTRAIT_TARGET_MIN_SEPARATION,
     resolveSoftTargetSeparation,
 } from '../assets/Scripts/UI/PortraitTargetMotion.ts';
-import { ACTIVE_TARGET_SKINS, TARGET_SKIN_VISUAL_SCALE, targetContentLayout, targetSkinPixelScale, targetSkinVisualScale } from '../assets/Scripts/UI/TargetSkinSizing.ts';
+import { ACTIVE_TARGET_SKINS, ALL_TARGET_SKINS, COLOR_QUESTION_TARGET_SKIN, TARGET_SKIN_VISUAL_SCALE, targetContentLayout, targetShapeForSkin, targetSkinForAnswer, targetSkinPixelScale, targetSkinVisualScale, uniqueColorTargetSkins } from '../assets/Scripts/UI/TargetSkinSizing.ts';
 
 function pipeline(seed: string): { director: Brawl60Director; generator: QuestionGenerator } {
     return {
@@ -235,7 +244,8 @@ test('sound throttle recovers from cooldowns and device clock rollback', () => {
 test('game feedback policy maps master, combo, failures and final countdown', () => {
     assert.deepEqual(successFeedback('correct', 4), { sound: 'correct', haptic: 'light', hitStopMs: 0, comboMilestone: false });
     assert.deepEqual(successFeedback('master', 10), { sound: 'master', haptic: 'medium', hitStopMs: 100, comboMilestone: true });
-    assert.deepEqual(failureFeedback('bomb', 6), { sound: 'bomb', haptic: 'heavy', label: '炸弹！', showComboBreak: true });
+    assert.deepEqual(successFeedback('masterSlash', 10), { sound: 'master', haptic: 'medium', hitStopMs: 120, comboMilestone: true });
+    assert.deepEqual(failureFeedback('bomb', 6), { sound: 'bomb', haptic: 'heavy', label: '', showComboBreak: true });
     assert.deepEqual(failureFeedback('orderError', 2), { sound: 'error', haptic: 'medium', label: '顺序错误', showComboBreak: false });
     assert.deepEqual(failureFeedback('wrong', 0), { sound: 'error', haptic: 'medium', label: '', showComboBreak: false });
     assert.deepEqual(failureFeedback('miss', 0), { sound: 'error', haptic: 'medium', label: '', showComboBreak: false });
@@ -462,6 +472,23 @@ test('standard parity accepts either even while multi parity requires all evens'
     assert.equal(gesture.hit('12').status, 'success');
 });
 
+test('master slash requires multiple answers completed without lifting the pointer', () => {
+    const constraint = { requiredTargetIds: ['a', 'b'], forbiddenTargetIds: [], matchMode: 'all' as const, ordered: false, allowExtraHits: false };
+    const continuous = new GestureResolver(constraint);
+    continuous.hit('a');
+    assert.deepEqual(continuous.hit('b'), { status: 'success', masterSlash: true });
+
+    const broken = new GestureResolver(constraint);
+    broken.hit('a');
+    assert.equal(broken.end(true).status, 'continue');
+    assert.deepEqual(broken.hit('b'), { status: 'success', masterSlash: false });
+
+    const single = new GestureResolver({ ...constraint, requiredTargetIds: ['a'], matchMode: 'any' });
+    assert.deepEqual(single.hit('a'), { status: 'success', masterSlash: false });
+    const reverseChoice = new GestureResolver({ ...constraint, requiredTargetIds: ['a', 'b'], matchMode: 'any' });
+    assert.deepEqual(reverseChoice.hit('a'), { status: 'success', masterSlash: false });
+});
+
 test('ordinary single selection generates exactly one correct target', () => {
     const familyKinds = new Set(['math-property', 'english-category', 'life-category']);
     const ruleSets = [['standard'], ['bomb'], ['rotate']] as const;
@@ -535,11 +562,33 @@ test('session applies a question result only once', () => {
     assert.ok(session.resolveSuccess(q)); assert.equal(session.resolveSuccess(q), null); assert.equal(session.state.correctCount, 1);
 });
 
+test('session counts master slashes and adds their independent score bonus', () => {
+    const session = new GameSession({ mode: 'brawl60', seed: 'master-slash', contentVersion: 'v' }, GAMEPLAY_CONFIG);
+    const question: QuestionInstance = { id: 'multi', theme: 'math', prompt: { text: '斩全部偶数' }, targets: [{ id: 'a', text: '2' }, { id: 'b', text: '4' }], baseCorrectTargetIds: ['a', 'b'], activeRules: ['multi'], timeLimitMs: 3000 };
+    session.start(); session.beginQuestion(); session.tick(1000);
+    const result = session.resolveSuccess(question, true);
+    assert.equal(result?.kind, 'masterSlash');
+    assert.equal(result?.masterHit, false);
+    assert.equal(result?.scoreDelta, 225);
+    assert.equal(session.state.masterSlashCount, 1);
+});
+
 test('question preview time does not reduce the measured answer window', () => {
     const entry = { mode: 'brawl60' as const, seed: 'preview-window', contentVersion: 'v' };
     const session = new GameSession(entry, GAMEPLAY_CONFIG); session.start(); session.tick(300); session.beginQuestion(); session.tick(120);
     const q: QuestionInstance = { id: 'preview-q', theme: 'math', prompt: { text: '1+1=?' }, targets: [{ id: 'a', text: '2' }, { id: 'b', text: '3' }], baseCorrectTargetIds: ['a'], activeRules: ['standard'], timeLimitMs: 3000 };
     assert.equal(session.resolveSuccess(q)?.reactionMs, 120);
+});
+
+test('master hit window starts after target entrance settles', () => {
+    const question: QuestionInstance = { id: 'master-hit-window', theme: 'math', prompt: { text: '1+1=?' }, targets: [{ id: 'a', text: '2' }, { id: 'b', text: '3' }], baseCorrectTargetIds: ['a'], activeRules: ['standard'], timeLimitMs: 3000 };
+    const withinWindow = new GameSession({ mode: 'brawl60', seed: 'master-hit-within', contentVersion: 'v' }, GAMEPLAY_CONFIG);
+    withinWindow.start(); withinWindow.beginQuestion(); withinWindow.tick(990);
+    assert.equal(withinWindow.resolveSuccess(question)?.masterHit, true);
+
+    const outsideWindow = new GameSession({ mode: 'brawl60', seed: 'master-hit-outside', contentVersion: 'v' }, GAMEPLAY_CONFIG);
+    outsideWindow.start(); outsideWindow.beginQuestion(); outsideWindow.tick(1000);
+    assert.equal(outsideWindow.resolveSuccess(question)?.masterHit, false);
 });
 
 test('endless brawl only ends on life depletion and heals every fifth consecutive correct answer', () => {
@@ -711,9 +760,70 @@ test('expanded content catalog contains five times the recommended family counts
     const counts = Object.fromEntries(Object.keys(CONTENT_FAMILY_TARGETS).map((theme) => [theme, 0])) as Record<keyof typeof CONTENT_FAMILY_TARGETS, number>;
     for (const family of CONTENT_FAMILIES) counts[family.theme] += 1;
     assert.deepEqual(counts, CONTENT_FAMILY_TARGETS);
-    assert.equal(CONTENT_FAMILIES.length, 145);
+    assert.equal(CONTENT_FAMILIES.length, 165);
     assert.equal(new Set(CONTENT_FAMILIES.map((family) => family.id)).size, CONTENT_FAMILIES.length);
     assert.ok(!CONTENT_FAMILIES.some((family) => family.kind === 'life-use'));
+});
+
+test('question-bank registry reports audited base records instead of generated combinations', () => {
+    const stats = getQuestionBankStats();
+    assert.equal(stats.baseRecordCount, 1004);
+    assert.equal(stats.packCount, 19);
+    assert.deepEqual(stats.byTheme, {
+        math: 0,
+        vision: 0,
+        hanzi: 300,
+        english: 136,
+        life: 30,
+        geography: 60,
+        knowledge: 404,
+        history: 74,
+    });
+    assert.equal(new Set(QUESTION_BANK_PACKS.map((pack) => pack.id)).size, QUESTION_BANK_PACKS.length);
+});
+
+test('new relationship and common-knowledge packs keep short answers and clean choices', () => {
+    assert.equal(HANZI_ANTONYM_FACTS.length, 100);
+    assert.equal(HANZI_SYNONYM_FACTS.length, 100);
+    for (const fact of [...HANZI_ANTONYM_FACTS, ...HANZI_SYNONYM_FACTS]) {
+        assert.ok(Array.from(fact.left).length <= 4, fact.left);
+        assert.ok(Array.from(fact.right).length <= 4, fact.right);
+        assert.ok(!fact.leftDistractors.includes(fact.left));
+        assert.ok(!fact.rightDistractors.includes(fact.right));
+    }
+
+    const expansions = [
+        KNOWLEDGE_SCIENCE_EXPANSION,
+        KNOWLEDGE_NATURE_EXPANSION,
+        KNOWLEDGE_CULTURE_EXPANSION,
+        KNOWLEDGE_CIVIC_FACTS,
+    ];
+    for (const pool of expansions) {
+        assert.equal(pool.length, 56);
+        for (const fact of pool) {
+            assert.ok(Array.from(fact.prompt).length <= 12, fact.prompt);
+            assert.ok(Array.from(fact.answer).length <= 4, `${fact.prompt}: ${fact.answer}`);
+            assert.ok(!fact.wrong.includes(fact.answer));
+            assert.equal(new Set(fact.wrong).size, fact.wrong.length);
+        }
+    }
+});
+
+test('warmup catalog includes distinct equation and symbol-matching questions', () => {
+    for (const kind of ['math-equation', 'vision-match'] as const) {
+        const families = CONTENT_FAMILIES.filter((family) => family.kind === kind);
+        assert.equal(families.length, 5);
+        for (const family of families) {
+            const generator = new QuestionGenerator(new SeededRng(`warmup-${family.id}`), GAMEPLAY_CONFIG);
+            const question = generator.next({
+                phase: 'warmup', difficultyStage: 0, targetCount: 3, questionTimeMs: 3_000,
+                speed: 0.72, family, rules: ['standard'],
+            });
+            assert.deepEqual(validateQuestion(question, evaluateRules(question)), []);
+            assert.equal(question.baseCorrectTargetIds.length, 1);
+            assert.equal(question.targets.length, 3);
+        }
+    }
 });
 
 test('reviewed fact pools contain unique answers and safe idiom distractors', () => {
@@ -832,48 +942,67 @@ test('target skins use their source canvas instead of auto-trim bounds for visua
 });
 
 test('target skin optical scales keep visible subject areas within a small error', () => {
-    // Opaque-area ratios measured from the imported, auto-trimmed sprite frames.
-    const visibleAreaRatios: Record<keyof typeof TARGET_SKIN_VISUAL_SCALE, number> = {
-        blue_square: 0.559,
-        green_triangle: 0.421,
-        orange_circle: 0.699,
-        pink_diamond: 0.474,
-        purple_hexagon: 0.688,
-        red_trapezoid: 0.600,
-        yellow_circle: 0.586,
-    };
-    const correctedAreas = Object.entries(visibleAreaRatios).map(([skin, area]) =>
-        area * targetSkinVisualScale(skin) ** 2,
-    );
-    const nonTriangleAreas = correctedAreas.filter((_, index) => Object.keys(visibleAreaRatios)[index] !== 'green_triangle');
-
-    assert.ok(Math.max(...nonTriangleAreas) / Math.min(...nonTriangleAreas) < 1.02);
-    assert.ok(Math.max(...correctedAreas) / Math.min(...correctedAreas) < 1.13);
+    assert.equal(targetSkinVisualScale('blue_circle'), TARGET_SKIN_VISUAL_SCALE.circle);
+    assert.equal(targetSkinVisualScale('red_hexagon'), TARGET_SKIN_VISUAL_SCALE.hexagon);
+    assert.equal(targetSkinVisualScale('yellow_square'), TARGET_SKIN_VISUAL_SCALE.square);
+    assert.equal(targetSkinVisualScale(COLOR_QUESTION_TARGET_SKIN), TARGET_SKIN_VISUAL_SCALE.white_square);
     assert.equal(targetSkinVisualScale('unknown_skin'), 1);
 });
 
-test('target content layouts stay inside narrow skins and use optical centers', () => {
-    const triangle = targetContentLayout('green_triangle', 'roundedSquare');
-    const diamond = targetContentLayout('pink_diamond', 'roundedSquare');
-    const square = targetContentLayout('blue_square', 'triangle');
+test('target content layouts follow the three supported artwork shapes', () => {
+    const circle = targetContentLayout('blue_circle', 'roundedSquare');
+    const hexagon = targetContentLayout('green_hexagon', 'roundedSquare');
+    const square = targetContentLayout('red_square', 'circle');
 
-    assert.ok(triangle.width <= 0.92);
-    assert.ok(triangle.height <= 0.58);
-    assert.ok(triangle.offsetY < 0);
-    assert.ok(diamond.width / 2 + diamond.height / 2 < 1);
-    assert.ok(square.width > triangle.width);
-    assert.deepEqual(targetContentLayout(undefined, 'triangle'), triangle);
+    assert.ok(square.width > hexagon.width);
+    assert.ok(circle.height > hexagon.height);
+    assert.deepEqual(targetContentLayout(undefined, 'circle'), circle);
+    assert.equal(targetShapeForSkin('purple_circle'), 'circle');
+    assert.equal(targetShapeForSkin('cyan_hexagon'), 'hexagon');
+    assert.equal(targetShapeForSkin(COLOR_QUESTION_TARGET_SKIN), 'roundedSquare');
 });
 
-test('active gameplay target skins temporarily exclude the triangle', () => {
+test('active gameplay target skins contain only colored squares, circles, and hexagons', () => {
     assert.deepEqual(ACTIVE_TARGET_SKINS, [
-        'blue_square',
-        'orange_circle',
-        'pink_diamond',
-        'purple_hexagon',
-        'red_trapezoid',
-        'yellow_circle',
+        'blue_circle',
+        'blue_hexagon',
+        'cyan_circle',
+        'cyan_hexagon',
+        'cyan_square',
+        'green_circle',
+        'green_hexagon',
+        'green_square',
+        'orange_hexagon',
+        'orange_square',
+        'purple_circle',
+        'purple_square',
+        'red_circle',
+        'red_hexagon',
+        'red_square',
+        'yellow_hexagon',
+        'yellow_square',
     ]);
+    assert.ok(ACTIVE_TARGET_SKINS.every((skin) => /_(square|circle|hexagon)$/.test(skin)));
+    assert.ok(!ACTIVE_TARGET_SKINS.includes(COLOR_QUESTION_TARGET_SKIN as never));
+    assert.deepEqual(ALL_TARGET_SKINS, [...ACTIVE_TARGET_SKINS, COLOR_QUESTION_TARGET_SKIN]);
+    assert.equal(targetSkinForAnswer('红', ACTIVE_TARGET_SKINS[0]), COLOR_QUESTION_TARGET_SKIN);
+    assert.equal(targetSkinForAnswer(undefined, ACTIVE_TARGET_SKINS[0]), ACTIVE_TARGET_SKINS[0]);
+});
+
+test('one question uses every artwork color at most once while shapes may repeat', () => {
+    const randomized = [
+        'red_circle',
+        'blue_circle',
+        'red_square',
+        'cyan_circle',
+        'blue_hexagon',
+        'green_circle',
+    ] as const;
+    const selected = uniqueColorTargetSkins(randomized);
+
+    assert.deepEqual(selected, ['red_circle', 'blue_circle', 'cyan_circle', 'green_circle']);
+    assert.equal(selected.filter((skin) => skin.endsWith('_circle')).length, 4);
+    assert.equal(new Set(selected.map((skin) => skin.slice(0, skin.lastIndexOf('_')))).size, selected.length);
 });
 
 test('portrait target motion preserves lanes and separates every phase throughout flight', () => {
@@ -1427,6 +1556,49 @@ test('save v2 migration adds a valid default friend challenge configuration', ()
     });
     assert.equal(migrated.schemaVersion, 3);
     assert.deepEqual(migrated.lastFriendChallengeConfig, DEFAULT_FRIEND_CHALLENGE_CONFIG);
+});
+
+test('save v3 migration preserves the legacy best score for the local brawl leaderboard', () => {
+    const migrated = migrateV3ToV4({
+        schemaVersion: 3,
+        player: { level: 2, xp: 700, bestScore: 975 },
+        settings: { music: true, sfx: true, vibration: true, quality: 'auto' },
+        tutorials: {},
+        tower: DEFAULT_TOWER_PROGRESS,
+        lastFriendChallengeConfig: DEFAULT_FRIEND_CHALLENGE_CONFIG,
+    });
+    assert.equal(migrated.schemaVersion, 4);
+    assert.equal(migrated.leaderboard.brawlBestScore, 975);
+});
+
+test('save v4 migration creates detailed brawl and trial leaderboard records', () => {
+    const migrated = migrateV4ToV5({
+        schemaVersion: 4,
+        player: { level: 2, xp: 700, bestScore: 975 },
+        settings: { music: true, sfx: true, vibration: true, quality: 'auto' },
+        tutorials: {}, tower: DEFAULT_TOWER_PROGRESS,
+        lastFriendChallengeConfig: DEFAULT_FRIEND_CHALLENGE_CONFIG,
+        leaderboard: { brawlBestScore: 975 },
+    });
+    assert.equal(migrated.schemaVersion, 5);
+    assert.equal(migrated.leaderboard.brawlBest.rankScore, 975);
+    assert.equal(migrated.leaderboard.trialAnsweredCount, 0);
+});
+
+test('local leaderboard sorts persisted player scores and reports an off-screen self rank', () => {
+    const record = brawlRecordFromRun({
+        entry: { mode: 'brawl60', seed: 'rank', contentVersion: 'v' }, score: 0,
+        elapsedMs: 300_000, maxCombo: 30, correctCount: 120, errorCount: 5, accuracy: 120 / 125, masterSlashCount: 10,
+    });
+    const leading = createLocalLeaderboard('brawl', { brawl: record, trial: { highestFloor: 0, answeredCount: 0, accuracy: 0 } });
+    assert.equal(leading.top[0].id, 'self');
+    assert.equal(leading.top[0].score, record.rankScore);
+    assert.equal(leading.self.rank, 1);
+
+    const newcomer = createLocalLeaderboard('trial', { brawl: emptyBrawlRecord(), trial: { highestFloor: 0, answeredCount: 0, accuracy: 0 } });
+    assert.equal(newcomer.top.length, 10);
+    assert.equal(newcomer.self.rank, 13);
+    assert.equal(newcomer.self.score, 0);
 });
 
 test('home portrait layout keeps every section separated across common safe areas', () => {

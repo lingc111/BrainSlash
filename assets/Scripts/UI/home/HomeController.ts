@@ -9,6 +9,7 @@ import {
     ImageAsset,
     Label,
     Layers,
+    Mask,
     Node,
     ResolutionPolicy,
     resources,
@@ -155,6 +156,7 @@ export class HomeController extends Component {
 
     protected onDestroy(): void {
         this.countdown.stop();
+        if (!EDITOR) AppRuntime.platform.hideUserAuthorizationButton();
         this.removePendingChallengeListener?.();
         this.removePendingChallengeListener = null;
         if (this.dailyChallenge) Tween.stopAllByTarget(this.dailyChallenge);
@@ -609,9 +611,9 @@ export class HomeController extends Component {
         shade.fillColor = new Color(31, 29, 25, 170);
         shade.rect(-visible.width / 2, -visible.height / 2, visible.width, visible.height);
         shade.fill();
-        const panel = this.graphics(modal, 'SettingsPaper', 0, 0, 650, 700);
-        this.drawIrregularPaper(panel, 650, 700, C.paperRaised, C.ink, 5);
-        this.label(modal, 'SettingsTitle', '设置', 0, 265, 400, 72, 45, C.ink, 'center');
+        const panel = this.graphics(modal, 'SettingsPaper', 0, 0, 650, 820);
+        this.drawIrregularPaper(panel, 650, 820, C.paperRaised, C.ink, 5);
+        this.label(modal, 'SettingsTitle', '设置', 0, 330, 400, 72, 45, C.ink, 'center');
         const addToggle = (name: string, y: number, read: () => boolean, write: (value: boolean) => void): void => {
             const row = this.makeNode(modal, `Setting_${name}`, 0, y, 500, 74);
             const g = row.addComponent(Graphics);
@@ -622,23 +624,57 @@ export class HomeController extends Component {
             refresh();
             this.bindButton(row, () => { write(!read()); refresh(); this.pulseHaptic(); });
         };
-        addToggle('音乐', 150, () => AppRuntime.save.snapshot().settings.music, (value) => AppRuntime.save.updateSettings({ music: value }));
-        addToggle('音效', 55, () => AppRuntime.save.snapshot().settings.sfx, (value) => { AppRuntime.save.updateSettings({ sfx: value }); AppRuntime.audio.enabled = value; });
-        addToggle('震动', -40, () => AppRuntime.save.snapshot().settings.vibration, (value) => AppRuntime.save.updateSettings({ vibration: value }));
-        const quality = this.makeNode(modal, 'Setting_Quality', 0, -135, 500, 74);
+        addToggle('音乐', 220, () => AppRuntime.save.snapshot().settings.music, (value) => AppRuntime.save.updateSettings({ music: value }));
+        addToggle('音效', 125, () => AppRuntime.save.snapshot().settings.sfx, (value) => { AppRuntime.save.updateSettings({ sfx: value }); AppRuntime.audio.enabled = value; });
+        addToggle('震动', 30, () => AppRuntime.save.snapshot().settings.vibration, (value) => AppRuntime.save.updateSettings({ vibration: value }));
+        const quality = this.makeNode(modal, 'Setting_Quality', 0, -65, 500, 74);
         const qualityG = quality.addComponent(Graphics); qualityG.fillColor = C.paper; qualityG.strokeColor = C.ink; qualityG.lineWidth = 3; qualityG.roundRect(-250, -37, 500, 74, 12); qualityG.fill(); qualityG.stroke();
         const qualityLabel = this.label(quality, 'Value', '', 0, 0, 450, 60, 28, C.ink, 'center');
         const qualities = ['auto', 'low', 'medium', 'high'] as const;
         const refreshQuality = (): void => { qualityLabel.string = `画质　${AppRuntime.save.snapshot().settings.quality.toUpperCase()}`; };
         refreshQuality();
         this.bindButton(quality, () => { const current = AppRuntime.save.snapshot().settings.quality; AppRuntime.save.updateSettings({ quality: qualities[(qualities.indexOf(current) + 1) % qualities.length] }); refreshQuality(); });
-        const close = this.makeNode(modal, 'CloseSettings', 0, -260, 300, 76);
+        const authorization = this.makeNode(modal, 'WechatAuthorization', 0, -160, 500, 74);
+        const authorizationG = authorization.addComponent(Graphics);
+        authorizationG.fillColor = C.paper; authorizationG.strokeColor = C.ink; authorizationG.lineWidth = 3;
+        authorizationG.roundRect(-250, -37, 500, 74, 12); authorizationG.fill(); authorizationG.stroke();
+        const authorizationLabel = this.label(authorization, 'Value', '', 0, 0, 450, 60, 27, C.ink, 'center');
+        const refreshAuthorization = (message?: string): void => {
+            const profile = AppRuntime.platform.authorizedUserProfile();
+            authorizationLabel.string = message ?? (profile ? `微信头像　${profile.nickName || '已授权'}` : '微信头像　点击授权');
+        };
+        refreshAuthorization();
+        this.bindButton(authorization, () => {
+            authorizationLabel.string = '微信头像　授权中…';
+            void AppRuntime.platform.authorizeUserProfile().then((result) => {
+                if (!authorization.isValid) return;
+                if (result.status === 'authorized') {
+                    refreshAuthorization();
+                    void AppRuntime.syncLeaderboard();
+                } else if (result.status === 'unsupported') refreshAuthorization('微信头像　请在微信真机授权');
+                else refreshAuthorization('微信头像　未授权，点击重试');
+            });
+        });
+        if (!EDITOR) {
+            AppRuntime.platform.showUserAuthorizationButton({
+                centerX: 0, centerY: -160, width: 500, height: 74,
+                viewportWidth: visible.width, viewportHeight: visible.height,
+            }, (result) => {
+                if (!authorization.isValid) return;
+                if (result.status === 'authorized') {
+                    refreshAuthorization();
+                    void AppRuntime.syncLeaderboard();
+                } else refreshAuthorization('微信头像　未授权，点击重试');
+            });
+        }
+        const close = this.makeNode(modal, 'CloseSettings', 0, -300, 300, 76);
         const closeG = close.addComponent(Graphics); closeG.fillColor = C.yellow; closeG.strokeColor = C.ink; closeG.lineWidth = 4; closeG.roundRect(-150, -38, 300, 76, 14); closeG.fill(); closeG.stroke();
         this.label(close, 'Label', '完成', 0, 0, 260, 60, 30, C.ink, 'center');
         this.bindButton(close, () => this.toggleSettings());
     }
 
     private closeSettings(): void {
+        if (!EDITOR) AppRuntime.platform.hideUserAuthorizationButton();
         if (this.settingsModal?.isValid) this.settingsModal.destroy();
         this.settingsModal = null;
     }
@@ -1111,28 +1147,12 @@ export class HomeController extends Component {
     }
 
     private drawAvatar(parent: Node): void {
-        const g = this.graphics(parent, 'HandDrawnAvatar', 0, -3, 88, 88);
-        g.strokeColor = C.ink;
-        g.lineWidth = 3;
-        g.fillColor = C.paperRaised;
-        g.circle(0, -5, 31);
-        g.fill();
-        g.stroke();
-        g.moveTo(-32, 8);
-        g.lineTo(-21, 29);
-        g.lineTo(-10, 21);
-        g.lineTo(0, 36);
-        g.lineTo(10, 22);
-        g.lineTo(24, 31);
-        g.lineTo(31, 8);
-        g.stroke();
-        g.fillColor = C.ink;
-        g.circle(-11, -7, 2.5);
-        g.circle(11, -7, 2.5);
-        g.fill();
-        g.moveTo(-7, -20);
-        g.quadraticCurveTo(0, -24, 7, -20);
-        g.stroke();
+        const maskNode = this.makeNode(parent, 'DefaultAvatarMask', 0, -3, 82, 82);
+        const mask = maskNode.addComponent(Mask);
+        mask.type = Mask.Type.GRAPHICS_ELLIPSE;
+        mask.segments = 48;
+        const artwork = this.makeNode(maskNode, 'DefaultAvatarArtwork', 0, 0, 128, 128);
+        this.attachResourceTexture(artwork, 'textures/common/default_avatar/spriteFrame');
     }
 
     private drawLightning(parent: Node, x: number, y: number, size: number): void {

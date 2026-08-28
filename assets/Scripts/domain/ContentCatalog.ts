@@ -8,14 +8,17 @@ export type ContentFamilyKind =
     | 'math-compare'
     | 'math-sequence'
     | 'math-missing'
+    | 'math-equation'
     | 'vision-direction'
     | 'vision-odd'
     | 'vision-count'
     | 'vision-stroop'
     | 'vision-pattern'
+    | 'vision-match'
     | 'hanzi-fill'
-    | 'hanzi-valid'
     | 'hanzi-order'
+    | 'hanzi-antonym'
+    | 'hanzi-synonym'
     | 'english-meaning'
     | 'english-category'
     | 'english-antonym'
@@ -25,6 +28,7 @@ export type ContentFamilyKind =
     | 'knowledge-science'
     | 'knowledge-nature'
     | 'knowledge-culture'
+    | 'knowledge-civic'
     | 'history-modern-opening'
     | 'history-modern-awakening'
     | 'history-modern-resistance'
@@ -39,13 +43,13 @@ export interface ContentFamilySpec {
 }
 
 export const CONTENT_FAMILY_TARGETS: Readonly<Record<ThemeId, number>> = {
-    math: 35,
-    vision: 25,
-    hanzi: 15,
+    math: 40,
+    vision: 30,
+    hanzi: 20,
     english: 15,
     life: 5,
     geography: 10,
-    knowledge: 15,
+    knowledge: 20,
     history: 25,
 };
 
@@ -57,14 +61,17 @@ const FAMILY_GROUPS: ReadonlyArray<readonly [ThemeId, ContentFamilyKind]> = [
     ['math', 'math-compare'],
     ['math', 'math-sequence'],
     ['math', 'math-missing'],
+    ['math', 'math-equation'],
     ['vision', 'vision-direction'],
     ['vision', 'vision-odd'],
     ['vision', 'vision-count'],
     ['vision', 'vision-stroop'],
     ['vision', 'vision-pattern'],
+    ['vision', 'vision-match'],
     ['hanzi', 'hanzi-fill'],
-    ['hanzi', 'hanzi-valid'],
     ['hanzi', 'hanzi-order'],
+    ['hanzi', 'hanzi-antonym'],
+    ['hanzi', 'hanzi-synonym'],
     ['english', 'english-meaning'],
     ['english', 'english-category'],
     ['english', 'english-antonym'],
@@ -74,6 +81,7 @@ const FAMILY_GROUPS: ReadonlyArray<readonly [ThemeId, ContentFamilyKind]> = [
     ['knowledge', 'knowledge-science'],
     ['knowledge', 'knowledge-nature'],
     ['knowledge', 'knowledge-culture'],
+    ['knowledge', 'knowledge-civic'],
     ['history', 'history-modern-opening'],
     ['history', 'history-modern-awakening'],
     ['history', 'history-modern-resistance'],

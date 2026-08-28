@@ -1,53 +1,76 @@
 import { sys } from 'cc';
 import { beginDailyRun, recordDailyRun } from '../domain/DailyChallenge';
 import { normalizeFriendChallengeConfig } from '../domain/FriendChallenge';
+import { brawlRecordFromRun, isBetterBrawlRecord } from '../domain/Leaderboard';
 import type { FriendChallengeConfig, GameEntryParams, GameResult, RunResult } from '../domain/Models';
 import { finalizeResult, XP_PER_CORRECT, XP_PER_LEVEL } from '../domain/ResultSummary';
 import { commitTowerFloor, type TowerFloorResult } from '../domain/TowerMode';
 import {
     createDefaultSave,
-    migrateV1ToV3,
-    migrateV2ToV3,
-    normalizeV3,
+    migrateV1ToV5,
+    migrateV2ToV5,
+    migrateV3ToV5,
+    migrateV4ToV5,
+    normalizeV5,
     type SaveDataV1,
     type SaveDataV2,
     type SaveDataV3,
+    type SaveDataV4,
+    type SaveDataV5,
     type SaveSettings,
 } from './SaveData';
 
-export type { SaveDataV1, SaveDataV2, SaveDataV3, SaveSettings } from './SaveData';
+export type { SaveDataV1, SaveDataV2, SaveDataV3, SaveDataV4, SaveDataV5, SaveSettings } from './SaveData';
 
 const KEY_V1 = 'brain-slash.save.v1';
 const KEY_V2 = 'brain-slash.save.v2';
 const KEY_V3 = 'brain-slash.save.v3';
+const KEY_V4 = 'brain-slash.save.v4';
+const KEY_V5 = 'brain-slash.save.v5';
 
 export class SaveService {
-    private data: SaveDataV3 = createDefaultSave();
+    private data: SaveDataV5 = createDefaultSave();
 
-    public load(): SaveDataV3 {
+    public load(): SaveDataV5 {
+        const rawV5 = safeParse(sys.localStorage.getItem(KEY_V5));
+        if (rawV5 && (rawV5 as Partial<SaveDataV5>).schemaVersion === 5) {
+            this.data = normalizeV5(rawV5 as Partial<SaveDataV5>);
+            return this.snapshot();
+        }
+        const rawV4 = safeParse(sys.localStorage.getItem(KEY_V4));
+        if (rawV4 && (rawV4 as Partial<SaveDataV4>).schemaVersion === 4) {
+            this.data = migrateV4ToV5(rawV4 as Partial<SaveDataV4>);
+            this.persist();
+            return this.snapshot();
+        }
         const rawV3 = safeParse(sys.localStorage.getItem(KEY_V3));
         if (rawV3 && (rawV3 as Partial<SaveDataV3>).schemaVersion === 3) {
-            this.data = normalizeV3(rawV3 as Partial<SaveDataV3>);
+            this.data = migrateV3ToV5(rawV3 as Partial<SaveDataV3>);
+            this.persist();
             return this.snapshot();
         }
         const rawV2 = safeParse(sys.localStorage.getItem(KEY_V2));
         if (rawV2 && (rawV2 as Partial<SaveDataV2>).schemaVersion === 2) {
-            this.data = migrateV2ToV3(rawV2 as Partial<SaveDataV2>);
+            this.data = migrateV2ToV5(rawV2 as Partial<SaveDataV2>);
             this.persist();
             return this.snapshot();
         }
         const rawV1 = safeParse(sys.localStorage.getItem(KEY_V1));
         this.data = rawV1 && (rawV1 as Partial<SaveDataV1>).schemaVersion === 1
-            ? migrateV1ToV3(rawV1 as Partial<SaveDataV1>) : createDefaultSave();
+            ? migrateV1ToV5(rawV1 as Partial<SaveDataV1>) : createDefaultSave();
         this.persist();
         return this.snapshot();
     }
 
-    public snapshot(): SaveDataV3 { return clone(this.data); }
+    public snapshot(): SaveDataV5 { return clone(this.data); }
 
     public commitResult(run: RunResult): GameResult {
         const committed = finalizeResult(run, this.data.player);
         this.data.player = committed.player;
+        if (run.entry.mode === 'brawl60') {
+            const record = brawlRecordFromRun(run);
+            if (isBetterBrawlRecord(record, this.data.leaderboard.brawlBest)) this.data.leaderboard.brawlBest = record;
+        }
         const daily = recordDailyRun(this.data.daily, run);
         if (daily) this.data.daily = daily.record;
         this.persist();
@@ -57,6 +80,8 @@ export class SaveService {
     public commitTowerResult(run: RunResult, life: number): TowerFloorResult {
         const commit = commitTowerFloor(this.data.tower, run, life);
         this.data.tower = commit.progress;
+        this.data.leaderboard.trialAnsweredCount += Math.max(0, Math.floor(run.correctCount + run.errorCount));
+        this.data.leaderboard.trialCorrectCount += Math.max(0, Math.floor(run.correctCount));
         const xp = this.data.player.xp + Math.max(0, Math.floor(run.correctCount)) * XP_PER_CORRECT;
         this.data.player = { ...this.data.player, xp, level: 1 + Math.floor(xp / XP_PER_LEVEL) };
         this.persist();
@@ -84,7 +109,7 @@ export class SaveService {
     }
 
     private persist(): void {
-        try { sys.localStorage.setItem(KEY_V3, JSON.stringify(this.data)); } catch { /* Storage can be unavailable in preview. */ }
+        try { sys.localStorage.setItem(KEY_V5, JSON.stringify(this.data)); } catch { /* Storage can be unavailable in preview. */ }
     }
 }
 

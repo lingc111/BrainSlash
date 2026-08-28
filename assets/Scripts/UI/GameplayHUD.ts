@@ -282,7 +282,7 @@ export class GameplayHUD extends Component {
             { id: 'seven', contentType: TargetContentType.TEXT, text: '7', value: 7, shape: 'circle', color: GREEN },
             { id: 'twelve', contentType: TargetContentType.TEXT, text: '12', value: 12, shape: 'hexagon', color: BLUE },
             { id: 'three', contentType: TargetContentType.TEXT, text: '3', value: 3, shape: 'circle', color: PURPLE },
-            { id: 'fourteen', contentType: TargetContentType.TEXT, text: '14', value: 14, shape: 'pentagon', color: ORANGE },
+            { id: 'fourteen', contentType: TargetContentType.TEXT, text: '14', value: 14, shape: 'roundedSquare', color: ORANGE },
             { id: 'bomb', contentType: TargetContentType.ICON, shape: 'circle', isBomb: true, color: INK },
         ];
         data.forEach((item, index) => {

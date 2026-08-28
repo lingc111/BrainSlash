@@ -5,6 +5,7 @@
     "version": "3.8.8"
   },
   "scripts": {
-    "test": "node --import ./tools/ts-test-resolver.mjs --test --experimental-transform-types tests/*.test.ts"
+    "test": "node --import ./tools/ts-test-resolver.mjs --test --experimental-transform-types tests/*.test.ts",
+    "audit:questions": "node --import ./tools/ts-test-resolver.mjs --experimental-transform-types tools/audit-question-bank.mjs"
   }
 }

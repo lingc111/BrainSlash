@@ -31,6 +31,7 @@ class AppRuntimeState {
     public initialize(): void {
         const data = this.save.load();
         this.audio.enabled = data.settings.sfx;
+        void this.syncLeaderboard();
         if (!this.launchOptionsRead) {
             this.launchOptionsRead = true;
             this.applyLaunchChallenge(this.platform.readChallenge(CONTENT_VERSION));
@@ -138,11 +139,13 @@ class AppRuntimeState {
     public home(): void { if (!this.transitioning) { this.transitioning = true; director.loadScene('Home', () => { this.transitioning = false; }); } }
     public finish(run: RunResult): GameResult {
         this.result = this.save.commitResult(run);
+        if (run.entry.mode === 'brawl60') void this.syncLeaderboard();
         this.analytics.track('game_finish', { score: run.score, mode: run.entry.mode });
         return this.result;
     }
     public finishTower(run: RunResult, life: number): TowerFloorResult {
         this.towerResult = this.save.commitTowerResult(run, life);
+        void this.syncLeaderboard();
         this.analytics.track('tower_floor_finish', {
             floor: this.towerResult.floor,
             cleared: this.towerResult.cleared,
@@ -177,6 +180,19 @@ class AppRuntimeState {
         }
         const payload = createFriendChallengePayload(this.result);
         this.platform.share(payload); this.analytics.track('share', { score: payload.targetScore });
+    }
+
+    public syncLeaderboard(): Promise<boolean> {
+        const save = this.save.snapshot();
+        const answeredCount = save.leaderboard.trialAnsweredCount;
+        return this.platform.uploadLeaderboard({
+            brawl: save.leaderboard.brawlBest,
+            trial: {
+                highestFloor: save.tower.highestClearedFloor,
+                answeredCount,
+                accuracy: answeredCount > 0 ? save.leaderboard.trialCorrectCount / answeredCount : 0,
+            },
+        });
     }
 }
 

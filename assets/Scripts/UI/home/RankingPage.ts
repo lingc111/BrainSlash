@@ -1,5 +1,6 @@
 import {
     _decorator,
+    assetManager,
     Button,
     Color,
     Component,
@@ -7,64 +8,76 @@ import {
     ImageAsset,
     Label,
     Layers,
+    Mask,
     Node,
     resources,
     Sprite,
     SpriteFrame,
+    SubContextView,
     UITransform,
     Vec3,
 } from 'cc';
 import { EDITOR } from 'cc/env';
 import { AppRuntime } from '../../app/AppRuntime';
+import { createLocalLeaderboard, emptyBrawlRecord, type LeaderboardEntry, type LeaderboardMode } from '../../domain/Leaderboard';
 import { HOME_HAND_DRAWN as C } from '../DesignTokens';
 
 const { ccclass, executeInEditMode } = _decorator;
 
-type RankingMode = 'brawl' | 'trial';
-
-interface RankingEntry {
-    readonly name: string;
-    readonly brawl: number;
-    readonly trial: number;
-}
-
-const RANKINGS: readonly RankingEntry[] = [
-    { name: '小王', brawl: 1280, trial: 96 },
-    { name: '阿宁', brawl: 1170, trial: 91 },
-    { name: 'Momo', brawl: 1100, trial: 88 },
-    { name: '大熊猫', brawl: 980, trial: 82 },
-    { name: '奶盖小仙女', brawl: 950, trial: 78 },
-    { name: '吃不饱', brawl: 900, trial: 73 },
-    { name: '钺', brawl: 860, trial: 69 },
-    { name: '泡泡龙', brawl: 820, trial: 65 },
-    { name: '小宇宙', brawl: 780, trial: 61 },
-    { name: '咸鱼翻身', brawl: 720, trial: 56 },
-] as const;
-
 const ROW_Y = [-28, -104, -180, -256, -332, -408, -484] as const;
+const DISPLAY_ORDER = [1, 0, 2, 3, 4, 5, 6, 7, 8, 9] as const;
 
 /** Runtime-built ranking page that shares Home's header and bottom navigation. */
 @ccclass('RankingPage')
 @executeInEditMode(true)
 export class RankingPage extends Component {
-    private mode: RankingMode = 'brawl';
+    private mode: LeaderboardMode = 'brawl';
     private brawlSelection: Node | null = null;
     private trialSelection: Node | null = null;
     private scoreLabels: Label[] = [];
+    private nameLabels: Label[] = [];
+    private detailLabels: Label[] = [];
+    private avatarSlots: Node[] = [];
+    private selfAvatar: Node | null = null;
     private selfRankLabel: Label | null = null;
     private selfScoreLabel: Label | null = null;
+    private selfDetailLabel: Label | null = null;
+    private removeProfileListener: (() => void) | null = null;
+    private openDataView: Node | null = null;
+    private readonly localDataNodes: Node[] = [];
+    private readonly avatarRequests = new Map<Node, string>();
+    private readonly avatarFrames = new Map<string, SpriteFrame>();
 
     protected onLoad(): void {
         this.buildView();
+        if (!EDITOR) this.removeProfileListener = AppRuntime.platform.onAuthorizedUserProfileChanged(() => {
+            this.refreshScores();
+            this.refreshOpenDataLeaderboard();
+        });
         this.refreshScores();
     }
 
-    public selectMode(mode: RankingMode): void {
+    protected onDestroy(): void {
+        if (!EDITOR) AppRuntime.platform.postLeaderboardMessage({ type: 'brainSlashLeaderboard', action: 'hide' });
+        this.removeProfileListener?.();
+        this.removeProfileListener = null;
+        this.avatarRequests.clear();
+    }
+
+    protected onEnable(): void {
+        if (this.scoreLabels.length > 0) {
+            this.refreshScores();
+            this.refreshOpenDataLeaderboard();
+        }
+    }
+
+    public selectMode(mode: LeaderboardMode): void {
         if (this.mode === mode) return;
         this.mode = mode;
         if (this.brawlSelection) this.brawlSelection.active = mode === 'brawl';
         if (this.trialSelection) this.trialSelection.active = mode === 'trial';
         this.refreshScores();
+        this.refreshOpenDataLeaderboard();
         if (!EDITOR) AppRuntime.audio.play('ui');
     }
 
@@ -94,6 +107,7 @@ export class RankingPage extends Component {
         this.buildPodium(this.node);
         this.buildRows(this.node);
         this.buildSelfRanking(this.node);
+        this.setupOpenDataLeaderboard();
     }
 
     private buildTrialSelection(parent: Node): void {
@@ -107,30 +121,43 @@ export class RankingPage extends Component {
     }
 
     private buildPodium(parent: Node): void {
-        const podium: Array<{ entry: RankingEntry; asset: string; x: number; y: number; size: [number, number]; faceY: number }> = [
-            { entry: RANKINGS[1], asset: 'ranking_silver', x: -250, y: 207, size: [186, 190], faceY: 203 },
-            { entry: RANKINGS[0], asset: 'ranking_gold', x: 0, y: 232, size: [212, 236], faceY: 222 },
-            { entry: RANKINGS[2], asset: 'ranking_bronze', x: 250, y: 207, size: [186, 190], faceY: 203 },
+        const podium = [
+            { asset: 'ranking_silver', x: -250, y: 207, size: [186, 190] as [number, number], faceY: 203 },
+            { asset: 'ranking_gold', x: 0, y: 232, size: [212, 236] as [number, number], faceY: 222 },
+            { asset: 'ranking_bronze', x: 250, y: 207, size: [186, 190] as [number, number], faceY: 203 },
         ];
 
         podium.forEach((item, index) => {
             const medal = this.makeNode(parent, `PodiumMedal_${index + 1}`, item.x, item.y, item.size[0], item.size[1]);
             this.attachTexture(medal, `textures/rank/ui/${item.asset}`);
-            this.drawAvatar(parent, `PodiumAvatar_${index + 1}`, item.x, item.faceY, index === 1 ? 72 : 66, index);
-            this.label(parent, `PodiumName_${index + 1}`, item.entry.name, item.x, 101, 210, 46, 31, C.ink);
+            const avatar = this.drawAvatar(parent, `PodiumAvatar_${index + 1}`, item.x, item.faceY, index === 1 ? 72 : 66, index);
+            this.avatarSlots.push(avatar);
+            this.localDataNodes.push(avatar);
+            const name = this.label(parent, `PodiumName_${index + 1}`, '', item.x, 101, 210, 46, 31, C.ink);
+            this.nameLabels.push(name);
+            this.localDataNodes.push(name.node);
             const score = this.label(parent, `PodiumScore_${index + 1}`, '', item.x, 59, 180, 44, 30, C.ink);
             this.scoreLabels.push(score);
+            this.localDataNodes.push(score.node);
+            const detail = this.label(parent, `PodiumDetail_${index + 1}`, '', item.x + 12, 27, 220, 28, 16, C.inkSoft);
+            this.detailLabels.push(detail);
+            this.localDataNodes.push(detail.node);
         });
     }
 
     private buildRows(parent: Node): void {
-        RANKINGS.slice(3).forEach((entry, index) => {
-            const y = ROW_Y[index];
-            this.label(parent, `Rank_${index + 4}`, `${index + 4}`, -318, y, 60, 56, 29, C.ink);
-            this.drawAvatar(parent, `RowAvatar_${index + 4}`, -236, y, 48, index + 3);
-            this.label(parent, `Name_${index + 4}`, entry.name, -115, y, 260, 56, 27, C.ink, 'left');
-            const score = this.label(parent, `Score_${index + 4}`, '', 318, y, 125, 56, 28, C.ink);
+        ROW_Y.forEach((y, index) => {
+            const rank = this.label(parent, `Rank_${index + 4}`, `${index + 4}`, -300, y, 60, 56, 29, C.ink);
+            const avatar = this.drawAvatar(parent, `RowAvatar_${index + 4}`, -242, y, 48, index + 3);
+            const name = this.label(parent, `Name_${index + 4}`, '', -78, y + 13, 258, 34, 25, C.ink, 'left');
+            const detail = this.label(parent, `Detail_${index + 4}`, '', -51, y - 16, 312, 24, 16, C.inkSoft, 'left');
+            this.avatarSlots.push(avatar);
+            this.nameLabels.push(name);
+            this.detailLabels.push(detail);
+            this.localDataNodes.push(rank.node, avatar, name.node, detail.node);
+            const score = this.label(parent, `Score_${index + 4}`, '', 244, y, 154, 56, 25, C.ink);
             this.scoreLabels.push(score);
+            this.localDataNodes.push(score.node);
         });
     }
 
@@ -138,19 +165,84 @@ export class RankingPage extends Component {
         const card = this.makeNode(parent, 'MyRankingCard', 0, -638, 842, 300);
         this.attachTexture(card, 'textures/rank/ui/ranking_self');
         this.selfRankLabel = this.label(card, 'MyRank', '', -333, -5, 92, 92, 42, C.ink);
-        this.drawAvatar(card, 'MyAvatar', -250, -5, 74, 6);
-        this.label(card, 'MyName', '钺', -30, -3, 280, 70, 34, C.ink);
-        this.selfScoreLabel = this.label(card, 'MyScore', '', 304, -4, 170, 72, 35, C.ink);
+        // The source card contains an old baked-in avatar. The larger paper
+        // cover and default avatar replace it completely without regenerating
+        // the surrounding card artwork.
+        this.selfAvatar = this.drawAvatar(card, 'MyAvatar', -250, -5, 118, 6, true);
+        const selfName = this.label(card, 'MyName', '我', -30, 18, 280, 52, 34, C.ink);
+        this.selfDetailLabel = this.label(card, 'MyDetail', '', -5, -33, 390, 32, 20, C.inkSoft);
+        this.selfScoreLabel = this.label(card, 'MyScore', '', 244, -38, 182, 72, 31, C.ink);
+        this.localDataNodes.push(this.selfRankLabel.node, this.selfAvatar, selfName.node, this.selfDetailLabel.node, this.selfScoreLabel.node);
+    }
+
+    private setupOpenDataLeaderboard(): void {
+        if (EDITOR || !AppRuntime.platform.supportsFriendLeaderboard()) return;
+        const viewNode = this.makeNode(this.node, 'WechatFriendLeaderboard', 0, 0, C.designWidth, 1450);
+        const view = viewNode.addComponent(SubContextView);
+        view.fps = 10;
+        this.openDataView = viewNode;
+        this.localDataNodes.forEach((node) => { node.active = false; });
+        this.scheduleOnce(() => this.refreshOpenDataLeaderboard(), 0);
+    }
+
+    private refreshOpenDataLeaderboard(): void {
+        if (EDITOR || !this.openDataView?.activeInHierarchy) return;
+        const save = AppRuntime.save.snapshot();
+        const answeredCount = save.leaderboard.trialAnsweredCount;
+        AppRuntime.platform.postLeaderboardMessage({
+            type: 'brainSlashLeaderboard',
+            action: 'show',
+            mode: this.mode,
+            profile: AppRuntime.platform.authorizedUserProfile(),
+            localRecord: {
+                brawl: save.leaderboard.brawlBest,
+                trial: {
+                    highestFloor: save.tower.highestClearedFloor,
+                    answeredCount,
+                    accuracy: answeredCount > 0 ? save.leaderboard.trialCorrectCount / answeredCount : 0,
+                },
+            },
+        });
     }
 
     private refreshScores(): void {
-        const ordered = [RANKINGS[1], RANKINGS[0], RANKINGS[2], ...RANKINGS.slice(3)];
-        ordered.forEach((entry, index) => {
-            const label = this.scoreLabels[index];
-            if (label) label.string = `${entry[this.mode]}`;
+        const save = EDITOR ? null : AppRuntime.save.snapshot();
+        const trialAnswered = save?.leaderboard.trialAnsweredCount ?? 0;
+        const snapshot = createLocalLeaderboard(this.mode, {
+            brawl: save?.leaderboard.brawlBest ?? emptyBrawlRecord(),
+            trial: {
+                highestFloor: save?.tower.highestClearedFloor ?? 0,
+                answeredCount: trialAnswered,
+                accuracy: trialAnswered > 0 ? (save?.leaderboard.trialCorrectCount ?? 0) / trialAnswered : 0,
+            },
         });
-        if (this.selfRankLabel) this.selfRankLabel.string = this.mode === 'brawl' ? '7' : '12';
-        if (this.selfScoreLabel) this.selfScoreLabel.string = this.mode === 'brawl' ? '860' : '52';
+        const authorizedAvatar = EDITOR ? undefined : AppRuntime.platform.authorizedUserProfile()?.avatarUrl;
+        DISPLAY_ORDER.forEach((rankIndex, displayIndex) => {
+            const entry = snapshot.top[rankIndex];
+            const scoreLabel = this.scoreLabels[displayIndex];
+            const nameLabel = this.nameLabels[displayIndex];
+            const detailLabel = this.detailLabels[displayIndex];
+            if (scoreLabel) scoreLabel.string = entry ? this.scoreText(entry) : '—';
+            if (nameLabel) nameLabel.string = entry?.name ?? '—';
+            if (detailLabel) detailLabel.string = entry ? this.detailText(entry) : '';
+            const avatarUrl = entry?.avatarUrl ?? (entry?.isSelf ? authorizedAvatar : undefined);
+            const avatarSlot = this.avatarSlots[displayIndex];
+            if (avatarSlot) this.updateAvatar(avatarSlot, avatarUrl);
+        });
+        if (this.selfRankLabel) this.selfRankLabel.string = `${snapshot.self.rank}`;
+        if (this.selfScoreLabel) this.selfScoreLabel.string = this.scoreText(snapshot.self);
+        if (this.selfDetailLabel) this.selfDetailLabel.string = this.detailText(snapshot.self);
+        if (this.selfAvatar) this.updateAvatar(this.selfAvatar, snapshot.self.avatarUrl ?? authorizedAvatar);
+    }
+
+    private scoreText(entry: LeaderboardEntry): string {
+        return this.mode === 'brawl' ? `综合 ${entry.score}` : `第 ${entry.score} 层`;
+    }
+
+    private detailText(entry: LeaderboardEntry): string {
+        if (this.mode === 'trial') return `${entry.trial?.answeredCount ?? 0}题 · ${percent(entry.trial?.accuracy ?? 0)}`;
+        const data = entry.brawl!;
+        return `存活 ${duration(data.survivalMs)} · ${data.answeredCount}题 · C${data.maxCombo} · ${percent(data.accuracy)}`;
     }
 
     private attachTexture(parent: Node, resourcePath: string): void {
@@ -172,34 +264,73 @@ export class RankingPage extends Component {
         });
     }
 
-    private drawAvatar(parent: Node, name: string, x: number, y: number, size: number, variant: number): void {
-        const g = this.graphics(parent, name, x, y, size, size);
-        const radius = size * 0.35;
-        g.fillColor = C.paperRaised;
-        g.strokeColor = C.ink;
-        g.lineWidth = Math.max(2, size * 0.04);
-        g.circle(0, -size * 0.04, radius);
-        g.fill();
-        g.stroke();
-        g.moveTo(-radius, size * 0.08);
-        if (variant % 3 === 0) {
-            g.lineTo(-radius * 0.55, radius * 0.92);
-            g.lineTo(-radius * 0.15, radius * 0.64);
-            g.lineTo(radius * 0.2, radius * 1.02);
-            g.lineTo(radius * 0.58, radius * 0.68);
-        } else if (variant % 3 === 1) {
-            g.quadraticCurveTo(0, radius * 1.2, radius, size * 0.06);
-        } else {
-            g.lineTo(-radius * 0.45, radius * 0.88);
-            g.lineTo(0, radius * 0.58);
-            g.lineTo(radius * 0.45, radius * 0.9);
-            g.lineTo(radius, size * 0.06);
+    private drawAvatar(parent: Node, name: string, x: number, y: number, size: number, _variant: number, coverBaked = false): Node {
+        const slot = this.makeNode(parent, name, x, y, size, size);
+        if (coverBaked) {
+            const cover = this.graphics(slot, 'BakedAvatarCover', 0, 0, size, size);
+            cover.fillColor = C.paperRaised;
+            cover.circle(0, 0, size * 0.5);
+            cover.fill();
         }
-        g.stroke();
-        g.fillColor = C.ink;
-        g.circle(-radius * 0.36, -size * 0.06, Math.max(1.5, size * 0.035));
-        g.circle(radius * 0.36, -size * 0.06, Math.max(1.5, size * 0.035));
-        g.fill();
+
+        const cropSize = size * 0.82;
+        const maskNode = this.makeNode(slot, 'DefaultAvatarMask', 0, 0, cropSize, cropSize);
+        const mask = maskNode.addComponent(Mask);
+        mask.type = Mask.Type.GRAPHICS_ELLIPSE;
+        mask.segments = 48;
+        const artwork = this.makeNode(maskNode, 'Artwork', 0, 0, cropSize * 1.55, cropSize * 1.55);
+        const sprite = artwork.addComponent(Sprite);
+        sprite.sizeMode = Sprite.SizeMode.CUSTOM;
+        sprite.type = Sprite.Type.SIMPLE;
+        resources.load('textures/common/default_avatar', ImageAsset, (error, image) => {
+            if (error || !image || !artwork.isValid) {
+                console.warn('[Ranking] Default avatar failed to load', error);
+                return;
+            }
+            const frame = SpriteFrame.createWithImage(image);
+            frame.packable = false;
+            sprite.spriteFrame = frame;
+        });
+        return slot;
+    }
+
+    private updateAvatar(slot: Node, avatarUrl: string | undefined): void {
+        const cropSize = slot.getComponent(UITransform)!.contentSize.width * 0.82;
+        let maskNode = slot.getChildByName('AuthorizedAvatarMask');
+        if (!maskNode) {
+            maskNode = this.makeNode(slot, 'AuthorizedAvatarMask', 0, -cropSize * 0.04, cropSize, cropSize);
+            const mask = maskNode.addComponent(Mask);
+            mask.type = Mask.Type.GRAPHICS_ELLIPSE;
+            mask.segments = 48;
+            const artwork = this.makeNode(maskNode, 'Artwork', 0, 0, cropSize, cropSize);
+            const sprite = artwork.addComponent(Sprite);
+            sprite.sizeMode = Sprite.SizeMode.CUSTOM;
+            sprite.type = Sprite.Type.SIMPLE;
+        }
+        if (!avatarUrl) {
+            this.avatarRequests.delete(slot);
+            maskNode.active = false;
+            return;
+        }
+        maskNode.active = true;
+        this.avatarRequests.set(slot, avatarUrl);
+        const sprite = maskNode.getChildByName('Artwork')?.getComponent(Sprite);
+        if (!sprite) return;
+        const cached = this.avatarFrames.get(avatarUrl);
+        if (cached) {
+            sprite.spriteFrame = cached;
+            return;
+        }
+        assetManager.loadRemote<ImageAsset>(avatarUrl, { ext: '.png' }, (error, image) => {
+            if (error || !image || !slot.isValid || this.avatarRequests.get(slot) !== avatarUrl) {
+                if (error) console.warn('[Ranking] Authorized avatar failed to load', error);
+                return;
+            }
+            const frame = SpriteFrame.createWithImage(image);
+            frame.packable = false;
+            this.avatarFrames.set(avatarUrl, frame);
+            if (sprite.node.isValid) sprite.spriteFrame = frame;
+        });
     }
 
     private makeNode(parent: Node, name: string, x: number, y: number, width: number, height: number): Node {
@@ -254,3 +385,11 @@ export class RankingPage extends Component {
         node.on(Node.EventType.TOUCH_CANCEL, release, this);
     }
 }
+
+function duration(milliseconds: number): string {
+    const seconds = Math.max(0, Math.floor(milliseconds / 1_000));
+    const minutes = Math.floor(seconds / 60);
+    return minutes > 0 ? `${minutes}:${String(seconds % 60).padStart(2, '0')}` : `${seconds}s`;
+}
+
+function percent(value: number): string { return `${Math.round(Math.max(0, Math.min(1, value)) * 100)}%`; }

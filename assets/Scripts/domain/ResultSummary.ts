@@ -79,7 +79,7 @@ export function createResultPresentation(result: GameResult): ResultPresentation
         accuracy: `${Math.round(Math.max(0, Math.min(1, result.accuracy)) * 100)}%`,
         maxCombo: String(result.maxCombo),
         fastestReaction: formatReaction(result.bestReactionMs),
-        answerDetail: `答对 ${result.correctCount}  ·  失误 ${result.errorCount}`,
+        answerDetail: `答对 ${result.correctCount}  ·  失误 ${result.errorCount}${result.masterSlashCount ? `  ·  MASTER SLASH ${result.masterSlashCount}` : ''}`,
         growthTitle: result.growth.levelAfter > result.growth.levelBefore
             ? `升级！ Lv.${result.growth.levelBefore} → Lv.${result.growth.levelAfter}`
             : `Lv.${result.growth.levelAfter} 熟练度`,

@@ -4,7 +4,7 @@ import { targetContentLayout, targetSkinPixelScale, targetSkinVisualScale } from
 const { ccclass } = _decorator;
 
 export enum TargetContentType { TEXT, ICON, IMAGE }
-export type TargetShape = 'circle' | 'triangle' | 'roundedSquare' | 'pentagon' | 'hexagon';
+export type TargetShape = 'circle' | 'roundedSquare' | 'hexagon';
 
 export interface GameplayTargetData {
     id: string;
@@ -190,9 +190,9 @@ export class GameplayTarget extends Component {
             g.fill(); g.stroke();
             return;
         }
-        const sides = this.data.shape === 'triangle' ? 3 : this.data.shape === 'pentagon' ? 5 : 6;
+        const sides = 6;
         const points: Vec2[] = [];
-        const start = this.data.shape === 'triangle' ? Math.PI / 2 : Math.PI / 2;
+        const start = Math.PI / 2;
         for (let i = 0; i < sides; i++) {
             const angle = start + i * Math.PI * 2 / sides;
             points.push(new Vec2(Math.cos(angle) * r, Math.sin(angle) * r));

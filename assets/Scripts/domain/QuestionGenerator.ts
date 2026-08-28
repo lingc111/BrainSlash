@@ -17,6 +17,18 @@ import {
     type ContentFamilySpec,
     type TriviaFact,
 } from './ContentCatalog';
+import {
+    HANZI_ANTONYM_FACTS,
+    HANZI_SYNONYM_FACTS,
+    type HanziRelationFact,
+    type HanziRelationKind,
+} from './HanziRelationCatalog';
+import {
+    KNOWLEDGE_CIVIC_FACTS,
+    KNOWLEDGE_CULTURE_EXPANSION,
+    KNOWLEDGE_NATURE_EXPANSION,
+    KNOWLEDGE_SCIENCE_EXPANSION,
+} from './KnowledgeExpansionCatalog';
 import { validateQuestion } from './FairnessValidator';
 import type { QuestionInstance, RuleId, TargetSpec, ThemeId } from './Models';
 import { evaluateRules, rulesForReadableTargets } from './Rules';
@@ -82,23 +94,27 @@ export class QuestionGenerator {
             case 'math-compare': return this.mathCompare(family, stage);
             case 'math-sequence': return this.mathSequence(family, stage);
             case 'math-missing': return this.mathMissing(family, stage);
+            case 'math-equation': return this.mathEquation(family, stage);
             case 'vision-direction': return this.visionDirection(family, stage);
             case 'vision-odd': return this.visionOdd(family, stage);
             case 'vision-count': return this.visionCount(family, stage);
             case 'vision-stroop': return this.visionStroop(family, stage);
             case 'vision-pattern': return this.visionPattern(family, stage);
+            case 'vision-match': return this.visionMatch(family, stage);
             case 'hanzi-fill': return this.hanziFill(family, stage);
-            case 'hanzi-valid': return this.hanziValid(family, stage);
             case 'hanzi-order': return this.hanziOrder(family, stage);
+            case 'hanzi-antonym': return this.hanziRelation(family, stage, 'antonym');
+            case 'hanzi-synonym': return this.hanziRelation(family, stage, 'synonym');
             case 'english-meaning': return this.englishMeaning(family, stage);
             case 'english-category': return this.englishCategory(family, stage);
             case 'english-antonym': return this.englishAntonym(family, stage);
             case 'life-category': return this.lifeCategory(family, stage);
             case 'geography-capital': return this.geographyCapital(family, stage);
             case 'geography-country': return this.geographyCountry(family, stage);
-            case 'knowledge-science': return this.trivia(family, stage, 'knowledge-science', KNOWLEDGE_SCIENCE_FACTS);
-            case 'knowledge-nature': return this.trivia(family, stage, 'knowledge-nature', KNOWLEDGE_NATURE_FACTS);
-            case 'knowledge-culture': return this.trivia(family, stage, 'knowledge-culture', KNOWLEDGE_CULTURE_FACTS);
+            case 'knowledge-science': return this.trivia(family, stage, 'knowledge-science', [...KNOWLEDGE_SCIENCE_FACTS, ...KNOWLEDGE_SCIENCE_EXPANSION]);
+            case 'knowledge-nature': return this.trivia(family, stage, 'knowledge-nature', [...KNOWLEDGE_NATURE_FACTS, ...KNOWLEDGE_NATURE_EXPANSION]);
+            case 'knowledge-culture': return this.trivia(family, stage, 'knowledge-culture', [...KNOWLEDGE_CULTURE_FACTS, ...KNOWLEDGE_CULTURE_EXPANSION]);
+            case 'knowledge-civic': return this.trivia(family, stage, 'knowledge-civic', KNOWLEDGE_CIVIC_FACTS);
             case 'history-modern-opening': return this.trivia(family, stage, 'history-modern-opening', HISTORY_MODERN_OPENING_FACTS);
             case 'history-modern-awakening': return this.trivia(family, stage, 'history-modern-awakening', HISTORY_MODERN_AWAKENING_FACTS);
             case 'history-modern-resistance': return this.trivia(family, stage, 'history-modern-resistance', HISTORY_MODERN_RESISTANCE_FACTS);
@@ -283,6 +299,34 @@ export class QuestionGenerator {
         return this.makeChoice(family, `${minuend}-□=${result}`, right, [right - 2, right - 1, right + 1, right + 2], stage);
     }
 
+    private mathEquation(family: ContentFamilySpec, stage: Stage): QuestionInstance {
+        const target = this.rng.int(8 + family.variant * 2, 18 + family.variant * 6 + stage * 10);
+        if (family.variant % 2 === 0) {
+            const left = this.rng.int(2, target - 3);
+            const right = target - left;
+            const answer = `${left}+${right}`;
+            const candidates = [
+                `${left}+${right + 1}`,
+                `${left + 1}+${right + 1}`,
+                `${left}+${right - 1}`,
+                `${left + 2}+${right + 1}`,
+                `${left + 1}+${right - 2}`,
+            ];
+            return this.makeChoice(family, `等于 ${target}`, answer, candidates, stage);
+        }
+        const subtrahend = this.rng.int(2, 8 + family.variant + stage * 3);
+        const minuend = target + subtrahend;
+        const answer = `${minuend}-${subtrahend}`;
+        const candidates = [
+            `${minuend + 1}-${subtrahend}`,
+            `${minuend}-${subtrahend + 1}`,
+            `${minuend + 2}-${subtrahend}`,
+            `${minuend}-${subtrahend + 2}`,
+            `${minuend + 3}-${subtrahend + 1}`,
+        ];
+        return this.makeChoice(family, `等于 ${target}`, answer, candidates, stage);
+    }
+
     private visionDirection(family: ContentFamilySpec, stage: Stage): QuestionInstance {
         const shown = this.rng.pick(ARROWS);
         const opposite = family.variant >= 3 && stage > 0;
@@ -357,17 +401,33 @@ export class QuestionGenerator {
         return this.makeChoice(family, `${sequence.slice(0, 5).join('')}?`, sequence[5], ['小', '中', '大', '特大'], stage, { allowBomb: false });
     }
 
+    private visionMatch(family: ContentFamilySpec, stage: Stage): QuestionInstance {
+        const symbolSets: readonly (readonly string[])[] = [
+            ['●', '○', '▲', '△'],
+            ['■', '□', '◆', '◇'],
+            ['★', '☆', '●', '○'],
+            ['▲', '△', '◆', '◇'],
+            ['■', '□', '★', '☆'],
+        ];
+        const symbols = symbolSets[family.variant];
+        const first = this.rng.pick(symbols);
+        const second = this.rng.pick(symbols.filter((symbol) => symbol !== first));
+        const answer = `${first}${second}`;
+        const candidates: string[] = [];
+        for (const left of symbols) {
+            for (const right of symbols) {
+                const pair = `${left}${right}`;
+                if (pair !== answer) candidates.push(pair);
+            }
+        }
+        return this.makeChoice(family, `找相同 ${answer}`, answer, candidates, stage);
+    }
+
     private hanziFill(family: ContentFamilySpec, stage: Stage): QuestionInstance {
         const entry = this.pickFact('idioms', IDIOMS, (item) => `idiom:${item.text}`);
         const answer = entry.text[entry.missingIndex];
         const prompt = `${entry.text.slice(0, entry.missingIndex)}□${entry.text.slice(entry.missingIndex + 1)}`;
         return this.makeChoice(family, prompt, answer, entry.wrong, stage);
-    }
-
-    private hanziValid(family: ContentFamilySpec, stage: Stage): QuestionInstance {
-        const entry = this.pickFact('idioms', IDIOMS, (item) => `idiom:${item.text}`);
-        const wrong = entry.wrong.map((char) => `${entry.text.slice(0, entry.missingIndex)}${char}${entry.text.slice(entry.missingIndex + 1)}`);
-        return this.makeChoice(family, '真成语', entry.text, wrong, stage);
     }
 
     private hanziOrder(family: ContentFamilySpec, stage: Stage): QuestionInstance {
@@ -441,6 +501,28 @@ export class QuestionGenerator {
         const fact = this.pickFact('geography-facts', GEOGRAPHY_FACTS, (item) => `geography:${item.country}`);
         const candidates = GEOGRAPHY_FACTS.filter((candidate) => candidate.country !== fact.country).map((candidate) => candidate.country);
         return this.makeChoice(family, `${fact.capital}在哪国`, fact.country, candidates, stage);
+    }
+
+    private hanziRelation(
+        family: ContentFamilySpec,
+        stage: Stage,
+        kind: HanziRelationKind,
+    ): QuestionInstance {
+        const pool: readonly HanziRelationFact[] = kind === 'antonym'
+            ? HANZI_ANTONYM_FACTS
+            : HANZI_SYNONYM_FACTS;
+        const fact = this.pickFact(`hanzi-${kind}`, pool, (item) => item.id);
+        const reversePair = this.rng.next() < 0.5;
+        const promptWord = reversePair ? fact.right : fact.left;
+        const answer = reversePair ? fact.left : fact.right;
+        const distractors = reversePair ? fact.leftDistractors : fact.rightDistractors;
+        return this.makeChoice(
+            family,
+            `${promptWord}的${kind === 'antonym' ? '反义词' : '近义词'}`,
+            answer,
+            distractors,
+            stage,
+        );
     }
 
     private trivia(family: ContentFamilySpec, stage: Stage, poolId: string, facts: readonly TriviaFact[]): QuestionInstance {
