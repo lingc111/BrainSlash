@@ -704,4 +704,30 @@ export class QuestionGenerator {
         history.push(signature);
         if (history.length > limit) history.shift();
     }
+
+    private semanticSignature(question: QuestionInstance): string {
+        const familyKind = (question.familyId ?? '').replace(/\.v\d+$/, '');
+        return `${question.theme}|${familyKind}|${this.normalizePrompt(question.prompt.text)}|${this.answerSignature(question)}`;
+    }
+
+    private answerSignature(question: QuestionInstance): string {
+        const textById = new Map(question.targets.map((target) => [target.id, target.text.trim()]));
+        const answerIds = question.orderedTargetIds?.length ? question.orderedTargetIds : question.baseCorrectTargetIds;
+        const answers = answerIds.map((id) => textById.get(id) ?? id);
+        if (!question.orderedTargetIds?.length) answers.sort();
+        return answers.join('→');
+    }
+
+    private normalizePrompt(prompt: string): string {
+        const compact = prompt.replace(/\s+/g, '');
+        const arithmetic = compact.match(/^(\d+)([+×])(\d+)(?:\2(\d+))?=\?$/);
+        if (!arithmetic) return compact;
+        const operands = [arithmetic[1], arithmetic[3], arithmetic[4]].filter((value): value is string => !!value);
+        return `${operands.map(Number).sort((a, b) => a - b).join(arithmetic[2])}=?`;
+    }
+
+    private recordSignature(history: string[], signature: string, limit: number): void {
+        history.push(signature);
+        if (history.length > limit) history.shift();
+    }
 }
