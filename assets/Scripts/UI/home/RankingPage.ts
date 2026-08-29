@@ -1,6 +1,5 @@
 import {
     _decorator,
-    assetManager,
     Button,
     Color,
     Component,
@@ -21,6 +20,8 @@ import { EDITOR } from 'cc/env';
 import { AppRuntime } from '../../app/AppRuntime';
 import { createLocalLeaderboard, emptyBrawlRecord, type LeaderboardEntry, type LeaderboardMode } from '../../domain/Leaderboard';
 import { HOME_HAND_DRAWN as C } from '../DesignTokens';
+import { applyGameFont } from '../GameFont';
+import { loadAvatarFrame } from './AvatarFrameLoader';
 
 const { ccclass, executeInEditMode } = _decorator;
 
@@ -49,7 +50,6 @@ export class RankingPage extends Component {
     private openDataView: Node | null = null;
     private readonly localDataNodes: Node[] = [];
     private readonly avatarRequests = new Map<Node, string>();
-    private readonly avatarFrames = new Map<string, SpriteFrame>();
 
     protected onLoad(): void {
         this.buildView();
@@ -321,19 +321,12 @@ export class RankingPage extends Component {
         }
         const sprite = artwork.getComponent(Sprite)!;
         this.avatarRequests.set(slot, avatarUrl);
-        const cached = this.avatarFrames.get(avatarUrl);
-        if (cached) {
-            sprite.spriteFrame = cached;
-            return;
-        }
-        assetManager.loadRemote<ImageAsset>(avatarUrl, { ext: '.png' }, (error, image) => {
-            if (error || !image || !slot.isValid || this.avatarRequests.get(slot) !== avatarUrl) {
+        sprite.spriteFrame = null;
+        loadAvatarFrame(avatarUrl, (error, frame) => {
+            if (error || !frame || !slot.isValid || this.avatarRequests.get(slot) !== avatarUrl) {
                 if (error) console.warn('[Ranking] Authorized avatar failed to load', error);
                 return;
             }
-            const frame = SpriteFrame.createWithImage(image);
-            frame.packable = false;
-            this.avatarFrames.set(avatarUrl, frame);
             if (sprite.node.isValid) sprite.spriteFrame = frame;
         });
     }
@@ -376,7 +369,7 @@ export class RankingPage extends Component {
         label.horizontalAlign = align === 'left' ? Label.HorizontalAlign.LEFT
             : align === 'right' ? Label.HorizontalAlign.RIGHT : Label.HorizontalAlign.CENTER;
         label.verticalAlign = Label.VerticalAlign.CENTER;
-        return label;
+        return applyGameFont(label);
     }
 
     private bindButton(node: Node, callback: () => void): void {

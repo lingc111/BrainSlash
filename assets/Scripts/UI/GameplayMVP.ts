@@ -24,6 +24,7 @@ import {
 } from './PortraitTargetMotion';
 import { showResultOverlay, showTowerResultOverlay } from './ResultOverlay';
 import { ACTIVE_TARGET_SKINS, ALL_TARGET_SKINS, targetShapeForSkin, targetSkinForAnswer, uniqueColorTargetSkins } from './TargetSkinSizing';
+import { applyGameFont, applyGameFontToTree, setGameFontMetrics } from './GameFont';
 
 const { ccclass } = _decorator;
 const INK = new Color(45,43,39,255), PAPER = new Color(255,250,236,255), RED = new Color(174,69,61,255), GREEN = new Color(109,152,106,255), BLUE = new Color(91,133,156,255), YELLOW = new Color(226,184,67,255);
@@ -38,7 +39,7 @@ interface TargetMotion extends PortraitTargetMotionPlan {
 }
 function ui(n:Node,w:number,h:number):UITransform { const t=n.getComponent(UITransform)??n.addComponent(UITransform); t.setContentSize(w,h); t.setAnchorPoint(.5,.5); return t; }
 function node(name:string,parent:Node,w=0,h=0):Node { const n=new Node(name); parent.addChild(n); ui(n,w,h); return n; }
-function text(parent:Node,name:string,value:string,size:number,color=INK):Label { const l=node(name,parent,Math.max(100,value.length*size*1.25),size*1.5).addComponent(Label); l.string=value;l.fontSize=size;l.lineHeight=size*1.2;l.color=color;l.horizontalAlign=Label.HorizontalAlign.CENTER;l.verticalAlign=Label.VerticalAlign.CENTER;l.enableWrapText=false;return l; }
+function text(parent:Node,name:string,value:string,size:number,color=INK):Label { const l=node(name,parent,Math.max(100,value.length*size*1.25),size*1.5).addComponent(Label); l.string=value;l.fontSize=size;l.lineHeight=size*1.2;l.color=color;l.horizontalAlign=Label.HorizontalAlign.CENTER;l.verticalAlign=Label.VerticalAlign.CENTER;l.enableWrapText=false;return applyGameFont(l); }
 function gfx(parent:Node,name:string,w:number,h:number):Graphics { return node(name,parent,w,h).addComponent(Graphics); }
 function image(parent:Node,name:string,w:number,h:number):Sprite { const s=node(name,parent,w,h).addComponent(Sprite);s.sizeMode=Sprite.SizeMode.CUSTOM;return s; }
 
@@ -70,7 +71,7 @@ export class GameplayMVP extends Component {
         const editorPreview=this.node.getChildByName('TargetContainer')?.getChildByName('EditorPreviewTargets');if(editorPreview){editorPreview.active=false;editorPreview.destroy();}
         AppRuntime.initialize();if(!AppRuntime.consumeGameplayLaunch()){AppRuntime.home();return;}AppRuntime.consumePendingFriendChallenge();const saved=AppRuntime.save.snapshot();this.session=new GameSession(AppRuntime.entry,GAMEPLAY_CONFIG);const daily=saved.daily;this.dailyBest=AppRuntime.entry.mode==='daily'&&daily?.dateKey===AppRuntime.entry.dailyDate&&daily.recipeId===AppRuntime.entry.recipeId?daily.bestScore:0;
         this.generator=new QuestionGenerator(new SeededRng(`${AppRuntime.entry.seed}:gameplay`),GAMEPLAY_CONFIG,{recentFactIds:saved.recentQuestionIds,recentSemanticSignatures:saved.recentQuestionSignatures,onQuestionAccepted:(ids,signature)=>AppRuntime.save.rememberQuestion(ids,signature)});this.director=AppRuntime.entry.mode==='tower'?new TowerDirector(new SeededRng(`${AppRuntime.entry.seed}:director`),AppRuntime.entry.towerFloor??saved.tower.currentFloor):AppRuntime.entry.mode==='friendChallenge'&&AppRuntime.entry.challengeConfig?new FriendChallengeDirector(new SeededRng(`${AppRuntime.entry.seed}:director`),AppRuntime.entry.challengeConfig):new Brawl60Director(new SeededRng(`${AppRuntime.entry.seed}:director`),AppRuntime.entry.recipeId,AppRuntime.entry.mode==='brawl60'?allowedBrawlRules(saved.tower,saved.tutorials):undefined,AppRuntime.entry.mode!=='brawl60'||saved.tower.highestClearedFloor>=15);this.visual=new SeededRng(`${AppRuntime.entry.seed}:visual`);
-        this.bindStaticView();screen.on('window-resize',this.handleResize,this);game.on(Game.EVENT_HIDE,this.onHide,this);game.on(Game.EVENT_SHOW,this.onShow,this);this.scheduleOnce(this.handleResize,0);
+        this.bindStaticView();applyGameFontToTree(this.node);screen.on('window-resize',this.handleResize,this);game.on(Game.EVENT_HIDE,this.onHide,this);game.on(Game.EVENT_SHOW,this.onShow,this);this.scheduleOnce(this.handleResize,0);
         this.scheduleOnce(()=>{this.node.getChildByName('Ready')?.destroy();AppRuntime.audio.play('ui');this.session.start();this.spawn();},GAMEPLAY_CONFIG.readyMs/1000);
     }
     protected onDestroy():void { this.revealToken++;screen.off('window-resize',this.handleResize,this);game.off(Game.EVENT_HIDE,this.onHide,this);game.off(Game.EVENT_SHOW,this.onShow,this);this.node.off(Node.EventType.TOUCH_START,this.startTouch,this);this.node.off(Node.EventType.TOUCH_MOVE,this.moveTouch,this);this.node.off(Node.EventType.TOUCH_END,this.endTouch,this);this.node.off(Node.EventType.TOUCH_CANCEL,this.endTouch,this);this.releaseQuestionArtwork(new Set<EffectKey>()); }
@@ -97,7 +98,7 @@ export class GameplayMVP extends Component {
         const background=required('Background').getComponent(Sprite);if(!background)throw new Error('[GameplayMVP] 静态节点 Background 缺少 Sprite 组件。');
         resources.load('textures/common/background_paper/spriteFrame',SpriteFrame,(e,f)=>{if(!e&&background.isValid)background.spriteFrame=f;});
         this.targets=required('TargetContainer');const trailNode=required('SlashTrail');const trail=trailNode.getComponent(Graphics);if(!trail)throw new Error('[GameplayMVP] 静态节点 SlashTrail 缺少 Graphics 组件。');this.trail=trail;
-        this.effects=required('HitEffects');this.floats=required('FloatingText');this.score=requiredLabel('Score');this.combo=requiredLabel('Combo');this.prompt=requiredLabel('Prompt');this.rule=requiredLabel('Rule');this.prepareRuleBadge();this.timer=requiredLabel('Timer');this.life=requiredLabel('Life');const endless=this.session.entry.mode==='brawl60';this.timer.fontSize=endless?72:38;this.timer.lineHeight=endless?82:46;ui(this.timer.node,128,100);
+        this.effects=required('HitEffects');this.floats=required('FloatingText');this.score=requiredLabel('Score');this.combo=requiredLabel('Combo');this.prompt=requiredLabel('Prompt');this.rule=requiredLabel('Rule');this.prepareRuleBadge();this.timer=requiredLabel('Timer');this.life=requiredLabel('Life');const endless=this.session.entry.mode==='brawl60';setGameFontMetrics(this.timer,endless?72:38,endless?82:46);ui(this.timer.node,128,100);
         this.buildHandDrawnChrome();
         this.applyVisibleLayout();
         this.node.on(Node.EventType.TOUCH_START,this.startTouch,this);this.node.on(Node.EventType.TOUCH_MOVE,this.moveTouch,this);this.node.on(Node.EventType.TOUCH_END,this.endTouch,this);this.node.on(Node.EventType.TOUCH_CANCEL,this.endTouch,this);
@@ -106,8 +107,8 @@ export class GameplayMVP extends Component {
         resources.load('textures/gameplay/ui/Hit/spriteFrame',SpriteFrame,(e,f)=>{if(!e&&f?.isValid)this.masterHitFrame=f;});
     }
     private applyVisibleLayout():void{const background=this.node.getChildByName('Background')?.getComponent(Sprite);if(!background||!this.score)return;const v=view.getVisibleSize();ui(this.node,v.width,v.height);for(const layer of [background.node,this.targets,this.trail.node,this.effects,this.floats])ui(layer,v.width,v.height);this.layoutStaticHud(v.width,v.height);this.layoutHandDrawnChrome(v.width,v.height);}
-    private layoutStaticHud(width:number,height:number):void{const y=height/2-150;this.score.node.active=false;this.combo.node.active=true;this.combo.fontSize=44;this.combo.lineHeight=53;this.combo.color=INK;this.combo.node.setPosition(-width/2+96,y+3);this.prompt.node.setPosition(0,y);this.fitPromptTypography(this.prompt.string);this.ruleBadge?.setPosition(0,y-55);this.rule.node.setPosition(0,y-55);this.timer.node.setPosition(width/2-68,y+4);this.life.node.active=false;}
-    private fitPromptTypography(value:string):void{const length=[...value.trim()].length,size=length<=4?44:length<=6?38:length<=9?32:26;this.prompt.fontSize=size;this.prompt.lineHeight=Math.ceil(size*1.16);this.prompt.enableWrapText=false;this.prompt.overflow=Label.Overflow.SHRINK;ui(this.prompt.node,258,58);}
+    private layoutStaticHud(width:number,height:number):void{const y=height/2-150;this.score.node.active=false;this.combo.node.active=true;setGameFontMetrics(this.combo,44,53);this.combo.color=INK;this.combo.node.setPosition(-width/2+96,y+3);this.prompt.node.setPosition(0,y);this.fitPromptTypography(this.prompt.string);this.ruleBadge?.setPosition(0,y-55);this.rule.node.setPosition(0,y-55);this.timer.node.setPosition(width/2-68,y+4);this.life.node.active=false;}
+    private fitPromptTypography(value:string):void{const length=[...value.trim()].length,size=length<=4?44:length<=6?38:length<=9?32:26;setGameFontMetrics(this.prompt,size,Math.ceil(size*1.16));this.prompt.enableWrapText=false;this.prompt.overflow=Label.Overflow.SHRINK;ui(this.prompt.node,258,64);}
     private prepareRuleBadge():void{
         let badge=this.node.getChildByName('RuleBadge')??this.rule.node.getChildByName('Badge');
         if(badge?.parent===this.rule.node){const ruleIndex=this.rule.node.getSiblingIndex();badge.removeFromParent();badge.name='RuleBadge';this.node.addChild(badge);badge.setSiblingIndex(ruleIndex);}

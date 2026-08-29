@@ -7,6 +7,7 @@ import { EDITOR } from 'cc/env';
 import { GameplayTarget, GameplayTargetData, TargetContentType } from './GameplayTarget';
 import { GameplayMVP } from './GameplayMVP';
 import { ACTIVE_TARGET_SKINS } from './TargetSkinSizing';
+import { applyGameFont } from './GameFont';
 
 const { ccclass, executeInEditMode } = _decorator;
 
@@ -59,7 +60,7 @@ function label(parent: Node, name: string, text: string, size: number, color = I
     result.horizontalAlign = Label.HorizontalAlign.CENTER;
     result.verticalAlign = Label.VerticalAlign.CENTER;
     result.enableWrapText = false;
-    return result;
+    return applyGameFont(result);
 }
 
 function graphics(parent: Node, name: string, width: number, height: number): Graphics {

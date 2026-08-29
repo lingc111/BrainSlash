@@ -1,5 +1,6 @@
 import { _decorator, Color, Component, Graphics, Label, Node, Sprite, SpriteFrame, UITransform, Vec2 } from 'cc';
 import { targetContentLayout, targetSkinPixelScale, targetSkinVisualScale } from './TargetSkinSizing';
+import { applyGameFont, gameFontLineHeight } from './GameFont';
 import { targetTextPresentation } from './TargetTypography';
 
 const { ccclass } = _decorator;
@@ -48,7 +49,7 @@ function label(parent: Node, name: string, text: string, size: number, color = I
     result.horizontalAlign = Label.HorizontalAlign.CENTER;
     result.verticalAlign = Label.VerticalAlign.CENTER;
     result.enableWrapText = false;
-    return result;
+    return applyGameFont(result);
 }
 
 function graphics(parent: Node, name: string, width: number, height: number): Graphics {
@@ -169,7 +170,7 @@ export class GameplayTarget extends Component {
         } else {
             const content = label(root, this.data.contentType === TargetContentType.ICON ? 'IconContent' : 'TextContent', presentation.displayText, presentation.fontSize, this.data.contentColor ?? INK);
             content.isBold = true;
-            content.lineHeight = presentation.lineHeight;
+            content.lineHeight = gameFontLineHeight(presentation.lineHeight);
             ui(content.node, contentWidth, contentHeight);
             content.overflow = Label.Overflow.SHRINK;
         }

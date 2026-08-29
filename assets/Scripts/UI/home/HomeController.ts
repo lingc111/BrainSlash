@@ -41,6 +41,8 @@ import { calculateHomePortraitLayout } from './HomePortraitLayout';
 import { createMockHomeViewData, HomeViewData } from './HomeViewData';
 import { RankingPage } from './RankingPage';
 import { AppRuntime } from '../../app/AppRuntime';
+import { applyGameFont, gameFontLineHeight } from '../GameFont';
+import { loadAvatarFrame } from './AvatarFrameLoader';
 
 const { ccclass, executeInEditMode } = _decorator;
 
@@ -74,10 +76,12 @@ export class HomeController extends Component {
     private friendChallengeModal: Node | null = null;
     private featureNoticeModal: Node | null = null;
     private removePendingChallengeListener: (() => void) | null = null;
+    private removeUserProfileListener: (() => void) | null = null;
+    private avatarMask: Node | null = null;
+    private avatarRequestUrl: string | null = null;
 
     private levelLabel: Label | null = null;
     private energyLabel: Label | null = null;
-    private dailyAccentLabel: Label | null = null;
     private dailyTitleLabel: Label | null = null;
     private dailyStatusLabel: Label | null = null;
     private countdownLabel: Label | null = null;
@@ -160,6 +164,9 @@ export class HomeController extends Component {
         if (!EDITOR) AppRuntime.platform.hideUserAuthorizationButton();
         this.removePendingChallengeListener?.();
         this.removePendingChallengeListener = null;
+        this.removeUserProfileListener?.();
+        this.removeUserProfileListener = null;
+        this.avatarRequestUrl = null;
         if (this.dailyChallenge) Tween.stopAllByTarget(this.dailyChallenge);
     }
 
@@ -167,7 +174,6 @@ export class HomeController extends Component {
         this.data = { ...data };
         if (this.levelLabel) this.levelLabel.string = `Lv.${data.level}  ${data.rankName}`;
         if (this.energyLabel) this.energyLabel.string = `${data.energy}/${data.maxEnergy}`;
-        if (this.dailyAccentLabel) this.dailyAccentLabel.string = '答';
         if (this.dailyTitleLabel) this.dailyTitleLabel.string = `第${data.towerFloor}层 · ${data.towerFloorTitle}`;
         if (this.dailyStatusLabel) this.dailyStatusLabel.string = `最高 ${data.towerHighestFloor} 层 · 塔积分 ${data.towerPoints}`;
         if (this.countdownLabel) this.countdownLabel.string = data.towerHint;
@@ -288,6 +294,10 @@ export class HomeController extends Component {
         this.removePendingChallengeListener = AppRuntime.onPendingFriendChallenge(() => {
             this.scheduleOnce(() => this.showPendingFriendChallenge(), 0);
         });
+        this.updateHeaderAvatar();
+        this.removeUserProfileListener = AppRuntime.platform.onAuthorizedUserProfileChanged(() => {
+            this.updateHeaderAvatar();
+        });
         if (AppRuntime.hasPendingFriendChallenge()) this.scheduleOnce(() => this.showPendingFriendChallenge(), 0);
         else if (AppRuntime.consumeFriendChallengeSetupRequest()) this.scheduleOnce(() => this.showFriendChallengeSetup(), 0);
     }
@@ -301,7 +311,7 @@ export class HomeController extends Component {
         const avatarPaper = this.graphics(avatarGroup, 'PaperCircle', 0, 0, 106, 106);
         this.fillCircle(avatarPaper, 0, 0, 50, new Color(0xec, 0xe9, 0xe1, 0xff));
         this.strokeCircle(avatarPaper, 0, 0, 50, C.inkSoft, 2.5);
-        this.drawAvatar(avatarGroup);
+        this.buildAvatarMask(avatarGroup);
         this.drawTape(avatarGroup, 'TapeTop', -18, 50, 70, 26, -12);
         this.drawTape(avatarGroup, 'TapeBottom', 24, -48, 70, 24, 12);
 
@@ -323,21 +333,22 @@ export class HomeController extends Component {
         this.attachResourceTexture(paper, 'textures/home/ui/home_slash_paper/spriteFrame');
 
         const titleGroup = this.makeNode(root, 'TitleImagePlaceholder', -85, 122, 610, 175);
-        this.dailyAccentLabel = this.label(titleGroup, 'AccentCharacter', '答', -245, 42, 72, 78, 58, C.red, 'center');
-        this.label(titleGroup, 'TitleLine1', '题试炼塔', 25, 42, 420, 76, 50, C.ink, 'left');
-        this.dailyTitleLabel = this.label(titleGroup, 'TitleLine2', '第1层 · 基础试炼', -20, -43, 570, 84, 52, C.ink, 'center');
+        this.label(titleGroup, 'TitleLine1', '答题试炼塔', -75, 42, 520, 78, 52, C.ink, 'center');
+        this.dailyTitleLabel = this.label(titleGroup, 'TitleLine2', '第1层 · 基础试炼', 0, -43, 570, 84, 52, C.ink, 'center');
         this.drawUnderline(titleGroup, 'TitleRedUnderline', -18, -82, 520, C.red, -4);
 
-        const towerIcon = this.makeNode(root, 'TowerIcon', 300, 110, 130, 150);
-        this.drawTowerIcon(towerIcon);
+        const towerIcon = this.makeNode(root, 'TowerIcon', 300, 110, 190, 190);
+        this.attachResourceTexture(towerIcon, 'textures/home/ui/tower/spriteFrame');
+        const towerSprite = towerIcon.getChildByName('TextureSprite')?.getComponent(Sprite);
+        if (towerSprite) towerSprite.trim = false;
 
         const friend = this.makeNode(root, 'FriendBubble', -120, -42, 480, 78);
         const bubble = this.graphics(friend, 'BubbleOutline', -10, 0, 420, 68);
         this.roundedRect(bubble, -210, -32, 420, 64, C.paperRaised, C.ink, 2.5, 14);
         this.dailyStatusLabel = this.label(friend, 'TowerStatus', '', -9, 0, 386, 56, 24, C.ink, 'center');
 
-        this.countdownLabel = this.label(root, 'TowerHint', '第3层解锁禁区', 285, -42, 270, 58, 25, C.ink, 'center');
-        this.drawUnderline(root, 'CountdownUnderline', 285, -76, 230, C.red, -1);
+        this.countdownLabel = this.label(root, 'TowerHint', '第3层解锁禁区', 255, -42, 270, 58, 25, C.ink, 'center');
+        this.drawUnderline(root, 'CountdownUnderline', 255, -76, 230, C.red, -1);
 
         const start = this.makeNode(root, 'StartButton', 0, -195, 650, 136);
         // The source keeps generous transparent margins around the hand-drawn stroke.
@@ -391,7 +402,7 @@ export class HomeController extends Component {
 
     private buildRankProgress(parent: Node): Node {
         const root = this.makeNode(parent, 'RankProgress', 0, 0, 810, 112);
-        this.label(root, 'TitleLabel', '今日段位进度', -276, 36, 300, 48, 32, C.ink, 'left');
+        this.label(root, 'TitleLabel', '等级进度', -276, 36, 300, 48, 32, C.ink, 'left');
         const cells = this.makeNode(root, 'ProgressCells', -55, -20, 620, 54);
         for (let i = 0; i < 10; i += 1) {
             const cell = this.makeNode(cells, `ProgressCell_${i + 1}`, -274 + i * 61, 0, 46, 46);
@@ -719,7 +730,7 @@ export class HomeController extends Component {
         });
 
         const summary = this.label(panel, 'Summary', '', 0, -335, 680, 126, 24, C.ink, 'center');
-        summary.lineHeight = 34;
+        summary.lineHeight = gameFontLineHeight(34);
         const validationLabel = this.label(panel, 'Validation', '', 0, -420, 680, 48, 22, C.red, 'center');
         const start = this.makeChoiceButton(panel, 'StartChallenge', '开始挑战', 0, -535, 560, 94);
         start.setSelected(true);
@@ -953,7 +964,7 @@ export class HomeController extends Component {
                 ? Label.HorizontalAlign.RIGHT
                 : Label.HorizontalAlign.CENTER;
         label.verticalAlign = Label.VerticalAlign.CENTER;
-        return label;
+        return applyGameFont(label);
     }
 
     private bindButton(node: Node, callback: () => void): void {
@@ -1163,13 +1174,44 @@ export class HomeController extends Component {
         }
     }
 
-    private drawAvatar(parent: Node): void {
-        const maskNode = this.makeNode(parent, 'DefaultAvatarMask', 0, -3, 82, 82);
+    private buildAvatarMask(parent: Node): void {
+        const maskNode = this.makeNode(parent, 'WechatAvatarMask', 0, -3, 92, 92);
         const mask = maskNode.addComponent(Mask);
         mask.type = Mask.Type.GRAPHICS_ELLIPSE;
         mask.segments = 48;
-        const artwork = this.makeNode(maskNode, 'DefaultAvatarArtwork', 0, 0, 128, 128);
-        this.attachResourceTexture(artwork, 'textures/common/default_avatar/spriteFrame');
+        const artwork = this.makeNode(maskNode, 'Artwork', 0, 0, 92, 92);
+        const sprite = artwork.addComponent(Sprite);
+        sprite.sizeMode = Sprite.SizeMode.CUSTOM;
+        sprite.type = Sprite.Type.SIMPLE;
+        maskNode.active = false;
+        this.avatarMask = maskNode;
+    }
+
+    private updateHeaderAvatar(): void {
+        const maskNode = this.avatarMask;
+        if (!maskNode?.isValid) return;
+        const avatarUrl = AppRuntime.platform.authorizedUserProfile()?.avatarUrl.trim() ?? '';
+        this.avatarRequestUrl = avatarUrl || null;
+        const sprite = maskNode.getChildByName('Artwork')?.getComponent(Sprite);
+        if (!sprite) return;
+        if (!avatarUrl) {
+            sprite.spriteFrame = null;
+            maskNode.active = false;
+            return;
+        }
+
+        sprite.spriteFrame = null;
+        maskNode.active = false;
+        loadAvatarFrame(avatarUrl, (error, frame) => {
+            if (error || !frame || !maskNode.isValid || this.avatarRequestUrl !== avatarUrl) {
+                if (error) console.warn('[Home] Authorized avatar failed to load', error);
+                return;
+            }
+            if (sprite.node.isValid) {
+                sprite.spriteFrame = frame;
+                maskNode.active = true;
+            }
+        });
     }
 
     private drawLightning(parent: Node, x: number, y: number, size: number): void {

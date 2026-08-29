@@ -1,4 +1,5 @@
 import { BlockInputEvents, Button, Color, Graphics, Label, Node, UIOpacity, UITransform, Vec3, tween, view } from 'cc';
+import { applyGameFont } from './GameFont';
 import { AppRuntime } from '../app/AppRuntime';
 import type { GameResult, MistakeRecord } from '../domain/Models';
 import type { TowerFloorResult } from '../domain/TowerMode';
@@ -288,7 +289,7 @@ function makeWrappedLabel(parent: Node, name: string, value: string, size: numbe
     result.verticalAlign = Label.VerticalAlign.CENTER;
     result.overflow = Label.Overflow.SHRINK;
     result.enableWrapText = true;
-    return result;
+    return applyGameFont(result);
 }
 
 function mistakeReason(kind: MistakeRecord['failureKind']): string {
@@ -330,5 +331,5 @@ function makeLabel(parent: Node, name: string, value: string, size: number, colo
     result.verticalAlign = Label.VerticalAlign.CENTER;
     result.overflow = Label.Overflow.SHRINK;
     result.enableWrapText = false;
-    return result;
+    return applyGameFont(result);
 }
