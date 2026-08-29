@@ -7,6 +7,7 @@ import { AnalyticsService } from '../infrastructure/AnalyticsService';
 import { AudioService } from '../infrastructure/AudioService';
 import { PlatformService } from '../infrastructure/PlatformService';
 import { SaveService } from '../infrastructure/SaveService';
+import { staticQuestionBankLoader } from '../infrastructure/StaticQuestionBankLoader';
 import { RunSeedFactory } from './RunSeedFactory';
 
 class AppRuntimeState {
@@ -31,6 +32,7 @@ class AppRuntimeState {
     public initialize(): void {
         const data = this.save.load();
         this.audio.enabled = data.settings.sfx;
+        staticQuestionBankLoader.preload();
         void this.syncLeaderboard();
         if (!this.launchOptionsRead) {
             this.launchOptionsRead = true;
@@ -119,7 +121,7 @@ class AppRuntimeState {
             if (mode === 'daily') this.save.beginDaily(this.entry);
         }
         this.result = null; this.towerResult = null; this.transitioning = true; this.gameplayLaunchAuthorized = true; this.analytics.track('game_start', { mode, seed: this.entry.seed, floor: this.entry.towerFloor });
-        director.loadScene('Gameplay', () => { this.transitioning = false; });
+        this.loadGameplayScene();
     }
     public replay(): void {
         if (this.transitioning) return;
@@ -134,7 +136,7 @@ class AppRuntimeState {
         this.result = null; this.towerResult = null;
         this.transitioning = true; this.gameplayLaunchAuthorized = true;
         this.analytics.track('game_start', { mode: this.entry.mode, seed: this.entry.seed });
-        director.loadScene('Gameplay', () => { this.transitioning = false; });
+        this.loadGameplayScene();
     }
     public home(): void { if (!this.transitioning) { this.transitioning = true; director.loadScene('Home', () => { this.transitioning = false; }); } }
     public finish(run: RunResult): GameResult {
@@ -169,7 +171,12 @@ class AppRuntimeState {
         this.entry = this.seedFactory.create('tower', CONTENT_VERSION, floor);
         this.result = null; this.towerResult = null; this.transitioning = true; this.gameplayLaunchAuthorized = true;
         this.analytics.track('game_start', { mode: 'tower', seed: this.entry.seed, floor });
-        director.loadScene('Gameplay', () => { this.transitioning = false; });
+        this.loadGameplayScene();
+    }
+    private loadGameplayScene(): void {
+        void staticQuestionBankLoader.load().finally(() => {
+            director.loadScene('Gameplay', () => { this.transitioning = false; });
+        });
     }
     public share(): void {
         if (!this.result) return;

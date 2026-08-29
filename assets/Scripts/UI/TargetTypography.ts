@@ -6,7 +6,7 @@ export interface TargetTextPresentation {
     minimumHeightScale: number;
 }
 
-/** Keeps four-character Chinese answers large enough to read on moving targets. */
+/** Keeps moving-target answers large enough to read without clipping artwork edges. */
 export function targetTextPresentation(value: string): TargetTextPresentation {
     const text = value.trim();
     const characters = Array.from(text);
@@ -23,12 +23,13 @@ export function targetTextPresentation(value: string): TargetTextPresentation {
         };
     }
 
-    const fontSize = characters.length > 6 ? 25 : characters.length > 4 ? 30 : characters.length > 2 ? 38 : 52;
+    const fontSize = characters.length > 6 ? 30 : characters.length > 4 ? 38 : characters.length > 2 ? 46 : 52;
+    const needsWideLabel = characters.length >= 3;
     return {
         displayText: text,
         fontSize,
         lineHeight: fontSize * 1.2,
-        minimumWidthScale: 0,
-        minimumHeightScale: 0,
+        minimumWidthScale: needsWideLabel ? 1.82 : 0,
+        minimumHeightScale: needsWideLabel ? 0.9 : 0,
     };
 }

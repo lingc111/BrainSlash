@@ -33,6 +33,7 @@ import { validateQuestion } from './FairnessValidator';
 import type { QuestionInstance, RuleId, TargetSpec, ThemeId } from './Models';
 import { evaluateRules, rulesForReadableTargets } from './Rules';
 import { SeededRng } from './SeededRng';
+import { staticQuestionsForFamily, type StaticQuestionRecord } from './StaticQuestionBank';
 
 type Stage = 0 | 1 | 2;
 const COLOR_WORDS = ['红', '蓝', '绿', '黄'] as const;
@@ -86,6 +87,13 @@ export class QuestionGenerator {
 
     private generate(family: ContentFamilySpec, stage: Stage): QuestionInstance {
         this.index += 1;
+        const staticPool = staticQuestionsForFamily(family.kind);
+        if (staticPool.length && !this.directive.rules.includes('multi') && !this.directive.rules.includes('order')) {
+            const eligible = staticPool.filter((record) => record.difficulty <= stage + 1);
+            const pool = eligible.length ? eligible : staticPool;
+            const record = this.pickFact(`static:${family.kind}`, pool, (item) => item.id);
+            return this.staticChoice(family, stage, record);
+        }
         switch (family.kind) {
             case 'math-add': return this.mathAdd(family, stage);
             case 'math-subtract': return this.mathSubtract(family, stage);
@@ -122,6 +130,16 @@ export class QuestionGenerator {
             case 'history-myth': return this.trivia(family, stage, 'history-myth', HISTORY_MYTH_FACTS);
             default: return this.makeChoice(family, '偶数', 2, [3, 4, 5, 6], stage);
         }
+    }
+
+    private staticChoice(family: ContentFamilySpec, stage: Stage, record: StaticQuestionRecord): QuestionInstance {
+        return this.makeChoice(
+            family,
+            record.prompt,
+            String(record.answer),
+            record.distractors.map(String),
+            stage,
+        );
     }
 
     private make(

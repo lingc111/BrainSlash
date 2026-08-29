@@ -452,6 +452,14 @@ test('four-character Chinese target answers use a large two-line layout', () => 
     assert.equal(targetTextPresentation('book').displayText, 'book');
 });
 
+test('date and medium-length answers use the available target width', () => {
+    const date = targetTextPresentation('9月18日');
+    assert.equal(date.fontSize, 38);
+    assert.ok(date.minimumWidthScale >= 1.8);
+    assert.ok(date.minimumHeightScale >= 0.9);
+    assert.equal(targetTextPresentation('9月3日').fontSize, 46);
+});
+
 test('fill-in prompts show a spaced parenthesis placeholder', () => {
     const fillFamilies = CONTENT_FAMILIES.filter((family) => family.kind === 'math-missing' || family.kind === 'hanzi-fill');
     assert.ok(fillFamilies.length > 0);
