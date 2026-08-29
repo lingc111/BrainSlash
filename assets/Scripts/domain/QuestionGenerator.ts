@@ -34,6 +34,13 @@ import type { QuestionInstance, RuleId, TargetSpec, ThemeId } from './Models';
 import { evaluateRules, rulesForReadableTargets } from './Rules';
 import { SeededRng } from './SeededRng';
 import { staticQuestionsForFamily, type StaticQuestionRecord } from './StaticQuestionBank';
+import { generateExtendedQuestion } from './ExtendedQuestionGenerator';
+import {
+    legacyQuestionTypeForFamily,
+    questionTypeById,
+    type QuestionTypeDefinition,
+} from './QuestionTypeCatalog';
+import { validateRuleSet } from '../configs/GameConfig';
 
 type Stage = 0 | 1 | 2;
 export interface QuestionGeneratorOptions {
@@ -55,6 +62,8 @@ export class QuestionGenerator {
     private readonly crossSessionFactIds = new Set<string>();
     private readonly crossSessionSemanticSignatures = new Set<string>();
     private activeFactIds: string[] = [];
+    private activeQuestionType?: QuestionTypeDefinition;
+    private activeRulesOverride?: RuleId[];
 
     public constructor(
         private readonly rng: SeededRng,
@@ -105,6 +114,27 @@ export class QuestionGenerator {
     private generate(family: ContentFamilySpec, stage: Stage): QuestionInstance {
         this.index += 1;
         const staticPool = staticQuestionsForFamily(family.kind);
+        this.activeQuestionType = legacyQuestionTypeForFamily(family.kind);
+        this.activeRulesOverride = undefined;
+        const supportsExtended = !!this.directive.typeId
+            && !this.directive.rules.includes('multi')
+            && !this.directive.rules.includes('order')
+            && this.directive.rules.filter((rule) => rule !== 'standard').length <= 1;
+        if (supportsExtended) {
+            const definition = questionTypeById(this.directive.typeId!);
+            if (definition) {
+                const rules = this.rulesForQuestionType(definition);
+                if (rules) {
+                    this.activeQuestionType = definition;
+                    this.activeRulesOverride = rules;
+                    const draft = generateExtendedQuestion(definition, this.rng, stage);
+                    const fitted = this.fitExtendedDraft(draft.targets, draft.correctTargetIds, draft.orderedTargetIds);
+                    const targets = fitted.targets;
+                    this.appendBomb(targets);
+                    return this.make(family, draft.prompt, targets, fitted.correctTargetIds, rules, stage, fitted.orderedTargetIds);
+                }
+            }
+        }
         if (staticPool.length && !this.directive.rules.includes('order')) {
             const eligible = staticPool.filter((record) => record.difficulty <= stage + 1);
             const pool = eligible.length ? eligible : staticPool;
@@ -207,9 +237,11 @@ export class QuestionGenerator {
         _stage: Stage,
         orderedTargetIds?: string[],
     ): QuestionInstance {
-        const activeRules = [...this.directive.rules];
+        const activeRules = [...(this.activeRulesOverride ?? this.directive.rules)];
         return {
             id: `${family.id}-${this.index}`,
+            typeId: this.activeQuestionType?.typeId,
+            engineId: this.activeQuestionType?.engineId,
             familyId: family.id,
             theme: family.theme,
             factIds: [...this.activeFactIds],
@@ -630,7 +662,7 @@ export class QuestionGenerator {
     }
 
     private appendBomb(targets: TargetSpec[]): void {
-        if (!(this.directive.bombEnabled ?? this.directive.rules.includes('bomb'))) return;
+        if (!(this.directive.bombEnabled ?? (this.activeRulesOverride ?? this.directive.rules).includes('bomb'))) return;
         const insertIndex = this.rng.int(0, targets.length);
         targets.splice(insertIndex, 0, { id: 'bomb', text: '爆', isBomb: true });
     }
@@ -648,17 +680,19 @@ export class QuestionGenerator {
             bag = this.rng.shuffle(items.map((_, index) => index));
             this.factBags.set(key, bag);
         }
-        const recent = new Set([...this.crossSessionFactIds, ...this.recentQuestionFacts.flat()]);
+        const localRecent = new Set(this.recentQuestionFacts.flat());
+        const seen = new Set([...this.crossSessionFactIds, ...localRecent]);
         let bagIndex = bag.length - 1;
         while (bagIndex >= 0) {
             const factId = idOf(items[bag[bagIndex]]);
-            if (!recent.has(factId) && !this.activeFactIds.includes(factId)) break;
+            if (!seen.has(factId) && !this.activeFactIds.includes(factId)) break;
             bagIndex--;
         }
         if (bagIndex < 0) {
             bag = this.rng.shuffle(items.map((_, index) => index));
             this.factBags.set(key, bag);
-            bagIndex = bag.findIndex((index) => !recent.has(idOf(items[index])) && !this.activeFactIds.includes(idOf(items[index])));
+            bagIndex = bag.findIndex((index) => !seen.has(idOf(items[index])) && !this.activeFactIds.includes(idOf(items[index])));
+            if (bagIndex < 0) bagIndex = bag.findIndex((index) => !localRecent.has(idOf(items[index])) && !this.activeFactIds.includes(idOf(items[index])));
             if (bagIndex < 0) bagIndex = bag.findIndex((index) => !this.activeFactIds.includes(idOf(items[index])));
             if (bagIndex < 0) bagIndex = 0;
         }
@@ -681,7 +715,7 @@ export class QuestionGenerator {
 
     private semanticSignature(question: QuestionInstance): string {
         const familyKind = (question.familyId ?? '').replace(/\.v\d+$/, '');
-        return `${question.theme}|${familyKind}|${this.normalizePrompt(question.prompt.text)}|${this.answerSignature(question)}`;
+        return `${question.theme}|${question.typeId ?? familyKind}|${this.normalizePrompt(question.prompt.text)}|${this.answerSignature(question)}`;
     }
 
     private answerSignature(question: QuestionInstance): string {
@@ -703,5 +737,35 @@ export class QuestionGenerator {
     private recordSignature(history: string[], signature: string, limit: number): void {
         history.push(signature);
         if (history.length > limit) history.shift();
+    }
+
+    private rulesForQuestionType(definition: QuestionTypeDefinition): RuleId[] | null {
+        const requested = this.directive.rules.filter((rule) => rule !== 'standard' && rule !== 'multi' && rule !== 'order');
+        if (definition.engineId === 'inverse' && requested.includes('reverse')) return null;
+        const needsOrder = definition.engineId === 'order';
+        const needsMulti = definition.engineId === 'multi' || definition.engineId === 'double'
+            || definition.engineId === 'pair' || definition.engineId === 'same';
+        const result = [...requested, ...(needsOrder ? ['order' as const] : needsMulti ? ['multi' as const] : [])];
+        const normalized: RuleId[] = result.length ? Array.from(new Set(result)) : ['standard'];
+        return validateRuleSet(normalized) ? normalized : null;
+    }
+
+    private fitExtendedDraft(
+        targets: readonly TargetSpec[],
+        correctTargetIds: readonly string[],
+        orderedTargetIds?: readonly string[],
+    ): { targets: TargetSpec[]; correctTargetIds: string[]; orderedTargetIds?: string[] } {
+        const cap = Math.max(2, this.directive.targetCount);
+        const answerIds = orderedTargetIds?.length ? [...orderedTargetIds].slice(0, cap) : [...correctTargetIds];
+        const answers = targets.filter((target) => answerIds.includes(target.id));
+        const distractors = this.rng.shuffle(targets.filter((target) => !answerIds.includes(target.id)));
+        const selected = [...answers, ...distractors.slice(0, Math.max(0, cap - answers.length))];
+        const selectedIds = new Set(selected.map((target) => target.id));
+        const fittedOrder = orderedTargetIds?.filter((id) => selectedIds.has(id));
+        return {
+            targets: this.rng.shuffle(selected),
+            correctTargetIds: correctTargetIds.filter((id) => selectedIds.has(id)),
+            orderedTargetIds: fittedOrder?.length ? fittedOrder : undefined,
+        };
     }
 }

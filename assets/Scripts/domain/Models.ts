@@ -1,6 +1,10 @@
 export type GameMode = 'brawl60' | 'daily' | 'friendChallenge' | 'tower';
 export type ThemeId = 'math' | 'vision' | 'english' | 'hanzi' | 'geography' | 'life' | 'knowledge' | 'history';
 export type RuleId = 'standard' | 'reverse' | 'rotate' | 'multi' | 'order' | 'bomb';
+export type GameplayEngineId =
+    | 'single' | 'multi' | 'double' | 'inverse' | 'odd-one-out' | 'same'
+    | 'pair' | 'order' | 'sequence' | 'fill' | 'truth' | 'compare'
+    | 'count' | 'condition';
 export type FriendChallengeDurationMs = 60_000 | 90_000 | 120_000;
 export type FriendChallengeRole = 'creator' | 'responder';
 export type SessionPhase = 'ready' | 'playing' | 'resolving' | 'finished';
@@ -16,9 +20,18 @@ export interface GameEntryParams {
     dailyDate?: string; dailyTargetScore?: number; towerFloor?: number;
 }
 export interface PromptSpec { text: string; }
-export interface TargetSpec { id: string; text: string; value?: string | number; colorName?: string; isBomb?: boolean; }
+export type TargetAttributeValue = string | number | boolean;
+export interface TargetSpec {
+    id: string;
+    text: string;
+    value?: string | number;
+    colorName?: string;
+    isBomb?: boolean;
+    /** Semantic attributes are compiled into answer ids before gameplay starts. */
+    attributes?: Readonly<Record<string, TargetAttributeValue>>;
+}
 export interface QuestionInstance {
-    id: string; theme: ThemeId; familyId?: string; factIds?: string[]; prompt: PromptSpec; targets: TargetSpec[];
+    id: string; typeId?: string; engineId?: GameplayEngineId; theme: ThemeId; familyId?: string; factIds?: string[]; prompt: PromptSpec; targets: TargetSpec[];
     baseCorrectTargetIds: string[]; orderedTargetIds?: string[]; activeRules: RuleId[];
     timeLimitMs: number;
 }

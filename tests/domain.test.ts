@@ -42,6 +42,8 @@ import {
 } from '../assets/Scripts/domain/FriendChallenge.ts';
 import { GestureResolver, shouldKeepIncompleteGesture } from '../assets/Scripts/domain/GestureResolver.ts';
 import type { FriendChallengeConfig, PlayerProgress, QuestionInstance, RunResult } from '../assets/Scripts/domain/Models.ts';
+import { EXCLUDED_QUESTION_TYPES, QUESTION_TYPES } from '../assets/Scripts/domain/QuestionTypeCatalog.ts';
+import { chineseAnswerLength, poetryRecordsAreSafe } from '../assets/Scripts/domain/ExtendedQuestionGenerator.ts';
 import { QuestionGenerator } from '../assets/Scripts/domain/QuestionGenerator.ts';
 import { createResultPresentation, finalizeResult } from '../assets/Scripts/domain/ResultSummary.ts';
 import { createMistakeRecord, evaluateRules, maximumAnswerTextLength, questionFlightDurationSeconds, questionPreviewDurationSeconds, rulesForReadableTargets, slashRuleCount, slashRuleLabel } from '../assets/Scripts/domain/Rules.ts';
@@ -76,6 +78,7 @@ import {
     evaluatePortraitTargetRotation,
     PORTRAIT_TARGET_MAX_SEPARATION_OFFSET,
     PORTRAIT_TARGET_MIN_SEPARATION,
+    PORTRAIT_TARGET_ROTATION_DEGREES_PER_SECOND,
     resolveSoftTargetSeparation,
 } from '../assets/Scripts/UI/PortraitTargetMotion.ts';
 import { ACTIVE_TARGET_SKINS, ALL_TARGET_SKINS, COLOR_QUESTION_TARGET_SKIN, TARGET_SKIN_VISUAL_SCALE, targetContentLayout, targetShapeForSkin, targetSkinForAnswer, targetSkinPixelScale, targetSkinVisualScale, uniqueColorTargetSkins } from '../assets/Scripts/UI/TargetSkinSizing.ts';
@@ -656,7 +659,7 @@ test('master hit window starts after target entrance settles', () => {
     assert.equal(outsideWindow.resolveSuccess(question)?.masterHit, false);
 });
 
-test('endless brawl only ends on life depletion and heals every fifth consecutive correct answer', () => {
+test('endless brawl only ends on life depletion and heals every third consecutive correct answer', () => {
     const question: QuestionInstance = { id: 'endless-q', theme: 'math', prompt: { text: '1+1=?' }, targets: [{ id: 'a', text: '2' }, { id: 'b', text: '3' }], baseCorrectTargetIds: ['a'], activeRules: ['standard'], timeLimitMs: 3_000 };
     const session = new GameSession({ mode: 'brawl60', seed: 'endless', contentVersion: 'v' }, GAMEPLAY_CONFIG);
     session.start();
@@ -665,25 +668,33 @@ test('endless brawl only ends on life depletion and heals every fifth consecutiv
     assert.equal(session.state.remainingMs, 0);
     assert.equal(session.state.elapsedMs, 10 * 60_000);
 
+    for (let index = 0; index < 2; index++) {
+        session.beginQuestion();
+        assert.equal(session.resolveSuccess(question)?.lifeDelta, 0);
+        session.continueAfterFeedback();
+    }
+    assert.equal(session.state.combo, 2);
+
     session.beginQuestion();
     session.resolveFailure('wrong');
     session.continueAfterFeedback();
     assert.equal(session.state.life, 2);
+    assert.equal(session.state.combo, 0);
 
-    let fifthLifeDelta = 0;
-    for (let index = 1; index <= 5; index++) {
+    let thirdLifeDelta = 0;
+    for (let index = 1; index <= 3; index++) {
         session.beginQuestion();
-        fifthLifeDelta = session.resolveSuccess(question)?.lifeDelta ?? 0;
+        thirdLifeDelta = session.resolveSuccess(question)?.lifeDelta ?? 0;
         session.continueAfterFeedback();
     }
-    assert.equal(fifthLifeDelta, 1);
-    assert.equal(session.state.combo, 5);
+    assert.equal(thirdLifeDelta, 1);
+    assert.equal(session.state.combo, 3);
     assert.equal(session.state.life, 3);
 
-    for (let index = 6; index <= 10; index++) {
+    for (let index = 4; index <= 6; index++) {
         session.beginQuestion();
         const result = session.resolveSuccess(question);
-        if (index === 10) assert.equal(result?.lifeDelta, 0);
+        if (index === 6) assert.equal(result?.lifeDelta, 0);
         session.continueAfterFeedback();
     }
     assert.equal(session.state.life, 3);
@@ -1141,8 +1152,14 @@ test('rotation rule spins targets deterministically after their entrance settles
     };
     assert.equal(evaluatePortraitTargetRotation(motion, 0, true), 10);
     assert.equal(evaluatePortraitTargetRotation(motion, 1, false), 0);
-    assert.equal(evaluatePortraitTargetRotation(motion, 1, true), 120);
-    assert.equal(evaluatePortraitTargetRotation({ ...motion, phase: -1 }, 1, true), -120);
+    assert.equal(
+        evaluatePortraitTargetRotation(motion, 1, true),
+        PORTRAIT_TARGET_ROTATION_DEGREES_PER_SECOND,
+    );
+    assert.equal(
+        evaluatePortraitTargetRotation({ ...motion, phase: -1 }, 1, true),
+        -PORTRAIT_TARGET_ROTATION_DEGREES_PER_SECOND,
+    );
 });
 
 test('each phase schedules its intended themes and rule beats', () => {
@@ -1326,8 +1343,56 @@ test('1000 seeds survive full multi-round deterministic legality regression', ()
         .filter((family) => ['math-property', 'math-sequence', 'hanzi-order', 'english-category', 'life-category'].includes(family.kind))
         .map((family) => family.id)
         .sort();
-    assert.deepEqual([...multiStepFamilyIds].sort(), expectedMultiStepFamilies);
+    for (const familyId of expectedMultiStepFamilies) assert.ok(multiStepFamilyIds.has(familyId), familyId);
+    assert.ok(multiStepFamilyIds.size > expectedMultiStepFamilies.length);
     assert.ok(multiStepQuestions > 10_000);
+});
+
+test('expanded question-type catalog covers 201 stable non-excluded types', () => {
+    assert.equal(QUESTION_TYPES.length, 201);
+    assert.equal(new Set(QUESTION_TYPES.map((definition) => definition.typeId)).size, 201);
+    assert.ok(QUESTION_TYPES.every((definition) => definition.modeWeights.brawl60 > 0
+        && definition.modeWeights.daily > 0
+        && definition.modeWeights.friendChallenge > 0
+        && definition.modeWeights.tower > 0));
+    const forbidden = /(memory|tracking|continuous|rule-switch|geography\.16|geography\.17)/;
+    assert.ok(QUESTION_TYPES.every((definition) => !forbidden.test(definition.typeId)));
+    assert.equal(EXCLUDED_QUESTION_TYPES.length, 12);
+});
+
+test('every expanded type survives 100 deterministic legal generations', () => {
+    for (const definition of QUESTION_TYPES) {
+        const family = CONTENT_FAMILIES.find((candidate) => candidate.kind === definition.familyKind)!;
+        for (let seed = 0; seed < 100; seed++) {
+            const directive = {
+                phase: 'twist' as const, difficultyStage: 2 as const, targetCount: 5,
+                questionTimeMs: 2_600, speed: 1, family, rules: ['standard' as const], typeId: definition.typeId,
+            };
+            const first = new QuestionGenerator(new SeededRng(`${definition.typeId}:${seed}`), GAMEPLAY_CONFIG).next(directive);
+            const second = new QuestionGenerator(new SeededRng(`${definition.typeId}:${seed}`), GAMEPLAY_CONFIG).next(directive);
+            assert.equal(first.typeId, definition.typeId);
+            assert.equal(first.engineId, definition.engineId);
+            assert.deepEqual(first, second);
+            assert.deepEqual(validateQuestion(first, evaluateRules(first)), [], definition.typeId);
+            assert.ok(first.targets.length >= 2 && first.targets.length <= 5, definition.typeId);
+        }
+    }
+});
+
+test('poetry answers are unique short fragments instead of full lines', () => {
+    assert.equal(poetryRecordsAreSafe(), true);
+    for (const definition of QUESTION_TYPES.filter((item) => item.generatorId.includes('poetry') || item.generatorId.includes('line-match'))) {
+        const family = CONTENT_FAMILIES.find((candidate) => candidate.kind === definition.familyKind)!;
+        for (let seed = 0; seed < 100; seed++) {
+            const question = new QuestionGenerator(new SeededRng(`poetry:${definition.typeId}:${seed}`), GAMEPLAY_CONFIG).next({
+                phase: 'twist', difficultyStage: 2, targetCount: 4, questionTimeMs: 2_600,
+                speed: 1, family, rules: ['standard'], typeId: definition.typeId,
+            });
+            for (const target of question.targets.filter((item) => !item.isBomb)) {
+                assert.ok(chineseAnswerLength(target.text) >= 1 && chineseAnswerLength(target.text) <= 4, `${definition.typeId}:${target.text}`);
+            }
+        }
+    }
 });
 
 test('question appearance keeps semantic questions and answers on rolling cooldowns', () => {

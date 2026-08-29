@@ -15,6 +15,12 @@ import {
     isStaticQuestionPack,
     type StaticQuestionPack,
 } from '../assets/Scripts/domain/StaticQuestionBank.ts';
+import {
+    clearStructuredContentForTests,
+    installStructuredContentPacks,
+    isStructuredContentPack,
+    structuredContent,
+} from '../assets/Scripts/domain/StructuredContentBank.ts';
 
 function readPacks(): StaticQuestionPack[] {
     const directory = join(process.cwd(), 'assets', 'resources', 'question-banks');
@@ -37,6 +43,19 @@ test('resources subpackage contains exactly 5000 valid static playable questions
             assert.ok(!record.distractors.map(String).includes(String(record.answer)));
         }
     }
+});
+
+test('schema v2 content installs without changing the 5000 static-question contract', () => {
+    clearStructuredContentForTests();
+    const directory = join(process.cwd(), 'assets', 'resources', 'question-banks');
+    const values = readdirSync(directory).filter((name) => name.endsWith('.json'))
+        .map((name) => JSON.parse(readFileSync(join(directory, name), 'utf8')) as unknown);
+    const packs = values.filter(isStructuredContentPack);
+    assert.equal(packs.length, 1);
+    assert.equal(installStructuredContentPacks(packs), 24);
+    assert.equal(structuredContent('pinyin').length, 12);
+    assert.equal(structuredContent('poetry-fragment').length, 12);
+    assert.equal(readPacks().reduce((sum, pack) => sum + pack.records.length, 0), 5_000);
 });
 
 test('installed static questions are selected by the live generator', () => {

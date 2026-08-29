@@ -5,6 +5,7 @@ import type { FriendChallengeConfig, RuleId, ThemeId } from './Models';
 import { slashRuleCount } from './Rules';
 import { SeededRng } from './SeededRng';
 import { familyHasStaticQuestions } from './StaticQuestionBank';
+import { QuestionTypeRotation } from './QuestionTypeCatalog';
 
 export type BrawlPhaseId = 'warmup' | 'action' | 'twist' | 'climax';
 export type DifficultyStage = 0 | 1 | 2;
@@ -30,6 +31,8 @@ export interface BrawlQuestionDirective {
     speed: number;
     family: ContentFamilySpec;
     rules: RuleId[];
+    /** Omitted for the legacy/static path; present for a registered expanded type. */
+    typeId?: string;
     /** Bomb is a gameplay hazard, independent from the selectable slash rules. */
     bombEnabled?: boolean;
 }
@@ -194,8 +197,11 @@ export class FriendChallengeDirector {
     private themeBag: ThemeId[] = [];
     private readonly ruleBags = new Map<ThemeId, RuleId[][]>();
     private readonly familyBags = new Map<string, ContentFamilySpec[]>();
+    private readonly typeRotation: QuestionTypeRotation;
 
-    public constructor(private readonly rng: SeededRng, private readonly config: FriendChallengeConfig) {}
+    public constructor(private readonly rng: SeededRng, private readonly config: FriendChallengeConfig) {
+        this.typeRotation = new QuestionTypeRotation(rng.fork('question-types'));
+    }
 
     public next(elapsedMs: number): BrawlQuestionDirective {
         const normalizedElapsed = Math.max(0, Math.min(60_000, elapsedMs * 60_000 / this.config.durationMs));
@@ -213,6 +219,7 @@ export class FriendChallengeDirector {
             speed: phase.speed,
             family,
             rules: [...rules],
+            typeId: this.typeRotation.next(family.kind, (phase.difficultyStage + 1) as 1 | 2 | 3, rules, new Set(this.config.enabledRules)),
             bombEnabled: true,
         };
     }
@@ -253,6 +260,7 @@ export class Brawl60Director {
     private readonly familyBags = new Map<string, ContentFamilySpec[]>();
     private readonly recentThemes: ThemeId[] = [];
     private readonly recentFamilyIds: string[] = [];
+    private readonly typeRotation: QuestionTypeRotation;
     private readonly seenFamilyIds = new Set<string>();
     private readonly themeSelectionCounts = new Map<ThemeId, number>();
 
@@ -261,7 +269,7 @@ export class Brawl60Director {
         private readonly recipeId = 'mixed',
         private readonly allowedRules?: ReadonlySet<RuleId>,
         private readonly allowCompoundRules = true,
-    ) {}
+    ) { this.typeRotation = new QuestionTypeRotation(rng.fork('question-types')); }
 
     public next(elapsedMs: number): BrawlQuestionDirective {
         const phase = filterPhaseRules(phaseForRecipe(phaseAt(elapsedMs), this.recipeId), this.allowedRules, this.allowCompoundRules);
@@ -283,6 +291,12 @@ export class Brawl60Director {
             speed: phase.speed,
             family,
             rules: requestedRules,
+            typeId: this.typeRotation.next(
+                family.kind,
+                (phase.difficultyStage + 1) as 1 | 2 | 3,
+                requestedRules,
+                this.allowedRules ?? (recipe ? new Set(recipe.allowedRules) : undefined),
+            ),
         };
     }
 

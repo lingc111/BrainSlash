@@ -2,6 +2,7 @@ import type { PortraitTargetPosition } from './PortraitTargetLayout';
 
 export const PORTRAIT_TARGET_MIN_SEPARATION = 234;
 export const PORTRAIT_TARGET_MAX_SEPARATION_OFFSET = 18;
+export const PORTRAIT_TARGET_ROTATION_DEGREES_PER_SECOND = 72;
 
 export interface PortraitTargetMotionPlan {
     startX: number;
@@ -107,7 +108,8 @@ export function evaluatePortraitTargetRotation(
     const entranceAngle = motion.entranceAngle * Math.max(0, 1 - Math.min(1, local / 0.24));
     if (!rotating) return entranceAngle;
     const direction = Math.sin(motion.phase) >= 0 ? 1 : -1;
-    return entranceAngle + direction * local * 120 * motion.speed;
+    return entranceAngle
+        + direction * local * PORTRAIT_TARGET_ROTATION_DEGREES_PER_SECOND * motion.speed;
 }
 
 /**

@@ -3,7 +3,7 @@ import type { FailureKind, GameEntryParams, GameSessionState, HitResult, Questio
 import { calculateScore } from './ScoreSystem';
 
 export class GameSession {
-    public static readonly ENDLESS_HEAL_STREAK = 5;
+    public static readonly ENDLESS_HEAL_STREAK = 3;
     public readonly state: GameSessionState;
     private readonly durationMs: number;
     private questionStartedAt = 0;

@@ -1,5 +1,6 @@
 import { JsonAsset, resources } from 'cc';
 import { installStaticQuestionPacks, isStaticQuestionPack, type StaticQuestionPack } from '../domain/StaticQuestionBank';
+import { installStructuredContentPacks, isStructuredContentPack, type StructuredContentPackV2 } from '../domain/StructuredContentBank';
 
 class StaticQuestionBankLoader {
     private pending: Promise<number> | null = null;
@@ -16,9 +17,12 @@ class StaticQuestionBankLoader {
                     return;
                 }
                 const packs: StaticQuestionPack[] = [];
+                const structuredPacks: StructuredContentPackV2[] = [];
                 for (const asset of assets) {
                     if (isStaticQuestionPack(asset.json)) packs.push(asset.json);
+                    else if (isStructuredContentPack(asset.json)) structuredPacks.push(asset.json);
                 }
+                installStructuredContentPacks(structuredPacks);
                 this.loadedCount = installStaticQuestionPacks(packs);
                 if (this.loadedCount !== 5_000) {
                     console.warn(`[QuestionBank] Expected 5000 static questions, loaded ${this.loadedCount}.`);

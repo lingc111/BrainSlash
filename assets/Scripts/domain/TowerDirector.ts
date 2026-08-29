@@ -3,6 +3,7 @@ import { familySupportsRules, targetCountForFamily, type BrawlPhaseId, type Braw
 import type { RuleId, ThemeId } from './Models';
 import { SeededRng } from './SeededRng';
 import { towerFloorConfig, type TowerFloorConfig } from './TowerMode';
+import { QuestionTypeRotation } from './QuestionTypeCatalog';
 
 export class TowerDirector {
     public readonly config: TowerFloorConfig;
@@ -10,9 +11,11 @@ export class TowerDirector {
     private ruleBag: RuleId[][] = [];
     private readonly familyBags = new Map<string, ContentFamilySpec[]>();
     private readonly recentFamilyIds: string[] = [];
+    private readonly typeRotation: QuestionTypeRotation;
 
     public constructor(private readonly rng: SeededRng, floor: number) {
         this.config = towerFloorConfig(floor);
+        this.typeRotation = new QuestionTypeRotation(rng.fork('question-types'));
     }
 
     public next(_elapsedMs: number): BrawlQuestionDirective {
@@ -33,6 +36,12 @@ export class TowerDirector {
             speed: this.config.speed,
             family,
             rules,
+            typeId: this.typeRotation.next(
+                family.kind,
+                (this.config.difficultyStage + 1) as 1 | 2 | 3,
+                rules,
+                new Set(this.config.ruleSequence.reduce<RuleId[]>((all, set) => [...all, ...set], [])),
+            ),
         };
     }
 
