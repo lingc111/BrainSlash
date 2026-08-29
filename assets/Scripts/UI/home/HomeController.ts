@@ -1,15 +1,12 @@
 import {
     _decorator,
-    BlockInputEvents,
     Button,
     Camera,
     Color,
     Component,
     Graphics,
-    ImageAsset,
     Label,
     Layers,
-    Mask,
     Node,
     ResolutionPolicy,
     resources,
@@ -18,7 +15,6 @@ import {
     SpriteFrame,
     tween,
     Tween,
-    UIOpacity,
     UITransform,
     Vec3,
     view,
@@ -27,19 +23,9 @@ import { EDITOR } from 'cc/env';
 import { HOME_HAND_DRAWN as C } from '../DesignTokens';
 import { CONTENT_VERSION } from '../../configs/GameConfig';
 import { createDailyChallenge, createDailyHomePresentation } from '../../domain/DailyChallenge';
-import {
-    FRIEND_CHALLENGE_DURATIONS,
-    FRIEND_CHALLENGE_RULES,
-    FRIEND_CHALLENGE_THEMES,
-    friendChallengeConfigSummary,
-    normalizeFriendChallengeConfig,
-} from '../../domain/FriendChallenge';
-import type { FriendChallengeConfig, FriendChallengeDurationMs, RuleId, ThemeId } from '../../domain/Models';
-import { nextTowerUnlock, towerFloorConfig, towerFloorLabel, towerRuleLabel } from '../../domain/TowerMode';
 import { CountdownTimer } from './CountdownTimer';
 import { calculateHomePortraitLayout } from './HomePortraitLayout';
 import { createMockHomeViewData, HomeViewData } from './HomeViewData';
-import { RankingPage } from './RankingPage';
 import { AppRuntime } from '../../app/AppRuntime';
 
 const { ccclass, executeInEditMode } = _decorator;
@@ -68,12 +54,8 @@ export class HomeController extends Component {
     private brawlButton: Node | null = null;
     private eventArea: Node | null = null;
     private rankProgress: Node | null = null;
-    private rankingPage: Node | null = null;
     private bottomNavigation: Node | null = null;
     private settingsModal: Node | null = null;
-    private friendChallengeModal: Node | null = null;
-    private featureNoticeModal: Node | null = null;
-    private removePendingChallengeListener: (() => void) | null = null;
 
     private levelLabel: Label | null = null;
     private energyLabel: Label | null = null;
@@ -81,12 +63,9 @@ export class HomeController extends Component {
     private dailyTitleLabel: Label | null = null;
     private dailyStatusLabel: Label | null = null;
     private countdownLabel: Label | null = null;
-    private dailyEventTitleLabel: Label | null = null;
-    private dailyEventGoalLabel: Label | null = null;
     private progressValueLabel: Label | null = null;
     private progressCells: Node[] = [];
     private navSelectionMarkers: Node[] = [];
-    private navIconOpacities: UIOpacity[] = [];
 
     private readonly handleResize = (): void => this.applyLayout();
 
@@ -96,10 +75,6 @@ export class HomeController extends Component {
             const save = AppRuntime.save.snapshot();
             const daily = createDailyChallenge(new Date(), CONTENT_VERSION);
             const dailyView = createDailyHomePresentation(daily, save.daily);
-            const nextUnlock = nextTowerUnlock(save.tower.currentFloor);
-            const floorConfig = towerFloorConfig(save.tower.currentFloor);
-            const currentUnlock = floorConfig.unlockedRule ? towerRuleLabel(floorConfig.unlockedRule)
-                : floorConfig.unlocksCompoundRules ? '双规则' : undefined;
             this.data = {
                 ...createMockHomeViewData(),
                 level: save.player.level,
@@ -109,16 +84,7 @@ export class HomeController extends Component {
                 dailyAccent: dailyView.accent,
                 dailyTitle: dailyView.title,
                 dailyStatus: dailyView.status,
-                dailyGoal: dailyView.goal,
-                dailyAchieved: dailyView.achieved,
                 challengeEndTime: dailyView.endTime,
-                towerFloor: save.tower.currentFloor,
-                towerHighestFloor: save.tower.highestClearedFloor,
-                towerPoints: save.tower.totalTowerPoints,
-                towerFloorTitle: towerFloorLabel(save.tower.currentFloor),
-                towerHint: save.tower.chapterOneCompleted ? '首章完成 · 重战第30层'
-                    : currentUnlock ? `本层解锁${currentUnlock}`
-                    : nextUnlock ? `再过 ${nextUnlock.floor - save.tower.currentFloor} 层解锁${nextUnlock.label}` : '本层挑战首章终点',
             };
         }
         // Preview and device must share one coordinate system; otherwise the
@@ -132,7 +98,13 @@ export class HomeController extends Component {
             child.removeFromParent();
             child.destroy();
         }
-        this.finishBuildingView();
+        this.buildView();
+        this.refresh(this.data);
+        if (!EDITOR && AppRuntime.hasPendingFriendChallenge()) {
+            this.scheduleOnce(() => {
+                if (AppRuntime.consumePendingFriendChallenge()) AppRuntime.start('friendChallenge');
+            }, 0);
+        }
     }
 
     protected onEnable(): void {
@@ -145,7 +117,9 @@ export class HomeController extends Component {
         this.scheduleOnce(this.applyLayout, 0);
         this.countdown.start(
             this.data.challengeEndTime,
-            () => undefined,
+            (formatted) => {
+                if (this.countdownLabel?.isValid) this.countdownLabel.string = formatted;
+            },
             this.onChallengeExpired.bind(this),
         );
     }
@@ -157,9 +131,6 @@ export class HomeController extends Component {
 
     protected onDestroy(): void {
         this.countdown.stop();
-        if (!EDITOR) AppRuntime.platform.hideUserAuthorizationButton();
-        this.removePendingChallengeListener?.();
-        this.removePendingChallengeListener = null;
         if (this.dailyChallenge) Tween.stopAllByTarget(this.dailyChallenge);
     }
 
@@ -167,18 +138,9 @@ export class HomeController extends Component {
         this.data = { ...data };
         if (this.levelLabel) this.levelLabel.string = `Lv.${data.level}  ${data.rankName}`;
         if (this.energyLabel) this.energyLabel.string = `${data.energy}/${data.maxEnergy}`;
-        if (this.dailyAccentLabel) this.dailyAccentLabel.string = '答';
-        if (this.dailyTitleLabel) this.dailyTitleLabel.string = `第${data.towerFloor}层 · ${data.towerFloorTitle}`;
-        if (this.dailyStatusLabel) this.dailyStatusLabel.string = `最高 ${data.towerHighestFloor} 层 · 塔积分 ${data.towerPoints}`;
-        if (this.countdownLabel) this.countdownLabel.string = data.towerHint;
-        if (this.dailyEventTitleLabel) this.dailyEventTitleLabel.string = data.dailyTitle;
-        if (this.dailyEventTitleLabel) this.dailyEventTitleLabel.color = data.dailyAchieved ? C.green : C.blue;
-        if (this.dailyEventGoalLabel) {
-            this.dailyEventGoalLabel.string = data.dailyAchieved
-                ? data.dailyStatus
-                : data.dailyStatus.startsWith('最佳') ? data.dailyStatus : `${data.dailyGoal} · 首战待斩`;
-            this.dailyEventGoalLabel.color = data.dailyAchieved ? C.green : C.inkSoft;
-        }
+        if (this.dailyAccentLabel) this.dailyAccentLabel.string = data.dailyAccent;
+        if (this.dailyTitleLabel) this.dailyTitleLabel.string = data.dailyTitle;
+        if (this.dailyStatusLabel) this.dailyStatusLabel.string = data.dailyStatus;
         if (this.progressValueLabel) {
             this.progressValueLabel.string = `${data.rankProgress}/${data.rankProgressMax}`;
         }
@@ -187,7 +149,9 @@ export class HomeController extends Component {
         if (!EDITOR && this.enabled && this.node.activeInHierarchy) {
             this.countdown.start(
                 data.challengeEndTime,
-                () => undefined,
+                (formatted) => {
+                    if (this.countdownLabel?.isValid) this.countdownLabel.string = formatted;
+                },
                 this.onChallengeExpired.bind(this),
             );
         }
@@ -198,44 +162,29 @@ export class HomeController extends Component {
         AppRuntime.start('daily');
     }
 
-    public onTowerClick(): void {
-        this.pulseHaptic();
-        AppRuntime.start('tower');
-    }
-
     public onBrawlClick(): void {
         this.pulseHaptic();
         AppRuntime.start('brawl60');
     }
 
     public onReverseDayClick(): void {
-        this.pulseHaptic();
-        if (AppRuntime.hasPendingFriendChallenge()) this.showPendingFriendChallenge();
-        else this.showFriendChallengeSetup();
+        console.log('[Home] Friend challenge: 反向日');
     }
 
     public onFlagHunterClick(): void {
-        this.onDailyChallengeClick();
+        console.log('[Home] Limited event: 国旗猎人');
     }
 
     public onHomeClick(): void {
-        this.closeSettings();
-        this.showPage('home');
+        console.log('[Home] Home');
     }
 
     public onTopicClick(): void {
-        this.closeSettings();
-        this.pulseHaptic();
-        this.showFeatureUnavailable();
+        console.log('[Home] Topic');
     }
 
     public onRankClick(): void {
-        this.closeSettings();
-        this.showPage('rank');
-        void AppRuntime.platform.authorizeFriendInteraction().then((result) => {
-            if (result.status === 'authorized') this.rankingPage?.getComponent(RankingPage)?.refreshFriendData();
-            else if (result.status !== 'unsupported') console.warn('[Home] Friend leaderboard authorization failed:', result.reason);
-        });
+        console.log('[Home] Rank');
     }
 
     public onProfileClick(): void {
@@ -243,6 +192,7 @@ export class HomeController extends Component {
     }
 
     public onChallengeExpired(): void {
+        if (this.countdownLabel) this.countdownLabel.string = '00:00:00';
         if (!EDITOR) this.scheduleOnce(() => this.refreshLocalDaily(), 0);
     }
 
@@ -254,8 +204,6 @@ export class HomeController extends Component {
             dailyAccent: viewData.accent,
             dailyTitle: viewData.title,
             dailyStatus: viewData.status,
-            dailyGoal: viewData.goal,
-            dailyAchieved: viewData.achieved,
             challengeEndTime: viewData.endTime,
         });
     }
@@ -266,30 +214,14 @@ export class HomeController extends Component {
         this.safeArea = this.makeNode(this.node, 'SafeArea', 0, 0, C.designWidth, C.designHeight);
 
         this.header = this.buildHeader(this.safeArea);
-        this.dailyChallenge = this.buildTowerChallenge(this.safeArea);
+        this.dailyChallenge = this.buildDailyChallenge(this.safeArea);
         this.brawlButton = this.buildBrawlButton(this.safeArea);
         this.eventArea = this.buildEvents(this.safeArea);
         this.rankProgress = this.buildRankProgress(this.safeArea);
-        this.rankingPage = this.makeNode(this.safeArea, 'RankingPage', 0, 0, C.designWidth, 1450);
-        this.rankingPage.addComponent(RankingPage);
-        this.rankingPage.active = false;
         this.bottomNavigation = this.buildBottomNavigation(this.safeArea);
 
         this.applyLayout();
         if (!EDITOR) this.startIdleMotion();
-    }
-
-    private finishBuildingView(): void {
-        if (!this.node.isValid || this.safeArea) return;
-        this.buildView();
-        this.refresh(this.data);
-        if (EDITOR) return;
-
-        this.removePendingChallengeListener = AppRuntime.onPendingFriendChallenge(() => {
-            this.scheduleOnce(() => this.showPendingFriendChallenge(), 0);
-        });
-        if (AppRuntime.hasPendingFriendChallenge()) this.scheduleOnce(() => this.showPendingFriendChallenge(), 0);
-        else if (AppRuntime.consumeFriendChallengeSetupRequest()) this.scheduleOnce(() => this.showFriendChallengeSetup(), 0);
     }
 
     private buildHeader(parent: Node): Node {
@@ -315,77 +247,61 @@ export class HomeController extends Component {
         return header;
     }
 
-    private buildTowerChallenge(parent: Node): Node {
-        const root = this.makeNode(parent, 'TowerChallenge', 0, 0, 790, 600);
-        // Keep the source's 4:3 ratio while enlarging the complete paper by
-        // roughly 13%, giving the title and status rows enough breathing room.
-        const paper = this.makeNode(root, 'PaperBackground', 0, 0, 890, 668);
+    private buildDailyChallenge(parent: Node): Node {
+        const root = this.makeNode(parent, 'DailyChallenge', 0, 0, 790, 600);
+        const paper = this.makeNode(root, 'PaperBackground', 0, 0, 788, 591);
         this.attachResourceTexture(paper, 'textures/home/ui/home_slash_paper/spriteFrame');
 
-        const titleGroup = this.makeNode(root, 'TitleImagePlaceholder', -85, 122, 610, 175);
-        this.dailyAccentLabel = this.label(titleGroup, 'AccentCharacter', '答', -245, 42, 72, 78, 58, C.red, 'center');
-        this.label(titleGroup, 'TitleLine1', '题试炼塔', 25, 42, 420, 76, 50, C.ink, 'left');
-        this.dailyTitleLabel = this.label(titleGroup, 'TitleLine2', '第1层 · 基础试炼', -20, -43, 570, 84, 52, C.ink, 'center');
-        this.drawUnderline(titleGroup, 'TitleRedUnderline', -18, -82, 520, C.red, -4);
+        const titleGroup = this.makeNode(root, 'TitleImagePlaceholder', -100, 118, 450, 162);
+        this.dailyAccentLabel = this.label(titleGroup, 'AccentCharacter', '成', -176, 42, 92, 76, 58, C.red, 'center');
+        this.label(titleGroup, 'TitleLine1', '今日挑战', -34, 42, 260, 76, 50, C.ink, 'left');
+        this.dailyTitleLabel = this.label(titleGroup, 'TitleLine2', '成语连斩', -14, -43, 430, 84, 66, C.ink, 'center');
+        this.drawUnderline(titleGroup, 'TitleRedUnderline', 0, -82, 430, C.red, -4);
 
-        const towerIcon = this.makeNode(root, 'TowerIcon', 300, 110, 130, 150);
-        this.drawTowerIcon(towerIcon);
+        const hourglass = this.makeNode(root, 'HourglassIcon', 263, 112, 110, 140);
+        this.drawHourglass(hourglass);
 
-        const friend = this.makeNode(root, 'FriendBubble', -120, -42, 480, 78);
-        const bubble = this.graphics(friend, 'BubbleOutline', -10, 0, 420, 68);
-        this.roundedRect(bubble, -210, -32, 420, 64, C.paperRaised, C.ink, 2.5, 14);
-        this.dailyStatusLabel = this.label(friend, 'TowerStatus', '', -9, 0, 386, 56, 24, C.ink, 'center');
+        const friend = this.makeNode(root, 'FriendBubble', -105, -34, 440, 78);
+        this.drawSmallFriend(friend, -188, 0);
+        const bubble = this.graphics(friend, 'BubbleOutline', 30, 0, 360, 68);
+        this.roundedRect(bubble, -180, -32, 360, 64, C.paperRaised, C.ink, 2.5, 14);
+        this.dailyStatusLabel = this.label(friend, 'DailyStatus', '', 31, 0, 326, 56, 26, C.ink, 'center');
 
-        this.countdownLabel = this.label(root, 'TowerHint', '第3层解锁禁区', 285, -42, 270, 58, 25, C.ink, 'center');
-        this.drawUnderline(root, 'CountdownUnderline', 285, -76, 230, C.red, -1);
+        this.countdownLabel = this.label(root, 'CountdownLabel', '00:00:00', 266, -34, 220, 58, 34, C.ink, 'center');
+        this.drawUnderline(root, 'CountdownUnderline', 266, -68, 210, C.red, -1);
 
-        const start = this.makeNode(root, 'StartButton', 0, -195, 650, 136);
+        const start = this.makeNode(root, 'StartButton', 0, -190, 600, 126);
         // The source keeps generous transparent margins around the hand-drawn stroke.
         // Preserve its native ratio so the brush texture and lettering are not squeezed.
-        const artwork = this.makeNode(start, 'ButtonArtwork', 0, 0, 610, 226);
+        const artwork = this.makeNode(start, 'ButtonArtwork', 0, 0, 565, 210);
         this.attachResourceTexture(artwork, 'textures/home/ui/draw_sword/spriteFrame');
-        const artworkSprite = artwork.getChildByName('TextureSprite')?.getComponent(Sprite);
-        // The transparent asset is auto-trimmed on import. Render against its
-        // original canvas so the trimmed pixels are not stretched to this node.
-        if (artworkSprite) artworkSprite.trim = false;
         start.setSiblingIndex(root.children.length - 1);
-        this.bindButton(start, this.onTowerClick.bind(this));
+        this.bindButton(start, this.onDailyChallengeClick.bind(this));
         return root;
     }
 
     private buildBrawlButton(parent: Node): Node {
-        // Enlarge the complete artwork and hit target by 15% while preserving
-        // the source's long paper-strip aspect ratio.
-        const root = this.makeNode(parent, 'BrawlButton', 0, 0, 918, 306);
-        const paper = this.makeNode(root, 'YellowPaper', 0, 0, 918, 306);
+        const root = this.makeNode(parent, 'BrawlButton', 0, 0, 800, 266);
+        const paper = this.makeNode(root, 'YellowPaper', 0, 0, 798, 266);
         this.attachResourceTexture(paper, 'textures/home/ui/home_60s/spriteFrame');
         this.bindButton(root, this.onBrawlClick.bind(this));
         return root;
     }
 
     private buildEvents(parent: Node): Node {
-        const area = this.makeNode(parent, 'EventArea', 0, 0, 820, 476);
-        const cardScale = 1.13;
+        const area = this.makeNode(parent, 'EventArea', 0, 0, 790, 420);
 
-        const reverse = this.makeNode(area, 'ReverseDayCard', -208, 0, 336, 420);
-        // Keep the replacement artwork at its native 1182:1330 ratio so its
-        // paper edge and baked-in shadow are not stretched.
-        const pink = this.makeNode(reverse, 'Paper', 0, 0, 373, 420);
+        const reverse = this.makeNode(area, 'ReverseDayCard', -190, 0, 370, 420);
+        const pink = this.makeNode(reverse, 'Paper', 0, 0, 350, 420);
         this.attachResourceTexture(pink, 'textures/home/ui/friend_challenge/spriteFrame');
-        const pinkSprite = pink.getChildByName('TextureSprite')?.getComponent(Sprite);
-        if (pinkSprite) pinkSprite.trim = false;
+        this.label(reverse, 'TitleLabel', '反向日', -4, -105, 280, 68, 48, C.ink, 'center');
         this.bindButton(reverse, this.onReverseDayClick.bind(this));
-        reverse.setScale(cardScale, cardScale, 1);
 
-        const flag = this.makeNode(area, 'DailyChallengeCard', 208, 0, 336, 420);
-        const polaroid = this.makeNode(flag, 'Polaroid', 0, 0, 373, 420);
+        const flag = this.makeNode(area, 'FlagHunterCard', 190, 0, 370, 420);
+        const polaroid = this.makeNode(flag, 'Polaroid', 0, 0, 350, 420);
         this.attachResourceTexture(polaroid, 'textures/home/ui/limited_activity/spriteFrame');
-        const polaroidSprite = polaroid.getChildByName('TextureSprite')?.getComponent(Sprite);
-        if (polaroidSprite) polaroidSprite.trim = false;
-        this.dailyEventTitleLabel = this.label(flag, 'TitleLabel', '常识万花筒', 0, -108, 300, 40, 27, C.blue, 'center');
-        this.dailyEventGoalLabel = this.label(flag, 'ChallengeSummary', '目标 1300 分 · 首战待斩', 0, -149, 304, 30, 18, C.inkSoft, 'center');
+        this.label(flag, 'TitleLabel', '国旗猎人', 0, -120, 300, 64, 44, C.blue, 'center');
         this.bindButton(flag, this.onFlagHunterClick.bind(this));
-        flag.setScale(cardScale, cardScale, 1);
         return area;
     }
 
@@ -412,31 +328,23 @@ export class HomeController extends Component {
         separator.stroke();
 
         this.navSelectionMarkers = [];
-        this.navIconOpacities = [];
-        // The source canvases are equal, but each drawing occupies a different
-        // pixel range. Per-item size and baseline offsets normalize the visible
-        // icon scale while keeping every caption on the same horizontal line.
-        const items: Array<[string, string, number, number, number, () => void]> = [
-            ['HomeButton', 'nav_home', -306, 110, 0, this.onHomeClick.bind(this)],
-            ['TopicButton', 'nav_topic', -102, 138, 3, this.onTopicClick.bind(this)],
-            ['RankButton', 'nav_rank', 102, 134, -2, this.onRankClick.bind(this)],
-            ['ProfileButton', 'nav_profile', 306, 152, 5, this.onProfileClick.bind(this)],
+        // The source canvases are equally sized, but their painted pixels occupy
+        // different areas. These sizes normalize the visible icon+caption height.
+        const items: Array<[string, string, number, number, () => void]> = [
+            ['HomeButton', 'nav_home', -306, 110, this.onHomeClick.bind(this)],
+            ['TopicButton', 'nav_topic', -102, 138, this.onTopicClick.bind(this)],
+            ['RankButton', 'nav_rank', 102, 134, this.onRankClick.bind(this)],
+            ['ProfileButton', 'nav_profile', 306, 140, this.onProfileClick.bind(this)],
         ];
-        items.forEach(([name, assetName, x, artworkSize, artworkY, callback], index) => {
+        items.forEach(([name, assetName, x, artworkSize, callback], index) => {
             const item = this.makeNode(root, name, x, -4, 176, 120);
             const marker = this.makeNode(item, 'SelectedPaint', 0, 20, 142, 82);
             this.attachResourceTexture(marker, 'textures/home/ui/nav_selected_paint/spriteFrame');
             marker.active = index === 0;
             this.navSelectionMarkers.push(marker);
 
-            const artwork = this.makeNode(item, 'NavArtwork', 0, artworkY, artworkSize, artworkSize);
-            if (index === 0) this.drawHomeIconPaperFill(artwork);
+            const artwork = this.makeNode(item, 'NavArtwork', 0, 0, artworkSize, artworkSize);
             this.attachResourceTexture(artwork, `textures/home/ui/${assetName}/spriteFrame`);
-            const artworkSprite = artwork.getChildByName('TextureSprite')?.getComponent(Sprite);
-            if (artworkSprite) artworkSprite.trim = false;
-            const iconOpacity = artwork.addComponent(UIOpacity);
-            iconOpacity.opacity = index === 0 ? 255 : 170;
-            this.navIconOpacities.push(iconOpacity);
             this.bindButton(item, () => {
                 this.setSelectedNavigation(index);
                 callback();
@@ -449,34 +357,6 @@ export class HomeController extends Component {
         this.navSelectionMarkers.forEach((marker, index) => {
             if (marker.isValid) marker.active = index === selectedIndex;
         });
-        this.navIconOpacities.forEach((opacity, index) => {
-            if (opacity.isValid) opacity.opacity = index === selectedIndex ? 255 : 170;
-        });
-    }
-
-    private drawHomeIconPaperFill(parent: Node): void {
-        // Unlike the other three source icons, nav_home contains transparent
-        // space inside the drawing. Add the same paper fill used by those
-        // assets so inactive navigation items share one visual weight.
-        const g = this.graphics(parent, 'HomePaperFill', 0, 13, 92, 78);
-        g.fillColor = C.paperRaised;
-        g.moveTo(-35, 4);
-        g.lineTo(0, 34);
-        g.lineTo(35, 4);
-        g.lineTo(29, 4);
-        g.lineTo(29, -28);
-        g.lineTo(-29, -28);
-        g.lineTo(-29, 4);
-        g.close();
-        g.fill();
-    }
-
-    private showPage(page: 'home' | 'rank'): void {
-        const showHome = page === 'home';
-        for (const section of [this.dailyChallenge, this.brawlButton, this.eventArea, this.rankProgress]) {
-            if (section?.isValid) section.active = showHome;
-        }
-        if (this.rankingPage?.isValid) this.rankingPage.active = !showHome;
     }
 
     private applyLayout = (): void => {
@@ -509,16 +389,11 @@ export class HomeController extends Component {
         this.brawlButton?.setPosition(0, layout.sectionY.brawl, 0);
         this.eventArea?.setPosition(0, layout.sectionY.events, 0);
         this.rankProgress?.setPosition(0, layout.sectionY.rank, 0);
-        // Ranking has fewer top-level sections than Home. Lift the complete
-        // composition to close the oversized gap below the shared header while
-        // preserving the title/tab/paper proportions and bottom-nav clearance.
-        this.rankingPage?.setPosition(0, 78, 0);
         this.bottomNavigation?.setPosition(0, layout.navigationY, 0);
 
         for (const section of [this.header, this.dailyChallenge, this.brawlButton, this.eventArea, this.rankProgress]) {
             section?.setScale(layout.contentScale, layout.contentScale, 1);
         }
-        this.rankingPage?.setScale(layout.contentScale, layout.contentScale, 1);
     };
 
     private redrawBackground(width: number, height: number): void {
@@ -602,24 +477,19 @@ export class HomeController extends Component {
 
     private toggleSettings(): void {
         if (this.settingsModal?.isValid) {
-            this.closeSettings();
+            this.settingsModal.destroy();
+            this.settingsModal = null;
             return;
         }
-        const modalParent = this.safeArea ?? this.node;
-        const visible = modalParent.getComponent(UITransform)?.contentSize ?? { width: C.designWidth, height: C.designHeight };
-        const modal = this.makeNode(modalParent, 'SettingsModal', 0, 0, visible.width, visible.height);
-        modal.addComponent(BlockInputEvents);
-        if (this.bottomNavigation?.parent === modalParent) {
-            modal.setSiblingIndex(this.bottomNavigation.getSiblingIndex());
-        }
+        const modal = this.makeNode(this.node, 'SettingsModal', 0, 0, C.designWidth, C.designHeight);
         this.settingsModal = modal;
         const shade = modal.addComponent(Graphics);
         shade.fillColor = new Color(31, 29, 25, 170);
-        shade.rect(-visible.width / 2, -visible.height / 2, visible.width, visible.height);
+        shade.rect(-C.designWidth / 2, -C.designHeight / 2, C.designWidth, C.designHeight);
         shade.fill();
-        const panel = this.graphics(modal, 'SettingsPaper', 0, 0, 650, 820);
-        this.drawIrregularPaper(panel, 650, 820, C.paperRaised, C.ink, 5);
-        this.label(modal, 'SettingsTitle', '设置', 0, 330, 400, 72, 45, C.ink, 'center');
+        const panel = this.graphics(modal, 'SettingsPaper', 0, 0, 650, 700);
+        this.drawIrregularPaper(panel, 650, 700, C.paperRaised, C.ink, 5);
+        this.label(modal, 'SettingsTitle', '设置', 0, 265, 400, 72, 45, C.ink, 'center');
         const addToggle = (name: string, y: number, read: () => boolean, write: (value: boolean) => void): void => {
             const row = this.makeNode(modal, `Setting_${name}`, 0, y, 500, 74);
             const g = row.addComponent(Graphics);
@@ -630,234 +500,20 @@ export class HomeController extends Component {
             refresh();
             this.bindButton(row, () => { write(!read()); refresh(); this.pulseHaptic(); });
         };
-        addToggle('音乐', 220, () => AppRuntime.save.snapshot().settings.music, (value) => AppRuntime.save.updateSettings({ music: value }));
-        addToggle('音效', 125, () => AppRuntime.save.snapshot().settings.sfx, (value) => { AppRuntime.save.updateSettings({ sfx: value }); AppRuntime.audio.enabled = value; });
-        addToggle('震动', 30, () => AppRuntime.save.snapshot().settings.vibration, (value) => AppRuntime.save.updateSettings({ vibration: value }));
-        const quality = this.makeNode(modal, 'Setting_Quality', 0, -65, 500, 74);
+        addToggle('音乐', 150, () => AppRuntime.save.snapshot().settings.music, (value) => AppRuntime.save.updateSettings({ music: value }));
+        addToggle('音效', 55, () => AppRuntime.save.snapshot().settings.sfx, (value) => { AppRuntime.save.updateSettings({ sfx: value }); AppRuntime.audio.enabled = value; });
+        addToggle('震动', -40, () => AppRuntime.save.snapshot().settings.vibration, (value) => AppRuntime.save.updateSettings({ vibration: value }));
+        const quality = this.makeNode(modal, 'Setting_Quality', 0, -135, 500, 74);
         const qualityG = quality.addComponent(Graphics); qualityG.fillColor = C.paper; qualityG.strokeColor = C.ink; qualityG.lineWidth = 3; qualityG.roundRect(-250, -37, 500, 74, 12); qualityG.fill(); qualityG.stroke();
         const qualityLabel = this.label(quality, 'Value', '', 0, 0, 450, 60, 28, C.ink, 'center');
         const qualities = ['auto', 'low', 'medium', 'high'] as const;
         const refreshQuality = (): void => { qualityLabel.string = `画质　${AppRuntime.save.snapshot().settings.quality.toUpperCase()}`; };
         refreshQuality();
         this.bindButton(quality, () => { const current = AppRuntime.save.snapshot().settings.quality; AppRuntime.save.updateSettings({ quality: qualities[(qualities.indexOf(current) + 1) % qualities.length] }); refreshQuality(); });
-        const authorization = this.makeNode(modal, 'WechatAuthorization', 0, -160, 500, 74);
-        const authorizationG = authorization.addComponent(Graphics);
-        authorizationG.fillColor = C.paper; authorizationG.strokeColor = C.ink; authorizationG.lineWidth = 3;
-        authorizationG.roundRect(-250, -37, 500, 74, 12); authorizationG.fill(); authorizationG.stroke();
-        const authorizationLabel = this.label(authorization, 'Value', '', 0, 0, 450, 60, 27, C.ink, 'center');
-        const refreshAuthorization = (message?: string): void => {
-            const profile = AppRuntime.platform.authorizedUserProfile();
-            authorizationLabel.string = message ?? (profile ? `微信头像　${profile.nickName || '已授权'}` : '微信头像　点击授权');
-        };
-        refreshAuthorization();
-        const installWechatAuthorization = (): void => {
-            if (EDITOR || !authorization.isValid) return;
-            authorizationLabel.string = '微信头像　正在准备授权…';
-            const installed = AppRuntime.platform.showUserAuthorizationButton({
-                centerX: 0, centerY: -160, width: 500, height: 74,
-                viewportWidth: visible.width, viewportHeight: visible.height,
-            }, (result) => {
-                if (!authorization.isValid) return;
-                if (result.status === 'authorized') {
-                    refreshAuthorization();
-                    void AppRuntime.syncLeaderboard();
-                } else if (result.status === 'unsupported') refreshAuthorization('微信授权接口不可用，请查看日志');
-                else refreshAuthorization(result.reason ?? '微信头像　未授权，点击重试');
-            });
-            if (!installed) refreshAuthorization('微信授权接口不可用，请真机重试');
-        };
-        this.bindButton(authorization, installWechatAuthorization);
-        if (!EDITOR) this.scheduleOnce(installWechatAuthorization, 0);
-        const close = this.makeNode(modal, 'CloseSettings', 0, -300, 300, 76);
+        const close = this.makeNode(modal, 'CloseSettings', 0, -260, 300, 76);
         const closeG = close.addComponent(Graphics); closeG.fillColor = C.yellow; closeG.strokeColor = C.ink; closeG.lineWidth = 4; closeG.roundRect(-150, -38, 300, 76, 14); closeG.fill(); closeG.stroke();
         this.label(close, 'Label', '完成', 0, 0, 260, 60, 30, C.ink, 'center');
         this.bindButton(close, () => this.toggleSettings());
-    }
-
-    private closeSettings(): void {
-        if (!EDITOR) AppRuntime.platform.hideUserAuthorizationButton();
-        if (this.settingsModal?.isValid) this.settingsModal.destroy();
-        this.settingsModal = null;
-    }
-
-    private showFriendChallengeSetup(): void {
-        this.closeFriendChallengeModal();
-        const saved = AppRuntime.save.snapshot().lastFriendChallengeConfig;
-        const draft: FriendChallengeConfig = {
-            themeIds: [...saved.themeIds], enabledRules: [...saved.enabledRules], durationMs: saved.durationMs,
-        };
-        const { modal, panel } = this.makeChallengeModal('FriendChallengeSetup', 820, 1440);
-        this.friendChallengeModal = modal;
-        this.label(panel, 'Title', '好友挑战', 0, 625, 560, 76, 48, C.ink, 'center');
-        this.label(panel, 'Subtitle', '先定规则，再打出你的目标分', 0, 570, 620, 48, 24, C.inkSoft, 'center');
-        this.makeChallengeClose(panel, -340, 625);
-
-        this.label(panel, 'ThemeTitle', '1  选择主题', -235, 492, 300, 50, 31, C.ink, 'left');
-        const allThemes = this.makeChoiceButton(panel, 'ThemeAll', '乱斗 · 全部题库', 236, 492, 250, 64);
-        const themeLabels: Record<ThemeId, string> = { math: '数学', vision: '眼力', english: '英语', hanzi: '汉字', geography: '地理', life: '生活', knowledge: '常识', history: '历史' };
-        const themeButtons = new Map<ThemeId, ReturnType<HomeController['makeChoiceButton']>>();
-        FRIEND_CHALLENGE_THEMES.forEach((theme, index) => {
-            const x = -270 + (index % 4) * 180;
-            const y = 395 - Math.floor(index / 4) * 82;
-            themeButtons.set(theme, this.makeChoiceButton(panel, `Theme_${theme}`, themeLabels[theme], x, y, 156, 66));
-        });
-
-        this.label(panel, 'RuleTitle', '2  选择规则池', -235, 215, 330, 50, 31, C.ink, 'left');
-        const allRules = this.makeChoiceButton(panel, 'RuleAll', '全部开启', 236, 215, 250, 64);
-        const ruleLabels: Record<RuleId, string> = { standard: '标准', reverse: '反向', rotate: '旋转', multi: '多选', order: '顺序', bomb: '炸弹' };
-        const ruleButtons = new Map<RuleId, ReturnType<HomeController['makeChoiceButton']>>();
-        FRIEND_CHALLENGE_RULES.forEach((rule, index) => {
-            const x = -240 + (index % 3) * 240;
-            const y = 125 - Math.floor(index / 3) * 82;
-            ruleButtons.set(rule, this.makeChoiceButton(panel, `Rule_${rule}`, ruleLabels[rule], x, y, 205, 66));
-        });
-
-        this.label(panel, 'DurationTitle', '3  选择时间', -235, -100, 300, 50, 31, C.ink, 'left');
-        const durationButtons = new Map<FriendChallengeDurationMs, ReturnType<HomeController['makeChoiceButton']>>();
-        FRIEND_CHALLENGE_DURATIONS.forEach((duration, index) => {
-            durationButtons.set(duration, this.makeChoiceButton(panel, `Duration_${duration}`, `${duration / 1_000} 秒`, -240 + index * 240, -180, 205, 70));
-        });
-
-        const summary = this.label(panel, 'Summary', '', 0, -335, 680, 126, 24, C.ink, 'center');
-        summary.lineHeight = 34;
-        const validationLabel = this.label(panel, 'Validation', '', 0, -420, 680, 48, 22, C.red, 'center');
-        const start = this.makeChoiceButton(panel, 'StartChallenge', '开始挑战', 0, -535, 560, 94);
-        start.setSelected(true);
-
-        const refresh = (): void => {
-            themeButtons.forEach((choice, theme) => choice.setSelected(draft.themeIds.includes(theme)));
-            ruleButtons.forEach((choice, rule) => choice.setSelected(draft.enabledRules.includes(rule)));
-            durationButtons.forEach((choice, duration) => choice.setSelected(draft.durationMs === duration));
-            allThemes.setSelected(draft.themeIds.length === FRIEND_CHALLENGE_THEMES.length);
-            allRules.setSelected(draft.enabledRules.length === FRIEND_CHALLENGE_RULES.length);
-            const validation = normalizeFriendChallengeConfig(draft);
-            if (validation.valid) {
-                const value = friendChallengeConfigSummary(validation.config);
-                const themes = value.themes === '全部题库 · 乱斗' ? '全部题库（乱斗）' : value.themes;
-                summary.string = `主题：${themes}\n规则：${value.rules}\n时间：${value.duration}`;
-                validationLabel.string = '双方使用相同题序与配置';
-                validationLabel.color = C.green;
-            } else {
-                const reason = 'reason' in validation ? validation.reason : 'duration';
-                summary.string = '配置尚未完成';
-                validationLabel.string = reason === 'themes' ? '请至少选择一个主题'
-                    : reason === 'rules' ? '请至少开启一个规则'
-                    : reason === 'incompatible' ? '部分主题不支持当前规则，请调整选择' : '请选择有效时长';
-                validationLabel.color = C.red;
-            }
-            const button = start.node.getComponent(Button);
-            if (button) button.interactable = validation.valid;
-            const opacity = start.node.getComponent(UIOpacity) ?? start.node.addComponent(UIOpacity);
-            opacity.opacity = validation.valid ? 255 : 130;
-        };
-
-        this.bindButton(allThemes.node, () => {
-            draft.themeIds = [...FRIEND_CHALLENGE_THEMES]; refresh();
-        });
-        themeButtons.forEach((choice, theme) => this.bindButton(choice.node, () => { toggleToken(draft.themeIds, theme); refresh(); }));
-        this.bindButton(allRules.node, () => {
-            draft.enabledRules = [...FRIEND_CHALLENGE_RULES]; refresh();
-        });
-        ruleButtons.forEach((choice, rule) => this.bindButton(choice.node, () => { toggleToken(draft.enabledRules, rule); refresh(); }));
-        durationButtons.forEach((choice, duration) => this.bindButton(choice.node, () => { draft.durationMs = duration; refresh(); }));
-        this.bindButton(start.node, () => {
-            const validation = normalizeFriendChallengeConfig(draft);
-            if (!validation.valid) return;
-            if (AppRuntime.startConfiguredFriendChallenge(validation.config)) this.closeFriendChallengeModal();
-        });
-        refresh();
-    }
-
-    private showPendingFriendChallenge(): void {
-        const entry = AppRuntime.pendingFriendChallengeEntry();
-        if (!entry) return;
-        this.closeFriendChallengeModal();
-        const config = entry.challengeConfig;
-        const { modal, panel } = this.makeChallengeModal('PendingFriendChallenge', 760, 980);
-        this.friendChallengeModal = modal;
-        this.makeChallengeClose(panel, -310, 385);
-        this.label(panel, 'Title', '好友向你发起挑战', 0, 350, 620, 72, 43, C.ink, 'center');
-        this.label(panel, 'TargetCaption', '目标分数', 0, 245, 300, 42, 23, C.blue, 'center');
-        this.label(panel, 'TargetScore', String(entry.targetScore ?? 0), 0, 160, 500, 110, 82, C.red, 'center');
-        if (config) {
-            const value = friendChallengeConfigSummary(config);
-            this.makeReadOnlyChallengeRow(panel, '主题', value.themes, 55);
-            this.makeReadOnlyChallengeRow(panel, '规则', value.rules, -35);
-            this.makeReadOnlyChallengeRow(panel, '时间', value.duration, -125);
-        } else {
-            this.makeReadOnlyChallengeRow(panel, '模式', '经典同题挑战', 10);
-            this.makeReadOnlyChallengeRow(panel, '时间', '60 秒', -90);
-        }
-        this.label(panel, 'Fairness', '双方使用相同题序 · 3 条生命', 0, -235, 620, 50, 23, C.green, 'center');
-        const start = this.makeChoiceButton(panel, 'AcceptChallenge', '拔刀应战', 0, -335, 540, 92);
-        start.setSelected(true);
-        this.bindButton(start.node, () => {
-            if (AppRuntime.startPendingFriendChallenge()) this.closeFriendChallengeModal();
-        });
-    }
-
-    private makeChallengeModal(name: string, panelWidth: number, panelHeight: number): { modal: Node; panel: Node } {
-        const visible = this.node.getComponent(UITransform)?.contentSize ?? { width: C.designWidth, height: C.designHeight };
-        const modal = this.makeNode(this.node, name, 0, 0, visible.width, visible.height);
-        modal.addComponent(BlockInputEvents);
-        const shade = modal.addComponent(Graphics);
-        shade.fillColor = new Color(31, 29, 25, 205);
-        shade.rect(-visible.width / 2, -visible.height / 2, visible.width, visible.height);
-        shade.fill();
-        const panel = this.makeNode(modal, 'ChallengePaper', 0, 0, panelWidth, panelHeight);
-        const panelGraphic = panel.addComponent(Graphics);
-        this.drawIrregularPaper(panelGraphic, panelWidth, panelHeight, C.paperRaised, C.ink, 5);
-        const fit = Math.min(1, (visible.width - 32) / panelWidth, (visible.height - this.getTopInset(visible.height) - this.getBottomInset(visible.height) - 24) / panelHeight);
-        panel.setScale(fit, fit, 1);
-        return { modal, panel };
-    }
-
-    private makeChallengeClose(parent: Node, x: number, y: number): void {
-        const close = this.makeChoiceButton(parent, 'CloseChallenge', '关闭', x, y, 120, 68);
-        this.bindButton(close.node, () => this.closeFriendChallengeModal());
-    }
-
-    private closeFriendChallengeModal(): void {
-        if (this.friendChallengeModal?.isValid) this.friendChallengeModal.destroy();
-        this.friendChallengeModal = null;
-    }
-
-    private showFeatureUnavailable(): void {
-        this.closeFeatureNotice();
-        const { modal, panel } = this.makeChallengeModal('FeatureUnavailable', 560, 400);
-        this.featureNoticeModal = modal;
-        this.label(panel, 'Title', '主题', 0, 92, 420, 70, 42, C.ink, 'center');
-        this.label(panel, 'Message', '功能暂未开放', 0, 18, 440, 56, 28, C.inkSoft, 'center');
-        const close = this.makeChoiceButton(panel, 'CloseFeatureNotice', '我知道了', 0, -100, 260, 72);
-        close.setSelected(true);
-        this.bindButton(close.node, () => this.closeFeatureNotice());
-    }
-
-    private closeFeatureNotice(): void {
-        if (this.featureNoticeModal?.isValid) this.featureNoticeModal.destroy();
-        this.featureNoticeModal = null;
-    }
-
-    private makeChoiceButton(parent: Node, name: string, value: string, x: number, y: number, width: number, height: number): {
-        node: Node; graphic: Graphics; label: Label; setSelected: (selected: boolean) => void;
-    } {
-        const choice = this.makeNode(parent, name, x, y, width, height);
-        const graphic = choice.addComponent(Graphics);
-        const label = this.label(choice, 'Label', value, 0, 0, width - 20, height - 8, Math.min(28, height * 0.4), C.ink, 'center');
-        const setSelected = (selected: boolean): void => {
-            graphic.clear(); graphic.fillColor = selected ? C.yellow : C.paper; graphic.strokeColor = C.ink; graphic.lineWidth = selected ? 4 : 2.5;
-            graphic.roundRect(-width / 2, -height / 2, width, height, 14); graphic.fill(); graphic.stroke();
-        };
-        setSelected(false);
-        return { node: choice, graphic, label, setSelected };
-    }
-
-    private makeReadOnlyChallengeRow(parent: Node, caption: string, value: string, y: number): void {
-        const row = this.makeNode(parent, `Challenge_${caption}`, 0, y, 620, 70);
-        const g = row.addComponent(Graphics); g.fillColor = C.paper; g.strokeColor = C.inkSoft; g.lineWidth = 2;
-        g.roundRect(-310, -35, 620, 70, 12); g.fill(); g.stroke();
-        this.label(row, 'Caption', caption, -245, 0, 90, 52, 23, C.blue, 'left');
-        this.label(row, 'Value', value, 45, 0, 470, 52, 24, C.ink, 'center');
     }
 
     private makeNode(parent: Node, name: string, x: number, y: number, width: number, height: number): Node {
@@ -890,20 +546,12 @@ export class HomeController extends Component {
         sprite.sizeMode = Sprite.SizeMode.CUSTOM;
         sprite.type = tiled ? Sprite.Type.TILED : Sprite.Type.SIMPLE;
 
-        const imagePath = resourcePath.endsWith('/spriteFrame')
-            ? resourcePath.slice(0, -'/spriteFrame'.length)
-            : resourcePath;
-        resources.load(imagePath, ImageAsset, (error, image) => {
-            if (error || !image || !visual.isValid) {
+        resources.load(resourcePath, SpriteFrame, (error, frame) => {
+            if (error || !frame || !visual.isValid) {
                 console.warn(`[Home] Paper texture failed to load: ${resourcePath}`, error);
                 if (visual.isValid) visual.destroy();
                 return;
             }
-            // Cocos 3.8.8 can resolve a SpriteFrame sub-asset from a WeChat
-            // subpackage without producing a usable texture. Loading the source
-            // ImageAsset and constructing the frame here bypasses that mapping.
-            const frame = SpriteFrame.createWithImage(image);
-            frame.packable = false;
             sprite.spriteFrame = frame;
             if (cover) this.resizeCoverTexture(visual, parentTransform.contentSize.width, parentTransform.contentSize.height);
             const fallback = parent.getComponent(Graphics);
@@ -1164,12 +812,48 @@ export class HomeController extends Component {
     }
 
     private drawAvatar(parent: Node): void {
-        const maskNode = this.makeNode(parent, 'DefaultAvatarMask', 0, -3, 82, 82);
-        const mask = maskNode.addComponent(Mask);
-        mask.type = Mask.Type.GRAPHICS_ELLIPSE;
-        mask.segments = 48;
-        const artwork = this.makeNode(maskNode, 'DefaultAvatarArtwork', 0, 0, 128, 128);
-        this.attachResourceTexture(artwork, 'textures/common/default_avatar/spriteFrame');
+        const g = this.graphics(parent, 'HandDrawnAvatar', 0, -3, 88, 88);
+        g.strokeColor = C.ink;
+        g.lineWidth = 3;
+        g.fillColor = C.paperRaised;
+        g.circle(0, -5, 31);
+        g.fill();
+        g.stroke();
+        g.moveTo(-32, 8);
+        g.lineTo(-21, 29);
+        g.lineTo(-10, 21);
+        g.lineTo(0, 36);
+        g.lineTo(10, 22);
+        g.lineTo(24, 31);
+        g.lineTo(31, 8);
+        g.stroke();
+        g.fillColor = C.ink;
+        g.circle(-11, -7, 2.5);
+        g.circle(11, -7, 2.5);
+        g.fill();
+        g.moveTo(-7, -20);
+        g.quadraticCurveTo(0, -24, 7, -20);
+        g.stroke();
+    }
+
+    private drawSmallFriend(parent: Node, x: number, y: number): void {
+        const g = this.graphics(parent, 'FriendAvatar', x, y, 64, 64);
+        g.strokeColor = C.ink;
+        g.lineWidth = 2.4;
+        g.fillColor = C.paperRaised;
+        g.circle(0, -3, 25);
+        g.fill();
+        g.stroke();
+        g.moveTo(-24, 7);
+        g.lineTo(-14, 24);
+        g.lineTo(-3, 18);
+        g.lineTo(8, 27);
+        g.lineTo(20, 12);
+        g.stroke();
+        g.fillColor = C.ink;
+        g.circle(-8, -5, 2);
+        g.circle(8, -5, 2);
+        g.fill();
     }
 
     private drawLightning(parent: Node, x: number, y: number, size: number): void {
@@ -1181,32 +865,6 @@ export class HomeController extends Component {
         this.polygon(g, [
             [-20, 34], [12, 34], [4, 8], [25, 8], [-12, -40], [-6, -9], [-26, -9],
         ], C.yellow, C.ink, 5);
-    }
-
-    private drawTowerIcon(parent: Node): void {
-        const g = this.graphics(parent, 'TowerSteps', 0, 0, 130, 150);
-        g.fillColor = C.paperRaised;
-        g.strokeColor = C.ink;
-        g.lineWidth = 4;
-        const steps: Point[] = [[-50, -62], [50, -62], [50, -34], [26, -34], [26, -6], [2, -6], [2, 22], [-22, 22], [-22, 50], [-50, 50]];
-        this.polygon(g, steps, C.paperRaised, C.ink, 4);
-        g.strokeColor = C.red;
-        g.lineWidth = 5;
-        g.moveTo(-38, -48);
-        g.lineTo(37, 38);
-        g.stroke();
-        const flag = this.graphics(parent, 'TopFlag', 0, 0, 90, 70);
-        flag.strokeColor = C.ink;
-        flag.lineWidth = 4;
-        flag.moveTo(-20, 58);
-        flag.lineTo(-20, 12);
-        flag.stroke();
-        flag.fillColor = C.red;
-        flag.moveTo(-18, 55);
-        flag.lineTo(28, 44);
-        flag.lineTo(-18, 30);
-        flag.close();
-        flag.fill();
     }
 
     private drawHourglass(parent: Node): void {
@@ -1375,12 +1033,10 @@ export class HomeController extends Component {
         try {
             const info = wxApi?.getSystemInfoSync?.();
             const capsule = wxApi?.getMenuButtonBoundingClientRect?.();
-            if (info && capsule && Number.isFinite(info.screenHeight) && info.screenHeight > 0
-                && Number.isFinite(capsule.bottom)) {
+            if (info && capsule && info.screenHeight > 0) {
                 return capsule.bottom * visibleHeight / info.screenHeight + 10;
             }
-            if (info?.safeArea && Number.isFinite(info.screenHeight) && info.screenHeight > 0
-                && Number.isFinite(info.safeArea.top)) {
+            if (info?.safeArea && info.screenHeight > 0) {
                 return info.safeArea.top * visibleHeight / info.screenHeight + 18;
             }
         } catch {
@@ -1393,8 +1049,7 @@ export class HomeController extends Component {
         const wxApi = (globalThis as { wx?: WechatApi }).wx;
         try {
             const info = wxApi?.getSystemInfoSync?.();
-            if (info?.safeArea && Number.isFinite(info.screenHeight) && info.screenHeight > 0
-                && Number.isFinite(info.safeArea.bottom)) {
+            if (info?.safeArea && info.screenHeight > 0) {
                 const inset = info.screenHeight - info.safeArea.bottom;
                 return Math.max(28, inset * visibleHeight / info.screenHeight + 20);
             }
@@ -1408,10 +1063,4 @@ export class HomeController extends Component {
         if (!AppRuntime.save.snapshot().settings.vibration) return;
         AppRuntime.platform.vibrate(true, 'light');
     }
-}
-
-function toggleToken<T>(values: T[], value: T): void {
-    const index = values.indexOf(value);
-    if (index >= 0) values.splice(index, 1);
-    else values.push(value);
 }

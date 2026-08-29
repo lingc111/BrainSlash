@@ -1,4 +1,4 @@
-import type { FriendChallengeConfig, GameEntryParams, GameMode } from '../domain/Models';
+import type { GameEntryParams, GameMode } from '../domain/Models';
 import { createDailyChallenge } from '../domain/DailyChallenge';
 
 type Clock = () => Date;
@@ -17,7 +17,7 @@ function defaultEntropy(): number {
     return Math.floor(Math.random() * 0x1_0000_0000) >>> 0;
 }
 
-/** Keeps the daily recipe stable while giving every playable attempt a fresh seed. */
+/** Creates reproducible daily/friend entries and unique seeds for free-play runs. */
 export class RunSeedFactory {
     private sequence = 0;
 
@@ -26,39 +26,19 @@ export class RunSeedFactory {
         private readonly entropy: EntropySource = defaultEntropy,
     ) {}
 
-    public create(mode: GameMode, contentVersion: string, towerFloor?: number): GameEntryParams {
+    public create(mode: GameMode, contentVersion: string): GameEntryParams {
         const now = this.clock();
         if (mode === 'daily') {
-            const challenge = createDailyChallenge(now, contentVersion);
-            this.sequence = (this.sequence + 1) >>> 0;
-            return {
-                ...challenge.entry,
-                seed: [
-                    challenge.entry.seed,
-                    'attempt',
-                    now.getTime().toString(36),
-                    this.sequence.toString(36),
-                    (this.entropy() >>> 0).toString(36),
-                ].join(':'),
-            };
+            return createDailyChallenge(now, contentVersion).entry;
         }
 
         this.sequence = (this.sequence + 1) >>> 0;
-        const floor = mode === 'tower' ? Math.max(1, Math.min(30, Math.floor(towerFloor ?? 1))) : undefined;
         const seed = [
             mode,
-            ...(floor === undefined ? [] : [`floor-${floor}`]),
             now.getTime().toString(36),
             this.sequence.toString(36),
             (this.entropy() >>> 0).toString(36),
         ].join(':');
-        return { mode, seed, contentVersion, recipeId: 'mixed', towerFloor: floor };
-    }
-
-    public createFriendChallenge(config: FriendChallengeConfig, contentVersion: string): GameEntryParams {
-        const entry = this.create('friendChallenge', contentVersion);
-        return { ...entry, recipeId: undefined, challengeConfig: clone(config), challengeRole: 'creator' };
+        return { mode, seed, contentVersion, recipeId: 'mixed' };
     }
 }
-
-function clone<T>(value: T): T { return JSON.parse(JSON.stringify(value)) as T; }

@@ -7,33 +7,21 @@ export type ContentFamilyKind =
     | 'math-property'
     | 'math-compare'
     | 'math-sequence'
-    | 'math-missing'
-    | 'math-equation'
     | 'vision-direction'
     | 'vision-odd'
     | 'vision-count'
     | 'vision-stroop'
     | 'vision-pattern'
-    | 'vision-match'
     | 'hanzi-fill'
+    | 'hanzi-valid'
     | 'hanzi-order'
-    | 'hanzi-antonym'
-    | 'hanzi-synonym'
     | 'english-meaning'
     | 'english-category'
     | 'english-antonym'
+    | 'life-use'
     | 'life-category'
     | 'geography-capital'
-    | 'geography-country'
-    | 'knowledge-science'
-    | 'knowledge-nature'
-    | 'knowledge-culture'
-    | 'knowledge-civic'
-    | 'history-modern-opening'
-    | 'history-modern-awakening'
-    | 'history-modern-resistance'
-    | 'history-ancient'
-    | 'history-myth';
+    | 'geography-country';
 
 export interface ContentFamilySpec {
     id: string;
@@ -43,14 +31,12 @@ export interface ContentFamilySpec {
 }
 
 export const CONTENT_FAMILY_TARGETS: Readonly<Record<ThemeId, number>> = {
-    math: 40,
-    vision: 30,
-    hanzi: 20,
+    math: 30,
+    vision: 25,
+    hanzi: 15,
     english: 15,
-    life: 5,
+    life: 10,
     geography: 10,
-    knowledge: 20,
-    history: 25,
 };
 
 const FAMILY_GROUPS: ReadonlyArray<readonly [ThemeId, ContentFamilyKind]> = [
@@ -60,33 +46,21 @@ const FAMILY_GROUPS: ReadonlyArray<readonly [ThemeId, ContentFamilyKind]> = [
     ['math', 'math-property'],
     ['math', 'math-compare'],
     ['math', 'math-sequence'],
-    ['math', 'math-missing'],
-    ['math', 'math-equation'],
     ['vision', 'vision-direction'],
     ['vision', 'vision-odd'],
     ['vision', 'vision-count'],
     ['vision', 'vision-stroop'],
     ['vision', 'vision-pattern'],
-    ['vision', 'vision-match'],
     ['hanzi', 'hanzi-fill'],
+    ['hanzi', 'hanzi-valid'],
     ['hanzi', 'hanzi-order'],
-    ['hanzi', 'hanzi-antonym'],
-    ['hanzi', 'hanzi-synonym'],
     ['english', 'english-meaning'],
     ['english', 'english-category'],
     ['english', 'english-antonym'],
+    ['life', 'life-use'],
     ['life', 'life-category'],
     ['geography', 'geography-capital'],
     ['geography', 'geography-country'],
-    ['knowledge', 'knowledge-science'],
-    ['knowledge', 'knowledge-nature'],
-    ['knowledge', 'knowledge-culture'],
-    ['knowledge', 'knowledge-civic'],
-    ['history', 'history-modern-opening'],
-    ['history', 'history-modern-awakening'],
-    ['history', 'history-modern-resistance'],
-    ['history', 'history-ancient'],
-    ['history', 'history-myth'],
 ];
 
 const contentFamilies: ContentFamilySpec[] = [];
@@ -144,66 +118,6 @@ export const IDIOMS: readonly IdiomEntry[] = [
     { text: '凿壁偷光', missingIndex: 0, wrong: ['造', '燥', '躁', '澡'] },
     { text: '悬梁刺股', missingIndex: 1, wrong: ['粱', '粮', '良', '凉'] },
     { text: '囊萤映雪', missingIndex: 1, wrong: ['莹', '荧', '营', '赢'] },
-    { text: '开卷有益', missingIndex: 3, wrong: ['义', '忆', '易', '艺'] },
-    { text: '专心致志', missingIndex: 3, wrong: ['智', '制', '治', '质'] },
-    { text: '聚精会神', missingIndex: 3, wrong: ['伸', '深', '申', '甚'] },
-    { text: '全神贯注', missingIndex: 3, wrong: ['住', '驻', '柱', '祝'] },
-    { text: '脚踏实地', missingIndex: 3, wrong: ['的', '弟', '第', '递'] },
-    { text: '实事求是', missingIndex: 3, wrong: ['事', '市', '世', '式'] },
-    { text: '坚持不懈', missingIndex: 3, wrong: ['泻', '谢', '械', '屑'] },
-    { text: '锲而不舍', missingIndex: 0, wrong: ['契', '切', '窃', '怯'] },
-    { text: '百折不挠', missingIndex: 3, wrong: ['饶', '绕', '扰', '娆'] },
-    { text: '迎难而上', missingIndex: 0, wrong: ['赢', '营', '莹', '盈'] },
-    { text: '循序渐进', missingIndex: 2, wrong: ['减', '检', '俭', '剪'] },
-    { text: '温故知新', missingIndex: 3, wrong: ['心', '欣', '薪', '辛'] },
-    { text: '举一反三', missingIndex: 2, wrong: ['返', '饭', '泛', '犯'] },
-    { text: '触类旁通', missingIndex: 1, wrong: ['累', '泪', '雷', '垒'] },
-    { text: '融会贯通', missingIndex: 0, wrong: ['溶', '熔', '容', '荣'] },
-    { text: '博学多才', missingIndex: 3, wrong: ['材', '财', '裁', '采'] },
-    { text: '学以致用', missingIndex: 2, wrong: ['至', '制', '治', '志'] },
-    { text: '孜孜不倦', missingIndex: 3, wrong: ['卷', '券', '眷', '绢'] },
-    { text: '废寝忘食', missingIndex: 1, wrong: ['侵', '浸', '沁', '芹'] },
-    { text: '争分夺秒', missingIndex: 3, wrong: ['妙', '庙', '渺', '苗'] },
-    { text: '分秒必争', missingIndex: 2, wrong: ['毕', '笔', '碧', '壁'] },
-    { text: '日积月累', missingIndex: 3, wrong: ['类', '垒', '泪', '蕾'] },
-    { text: '积少成多', missingIndex: 2, wrong: ['城', '诚', '承', '程'] },
-    { text: '熟能生巧', missingIndex: 3, wrong: ['桥', '侨', '悄', '窍'] },
-    { text: '勤能补拙', missingIndex: 3, wrong: ['茁', '卓', '浊', '捉'] },
-    { text: '水到渠成', missingIndex: 2, wrong: ['瞿', '衢', '躯', '驱'] },
-    { text: '瓜熟蒂落', missingIndex: 2, wrong: ['帝', '弟', '递', '第'] },
-    { text: '顺水推舟', missingIndex: 3, wrong: ['州', '洲', '周', '粥'] },
-    { text: '顺藤摸瓜', missingIndex: 1, wrong: ['腾', '疼', '誊', '滕'] },
-    { text: '按图索骥', missingIndex: 3, wrong: ['冀', '翼', '寄', '继'] },
-    { text: '蛛丝马迹', missingIndex: 3, wrong: ['纪', '记', '剂', '际'] },
-    { text: '抽丝剥茧', missingIndex: 3, wrong: ['检', '俭', '剪', '减'] },
-    { text: '拨云见日', missingIndex: 0, wrong: ['拔', '泼', '钹', '跋'] },
-    { text: '拨乱反正', missingIndex: 0, wrong: ['拔', '泼', '钹', '跋'] },
-    { text: '柳暗花明', missingIndex: 1, wrong: ['岸', '按', '案', '黯'] },
-    { text: '峰回路转', missingIndex: 0, wrong: ['丰', '锋', '蜂', '封'] },
-    { text: '别开生面', missingIndex: 0, wrong: ['憋', '鳖', '蹩', '瘪'] },
-    { text: '焕然一新', missingIndex: 0, wrong: ['换', '幻', '唤', '涣'] },
-    { text: '耳目一新', missingIndex: 3, wrong: ['心', '薪', '辛', '欣'] },
-    { text: '独具匠心', missingIndex: 3, wrong: ['新', '欣', '薪', '辛'] },
-    { text: '匠心独运', missingIndex: 0, wrong: ['疆', '浆', '奖', '讲'] },
-    { text: '别出心裁', missingIndex: 3, wrong: ['才', '材', '财', '采'] },
-    { text: '推陈出新', missingIndex: 3, wrong: ['心', '欣', '薪', '辛'] },
-    { text: '革故鼎新', missingIndex: 3, wrong: ['心', '欣', '薪', '辛'] },
-    { text: '标新立异', missingIndex: 3, wrong: ['义', '意', '议', '易'] },
-    { text: '独树一帜', missingIndex: 3, wrong: ['织', '职', '志', '治'] },
-    { text: '与众不同', missingIndex: 3, wrong: ['童', '铜', '桐', '筒'] },
-    { text: '卓尔不群', missingIndex: 0, wrong: ['桌', '琢', '啄', '浊'] },
-    { text: '出类拔萃', missingIndex: 3, wrong: ['翠', '粹', '碎', '脆'] },
-    { text: '鹤立鸡群', missingIndex: 0, wrong: ['贺', '荷', '赫', '喝'] },
-    { text: '名列前茅', missingIndex: 3, wrong: ['毛', '矛', '锚', '卯'] },
-    { text: '首屈一指', missingIndex: 1, wrong: ['曲', '驱', '区', '趋'] },
-    { text: '名副其实', missingIndex: 1, wrong: ['付', '负', '附', '富'] },
-    { text: '当之无愧', missingIndex: 3, wrong: ['馈', '溃', '匮', '聩'] },
-    { text: '实至名归', missingIndex: 1, wrong: ['致', '制', '治', '志'] },
-    { text: '众望所归', missingIndex: 3, wrong: ['规', '龟', '闺', '硅'] },
-    { text: '德高望重', missingIndex: 3, wrong: ['众', '仲', '种', '肿'] },
-    { text: '功成名就', missingIndex: 3, wrong: ['旧', '舅', '救', '臼'] },
-    { text: '马到成功', missingIndex: 3, wrong: ['攻', '工', '公', '宫'] },
-    { text: '旗开得胜', missingIndex: 3, wrong: ['盛', '剩', '圣', '省'] },
 ];
 
 export interface EnglishWord {
@@ -214,13 +128,13 @@ export interface EnglishWord {
 
 export const ENGLISH_WORDS: readonly EnglishWord[] = [
     { en: 'CAT', zh: '猫', category: '动物' }, { en: 'DOG', zh: '狗', category: '动物' },
-    { en: 'BIRD', zh: '鸟', category: '动物' }, { en: 'ZEBRA', zh: '斑马', category: '动物' },
+    { en: 'BIRD', zh: '鸟', category: '动物' }, { en: 'FISH', zh: '鱼', category: '动物' },
     { en: 'LION', zh: '狮子', category: '动物' }, { en: 'TIGER', zh: '老虎', category: '动物' },
     { en: 'HORSE', zh: '马', category: '动物' }, { en: 'PANDA', zh: '熊猫', category: '动物' },
     { en: 'RED', zh: '红色', category: '颜色' }, { en: 'BLUE', zh: '蓝色', category: '颜色' },
     { en: 'GREEN', zh: '绿色', category: '颜色' }, { en: 'BLACK', zh: '黑色', category: '颜色' },
     { en: 'WHITE', zh: '白色', category: '颜色' }, { en: 'YELLOW', zh: '黄色', category: '颜色' },
-    { en: 'PURPLE', zh: '紫色', category: '颜色' }, { en: 'GRAY', zh: '灰色', category: '颜色' },
+    { en: 'PURPLE', zh: '紫色', category: '颜色' }, { en: 'ORANGE', zh: '橙色', category: '颜色' },
     { en: 'APPLE', zh: '苹果', category: '食物' }, { en: 'BREAD', zh: '面包', category: '食物' },
     { en: 'RICE', zh: '米饭', category: '食物' }, { en: 'MILK', zh: '牛奶', category: '食物' },
     { en: 'CAKE', zh: '蛋糕', category: '食物' }, { en: 'EGG', zh: '鸡蛋', category: '食物' },
@@ -236,31 +150,6 @@ export const ENGLISH_WORDS: readonly EnglishWord[] = [
     { en: 'SUN', zh: '太阳', category: '自然' }, { en: 'MOON', zh: '月亮', category: '自然' },
     { en: 'RAIN', zh: '雨', category: '自然' }, { en: 'SNOW', zh: '雪', category: '自然' },
     { en: 'RIVER', zh: '河流', category: '自然' }, { en: 'MOUNTAIN', zh: '山', category: '自然' },
-    { en: 'RABBIT', zh: '兔子', category: '动物' }, { en: 'MONKEY', zh: '猴子', category: '动物' },
-    { en: 'ELEPHANT', zh: '大象', category: '动物' }, { en: 'GIRAFFE', zh: '长颈鹿', category: '动物' },
-    { en: 'BEAR', zh: '熊', category: '动物' }, { en: 'FOX', zh: '狐狸', category: '动物' },
-    { en: 'WOLF', zh: '狼', category: '动物' }, { en: 'SHEEP', zh: '绵羊', category: '动物' },
-    { en: 'PINK', zh: '粉色', category: '颜色' }, { en: 'BROWN', zh: '棕色', category: '颜色' },
-    { en: 'GOLD', zh: '金色', category: '颜色' }, { en: 'SILVER', zh: '银色', category: '颜色' },
-    { en: 'BEIGE', zh: '米色', category: '颜色' }, { en: 'CYAN', zh: '青色', category: '颜色' },
-    { en: 'BANANA', zh: '香蕉', category: '食物' }, { en: 'PEAR', zh: '梨', category: '食物' },
-    { en: 'GRAPE', zh: '葡萄', category: '食物' }, { en: 'NOODLE', zh: '面条', category: '食物' },
-    { en: 'MEAT', zh: '肉', category: '食物' }, { en: 'CHICKEN', zh: '鸡肉', category: '食物' },
-    { en: 'JUICE', zh: '果汁', category: '食物' }, { en: 'COFFEE', zh: '咖啡', category: '食物' },
-    { en: 'EAT', zh: '吃', category: '动作' }, { en: 'DRINK', zh: '喝', category: '动作' },
-    { en: 'SLEEP', zh: '睡觉', category: '动作' }, { en: 'SMILE', zh: '微笑', category: '动作' },
-    { en: 'LAUGH', zh: '大笑', category: '动作' }, { en: 'CRY', zh: '哭', category: '动作' },
-    { en: 'THINK', zh: '思考', category: '动作' }, { en: 'SPEAK', zh: '说话', category: '动作' },
-    { en: 'LISTEN', zh: '听', category: '动作' }, { en: 'DRAW', zh: '画', category: '动作' },
-    { en: 'DOOR', zh: '门', category: '物品' }, { en: 'WINDOW', zh: '窗户', category: '物品' },
-    { en: 'BAG', zh: '袋子', category: '物品' }, { en: 'SHOE', zh: '鞋', category: '物品' },
-    { en: 'HAT', zh: '帽子', category: '物品' }, { en: 'BED', zh: '床', category: '物品' },
-    { en: 'LAMP', zh: '台灯', category: '物品' }, { en: 'MAP', zh: '地图', category: '物品' },
-    { en: 'BALL', zh: '球', category: '物品' }, { en: 'BOX', zh: '盒子', category: '物品' },
-    { en: 'TREE', zh: '树', category: '自然' }, { en: 'FLOWER', zh: '花', category: '自然' },
-    { en: 'GRASS', zh: '草', category: '自然' }, { en: 'CLOUD', zh: '云', category: '自然' },
-    { en: 'WIND', zh: '风', category: '自然' }, { en: 'STAR', zh: '星星', category: '自然' },
-    { en: 'SEA', zh: '海洋', category: '自然' }, { en: 'FOREST', zh: '森林', category: '自然' },
 ];
 
 export const ENGLISH_ANTONYMS: readonly (readonly [string, string])[] = [
@@ -268,10 +157,6 @@ export const ENGLISH_ANTONYMS: readonly (readonly [string, string])[] = [
     ['OPEN', 'CLOSE'], ['HAPPY', 'SAD'], ['OLD', 'YOUNG'], ['DAY', 'NIGHT'], ['LIGHT', 'DARK'],
     ['HIGH', 'LOW'], ['LONG', 'SHORT'], ['EASY', 'HARD'], ['EARLY', 'LATE'], ['FULL', 'EMPTY'],
     ['START', 'STOP'], ['PUSH', 'PULL'], ['IN', 'OUT'], ['ABOVE', 'BELOW'], ['SAME', 'DIFFERENT'],
-    ['NEAR', 'FAR'], ['CLEAN', 'DIRTY'], ['WET', 'DRY'], ['THICK', 'THIN'], ['RICH', 'POOR'],
-    ['STRONG', 'WEAK'], ['BRAVE', 'AFRAID'], ['QUIET', 'LOUD'], ['FRONT', 'BACK'], ['TOP', 'BOTTOM'],
-    ['ARRIVE', 'LEAVE'], ['BUY', 'SELL'], ['GIVE', 'TAKE'], ['MORE', 'LESS'], ['TRUE', 'FALSE'],
-    ['LOVE', 'HATE'], ['LAUGH', 'CRY'], ['REMEMBER', 'FORGET'], ['ALIVE', 'DEAD'], ['WIN', 'LOSE'],
 ];
 
 export interface LifeFact {
@@ -280,42 +165,30 @@ export interface LifeFact {
     category: '清洁工具' | '厨房用品' | '学习用品' | '安全用品' | '交通工具' | '穿戴物品';
 }
 
-/**
- * A deliberately stricter subset for category questions. Context-dependent
- * objects such as garbage bags, sponges, scissors and masks stay available
- * for precise use questions, but never act as misleading category distractors.
- */
-export const LIFE_CATEGORY_FACTS: readonly LifeFact[] = [
-    { item: '扫帚', use: '清扫地面', category: '清洁工具' },
-    { item: '拖把', use: '拖洗地面', category: '清洁工具' },
-    { item: '吸尘器', use: '吸走灰尘', category: '清洁工具' },
-    { item: '簸箕', use: '收拢尘土', category: '清洁工具' },
-    { item: '玻璃刮', use: '刮净玻璃', category: '清洁工具' },
-    { item: '鸡毛掸子', use: '掸除浮尘', category: '清洁工具' },
-    { item: '炒锅', use: '炒制食物', category: '厨房用品' },
-    { item: '筷子', use: '夹取食物', category: '厨房用品' },
-    { item: '漏勺', use: '捞取食物', category: '厨房用品' },
-    { item: '砧板', use: '承托切菜', category: '厨房用品' },
-    { item: '擀面杖', use: '擀平面团', category: '厨房用品' },
-    { item: '蒸笼', use: '蒸制食物', category: '厨房用品' },
-    { item: '铅笔', use: '书写绘图', category: '学习用品' },
-    { item: '橡皮', use: '擦除铅笔字', category: '学习用品' },
-    { item: '圆规', use: '画圆', category: '学习用品' },
-    { item: '作业本', use: '书写作业', category: '学习用品' },
-    { item: '削笔器', use: '削尖铅笔', category: '学习用品' },
-    { item: '文具盒', use: '收纳文具', category: '学习用品' },
-    { item: '灭火器', use: '扑灭初起火灾', category: '安全用品' },
-    { item: '救生圈', use: '水上救生', category: '安全用品' },
-    { item: '安全帽', use: '保护头部', category: '安全用品' },
-    { item: '急救箱', use: '存放急救用品', category: '安全用品' },
-    { item: '警示锥', use: '标记危险区域', category: '安全用品' },
-    { item: '护目镜', use: '保护眼睛', category: '安全用品' },
-    { item: '自行车', use: '脚踏出行', category: '交通工具' },
-    { item: '公交车', use: '公共出行', category: '交通工具' },
-    { item: '地铁', use: '轨道通勤', category: '交通工具' },
-    { item: '轮船', use: '水上运输', category: '交通工具' },
-    { item: '飞机', use: '空中运输', category: '交通工具' },
-    { item: '火车', use: '铁路运输', category: '交通工具' },
+export const LIFE_FACTS: readonly LifeFact[] = [
+    { item: '雨伞', use: '雨天防雨', category: '穿戴物品' }, { item: '手电筒', use: '照亮黑暗', category: '安全用品' },
+    { item: '尺子', use: '测量长度', category: '学习用品' }, { item: '扫帚', use: '清扫地面', category: '清洁工具' },
+    { item: '拖把', use: '拖洗地面', category: '清洁工具' }, { item: '抹布', use: '擦拭桌面', category: '清洁工具' },
+    { item: '牙刷', use: '清洁牙齿', category: '清洁工具' }, { item: '菜刀', use: '切菜', category: '厨房用品' },
+    { item: '锅', use: '烹煮食物', category: '厨房用品' }, { item: '筷子', use: '夹取食物', category: '厨房用品' },
+    { item: '水壶', use: '烧水', category: '厨房用品' }, { item: '橡皮', use: '擦除铅笔字', category: '学习用品' },
+    { item: '铅笔', use: '书写绘图', category: '学习用品' }, { item: '圆规', use: '画圆', category: '学习用品' },
+    { item: '胶带', use: '粘合物品', category: '学习用品' }, { item: '灭火器', use: '扑灭初起火灾', category: '安全用品' },
+    { item: '救生圈', use: '水上救生', category: '安全用品' }, { item: '安全帽', use: '保护头部', category: '安全用品' },
+    { item: '口罩', use: '遮挡飞沫', category: '安全用品' }, { item: '自行车', use: '脚踏出行', category: '交通工具' },
+    { item: '公交车', use: '公共出行', category: '交通工具' }, { item: '地铁', use: '轨道通勤', category: '交通工具' },
+    { item: '轮船', use: '水上运输', category: '交通工具' }, { item: '围巾', use: '颈部保暖', category: '穿戴物品' },
+    { item: '手套', use: '手部保暖', category: '穿戴物品' }, { item: '雨靴', use: '防止鞋袜进水', category: '穿戴物品' },
+    { item: '眼镜', use: '辅助视力', category: '穿戴物品' }, { item: '剪刀', use: '剪裁纸张', category: '学习用品' },
+    { item: '漏勺', use: '捞取食物', category: '厨房用品' }, { item: '海绵', use: '清洗餐具', category: '清洁工具' },
+    { item: '吸尘器', use: '吸走灰尘', category: '清洁工具' }, { item: '清洁刷', use: '刷洗污渍', category: '清洁工具' },
+    { item: '垃圾袋', use: '收纳垃圾', category: '清洁工具' }, { item: '盘子', use: '盛放食物', category: '厨房用品' },
+    { item: '勺子', use: '舀取食物', category: '厨房用品' }, { item: '砧板', use: '承托切菜', category: '厨房用品' },
+    { item: '笔记本', use: '记录内容', category: '学习用品' }, { item: '计算器', use: '辅助计算', category: '学习用品' },
+    { item: '急救箱', use: '存放急救用品', category: '安全用品' }, { item: '安全带', use: '乘车保护身体', category: '安全用品' },
+    { item: '警示锥', use: '标记危险区域', category: '安全用品' }, { item: '飞机', use: '空中运输', category: '交通工具' },
+    { item: '火车', use: '铁路运输', category: '交通工具' }, { item: '出租车', use: '载客出行', category: '交通工具' },
+    { item: '摩托车', use: '机动骑行', category: '交通工具' },
 ];
 
 export interface GeographyFact {
@@ -333,128 +206,10 @@ export const GEOGRAPHY_FACTS: readonly GeographyFact[] = [
     { country: '葡萄牙', capital: '里斯本' }, { country: '希腊', capital: '雅典' },
     { country: '俄罗斯', capital: '莫斯科' }, { country: '美国', capital: '华盛顿' },
     { country: '加拿大', capital: '渥太华' }, { country: '墨西哥', capital: '墨西哥城' },
-    { country: '巴西', capital: '巴西利亚' },
+    { country: '巴西', capital: '巴西利亚' }, { country: '阿根廷', capital: '布宜诺斯艾利斯' },
     { country: '澳大利亚', capital: '堪培拉' }, { country: '新西兰', capital: '惠灵顿' },
     { country: '埃及', capital: '开罗' }, { country: '肯尼亚', capital: '内罗毕' },
-    { country: '土耳其', capital: '安卡拉' },
+    { country: '土耳其', capital: '安卡拉' }, { country: '瑞典', capital: '斯德哥尔摩' },
     { country: '挪威', capital: '奥斯陆' }, { country: '芬兰', capital: '赫尔辛基' },
     { country: '奥地利', capital: '维也纳' }, { country: '瑞士', capital: '伯尔尼' },
-    { country: '马来西亚', capital: '吉隆坡' },
-    { country: '菲律宾', capital: '马尼拉' }, { country: '尼泊尔', capital: '加德满都' },
-    { country: '巴基斯坦', capital: '伊斯兰堡' }, { country: '孟加拉国', capital: '达卡' },
-    { country: '蒙古', capital: '乌兰巴托' }, { country: '沙特', capital: '利雅得' },
-    { country: '阿联酋', capital: '阿布扎比' }, { country: '伊朗', capital: '德黑兰' },
-    { country: '伊拉克', capital: '巴格达' }, { country: '卡塔尔', capital: '多哈' },
-    { country: '秘鲁', capital: '利马' }, { country: '智利', capital: '圣地亚哥' },
-    { country: '哥伦比亚', capital: '波哥大' }, { country: '古巴', capital: '哈瓦那' },
-    { country: '摩洛哥', capital: '拉巴特' }, { country: '尼日利亚', capital: '阿布贾' },
-    { country: '坦桑尼亚', capital: '多多马' }, { country: '捷克', capital: '布拉格' },
-    { country: '波兰', capital: '华沙' }, { country: '匈牙利', capital: '布达佩斯' },
-    { country: '比利时', capital: '布鲁塞尔' }, { country: '丹麦', capital: '哥本哈根' },
-    { country: '爱尔兰', capital: '都柏林' }, { country: '保加利亚', capital: '索非亚' },
-    { country: '克罗地亚', capital: '萨格勒布' }, { country: '拉脱维亚', capital: '里加' },
-    { country: '格鲁吉亚', capital: '第比利斯' }, { country: '亚美尼亚', capital: '埃里温' },
-    { country: '阿塞拜疆', capital: '巴库' }, { country: '阿曼', capital: '马斯喀特' },
-    { country: '也门', capital: '萨那' },
-];
-
-export interface TriviaFact {
-    prompt: string;
-    answer: string;
-    wrong: readonly string[];
-}
-
-export {
-    KNOWLEDGE_CULTURE_FACTS,
-    KNOWLEDGE_NATURE_FACTS,
-    KNOWLEDGE_SCIENCE_FACTS,
-} from './CommonKnowledgeCatalog';
-
-export const HISTORY_MODERN_OPENING_FACTS: readonly TriviaFact[] = [
-    { prompt: '虎门销烟的主角', answer: '林则徐', wrong: ['魏源', '曾国藩', '左宗棠'] },
-    { prompt: '鸦片战争爆发于', answer: '1840', wrong: ['1839', '1860', '1894'] },
-    { prompt: '近代首个不平等条约', answer: '南京条约', wrong: ['北京条约', '马关条约', '辛丑条约'] },
-    { prompt: '洋务运动的口号', answer: '自强求富', wrong: ['师夷长技', '实业救国', '民主科学'] },
-    { prompt: '北洋水师最终覆没于', answer: '威海卫', wrong: ['旅顺', '天津', '厦门'] },
-    { prompt: '“公车上书”领衔者', answer: '康有为', wrong: ['孙中山', '陈独秀', '李大钊'] },
-    { prompt: '百日维新时的皇帝', answer: '光绪帝', wrong: ['同治帝', '宣统帝', '道光帝'] },
-    { prompt: '辛亥革命首义之城', answer: '武昌', wrong: ['广州', '南京', '长沙'] },
-    { prompt: '民国临时政府设在', answer: '南京', wrong: ['北京', '上海', '武汉'] },
-    { prompt: '清帝退位发生于', answer: '1912', wrong: ['1898', '1911', '1919'] },
-    { prompt: '《海国图志》作者', answer: '魏源', wrong: ['林则徐', '严复', '龚自珍'] },
-    { prompt: '致远舰管带', answer: '邓世昌', wrong: ['林永升', '刘步蟾', '丁汝昌'] },
-    { prompt: '戊戌变法年份', answer: '1898', wrong: ['1840', '1894', '1911'] },
-    { prompt: '京师大学堂今为', answer: '北京大学', wrong: ['清华大学', '南开大学', '复旦大学'] },
-    { prompt: '同盟会成立城市', answer: '东京', wrong: ['上海', '广州', '南京'] },
-    { prompt: '辛亥革命年份', answer: '1911', wrong: ['1898', '1912', '1919'] },
-    { prompt: '首任临时大总统', answer: '孙中山', wrong: ['黄兴', '宋教仁', '蔡锷'] },
-    { prompt: '新文化运动口号', answer: '民主科学', wrong: ['自强求富', '实业救国', '中体西用'] },
-    { prompt: '甲午战争爆发于', answer: '1894', wrong: ['1840', '1860', '1900'] },
-    { prompt: '《天演论》译者', answer: '严复', wrong: ['魏源', '梁启超', '章太炎'] },
-];
-
-export const HISTORY_MODERN_AWAKENING_FACTS: readonly TriviaFact[] = [
-    { prompt: '《新青年》创办人', answer: '陈独秀', wrong: ['鲁迅', '胡适', '蔡元培'] },
-    { prompt: '《狂人日记》作者', answer: '鲁迅', wrong: ['郭沫若', '老舍', '巴金'] },
-    { prompt: '五四运动首先爆发在', answer: '北京', wrong: ['上海', '广州', '天津'] },
-    { prompt: '五四运动导火索', answer: '巴黎和会', wrong: ['武昌起义', '九一八事变', '北伐开始'] },
-    { prompt: '中共一大最初开会城市', answer: '上海', wrong: ['北京', '广州', '武汉'] },
-    { prompt: '南湖红船所在城市', answer: '嘉兴', wrong: ['杭州', '绍兴', '苏州'] },
-    { prompt: '首个农村革命根据地', answer: '井冈山', wrong: ['延安', '西柏坡', '大别山'] },
-    { prompt: '中央红军长征集结出发地', answer: '江西于都', wrong: ['陕西延安', '贵州遵义', '河北西柏坡'] },
-    { prompt: '遵义会议所在省份', answer: '贵州', wrong: ['四川', '云南', '湖南'] },
-    { prompt: '“为中华崛起而读书”', answer: '周恩来', wrong: ['蔡元培', '闻一多', '詹天佑'] },
-];
-
-export const HISTORY_MODERN_RESISTANCE_FACTS: readonly TriviaFact[] = [
-    { prompt: '九一八事变发生地', answer: '沈阳', wrong: ['北平', '南京', '武汉'] },
-    { prompt: '卢沟桥事变发生在', answer: '北京', wrong: ['天津', '上海', '西安'] },
-    { prompt: '平型关大捷主力', answer: '八路军', wrong: ['新四军', '东北军', '北洋军'] },
-    { prompt: '台儿庄大捷指挥者', answer: '李宗仁', wrong: ['张自忠', '佟麟阁', '谢晋元'] },
-    { prompt: '南京大屠杀发生于', answer: '1937', wrong: ['1931', '1935', '1941'] },
-    { prompt: '地道战故事多发生在', answer: '冀中平原', wrong: ['河西走廊', '江南水乡', '云贵高原'] },
-    { prompt: '百团大战主要指挥者', answer: '彭德怀', wrong: ['叶挺', '左权', '聂荣臻'] },
-    { prompt: '“飞虎队”创建者', answer: '陈纳德', wrong: ['白求恩', '史迪威', '柯棣华'] },
-    { prompt: '日本宣布投降年份', answer: '1945', wrong: ['1937', '1943', '1949'] },
-    { prompt: '中国抗战胜利纪念日', answer: '9月3日', wrong: ['7月7日', '8月15日', '9月18日'] },
-];
-
-export const HISTORY_ANCIENT_FACTS: readonly TriviaFact[] = [
-    { prompt: '秦统一后推行的文字', answer: '小篆', wrong: ['甲骨文', '楷书', '行书'] },
-    { prompt: '“凿空西域”的使者', answer: '张骞', wrong: ['班超', '苏武', '甘英'] },
-    { prompt: '《史记》的作者', answer: '司马迁', wrong: ['班固', '司马光', '陈寿'] },
-    { prompt: '“投笔从戎”的主角', answer: '班超', wrong: ['霍去病', '卫青', '祖逖'] },
-    { prompt: '《三国演义》草船借箭者', answer: '诸葛亮', wrong: ['周瑜', '鲁肃', '司马懿'] },
-    { prompt: '被称为“诗仙”', answer: '李白', wrong: ['杜甫', '白居易', '王维'] },
-    { prompt: '玄奘取经前往古称', answer: '天竺', wrong: ['大秦', '安息', '扶桑'] },
-    { prompt: '活字印刷术发明者', answer: '毕昇', wrong: ['蔡伦', '沈括', '祖冲之'] },
-    { prompt: '郑和船队远航称为', answer: '下西洋', wrong: ['通西域', '渡东瀛', '征漠北'] },
-    { prompt: '“杯酒释兵权”的皇帝', answer: '宋太祖', wrong: ['唐太宗', '汉武帝', '明成祖'] },
-    { prompt: '兵马俑所在城市', answer: '西安', wrong: ['洛阳', '开封', '南京'] },
-    { prompt: '鸿门宴上舞剑的是', answer: '项庄', wrong: ['项伯', '樊哙', '韩信'] },
-    { prompt: '秦朝都城', answer: '咸阳', wrong: ['长安', '洛阳', '开封'] },
-    { prompt: '汉朝开国皇帝', answer: '刘邦', wrong: ['刘彻', '刘秀', '刘备'] },
-    { prompt: '唐朝开国皇帝', answer: '李渊', wrong: ['李世民', '李治', '李隆基'] },
-    { prompt: '北宋开国皇帝', answer: '赵匡胤', wrong: ['赵光义', '赵构', '柴荣'] },
-    { prompt: '明朝开国皇帝', answer: '朱元璋', wrong: ['朱棣', '朱允炆', '朱由检'] },
-    { prompt: '科举制度始于', answer: '隋朝', wrong: ['汉朝', '唐朝', '宋朝'] },
-    { prompt: '丝绸之路起点', answer: '长安', wrong: ['洛阳', '敦煌', '成都'] },
-    { prompt: '赤壁之战取胜方', answer: '孙刘联军', wrong: ['曹操军', '袁绍军', '董卓军'] },
-    { prompt: '玄武门之变主角', answer: '李世民', wrong: ['李建成', '李元吉', '李渊'] },
-    { prompt: '岳飞主要抗击', answer: '金军', wrong: ['辽军', '元军', '清军'] },
-];
-
-export const HISTORY_MYTH_FACTS: readonly TriviaFact[] = [
-    { prompt: '开天辟地的巨人', answer: '盘古', wrong: ['夸父', '刑天', '共工'] },
-    { prompt: '女娲补天使用', answer: '五色石', wrong: ['定海针', '息壤', '昆仑玉'] },
-    { prompt: '后羿一共射落几个太阳', answer: '9个', wrong: ['7个', '8个', '10个'] },
-    { prompt: '嫦娥奔月住进', answer: '广寒宫', wrong: ['兜率宫', '水晶宫', '碧游宫'] },
-    { prompt: '追着太阳奔跑的巨人', answer: '夸父', wrong: ['盘古', '刑天', '愚公'] },
-    { prompt: '精卫衔石要填平', answer: '东海', wrong: ['南海', '西湖', '黄河'] },
-    { prompt: '大禹治水几过家门不入', answer: '3次', wrong: ['1次', '5次', '9次'] },
-    { prompt: '尝百草的始祖', answer: '神农', wrong: ['伏羲', '祝融', '后稷'] },
-    { prompt: '失去头颅仍挥舞干戚', answer: '刑天', wrong: ['蚩尤', '共工', '相柳'] },
-    { prompt: '哪吒重获身体靠', answer: '莲花化身', wrong: ['蟠桃化身', '仙草化身', '神木化身'] },
-    { prompt: '筋斗云一个跟头十万八千里', answer: '孙悟空', wrong: ['猪八戒', '二郎神', '哪吒'] },
-    { prompt: '八仙过海比拼的是', answer: '各显神通', wrong: ['力拔山河', '点石成金', '呼风唤雨'] },
 ];

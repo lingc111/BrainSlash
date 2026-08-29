@@ -1,6 +1,5 @@
 import type { GameResult, PlayerProgress, RunResult } from './Models';
 import { dailyRecipeById } from './DailyChallenge';
-import { friendChallengeConfigSummary } from './FriendChallenge';
 
 export const XP_PER_CORRECT = 5;
 export const XP_PER_LEVEL = 500;
@@ -34,8 +33,7 @@ export function finalizeResult(run: RunResult, playerBefore: PlayerProgress): Re
     const levelBefore = levelForXp(xpBefore);
     const levelAfter = levelForXp(xpAfter);
     const previousBestScore = Math.max(0, Math.floor(playerBefore.bestScore));
-    const tracksPersonalBest = run.entry.mode !== 'friendChallenge';
-    const isNewRecord = tracksPersonalBest && run.score > previousBestScore;
+    const isNewRecord = run.score > previousBestScore;
     const challenge = run.entry.mode === 'friendChallenge' && run.entry.targetScore !== undefined
         ? challengeResult(run.score, run.entry.targetScore)
         : undefined;
@@ -55,31 +53,25 @@ export function finalizeResult(run: RunResult, playerBefore: PlayerProgress): Re
     };
     return {
         result,
-        player: { level: levelAfter, xp: xpAfter, bestScore: tracksPersonalBest ? Math.max(previousBestScore, run.score) : previousBestScore },
+        player: { level: levelAfter, xp: xpAfter, bestScore: Math.max(previousBestScore, run.score) },
     };
 }
 
 export function createResultPresentation(result: GameResult): ResultPresentation {
     const challenge = result.challenge;
     const daily = result.daily;
-    const friendCreator = result.entry.mode === 'friendChallenge' && result.entry.challengeRole === 'creator';
-    const sharePrimary = friendCreator || (daily ? daily.targetAchieved && daily.isNewBest : result.isNewRecord || challenge?.outcome === 'won');
+    const sharePrimary = daily ? daily.isNewBest : result.isNewRecord || challenge?.outcome === 'won';
     return {
         modeLabel: modeLabel(result),
         headline: challenge
             ? challenge.outcome === 'won' ? '挑战成功！' : challenge.outcome === 'tied' ? '势均力敌！' : '就差一点！'
-            : friendCreator ? '挑战成绩已生成！'
-            : daily?.firstAchievement ? '今日目标达成！'
-            : daily?.targetAchieved ? daily.isNewBest ? '今日新纪录！' : '今日挑战达标'
-            : result.entry.mode === 'daily' ? '挑战未达成'
-            : result.entry.mode === 'brawl60' ? result.isNewRecord ? '极限新纪录！' : '极限止步'
-            : result.isNewRecord ? '新纪录！' : '本局完成',
+            : daily?.isNewBest ? '今日新纪录！' : result.entry.mode === 'daily' ? '今日挑战完成' : result.isNewRecord ? '新纪录！' : '本局完成',
         comparison: comparisonText(result),
-        comparisonTone: challenge?.outcome === 'won' || daily?.firstAchievement ? 'positive' : daily?.isNewBest || result.isNewRecord ? 'highlight' : 'neutral',
+        comparisonTone: challenge?.outcome === 'won' ? 'positive' : daily?.isNewBest || result.isNewRecord ? 'highlight' : 'neutral',
         accuracy: `${Math.round(Math.max(0, Math.min(1, result.accuracy)) * 100)}%`,
         maxCombo: String(result.maxCombo),
         fastestReaction: formatReaction(result.bestReactionMs),
-        answerDetail: `答对 ${result.correctCount}  ·  失误 ${result.errorCount}${result.masterSlashCount ? `  ·  MASTER SLASH ${result.masterSlashCount}` : ''}`,
+        answerDetail: `答对 ${result.correctCount}  ·  失误 ${result.errorCount}`,
         growthTitle: result.growth.levelAfter > result.growth.levelBefore
             ? `升级！ Lv.${result.growth.levelBefore} → Lv.${result.growth.levelAfter}`
             : `Lv.${result.growth.levelAfter} 熟练度`,
@@ -87,10 +79,8 @@ export function createResultPresentation(result: GameResult): ResultPresentation
         growthProgress: result.growth.levelTarget > 0
             ? result.growth.levelProgressAfter / result.growth.levelTarget
             : 0,
-        replayLabel: result.entry.mode === 'friendChallenge'
-            ? friendCreator ? '同配置再来一局' : '再战同题'
-            : result.entry.mode === 'daily' ? '再战今日' : '再来一局',
-        shareLabel: result.entry.mode === 'friendChallenge' ? friendCreator ? '分享挑战' : '回敬挑战' : '挑战好友',
+        replayLabel: result.entry.mode === 'friendChallenge' ? '再战同题' : result.entry.mode === 'daily' ? '再战今日' : '再来一局',
+        shareLabel: result.entry.mode === 'friendChallenge' ? '回敬挑战' : '挑战好友',
         sharePrimary,
     };
 }
@@ -108,11 +98,8 @@ function modeLabel(result: GameResult): string {
         const title = dailyRecipeById(result.entry.recipeId)?.title;
         return title ? `今日挑战 · ${title}` : '今日挑战';
     }
-    if (result.entry.mode === 'friendChallenge') {
-        const duration = result.entry.challengeConfig?.durationMs;
-        return duration ? `好友挑战 · ${duration / 1_000} 秒` : '好友挑战';
-    }
-    return '无尽乱斗';
+    if (result.entry.mode === 'friendChallenge') return '好友挑战';
+    return '60 秒乱斗';
 }
 
 function comparisonText(result: GameResult): string {
@@ -121,13 +108,7 @@ function comparisonText(result: GameResult): string {
         if (result.challenge.scoreDelta < 0) return `距离好友 ${Math.abs(result.challenge.scoreDelta)} 分`;
         return `追平好友 ${result.challenge.targetScore} 分`;
     }
-    if (result.entry.mode === 'friendChallenge' && result.entry.challengeConfig) {
-        const summary = friendChallengeConfigSummary(result.entry.challengeConfig);
-        return `${summary.themes} · ${summary.duration}`;
-    }
     if (result.daily) {
-        if (!result.daily.targetAchieved) return `距离今日目标 ${Math.max(0, result.daily.targetScore - result.score)} 分`;
-        if (result.daily.firstAchievement) return `目标 ${result.daily.targetScore} 分 · 已达成`;
         if (result.daily.attempts === 1) return `今日首战 · ${result.score} 分`;
         if (result.daily.isNewBest) return `刷新今日最佳 +${result.score - result.daily.previousBestScore}`;
         if (result.score === result.daily.bestScore) return '追平今日最佳';

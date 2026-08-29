@@ -1,211 +1,141 @@
-# Brain Slash 开发 Handoff
+# Brain Slash 特效替换 Handoff
 
-更新时间：2026-08-29
+更新时间：2026-08-17
 工程：`D:\Develop\Cocos\WorkSpace\BrainSlash`
 技术栈：Cocos Creator 3.8.8 / TypeScript
-当前分支：`feature/lingc1`
-当前 HEAD：`560cf3d`（`大幅优化ui`）
-内容版本：`1.17.0-mvp`
+GitHub：`https://github.com/lingc111/BrainSlash`
 
-## 1. 当前结论
+## 1. 当前 Git 状态
 
-项目已完成可玩的核心闭环，题目系统骨架也比较完整。目前最大风险不再是“能不能出题”，而是内容量、分布、审核质量和持续扩充能力不足。
+- 当前分支：`main`
+- 当前 HEAD：`5148f14`（`all MD docs`）
+- 特效替换提交：`dcfb3d3`（`Replace gameplay slash effects`）
+- 浏览器坐标修复提交：`a84be7a`（`slash opt`）
+- 上述提交均已推送到 `origin/main`，本地 `main` 与远程同步。
+- 当前未提交内容只有本文件 `handoff.md`。
 
-当前审计得到 **1,004 条基础记录、19 个内容包**。这不能等同于 1,004 道完全不同的体验：同一事实会被不同题族、方向、候选项和规则复用；程序生成题虽有大量数值组合，语义模板仍有限。下一阶段应把重心放到题库生产系统和内容扩充，而不是继续堆 UI 或玩法入口。
+## 2. 已完成：替换 GameplayTarget 切割特效
 
-## 2. 已完成内容
+旧效果由 `GameplayHUD.paperSplit()` 使用 `Graphics` 即时绘制两块纸片和 4 个碎屑。
 
-### 游戏闭环
+现已替换为不同 GameplayTarget 对应的透明 PNG 粉碎特效：
 
-- 首页、Gameplay、Result、再来一局、分享/好友挑战已接通。
-- 支持乱斗、每日挑战、好友挑战、30 层试炼塔。
-- 乱斗有分阶段节奏、主题权重、题族轮换和难度提升，目前为生命耗尽结束的无尽玩法。
-- 好友挑战支持 60/90/120 秒、自选主题与规则、确定性 Seed 和成绩对比。
-- 试炼塔有层数、解锁、检查点、计分和首次通关奖励。
-- 本地存档、成长、排行榜、错题记录、微信分享和内容版本兼容逻辑已存在。
+| Target 皮肤 | 特效资源 |
+| --- | --- |
+| `blue_square` | `blue_square_slash.png` |
+| `green_octagon` | `green_octagon_slash.png` |
+| `green_triangle` | `green_triangle_slash.png` |
+| `orange_circle` | `orange_circle_slash.png` |
+| `pink_diamond` | `pink_diamond_slash.png` |
+| `purple_hexagon` | `purple_hexagon_slash.png` |
+| `red_trapezoid` | `red_trapezoid_slash.png` |
+| `yellow_circle` | `yellow_circle_slash.png` |
+| 炸弹 | `bomb_slash.png` |
 
-### 操作与反馈
+运行时会记录随机 Target 皮肤与特效资源的映射。正确目标、错误目标和炸弹被斩中时都会显示对应 PNG；错误命中仍保留红色错误环、扣生命、断 Combo 和轻震反馈。
 
-- 连续手势轨迹命中，不只判断触点终点。
-- 支持标准、反向、旋转、多目标、顺序和炸弹机制。
-- 正误、Combo、Master Hit、回血和结算反馈已接入。
-- 已有目标皮肤、切割贴图、对象池、浏览器坐标修复、安全区和竖屏布局。
-- 当前工作区另含四字答案双行排版、填空占位符可读性、好友挑战炸弹常驻等改动。
+## 3. 特效资源与性能处理
 
-### 题目系统
+原始 PNG 位于：
 
-- `ContentCatalog.ts`：题族定义、基础内容、主题题族目标。
-- `QuestionGenerator.ts`：题目、候选、答案和炸弹生成。
-- `QuestionBankRegistry.ts`：静态/关系型内容包注册和统计。
-- `HanziRelationCatalog.ts`、`CommonKnowledgeCatalog.ts`、`KnowledgeExpansionCatalog.ts`：内容数据。
-- `Brawl60Director.ts`：阶段、主题权重、规则兼容和轮换。
-- `FairnessValidator.ts`：生成题合法性校验。
-- `tools/audit-question-bank.mjs`：重复、长度和干扰项审计。
-- `tests/domain.test.ts`：确定性、合法性、冷却、模式和布局回归。
+`D:\Develop\codex\workspaces\BrainSlash\切割粉碎特效`
 
-现有能力：
+导入工程的优化版位于：
 
-- 33 种 `ContentFamilyKind`，每种 5 个 variant，共 165 个题族配置。
-- 数学、视觉主要算法生成；语言、地理、常识、历史主要依赖静态/关系记录。
-- 同一事实通过 shuffle bag 消耗，近 20 题尽量不重复。
-- 语义签名冷却 60 题，答案签名冷却 8 题，小池耗尽时逐步放宽。
-- 同一 Seed 可确定性复现，适合每日和好友挑战。
-- 已保护规则兼容、目标数、短文本、炸弹、反向、多选和顺序题。
+`assets/resources/textures/gameplay/effects/slash`
 
-## 3. 当前题库实量
+处理结果：
 
-以下是基础记录数，不是排列组合数：
+- 9 张图片从 `1254 × 1254` 缩放为 `512 × 512`；
+- 保留 RGBA 透明通道；
+- 预估常驻解码纹理内存从约 54 MB 降至约 9 MB；
+- Cocos Asset Database 已刷新，PNG 及 `.meta` 已生成并提交；
+- Gameplay 加载时预加载全部 SpriteFrame，避免首次命中才异步加载；
+- 特效节点使用 `NodePool` 回收；
+- 单次播放约 220 ms：60 ms 快速放大，随后 160 ms 扩散并淡出；
+- PNG 整体会根据本次斩击线段旋转，使画面中的斜向刀光与手势方向一致；
+- 资源尚未就绪时使用 4 个小纸屑作为降级反馈。
 
-| 主题 | 数量 | 判断 |
-| --- | ---: | --- |
-| 数学 | 0 | 完全依赖算法模板，组合多但语义变化有限 |
-| 视觉 | 0 | 完全依赖算法/符号模板，容易模式疲劳 |
-| 汉字 | 300 | 100 成语、100 反义、100 近义，相对扎实 |
-| 英语 | 136 | 96 词汇、40 反义，仍偏薄 |
-| 生活 | 30 | 严重不足，是最小静态池 |
-| 地理 | 60 | 仅国家—首都，题材单一 |
-| 常识 | 404 | 数量最多，但需来源、时效和歧义复审 |
-| 历史 | 74 | 严重不足；觉醒、抗战各仅 10 条 |
-| **合计** | **1,004** | 不足以支撑长期高频游玩 |
+注意：素材中没有 `blue_hexagon_slash.png`。为避免皮肤和粉碎图形不一致，`blue_hexagon` 当前已从随机皮肤列表移除。补充同名资源后，应将它加入 `SLASH_EFFECT_KEYS` 和 `skinNames`。
 
-19 个内容包：汉字 3 包；英语 2 包；生活 1 包；地理 1 包；常识 7 包；历史 5 包。
+## 4. 已完成：浏览器鼠标与刀光坐标偏移修复
 
-## 4. 题库主要问题
+用户在浏览器预览中发现系统鼠标指针与连续刀光轨迹有明显位置偏差。
 
-### P0：内容量和维度不足
+根因：`EventTouch.getUILocation()` 已返回经过视口和缩放适配的 UI 坐标，旧实现又把该坐标交给 `GameplayLayer.UITransform.convertToNodeSpaceAR()`，相当于再次应用 Canvas 世界矩阵，在浏览器窗口比例或 Canvas 状态变化时产生二次偏移。
 
-- 内容集中于汉字和常识，生活、地理、历史、英语很快轮空。
-- 数学和视觉没有可审计的静态基准集，只能证明生成合法，不能证明模板丰富、难度合理。
-- 地理只有首都互问，生活只有分类，英语主要是词义/分类/反义。
-- 5 个 variant 多为参数变化，不能当作 5 种真正独立题型。
+修复已由提交 `a84be7a` 推送到 `origin/main`，位于 `GameplayHUD.touchPoint()`：
 
-### P0：内容与代码强耦合
-
-- 大量题目写在 `.ts` 中，内容编辑不能独立批量维护。
-- 新增内容需改源码，容易产生合并冲突。
-- 缺少统一 schema、来源、审核状态、难度、标签和上下架状态。
-- Registry 只统计手工注册的包，漏注册时审计不可见。
-
-### P0：缺少审核流水线
-
-- 当前只检查重复、长度、答案混入干扰项、干扰项重复。
-- 不能自动保证事实正确性、时效、歧义、地域争议、繁简一致和关系强度。
-- 常识、公考、地理、历史尤其需要来源和复审日期。
-
-### P1：缺少内容更新与数据闭环
-
-- 题库随客户端发版，不能独立灰度、撤回单题或热更新。
-- 只有全局 `CONTENT_VERSION`，没有 pack 版本、校验和和最低客户端版本。
-- 改数组顺序或删除记录可能破坏旧 Seed/分享链接复现。
-- 尚无每题曝光、正确率、反应时间、误斩和争议率统计，难以识别歧义题和过难题。
-
-## 5. 下一阶段方案
-
-### 5.1 先把内容从代码拆出
-
-建议建立：
-
-```text
-assets/resources/question-banks/
-  manifest.json
-  hanzi/idioms.v1.json
-  english/words.v1.json
-  geography/capitals.v1.json
-  knowledge/science.v1.json
-  history/ancient.v1.json
+```ts
+private touchPoint(event: EventTouch): Vec2 {
+    const location = event.getUILocation();
+    const visible = view.getVisibleSize();
+    return new Vec2(location.x - visible.width * 0.5, location.y - visible.height * 0.5);
+}
 ```
 
-每条内容至少包含稳定 `id`、主题、题族、题干、答案、干扰项、1–5 难度、标签、语言、来源、复审日期、审核状态、启用状态和最低内容版本。关系题可用专用 schema，但也必须有稳定 ID 和审核信息。
+这使输入坐标直接转换为以屏幕中心为原点的 `GameplayLayer` 本地坐标，连续刀光和碰撞检测使用同一组点。
 
-先让 JSON 与旧 TS 数据并行加载，再迁移；不要一次性删掉旧题库。
+用户明确要求：不要增加持续跟随指针的短刀光头。此前尝试的 `SlashCursorLayer` 已完全撤销，当前工作区不存在该节点或相关逻辑。
 
-### 5.2 首轮扩到至少 3,000 条
+## 5. 关键代码位置
 
-| 主题 | 当前 | 首轮目标 | 扩充重点 |
-| --- | ---: | ---: | --- |
-| 汉字 | 300 | 500 | 易错字、搭配、部首、同音辨析 |
-| 英语 | 136 | 400 | 高频词、同义词、场景、词组，控制一词多义 |
-| 生活 | 30 | 300 | 工具、食物、交通、安全、场景和顺序 |
-| 地理 | 60 | 300 | 省会、地标、河流山脉、洲洋、方向关系 |
-| 常识 | 404 | 800 | 科学/自然/文化均衡，补来源和复审日期 |
-| 历史 | 74 | 400 | 朝代、人物事件、发明制度、遗产 |
-| 数学模板 | 8 kind | 20+ 独立模板 | 分数、单位、时间、规律、条件、图形数量 |
-| 视觉模板 | 6 kind | 15+ 独立模板 | 镜像、旋转、配对、路径、集合、短时记忆 |
+主文件：`assets/Scripts/UI/GameplayHUD.ts`
 
-独立模板必须在题干结构、认知动作或干扰策略上有实质差异，不能只换数字范围或 variant。
+- `SLASH_EFFECT_KEYS`：允许加载的特效资源键；
+- `targetSlashEffects`：Target Node 到特效键的运行时映射；
+- `slashFrames`：预加载后的 SpriteFrame 缓存；
+- `slashEffectPool`：PNG 特效节点对象池；
+- `applyRandomTargetSkins()`：随机皮肤和特效键绑定；
+- `touchPoint()`：浏览器/触屏输入坐标换算；
+- `sweep()`：连续手势线段命中检测；
+- `playSlashEffect()`：对应 PNG 的播放、旋转、淡出和回收；
+- `playFallbackBurst()`：资源未加载时的低成本降级效果；
+- `respawn()`：目标在 280 ms 后重新出现。
 
-### 5.3 建立导入和审计
+目标碰撞实现位于：`assets/Scripts/UI/GameplayTarget.ts`
 
-- 新增 CSV/JSON 导入工具、稳定 ID 生成和 schema 校验。
-- 规范化空格、标点、大小写、繁简体后做跨包去重。
-- 检查多答案风险、关系冲突、答案长度和干扰项质量。
-- 每个 pack × 合法规则 × 难度批量生成并过 `FairnessValidator`。
-- 输出主题、题族、难度、标签和审核状态覆盖报告，低于最低线时 CI 失败。
-- 增加内容快照测试，保证同 `contentVersion + seed` 的挑战序列不意外漂移。
+- `segmentHit(a, b)` 使用连续手势线段到目标中心的最近距离判断，不只检测触点终点。
 
-### 5.4 再做版本与热更新
+## 6. 已完成验证
 
-- manifest 包含 `packId/version/checksum/minClientVersion/recordCount`。
-- 客户端保留审核通过的 fallback 题库。
-- 下载后校验 schema、checksum 和最低数量，再原子切换。
-- 内容只追加或禁用，不复用旧 ID；好友挑战记录 pack 版本或快照标识。
-- 支持单题 blocklist。应在本地格式和审核流程稳定后再上远端后台。
+- 9 张优化 PNG 均为 `512 × 512`、32 位 RGBA；
+- 9 个 PNG 的 Cocos `.meta` 均显示 `imported: true`、`hasAlpha: true`、`type: sprite-frame`；
+- `GameplayHUD.ts` 与 `GameplayTarget.ts` 通过定向严格 TypeScript `noEmit` 检查；
+- `git diff --check` 通过；
+- Cocos Asset Database 已对特效目录和脚本执行刷新。
 
-### 5.5 用数据校准
+完整工程的诊断工具会报告 Cocos Creator 3.8.8 引擎声明文件中的既有错误，例如缺少 WebGPU 类型、`pal/*` 模块和动画声明命名空间。这些错误不位于项目 `assets` 脚本中，也不是本次改动引入；定向项目脚本检查通过。
 
-匿名聚合记录 `questionId`、pack 版本、模式、规则、难度、正误、反应时间、失败类型和曝光次数。按周筛选正确率/反应时间异常、候选分布疑似歧义、重复曝光过高的题，进入人工复审；不要自动改答案。
+## 7. 接手后的建议操作
 
-## 6. 推荐实施顺序
+1. 在浏览器预览中强制刷新，按横向、纵向和斜向拖动，确认刀光中心与系统鼠标指针重合。
+2. 分别斩中正确目标、错误目标和炸弹，确认对应 PNG、错误环、生命和 Combo 状态正常。
+3. 在不同浏览器窗口比例下重复测试，尤其是非 9:19.5 的宽窗口和缩放后的窗口。
+4. 将本文件 `handoff.md` 纳入版本控制；除此之外当前没有待提交代码修改。
+5. 如补充 `blue_hexagon_slash.png`，恢复蓝色六边形随机皮肤并重新验证映射。
 
-1. 定义 JSON schema、稳定 ID 和 manifest，写最小加载器。
-2. 先迁移 `life.categories`、`geography.world` 两个小包。
-3. 扩展审计与 CI，让 JSON 和旧 TS 题执行同一检查。
-4. 按生活 → 历史 → 地理 → 英语 → 汉字 → 常识补库存。
-5. 为数学、视觉建立模板注册表和模板级覆盖报告。
-6. 全量迁移旧内容，保留一版兼容读取。
-7. 做来源复审、真机可读性和连续 10 局重复率测试。
-8. 最后实现远端 manifest、缓存、灰度和单题下架。
+## 8. 不应破坏的交互约束
 
-## 7. 新内容验收标准
+- 刀光必须从实际鼠标/手指轨迹产生；
+- 输入、命中和音效时机优先于复杂视觉效果；
+- 特效总反馈应短促，不遮挡下一题；
+- 不增加 Gameplay 底部操作栏；
+- 不用持续跟随指针的额外刀尖或光点；
+- 低端设备应优先减少粒子和拖尾，不降低输入响应。
 
-- 每条记录使用永久唯一 ID，禁止依赖数组下标。
-- 文本适合竖屏快速辨认；四字中文可双行，超过四字需专项 UI 验证。
-- 普通单选恰好一个答案；多选、顺序、反向、炸弹组合通过合法性测试。
-- 干扰项不能明显无关，也不能形成第二个合理答案。
-- 事实题来源可追溯，有审核状态和复审日期。
-- 做同主题、同题族、同答案和语义近重复审计。
-- 至少通过 1,000 Seed 回归；新题族必须增加单测。
-- 真机检查目标不拥挤、文字不裁切、反应时间合理。
-- 提升 `CONTENT_VERSION`，验证每日、好友挑战及旧分享兼容。
+## 9. 2026-08-18 MVP 纵切更新
 
-## 8. 仍需补充的其他工作
+本轮已在不破坏旧编辑器视觉基线的前提下加入运行时 `GameplayMVP`：
 
-- 正式音频和低端机性能分档。
-- 微信开发者工具提审构建、不同机型安全区和真机长局测试。
-- 排行榜、开放数据域和头像授权相关改动需专项回归。
-- 当前工作区有 23 项改动/未跟踪项，不是干净基线。
+- Home 的今日挑战和 60 秒乱斗按钮已能进入 Gameplay，并传递模式、Seed 与内容版本；
+- Gameplay 已接入 60 秒、3 生命、分数、Combo、题目超时、Master Hit 和一次性结算；
+- 加入纯 TypeScript 的确定性 RNG、题目生成、规则、手势、计分、难度、公平性和 GameSession 模块；
+- 支持标准、反向、多目标、顺序、Stroop 与炸弹，炸弹不会被 Reverse 变为正确项；
+- 加入六主题最小纵切内容、首次复杂规则无惩罚教学、本地存档和设置弹窗；
+- 结算以 Gameplay 内全屏 Result 覆盖层实现，支持再来一局、挑战好友和返回首页；
+- 微信分享载荷包含 `seed/contentVersion/recipeId/targetScore`，版本不兼容时不会恢复挑战；
+- 切后台冻结局内逻辑，恢复前显示 600ms `READY`；
+- `tests/domain.test.ts` 包含 1000 Seed 确定性与合法性回归。
 
-当前未提交内容涉及 Gameplay、目标排版、首页/排行榜、好友挑战炸弹、计时、填空符号、微信平台服务、开放数据域、排行榜图片、`TargetTypography.ts` 和 `default_avatar.png` 删除。接手者应先运行 `git status`、`git diff` 确认归属，不要直接覆盖或回滚。
-
-## 9. 本次验证
-
-2026-08-29：
-
-- 题库审计通过：19 packs、1,004 条基础记录。
-- 自动测试 90/90 通过。
-- 覆盖 1,000 Seed 多轮确定性合法性、试炼塔 100 Seed、题目冷却、题库统计、规则兼容和布局。
-
-```powershell
-npm run audit:questions
-npm test
-```
-
-测试中的 Node experimental warning 和 package 未声明 `type: module` 警告不影响结果。
-
-## 10. 最重要的原则
-
-- 生成组合数不能替代审核过的基础内容数。
-- 先解决格式、审核、版本和导入流程，再大规模堆题。
-- 优先补最薄主题和新认知动作，不要继续让常识单主题膨胀。
-- 题目必须服务高速斩击：短题干、短答案、快速辨认，不能变成传统四选一学习 App。
-- 新题和新规则必须保持 Seed 可复现、公平性校验和好友挑战兼容。
+尚未完成的发布工作：独立 Boot/Result 场景、正式音频资源、每主题 5 个题型族及完整审核素材量、三档真机十局测试、微信开发者工具提审构建。当前实现是可玩的 MVP 纵切，不应将这些发布门禁标记为完成。

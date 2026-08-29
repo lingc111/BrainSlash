@@ -16,7 +16,7 @@ export const HOME_PORTRAIT_SECTION_HEIGHTS: Readonly<Record<HomeSectionId, numbe
     header: 138,
     daily: 600,
     brawl: 266,
-    events: 476,
+    events: 420,
     rank: 112,
 };
 
@@ -38,16 +38,11 @@ export function calculateHomePortraitLayout(
     topInset: number,
     bottomInset: number,
 ): HomePortraitLayout {
-    // Some WeChat DevTools device profiles briefly expose incomplete safe-area
-    // data while the canvas is being created. Keep one bad platform value from
-    // turning every section position and scale into NaN.
-    const height = Number.isFinite(visibleHeight) ? Math.max(1, visibleHeight) : 1_672;
-    const safeTopInset = Number.isFinite(topInset) ? Math.max(0, topInset) : 54;
-    const safeBottomInset = Number.isFinite(bottomInset) ? Math.max(0, bottomInset) : 42;
+    const height = Math.max(1, visibleHeight);
     const topEdge = height * 0.5;
     const bottomEdge = -height * 0.5;
-    const navigationY = bottomEdge + safeBottomInset + NAVIGATION_HEIGHT * 0.5;
-    const contentTop = topEdge - safeTopInset;
+    const navigationY = bottomEdge + Math.max(0, bottomInset) + NAVIGATION_HEIGHT * 0.5;
+    const contentTop = topEdge - Math.max(0, topInset);
     const contentBottom = navigationY + NAVIGATION_HEIGHT * 0.5 + CONTENT_NAVIGATION_GAP;
     const availableHeight = Math.max(1, contentTop - contentBottom);
     const baseHeight = SECTIONS.reduce((total, section) => total + section.height, 0);

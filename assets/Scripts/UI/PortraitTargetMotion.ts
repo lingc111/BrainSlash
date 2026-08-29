@@ -98,18 +98,6 @@ export function evaluatePortraitTargetMotion(
     };
 }
 
-export function evaluatePortraitTargetRotation(
-    motion: PortraitTargetMotionPlan,
-    elapsedSeconds: number,
-    rotating: boolean,
-): number {
-    const local = Math.max(0, elapsedSeconds);
-    const entranceAngle = motion.entranceAngle * Math.max(0, 1 - Math.min(1, local / 0.24));
-    if (!rotating) return entranceAngle;
-    const direction = Math.sin(motion.phase) >= 0 ? 1 : -1;
-    return entranceAngle + direction * local * 120 * motion.speed;
-}
-
 /**
  * Small deterministic circle separation used after the authored trajectory.
  * Its capped correction is deliberately not strong enough to hide a broken

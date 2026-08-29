@@ -1,121 +1,68 @@
 import { sys } from 'cc';
-import { beginDailyRun, recordDailyRun } from '../domain/DailyChallenge';
-import { normalizeFriendChallengeConfig } from '../domain/FriendChallenge';
-import { brawlRecordFromRun, isBetterBrawlRecord } from '../domain/Leaderboard';
-import type { FriendChallengeConfig, GameEntryParams, GameResult, RunResult } from '../domain/Models';
-import { finalizeResult, XP_PER_CORRECT, XP_PER_LEVEL } from '../domain/ResultSummary';
-import { commitTowerFloor, type TowerFloorResult } from '../domain/TowerMode';
-import {
-    createDefaultSave,
-    migrateV1ToV5,
-    migrateV2ToV5,
-    migrateV3ToV5,
-    migrateV4ToV5,
-    normalizeV5,
-    type SaveDataV1,
-    type SaveDataV2,
-    type SaveDataV3,
-    type SaveDataV4,
-    type SaveDataV5,
-    type SaveSettings,
-} from './SaveData';
+import { beginDailyRun, dailyRecipeById, recordDailyRun, type LocalDailyRecord } from '../domain/DailyChallenge';
+import type { GameEntryParams, GameResult, PlayerProgress, RuleId, RunResult } from '../domain/Models';
+import { finalizeResult } from '../domain/ResultSummary';
 
-export type { SaveDataV1, SaveDataV2, SaveDataV3, SaveDataV4, SaveDataV5, SaveSettings } from './SaveData';
+export interface SaveDataV1 {
+    schemaVersion: 1;
+    player: PlayerProgress;
+    settings: { music: boolean; sfx: boolean; vibration: boolean; quality: 'auto' | 'low' | 'medium' | 'high' };
+    tutorials: Partial<Record<RuleId, boolean>>;
+    daily?: LocalDailyRecord;
+}
 
-const KEY_V1 = 'brain-slash.save.v1';
-const KEY_V2 = 'brain-slash.save.v2';
-const KEY_V3 = 'brain-slash.save.v3';
-const KEY_V4 = 'brain-slash.save.v4';
-const KEY_V5 = 'brain-slash.save.v5';
+const KEY = 'brain-slash.save.v1';
+const DEFAULT_SAVE: SaveDataV1 = {
+    schemaVersion: 1, player: { level: 1, xp: 0, bestScore: 0 },
+    settings: { music: true, sfx: true, vibration: true, quality: 'auto' }, tutorials: {},
+};
 
 export class SaveService {
-    private data: SaveDataV5 = createDefaultSave();
+    private data: SaveDataV1 = clone(DEFAULT_SAVE);
 
-    public load(): SaveDataV5 {
-        const rawV5 = safeParse(sys.localStorage.getItem(KEY_V5));
-        if (rawV5 && (rawV5 as Partial<SaveDataV5>).schemaVersion === 5) {
-            this.data = normalizeV5(rawV5 as Partial<SaveDataV5>);
-            return this.snapshot();
-        }
-        const rawV4 = safeParse(sys.localStorage.getItem(KEY_V4));
-        if (rawV4 && (rawV4 as Partial<SaveDataV4>).schemaVersion === 4) {
-            this.data = migrateV4ToV5(rawV4 as Partial<SaveDataV4>);
-            this.persist();
-            return this.snapshot();
-        }
-        const rawV3 = safeParse(sys.localStorage.getItem(KEY_V3));
-        if (rawV3 && (rawV3 as Partial<SaveDataV3>).schemaVersion === 3) {
-            this.data = migrateV3ToV5(rawV3 as Partial<SaveDataV3>);
-            this.persist();
-            return this.snapshot();
-        }
-        const rawV2 = safeParse(sys.localStorage.getItem(KEY_V2));
-        if (rawV2 && (rawV2 as Partial<SaveDataV2>).schemaVersion === 2) {
-            this.data = migrateV2ToV5(rawV2 as Partial<SaveDataV2>);
-            this.persist();
-            return this.snapshot();
-        }
-        const rawV1 = safeParse(sys.localStorage.getItem(KEY_V1));
-        this.data = rawV1 && (rawV1 as Partial<SaveDataV1>).schemaVersion === 1
-            ? migrateV1ToV5(rawV1 as Partial<SaveDataV1>) : createDefaultSave();
-        this.persist();
+    public load(): SaveDataV1 {
+        try {
+            const parsed = JSON.parse(sys.localStorage.getItem(KEY) ?? 'null') as Partial<SaveDataV1> | null;
+            if (!parsed || parsed.schemaVersion !== 1) throw new Error('Unsupported or missing save.');
+            this.data = {
+                ...clone(DEFAULT_SAVE), ...parsed,
+                player: { ...DEFAULT_SAVE.player, ...parsed.player },
+                settings: { ...DEFAULT_SAVE.settings, ...parsed.settings }, tutorials: { ...parsed.tutorials },
+                daily: validDailyRecord(parsed.daily) ? { ...parsed.daily, tutorialBaseline: parsed.daily.tutorialBaseline ?? [] } : undefined,
+            };
+        } catch { this.data = clone(DEFAULT_SAVE); }
         return this.snapshot();
     }
 
-    public snapshot(): SaveDataV5 { return clone(this.data); }
-
+    public snapshot(): SaveDataV1 { return clone(this.data); }
     public commitResult(run: RunResult): GameResult {
         const committed = finalizeResult(run, this.data.player);
         this.data.player = committed.player;
-        if (run.entry.mode === 'brawl60') {
-            const record = brawlRecordFromRun(run);
-            if (isBetterBrawlRecord(record, this.data.leaderboard.brawlBest)) this.data.leaderboard.brawlBest = record;
-        }
         const daily = recordDailyRun(this.data.daily, run);
         if (daily) this.data.daily = daily.record;
         this.persist();
         return daily ? { ...committed.result, daily: daily.result } : committed.result;
     }
-
-    public commitTowerResult(run: RunResult, life: number): TowerFloorResult {
-        const commit = commitTowerFloor(this.data.tower, run, life);
-        this.data.tower = commit.progress;
-        this.data.leaderboard.trialAnsweredCount += Math.max(0, Math.floor(run.correctCount + run.errorCount));
-        this.data.leaderboard.trialCorrectCount += Math.max(0, Math.floor(run.correctCount));
-        const xp = this.data.player.xp + Math.max(0, Math.floor(run.correctCount)) * XP_PER_CORRECT;
-        this.data.player = { ...this.data.player, xp, level: 1 + Math.floor(xp / XP_PER_LEVEL) };
-        this.persist();
-        return commit.result;
-    }
-
+    public markTutorial(rule: RuleId): void { this.data.tutorials[rule] = true; this.persist(); }
     public beginDaily(entry: GameEntryParams): void {
         const record = beginDailyRun(this.data.daily, entry, this.data.tutorials);
         if (!record || record === this.data.daily) return;
-        this.data.daily = record;
-        this.persist();
+        this.data.daily = record; this.persist();
     }
-
-    public updateSettings(patch: Partial<SaveSettings>): void {
-        this.data.settings = { ...this.data.settings, ...patch };
-        this.persist();
-    }
-
-    public updateLastFriendChallengeConfig(config: FriendChallengeConfig): boolean {
-        const normalized = normalizeFriendChallengeConfig(config);
-        if (!normalized.valid) return false;
-        this.data.lastFriendChallengeConfig = normalized.config;
-        this.persist();
-        return true;
-    }
-
-    private persist(): void {
-        try { sys.localStorage.setItem(KEY_V5, JSON.stringify(this.data)); } catch { /* Storage can be unavailable in preview. */ }
-    }
-}
-
-function safeParse(value: string | null): unknown {
-    if (!value) return null;
-    try { return JSON.parse(value) as unknown; } catch { return null; }
+    public updateSettings(patch: Partial<SaveDataV1['settings']>): void { this.data.settings = { ...this.data.settings, ...patch }; this.persist(); }
+    private persist(): void { try { sys.localStorage.setItem(KEY, JSON.stringify(this.data)); } catch { /* Storage can be unavailable in preview. */ } }
 }
 
 function clone<T>(value: T): T { return JSON.parse(JSON.stringify(value)) as T; }
+
+function validDailyRecord(value: unknown): value is LocalDailyRecord {
+    const record = value as Partial<LocalDailyRecord> | null | undefined;
+    return !!record
+        && /^\d{4}-\d{2}-\d{2}$/.test(record.dateKey ?? '')
+        && typeof record.recipeId === 'string' && !!dailyRecipeById(record.recipeId)
+        && typeof record.attempts === 'number' && Number.isInteger(record.attempts) && record.attempts >= 0
+        && typeof record.bestScore === 'number' && Number.isFinite(record.bestScore) && record.bestScore >= 0
+        && typeof record.lastScore === 'number' && Number.isFinite(record.lastScore) && record.lastScore >= 0
+        && typeof record.completed === 'boolean'
+        && (record.tutorialBaseline === undefined || (Array.isArray(record.tutorialBaseline) && record.tutorialBaseline.every((rule) => ['reverse', 'multi', 'order', 'stroop', 'bomb'].includes(rule))));
+}

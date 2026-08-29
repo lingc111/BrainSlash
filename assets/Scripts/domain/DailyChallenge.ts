@@ -1,24 +1,14 @@
 import type { DailyChallengeResult, GameEntryParams, RuleId, RunResult, ThemeId } from './Models';
-import type { ContentFamilyKind } from './ContentCatalog';
 
-export type DailyRecipeId =
-    | 'number-lab'
-    | 'logic-detective'
-    | 'word-case'
-    | 'world-tour'
-    | 'common-knowledge'
-    | 'history-adventure'
-    | 'english-sprint';
+export type DailyRecipeId = 'even-hunt' | 'reverse-day' | 'flag-hunter' | 'idiom-rush' | 'color-trick' | 'life-instinct' | 'speed-mix';
 
 export interface DailyRecipe {
     id: DailyRecipeId;
     title: string;
     accent: string;
     themeWeights: Readonly<Record<ThemeId, number>>;
-    familyKinds: readonly ContentFamilyKind[];
-    allowedRules: readonly RuleId[];
+    preferredRule?: Exclude<RuleId, 'standard'>;
     speedMultiplier: number;
-    targetScore: number;
 }
 
 export interface LocalDailyRecord {
@@ -28,9 +18,6 @@ export interface LocalDailyRecord {
     bestScore: number;
     lastScore: number;
     completed: boolean;
-    targetScore: number;
-    targetAchieved: boolean;
-    achievedAt?: number;
     tutorialBaseline: Exclude<RuleId, 'standard'>[];
 }
 
@@ -38,7 +25,6 @@ export interface DailyChallengeDefinition {
     dateKey: string;
     endTime: number;
     recipe: DailyRecipe;
-    targetScore: number;
     entry: GameEntryParams;
 }
 
@@ -46,47 +32,18 @@ export interface DailyHomePresentation {
     accent: string;
     title: string;
     status: string;
-    goal: string;
-    achieved: boolean;
+    actionLabel: '开斩' | '再战今日';
     endTime: number;
 }
 
 const RECIPES: readonly DailyRecipe[] = [
-    {
-        id: 'number-lab', title: '数字训练营', accent: '数', themeWeights: weights({ math: 8 }),
-        familyKinds: ['math-add', 'math-subtract', 'math-multiply', 'math-property', 'math-compare', 'math-sequence'],
-        allowedRules: ['standard', 'bomb', 'multi', 'order', 'reverse', 'rotate'], speedMultiplier: 1.04, targetScore: 1600,
-    },
-    {
-        id: 'logic-detective', title: '逻辑侦探社', accent: '探', themeWeights: weights({ math: 4, vision: 6 }),
-        familyKinds: ['math-property', 'math-compare', 'math-sequence', 'vision-odd', 'vision-count', 'vision-stroop', 'vision-pattern'],
-        allowedRules: ['standard', 'bomb', 'multi', 'order', 'reverse', 'rotate'], speedMultiplier: 1, targetScore: 1500,
-    },
-    {
-        id: 'word-case', title: '文字谜案局', accent: '字', themeWeights: weights({ hanzi: 8 }),
-        familyKinds: ['hanzi-fill', 'hanzi-order', 'hanzi-antonym', 'hanzi-synonym'],
-        allowedRules: ['standard', 'bomb', 'order', 'reverse', 'rotate'], speedMultiplier: 0.92, targetScore: 1200,
-    },
-    {
-        id: 'world-tour', title: '世界漫游记', accent: '游', themeWeights: weights({ geography: 8 }),
-        familyKinds: ['geography-capital', 'geography-country'],
-        allowedRules: ['standard', 'bomb', 'reverse', 'rotate'], speedMultiplier: 0.94, targetScore: 1200,
-    },
-    {
-        id: 'common-knowledge', title: '常识万花筒', accent: '知', themeWeights: weights({ knowledge: 8 }),
-        familyKinds: ['knowledge-science', 'knowledge-nature', 'knowledge-culture', 'knowledge-civic'],
-        allowedRules: ['standard', 'bomb', 'reverse', 'rotate'], speedMultiplier: 0.96, targetScore: 1300,
-    },
-    {
-        id: 'history-adventure', title: '历史奇遇记', accent: '史', themeWeights: weights({ history: 8 }),
-        familyKinds: ['history-modern-opening', 'history-modern-awakening', 'history-modern-resistance', 'history-ancient', 'history-myth'],
-        allowedRules: ['standard', 'bomb', 'reverse', 'rotate'], speedMultiplier: 0.92, targetScore: 1200,
-    },
-    {
-        id: 'english-sprint', title: '双语快问', accent: '译', themeWeights: weights({ english: 8 }),
-        familyKinds: ['english-meaning', 'english-category', 'english-antonym'],
-        allowedRules: ['standard', 'bomb', 'multi', 'reverse', 'rotate'], speedMultiplier: 0.96, targetScore: 1400,
-    },
+    { id: 'even-hunt', title: '偶数猎杀', accent: '偶', themeWeights: weights({ math: 7, vision: 4 }), preferredRule: 'multi', speedMultiplier: 1 },
+    { id: 'reverse-day', title: '反向日', accent: '反', themeWeights: weights({ math: 3, vision: 3, english: 2, hanzi: 2, geography: 2, life: 2 }), preferredRule: 'reverse', speedMultiplier: 1 },
+    { id: 'flag-hunter', title: '国旗猎人', accent: '旗', themeWeights: weights({ geography: 7, vision: 3 }), preferredRule: 'multi', speedMultiplier: 1 },
+    { id: 'idiom-rush', title: '成语连斩', accent: '成', themeWeights: weights({ hanzi: 7, vision: 2 }), preferredRule: 'order', speedMultiplier: 1 },
+    { id: 'color-trick', title: '颜色骗局', accent: '色', themeWeights: weights({ vision: 7, english: 3 }), preferredRule: 'stroop', speedMultiplier: 1 },
+    { id: 'life-instinct', title: '生活快手', accent: '快', themeWeights: weights({ life: 7, vision: 3 }), preferredRule: 'bomb', speedMultiplier: 1 },
+    { id: 'speed-mix', title: '极速混战', accent: '速', themeWeights: weights({ math: 2, vision: 2, english: 2, hanzi: 2, geography: 2, life: 2 }), speedMultiplier: 1.12 },
 ];
 
 export function localDateKey(now: Date): string {
@@ -110,14 +67,12 @@ export function createDailyChallenge(now: Date, contentVersion: string): DailyCh
         dateKey,
         endTime: nextLocalDayStart(now),
         recipe,
-        targetScore: recipe.targetScore,
         entry: {
             mode: 'daily',
             seed: `daily:${contentVersion}:${dateKey}:${recipe.id}`,
             contentVersion,
             recipeId: recipe.id,
             dailyDate: dateKey,
-            dailyTargetScore: recipe.targetScore,
         },
     };
 }
@@ -132,52 +87,37 @@ export function recordDailyRun(previous: LocalDailyRecord | undefined, run: RunR
     const attempts = (current?.attempts ?? 0) + 1;
     const bestScore = Math.max(previousBestScore, run.score);
     const isNewBest = !current?.completed || run.score > previousBestScore;
-    const targetScore = positiveTarget(run.entry.dailyTargetScore) ?? recipe.targetScore;
-    const targetAchieved = run.score >= targetScore;
-    const firstAchievement = targetAchieved && !current?.targetAchieved;
-    const achievedAt = current?.achievedAt ?? (targetAchieved ? Date.now() : undefined);
     return {
-        record: {
-            dateKey, recipeId: recipe.id, attempts, bestScore, lastScore: run.score, completed: true,
-            targetScore, targetAchieved: !!current?.targetAchieved || targetAchieved,
-            ...(achievedAt === undefined ? {} : { achievedAt }),
-            tutorialBaseline: current?.tutorialBaseline ?? [],
-        },
-        result: { dateKey, recipeId: recipe.id, attempts, previousBestScore, bestScore, isNewBest, targetScore, targetAchieved, firstAchievement },
+        record: { dateKey, recipeId: recipe.id, attempts, bestScore, lastScore: run.score, completed: true, tutorialBaseline: current?.tutorialBaseline ?? [] },
+        result: { dateKey, recipeId: recipe.id, attempts, previousBestScore, bestScore, isNewBest },
     };
 }
 
 export function beginDailyRun(
     previous: LocalDailyRecord | undefined,
     entry: GameEntryParams,
-    _learned: Readonly<Partial<Record<RuleId, boolean>>>,
+    learned: Readonly<Partial<Record<RuleId, boolean>>>,
 ): LocalDailyRecord | null {
     if (entry.mode !== 'daily') return null;
     const dateKey = entry.dailyDate ?? dateKeyFromSeed(entry.seed);
     const recipe = dailyRecipeById(entry.recipeId);
     if (!dateKey || !recipe) return null;
     if (previous?.dateKey === dateKey && previous.recipeId === recipe.id) return previous;
-    return {
-        dateKey, recipeId: recipe.id, attempts: 0, bestScore: 0, lastScore: 0, completed: false,
-        targetScore: positiveTarget(entry.dailyTargetScore) ?? recipe.targetScore,
-        targetAchieved: false, tutorialBaseline: [],
-    };
+    const tutorialBaseline = (['reverse', 'multi', 'order', 'stroop', 'bomb'] as const).filter((rule) => learned[rule]);
+    return { dateKey, recipeId: recipe.id, attempts: 0, bestScore: 0, lastScore: 0, completed: false, tutorialBaseline };
+}
+
+export function dailyTutorialProgress(record: LocalDailyRecord | undefined): Partial<Record<RuleId, boolean>> {
+    return Object.fromEntries((record?.tutorialBaseline ?? []).map((rule) => [rule, true]));
 }
 
 export function createDailyHomePresentation(challenge: DailyChallengeDefinition, record?: LocalDailyRecord): DailyHomePresentation {
     const current = record?.dateKey === challenge.dateKey && record.recipeId === challenge.recipe.id ? record : undefined;
-    const targetScore = current?.targetScore ?? challenge.targetScore;
-    const achieved = !!current?.targetAchieved;
-    const status = !current?.completed
-        ? '今日固定题 · 首战待斩'
-        : achieved ? `已达标 · 最佳 ${current.bestScore}`
-        : `最佳 ${current.bestScore} · 还差 ${Math.max(0, targetScore - current.bestScore)}`;
     return {
         accent: challenge.recipe.accent,
         title: challenge.recipe.title,
-        status,
-        goal: `目标 ${targetScore} 分`,
-        achieved,
+        status: current?.completed ? `今日最佳 ${current.bestScore} · 已战 ${current.attempts} 次` : '今日首战 · 全员同题',
+        actionLabel: current?.completed ? '再战今日' : '开斩',
         endTime: challenge.endTime,
     };
 }
@@ -190,13 +130,7 @@ function weights(preferred: Partial<Record<ThemeId, number>>): Readonly<Record<T
         hanzi: preferred.hanzi ?? 1,
         geography: preferred.geography ?? 1,
         life: preferred.life ?? 1,
-        knowledge: preferred.knowledge ?? 1,
-        history: preferred.history ?? 1,
     };
-}
-
-function positiveTarget(value: unknown): number | undefined {
-    return typeof value === 'number' && Number.isFinite(value) && value > 0 ? Math.floor(value) : undefined;
 }
 
 function dateKeyFromSeed(seed: string): string | undefined {

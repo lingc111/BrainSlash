@@ -11,13 +11,6 @@ library/
 temp/
 local/
 build/
-build-templates/*
-!build-templates/wechatgame/
-build-templates/wechatgame/*
-!build-templates/wechatgame/game.ejs
-!build-templates/wechatgame/game.json
-!build-templates/wechatgame/openDataContext/
-!build-templates/wechatgame/openDataContext/**
 profiles/
 native
 .creator/

@@ -1,51 +1,32 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
-import { CONTENT_VERSION, GAMEPLAY_CONFIG, validateRuleSet } from '../assets/Scripts/configs/GameConfig.ts';
-import { Brawl60Director, FriendChallengeDirector, familySupportsRules, isDirectionSensitiveFamily, legalRuleSetsForTheme, phaseAt, targetCountForFamily } from '../assets/Scripts/domain/Brawl60Director.ts';
+import { CONTENT_VERSION, GAMEPLAY_CONFIG } from '../assets/Scripts/configs/GameConfig.ts';
+import { Brawl60Director, familySupportsRules, phaseAt, targetCountForFamily } from '../assets/Scripts/domain/Brawl60Director.ts';
 import {
     CONTENT_FAMILIES,
     CONTENT_FAMILY_TARGETS,
-    ENGLISH_ANTONYMS,
     ENGLISH_WORDS,
     GEOGRAPHY_FACTS,
-    HISTORY_ANCIENT_FACTS,
-    HISTORY_MODERN_AWAKENING_FACTS,
-    HISTORY_MODERN_OPENING_FACTS,
-    HISTORY_MODERN_RESISTANCE_FACTS,
-    HISTORY_MYTH_FACTS,
     IDIOMS,
-    KNOWLEDGE_CULTURE_FACTS,
-    KNOWLEDGE_NATURE_FACTS,
-    KNOWLEDGE_SCIENCE_FACTS,
-    LIFE_CATEGORY_FACTS,
+    LIFE_FACTS,
 } from '../assets/Scripts/domain/ContentCatalog.ts';
-import { HANZI_ANTONYM_FACTS, HANZI_SYNONYM_FACTS } from '../assets/Scripts/domain/HanziRelationCatalog.ts';
-import {
-    KNOWLEDGE_CIVIC_FACTS,
-    KNOWLEDGE_CULTURE_EXPANSION,
-    KNOWLEDGE_NATURE_EXPANSION,
-    KNOWLEDGE_SCIENCE_EXPANSION,
-} from '../assets/Scripts/domain/KnowledgeExpansionCatalog.ts';
-import { getQuestionBankStats, QUESTION_BANK_PACKS } from '../assets/Scripts/domain/QuestionBankRegistry.ts';
 import { GameSession } from '../assets/Scripts/domain/GameSession.ts';
 import { countdownWarningSecond, failureFeedback, successFeedback } from '../assets/Scripts/domain/GameFeedback.ts';
-import { beginDailyRun, createDailyChallenge, createDailyHomePresentation, dailyRecipeById, localDateKey, recordDailyRun } from '../assets/Scripts/domain/DailyChallenge.ts';
+import { beginDailyRun, createDailyChallenge, createDailyHomePresentation, dailyRecipeById, dailyTutorialProgress, localDateKey, recordDailyRun } from '../assets/Scripts/domain/DailyChallenge.ts';
 import {
     canStartFriendChallenge,
     createFriendChallengePayload,
-    DEFAULT_FRIEND_CHALLENGE_CONFIG,
     encodeFriendChallengeQuery,
-    FRIEND_CHALLENGE_RULES,
     friendTargetPresentation,
-    normalizeFriendChallengeConfig,
     parseFriendChallengeQuery,
 } from '../assets/Scripts/domain/FriendChallenge.ts';
 import { GestureResolver, shouldKeepIncompleteGesture } from '../assets/Scripts/domain/GestureResolver.ts';
-import type { FriendChallengeConfig, PlayerProgress, QuestionInstance, RunResult } from '../assets/Scripts/domain/Models.ts';
+import type { PlayerProgress, QuestionInstance, RunResult } from '../assets/Scripts/domain/Models.ts';
 import { QuestionGenerator } from '../assets/Scripts/domain/QuestionGenerator.ts';
 import { createResultPresentation, finalizeResult } from '../assets/Scripts/domain/ResultSummary.ts';
-import { createMistakeRecord, evaluateRules, questionFlightDurationSeconds, questionPreviewDurationSeconds, rulesForReadableTargets, slashRuleCount, slashRuleLabel } from '../assets/Scripts/domain/Rules.ts';
+import { evaluateRules } from '../assets/Scripts/domain/Rules.ts';
 import { SeededRng } from '../assets/Scripts/domain/SeededRng.ts';
+import { prepareRuleTutorial, tutorialRetryInstruction } from '../assets/Scripts/domain/RuleTutorial.ts';
 import { validateQuestion } from '../assets/Scripts/domain/FairnessValidator.ts';
 import { difficultyAt } from '../assets/Scripts/domain/DifficultyDirector.ts';
 import {
@@ -56,30 +37,14 @@ import {
 import { RunSeedFactory } from '../assets/Scripts/app/RunSeedFactory.ts';
 import { PlatformService } from '../assets/Scripts/infrastructure/PlatformService.ts';
 import { AudioService, SoundThrottle } from '../assets/Scripts/infrastructure/AudioService.ts';
-import { migrateV1ToV2, migrateV2ToV3, migrateV3ToV4, migrateV4ToV5 } from '../assets/Scripts/infrastructure/SaveData.ts';
-import { brawlRecordFromRun, createLocalLeaderboard, emptyBrawlRecord } from '../assets/Scripts/domain/Leaderboard.ts';
-import { TowerDirector } from '../assets/Scripts/domain/TowerDirector.ts';
-import {
-    DEFAULT_TOWER_PROGRESS,
-    allowedBrawlRules,
-    commitTowerFloor,
-    normalizeTowerProgress,
-    towerFloorConfig,
-    towerPointsForClear,
-    towerTimeBonus,
-    unlockedRulesForTower,
-} from '../assets/Scripts/domain/TowerMode.ts';
 import { calculatePortraitTargetLayout, portraitTargetEntranceDelay } from '../assets/Scripts/UI/PortraitTargetLayout.ts';
 import {
     createPortraitTargetMotionPlans,
     evaluatePortraitTargetMotion,
-    evaluatePortraitTargetRotation,
     PORTRAIT_TARGET_MAX_SEPARATION_OFFSET,
     PORTRAIT_TARGET_MIN_SEPARATION,
     resolveSoftTargetSeparation,
 } from '../assets/Scripts/UI/PortraitTargetMotion.ts';
-import { ACTIVE_TARGET_SKINS, ALL_TARGET_SKINS, COLOR_QUESTION_TARGET_SKIN, TARGET_SKIN_VISUAL_SCALE, targetContentLayout, targetShapeForSkin, targetSkinForAnswer, targetSkinPixelScale, targetSkinVisualScale, uniqueColorTargetSkins } from '../assets/Scripts/UI/TargetSkinSizing.ts';
-import { targetTextPresentation } from '../assets/Scripts/UI/TargetTypography.ts';
 
 function pipeline(seed: string): { director: Brawl60Director; generator: QuestionGenerator } {
     return {
@@ -118,8 +83,7 @@ test('friend challenge payload round-trips and rebuilds the same question sequen
     assert.equal(parsed.status, 'valid');
     if (parsed.status !== 'valid') return;
     assert.deepEqual(parsed.entry, {
-        mode: 'friendChallenge', seed: 'shared:/?seed&1', contentVersion: CONTENT_VERSION,
-        recipeId: 'mixed', challengeRole: 'responder', targetScore: 987,
+        mode: 'friendChallenge', seed: 'shared:/?seed&1', contentVersion: CONTENT_VERSION, recipeId: 'mixed', targetScore: 987,
     });
     const first = pipeline(parsed.entry.seed), second = pipeline(parsed.entry.seed);
     for (let index = 0; index < 64; index++) {
@@ -246,11 +210,8 @@ test('sound throttle recovers from cooldowns and device clock rollback', () => {
 test('game feedback policy maps master, combo, failures and final countdown', () => {
     assert.deepEqual(successFeedback('correct', 4), { sound: 'correct', haptic: 'light', hitStopMs: 0, comboMilestone: false });
     assert.deepEqual(successFeedback('master', 10), { sound: 'master', haptic: 'medium', hitStopMs: 100, comboMilestone: true });
-    assert.deepEqual(successFeedback('masterSlash', 10), { sound: 'master', haptic: 'medium', hitStopMs: 120, comboMilestone: true });
-    assert.deepEqual(failureFeedback('bomb', 6), { sound: 'bomb', haptic: 'heavy', label: '', showComboBreak: true });
+    assert.deepEqual(failureFeedback('bomb', 6), { sound: 'bomb', haptic: 'heavy', label: '炸弹！', showComboBreak: true });
     assert.deepEqual(failureFeedback('orderError', 2), { sound: 'error', haptic: 'medium', label: '顺序错误', showComboBreak: false });
-    assert.deepEqual(failureFeedback('wrong', 0), { sound: 'error', haptic: 'medium', label: '', showComboBreak: false });
-    assert.deepEqual(failureFeedback('miss', 0), { sound: 'error', haptic: 'medium', label: '', showComboBreak: false });
     assert.equal(countdownWarningSecond(5_000, 6), 5);
     assert.equal(countdownWarningSecond(4_999, 5), null);
     assert.equal(countdownWarningSecond(4_000, 5), 4);
@@ -258,212 +219,70 @@ test('game feedback policy maps master, combo, failures and final countdown', ()
     assert.equal(countdownWarningSecond(0, 1), null);
 });
 
-test('numeric comparison targets remain primitive numbers with readable labels', () => {
-    const family = CONTENT_FAMILIES.find((candidate) => candidate.kind === 'math-compare')!;
-    const generator = new QuestionGenerator(new SeededRng('wechat-set-spread-regression'), GAMEPLAY_CONFIG);
-    const question = generator.next({
-        phase: 'warmup',
-        difficultyStage: 1,
-        targetCount: 2,
-        questionTimeMs: 3_000,
-        speed: 1,
-        family,
-        rules: ['standard'],
-    });
-
-    for (const target of question.targets) {
-        assert.equal(typeof target.value, 'number');
-        assert.match(target.text, /^\d+$/);
-    }
-});
-
-test('friend challenge config validates canonical themes, rules, durations and compatibility', () => {
-    assert.equal(normalizeFriendChallengeConfig({ themeIds: [], enabledRules: ['standard'], durationMs: 60_000 }).valid, false);
-    assert.equal(normalizeFriendChallengeConfig({ themeIds: ['math'], enabledRules: [], durationMs: 60_000 }).valid, false);
-    assert.equal(normalizeFriendChallengeConfig({ themeIds: ['math', 'math'], enabledRules: ['standard'], durationMs: 60_000 }).valid, false);
-    assert.equal(normalizeFriendChallengeConfig({ themeIds: ['math'], enabledRules: ['standard'], durationMs: 75_000 }).valid, false);
-    const incompatible = normalizeFriendChallengeConfig({ themeIds: ['geography'], enabledRules: ['multi'], durationMs: 90_000 });
-    assert.deepEqual(incompatible, { valid: false, reason: 'incompatible' });
-    const valid = normalizeFriendChallengeConfig({ themeIds: ['history', 'math'], enabledRules: ['bomb', 'reverse'], durationMs: 120_000 });
-    assert.deepEqual(valid, {
-        valid: true,
-        config: { themeIds: ['math', 'history'], enabledRules: ['reverse'], durationMs: 120_000 },
-    });
-    assert.deepEqual(FRIEND_CHALLENGE_RULES, ['standard', 'reverse', 'rotate', 'multi', 'order']);
-});
-
-test('friend challenge V2 parser rejects tampering and preserves custom configuration', () => {
-    const config: FriendChallengeConfig = { themeIds: ['math', 'english'], enabledRules: ['standard', 'reverse'], durationMs: 90_000 };
-    const payload = createFriendChallengePayload({
-        entry: { mode: 'friendChallenge', seed: 'custom-seed', contentVersion: CONTENT_VERSION, challengeConfig: config, challengeRole: 'creator' },
-        score: 1_234,
-    });
-    const query = decodeQuery(encodeFriendChallengeQuery(payload));
-    const parsed = parseFriendChallengeQuery(query, CONTENT_VERSION);
-    assert.equal(parsed.status, 'valid');
-    if (parsed.status === 'valid') {
-        assert.deepEqual(parsed.entry.challengeConfig, config);
-        assert.equal(parsed.entry.challengeRole, 'responder');
-        assert.equal(parsed.entry.targetScore, 1_234);
-    }
-    const legacy = parseFriendChallengeQuery({ ...query, rules: 'standard,reverse,bomb' }, CONTENT_VERSION);
-    assert.equal(legacy.status, 'valid');
-    if (legacy.status === 'valid') assert.deepEqual(legacy.entry.challengeConfig, config);
-    assert.equal(parseFriendChallengeQuery({ ...query, duration: '75000' }, CONTENT_VERSION).status, 'invalid');
-    assert.equal(parseFriendChallengeQuery({ ...query, themes: 'math,math' }, CONTENT_VERSION).status, 'invalid');
-    assert.equal(parseFriendChallengeQuery({ ...query, rules: 'multi', themes: 'geography' }, CONTENT_VERSION).status, 'invalid');
-});
-
-test('friend challenge director balances themes and remains deterministic with legal rules', () => {
-    const config: FriendChallengeConfig = {
-        themeIds: ['math', 'english', 'history'],
-        enabledRules: ['standard', 'reverse', 'rotate', 'multi', 'order'],
-        durationMs: 120_000,
-    };
-    const a = new FriendChallengeDirector(new SeededRng('friend-director'), config);
-    const b = new FriendChallengeDirector(new SeededRng('friend-director'), config);
-    for (let cycle = 0; cycle < 8; cycle++) {
-        const seen = new Set<string>();
-        for (let offset = 0; offset < config.themeIds.length; offset++) {
-            const elapsed = (cycle * config.themeIds.length + offset) * 3_777;
-            const left = a.next(elapsed);
-            const right = b.next(elapsed);
-            assert.deepEqual(left, right);
-            assert.equal(left.bombEnabled, true);
-            assert.ok(!left.rules.includes('bomb'));
-            seen.add(left.family.theme);
-            const legalKeys = legalRuleSetsForTheme(left.family.theme, config.enabledRules).map((rules) => [...rules].sort().join('+'));
-            assert.ok(legalKeys.includes([...left.rules].sort().join('+')));
-        }
-        assert.deepEqual([...seen].sort(), [...config.themeIds].sort());
-    }
-});
-
-test('friend challenge treats bombs as an always-on mechanic instead of a configured rule', () => {
-    const config: FriendChallengeConfig = {
-        themeIds: ['math'], enabledRules: ['standard'], durationMs: 60_000,
-    };
-    const director = new FriendChallengeDirector(new SeededRng('friend-bomb-director'), config);
-    const generator = new QuestionGenerator(new SeededRng('friend-bomb-questions'), GAMEPLAY_CONFIG);
-
-    for (let index = 0; index < 20; index++) {
-        const directive = director.next(index * 2_000);
+test('every complex rule first appears as a readable single-rule safe tutorial', () => {
+    const { director, generator } = pipeline('tutorial-coverage');
+    const learned: Partial<Record<'reverse' | 'multi' | 'order' | 'stroop' | 'bomb', boolean>> = {};
+    const elapsedSequence = [12_000, 28_000, 48_000];
+    for (let index = 0; index < 120 && Object.keys(learned).length < 5; index++) {
+        const prepared = prepareRuleTutorial(director.next(elapsedSequence[index % elapsedSequence.length]), learned);
+        if (!prepared.tutorial) continue;
+        const { directive, tutorial } = prepared;
+        assert.deepEqual(directive.rules, [tutorial.rule]);
+        assert.ok(familySupportsRules(directive.family, directive.rules));
+        assert.ok(directive.targetCount <= 4);
+        assert.ok(directive.questionTimeMs >= 3_400);
+        assert.ok(directive.speed <= 0.76);
         const question = generator.next(directive);
-        assert.equal(directive.bombEnabled, true);
-        assert.ok(!question.activeRules.includes('bomb'));
-        assert.equal(question.targets.filter((target) => target.isBomb).length, 1);
+        question.tutorialSafe = true;
+        assert.equal(validateQuestion(question, evaluateRules(question)).length, 0);
+        learned[tutorial.rule] = true;
     }
+    assert.deepEqual(Object.keys(learned).sort(), ['bomb', 'multi', 'order', 'reverse', 'stroop']);
 });
 
-test('friend challenge sessions honor 60, 90 and 120 second durations with three lives', () => {
-    for (const durationMs of [60_000, 90_000, 120_000] as const) {
-        const session = new GameSession({
-            mode: 'friendChallenge', seed: `duration-${durationMs}`, contentVersion: CONTENT_VERSION,
-            challengeRole: 'creator', challengeConfig: { themeIds: ['math'], enabledRules: ['standard'], durationMs },
-        }, GAMEPLAY_CONFIG);
-        assert.equal(session.state.life, 3);
-        assert.equal(session.state.remainingMs, durationMs);
-        session.start();
-        session.tick(durationMs - 1);
-        assert.equal(session.state.phase, 'playing');
-        session.tick(1);
-        assert.equal(session.state.phase, 'finished');
-        assert.equal(session.state.remainingMs, 0);
-    }
+test('learned rule pairs stay combined while tutorial retry copy explains the failure', () => {
+    const { director } = pipeline('tutorial-pairs');
+    let directive = director.next(50_000);
+    for (let index = 0; directive.rules.length < 2 && index < 20; index++) directive = director.next(50_000);
+    assert.equal(directive.rules.length, 2);
+    const first = prepareRuleTutorial(directive, {});
+    assert.ok(first.tutorial);
+    if (!first.tutorial) return;
+    const second = prepareRuleTutorial(directive, { [first.tutorial.rule]: true });
+    assert.ok(second.tutorial);
+    if (!second.tutorial) return;
+    const learned = prepareRuleTutorial(directive, { [first.tutorial.rule]: true, [second.tutorial.rule]: true });
+    assert.equal(learned.tutorial, null);
+    assert.deepEqual(learned.directive.rules, directive.rules);
+    assert.match(tutorialRetryInstruction(first.tutorial, 'wrong'), /再斩一次/);
+    assert.equal(tutorialRetryInstruction(first.tutorial, 'bomb'), '避开炸弹 · 再斩一次');
+    assert.equal(tutorialRetryInstruction(second.tutorial, 'orderError'), '顺序不对 · 再斩一次');
+    assert.match(tutorialRetryInstruction(second.tutorial, 'miss'), /别漏目标/);
 });
 
-test('rotation excludes reverse and every direction-sensitive family', () => {
-    assert.equal(validateRuleSet(['rotate']), true);
-    assert.equal(validateRuleSet(['multi', 'rotate']), true);
-    assert.equal(validateRuleSet(['reverse', 'rotate']), false);
-    for (const family of CONTENT_FAMILIES) {
-        if (isDirectionSensitiveFamily(family.kind)) {
-            assert.equal(familySupportsRules(family, ['rotate']), false);
-            assert.equal(familySupportsRules(family, ['bomb', 'rotate']), false);
-        }
-    }
-    const math = CONTENT_FAMILIES.find((family) => family.kind === 'math-add')!;
-    assert.equal(familySupportsRules(math, ['rotate']), true);
-    assert.equal(familySupportsRules(math, ['bomb', 'rotate']), true);
+test('tutorials switch to a compatible safe family when only the remaining rule needs it', () => {
+    const { director, generator } = pipeline('tutorial-fallback');
+    const base = director.next(50_000);
+    const stroopFamily = CONTENT_FAMILIES.find((family) => family.kind === 'vision-stroop');
+    assert.ok(stroopFamily);
+    if (!stroopFamily) return;
+    const prepared = prepareRuleTutorial({ ...base, family: stroopFamily, rules: ['bomb', 'stroop'] }, { stroop: true });
+    assert.equal(prepared.tutorial?.rule, 'bomb');
+    assert.notEqual(prepared.directive.family.id, stroopFamily.id);
+    assert.equal(familySupportsRules(prepared.directive.family, ['bomb']), true);
+    const question = generator.next(prepared.directive);
+    assert.equal(validateQuestion(question, evaluateRules(question)).length, 0);
 });
 
 test('reverse never turns a bomb into a required target', () => {
     const question: QuestionInstance = {
         id: 'reverse', theme: 'math', prompt: { text: '反向' },
         targets: [{ id: 'right', text: '2' }, { id: 'wrong', text: '3' }, { id: 'bomb', text: '爆', isBomb: true }],
-        baseCorrectTargetIds: ['right'], activeRules: ['reverse', 'bomb'], timeLimitMs: 3000,
+        baseCorrectTargetIds: ['right'], activeRules: ['reverse', 'bomb'], timeLimitMs: 3000, tutorialSafe: false,
     };
     const constraint = evaluateRules(question);
     assert.deepEqual(constraint.requiredTargetIds, ['wrong']);
     assert.deepEqual(constraint.forbiddenTargetIds, ['bomb']);
-});
-
-test('mistake review records the effective answer after applying rules', () => {
-    const question: QuestionInstance = {
-        id: 'mistake-reverse', theme: 'math', prompt: { text: '偶数' },
-        targets: [{ id: 'even', text: '2' }, { id: 'odd', text: '3' }, { id: 'bomb', text: '爆', isBomb: true }],
-        baseCorrectTargetIds: ['even'], activeRules: ['reverse', 'bomb'], timeLimitMs: 3_000,
-    };
-    const constraint = evaluateRules(question);
-    const mistake = createMistakeRecord(question, constraint, 'wrong', 'even');
-    assert.deepEqual(mistake, {
-        questionId: 'mistake-reverse', prompt: '偶数', ruleLabel: '反向', failureKind: 'wrong',
-        selectedAnswer: '2', correctAnswer: '3',
-    });
-    assert.equal(createMistakeRecord(question, constraint, 'miss').selectedAnswer, '超时未完成');
-});
-
-test('slash rule labels describe the gesture and ignore bomb distractors', () => {
-    assert.equal(slashRuleLabel(['standard']), '单选');
-    assert.equal(slashRuleLabel(['bomb']), '单选');
-    assert.equal(slashRuleLabel(['bomb', 'multi']), '多选');
-    assert.equal(slashRuleLabel(['order']), '顺序');
-    assert.equal(slashRuleLabel(['multi', 'reverse']), '多选 + 反向');
-    assert.equal(slashRuleCount(['bomb', 'multi']), 1);
-    assert.equal(slashRuleCount(['multi', 'reverse']), 2);
-    assert.equal(questionPreviewDurationSeconds(['bomb', 'multi']), 0.3);
-    assert.equal(questionPreviewDurationSeconds(['multi', 'reverse']), 0.7);
-    assert.equal(questionFlightDurationSeconds(2.5, ['standard']), 2.5);
-    assert.equal(questionFlightDurationSeconds(2.5, ['bomb']), 2.5);
-    assert.equal(questionFlightDurationSeconds(2.5, ['multi']), 3.85);
-    assert.equal(questionFlightDurationSeconds(2.5, ['order']), 3.85);
-    assert.equal(questionFlightDurationSeconds(2.5, ['reverse']), 3.85);
-    assert.equal(questionFlightDurationSeconds(2.5, ['rotate']), 3.85);
-    assert.equal(questionFlightDurationSeconds(2.5, ['multi', 'reverse']), 4.15);
-    assert.equal(questionFlightDurationSeconds(2.5, ['multi', 'rotate']), 4.15);
-    assert.equal(questionFlightDurationSeconds(2.5, ['multi', 'order']), 4.15);
-    assert.equal(questionFlightDurationSeconds(2.5, ['bomb', 'multi']), 3.85);
-    assert.equal(questionFlightDurationSeconds(2.25, ['standard'], 5), 3);
-    assert.equal(questionFlightDurationSeconds(2.25, ['bomb'], 5), 3);
-    const shortTargets = [{ id: 'a', text: '三字内' }, { id: 'b', text: '答案' }];
-    const longTargets = [{ id: 'a', text: '四字答案' }, { id: 'b', text: '答案' }];
-    assert.deepEqual(rulesForReadableTargets(['rotate'], shortTargets), ['rotate']);
-    assert.deepEqual(rulesForReadableTargets(['rotate'], longTargets), ['standard']);
-    assert.deepEqual(rulesForReadableTargets(['multi', 'rotate'], longTargets), ['multi']);
-    assert.deepEqual(rulesForReadableTargets(['order', 'rotate'], longTargets), ['order']);
-    assert.deepEqual(rulesForReadableTargets(['bomb', 'rotate'], [{ id: 'bomb', text: '四字炸弹', isBomb: true }, ...shortTargets]), ['bomb', 'rotate']);
-});
-
-test('four-character Chinese target answers use a large two-line layout', () => {
-    const presentation = targetTextPresentation('清洁工具');
-    assert.equal(presentation.displayText, '清洁\n工具');
-    assert.equal(presentation.fontSize, 42);
-    assert.ok(presentation.minimumHeightScale >= 1.3);
-    assert.equal(targetTextPresentation('book').displayText, 'book');
-});
-
-test('fill-in prompts show a spaced parenthesis placeholder', () => {
-    const fillFamilies = CONTENT_FAMILIES.filter((family) => family.kind === 'math-missing' || family.kind === 'hanzi-fill');
-    assert.ok(fillFamilies.length > 0);
-    for (const family of fillFamilies) {
-        const generator = new QuestionGenerator(new SeededRng(`placeholder-${family.id}`), GAMEPLAY_CONFIG);
-        const question = generator.next({
-            phase: 'action', difficultyStage: 1, targetCount: 4, questionTimeMs: 2_600,
-            speed: 1, family, rules: ['standard'],
-        });
-        assert.ok(question.prompt.text.includes('( )'), `${family.id}: ${question.prompt.text}`);
-        assert.equal(question.prompt.text.includes('□'), false, family.id);
-    }
 });
 
 test('order and multi gestures resolve once and reject incomplete strokes', () => {
@@ -505,7 +324,7 @@ test('standard parity accepts either even while multi parity requires all evens'
     const base: QuestionInstance = {
         id: 'parity', theme: 'math', prompt: { text: '斩偶数' },
         targets: [{ id: '6', text: '6', value: 6 }, { id: '12', text: '12', value: 12 }, { id: '13', text: '13', value: 13 }],
-        baseCorrectTargetIds: ['6', '12'], activeRules: ['standard'], timeLimitMs: 3000,
+        baseCorrectTargetIds: ['6', '12'], activeRules: ['standard'], timeLimitMs: 3000, tutorialSafe: false,
     };
     const standard = evaluateRules(base);
     assert.equal(standard.matchMode, 'any');
@@ -518,55 +337,6 @@ test('standard parity accepts either even while multi parity requires all evens'
     assert.equal(gesture.hit('6').status, 'continue');
     assert.equal(gesture.end(true).status, 'continue');
     assert.equal(gesture.hit('12').status, 'success');
-});
-
-test('master slash requires multiple answers completed without lifting the pointer', () => {
-    const constraint = { requiredTargetIds: ['a', 'b'], forbiddenTargetIds: [], matchMode: 'all' as const, ordered: false, allowExtraHits: false };
-    const continuous = new GestureResolver(constraint);
-    continuous.hit('a');
-    assert.deepEqual(continuous.hit('b'), { status: 'success', masterSlash: true });
-
-    const broken = new GestureResolver(constraint);
-    broken.hit('a');
-    assert.equal(broken.end(true).status, 'continue');
-    assert.deepEqual(broken.hit('b'), { status: 'success', masterSlash: false });
-
-    const single = new GestureResolver({ ...constraint, requiredTargetIds: ['a'], matchMode: 'any' });
-    assert.deepEqual(single.hit('a'), { status: 'success', masterSlash: false });
-    const reverseChoice = new GestureResolver({ ...constraint, requiredTargetIds: ['a', 'b'], matchMode: 'any' });
-    assert.deepEqual(reverseChoice.hit('a'), { status: 'success', masterSlash: false });
-});
-
-test('ordinary single selection generates exactly one correct target', () => {
-    const familyKinds = new Set(['math-property', 'english-category', 'life-category']);
-    const ruleSets = [['standard'], ['bomb'], ['rotate']] as const;
-    for (const family of CONTENT_FAMILIES.filter((candidate) => familyKinds.has(candidate.kind))) {
-        for (const rules of ruleSets) {
-            if (!familySupportsRules(family, rules)) continue;
-            for (let seedIndex = 0; seedIndex < 20; seedIndex++) {
-                const generator = new QuestionGenerator(new SeededRng(`single-${family.id}-${rules.join('+')}-${seedIndex}`), GAMEPLAY_CONFIG);
-                const question = generator.next({
-                    phase: 'climax', difficultyStage: 2, targetCount: 6, questionTimeMs: 3_000,
-                    speed: 1, family, rules: [...rules],
-                });
-                const constraint = evaluateRules(question);
-                assert.equal(constraint.requiredTargetIds.length, 1, `${family.id}:${rules.join('+')}`);
-                assert.equal(validateQuestion(question, constraint).includes('single-needs-one-target'), false);
-            }
-        }
-    }
-});
-
-test('reverse selection may still accept any one of multiple reversed targets', () => {
-    const question: QuestionInstance = {
-        id: 'reverse-single', theme: 'math', prompt: { text: '奇数' },
-        targets: [{ id: '3', text: '3', value: 3 }, { id: '4', text: '4', value: 4 }, { id: '6', text: '6', value: 6 }],
-        baseCorrectTargetIds: ['3'], activeRules: ['reverse'], timeLimitMs: 3_000,
-    };
-    const constraint = evaluateRules(question);
-    assert.deepEqual(constraint.requiredTargetIds, ['4', '6']);
-    assert.equal(constraint.matchMode, 'any');
-    assert.equal(validateQuestion(question, constraint).includes('single-needs-one-target'), false);
 });
 
 test('multi selection keeps correct progress across separate strokes', () => {
@@ -606,80 +376,21 @@ test('generated multi-step questions keep progress until every required target i
 test('session applies a question result only once', () => {
     const entry = { mode: 'brawl60' as const, seed: 's', contentVersion: 'v' };
     const session = new GameSession(entry, GAMEPLAY_CONFIG); session.start(); session.beginQuestion();
-    const q: QuestionInstance = { id: 'q', theme: 'math', prompt: { text: 'x' }, targets: [{ id: 'a', text: '1' }, { id: 'b', text: '2' }], baseCorrectTargetIds: ['a'], activeRules: ['standard'], timeLimitMs: 3000 };
+    const q: QuestionInstance = { id: 'q', theme: 'math', prompt: { text: 'x' }, targets: [{ id: 'a', text: '1' }, { id: 'b', text: '2' }], baseCorrectTargetIds: ['a'], activeRules: ['standard'], timeLimitMs: 3000, tutorialSafe: true };
     assert.ok(session.resolveSuccess(q)); assert.equal(session.resolveSuccess(q), null); assert.equal(session.state.correctCount, 1);
 });
 
-test('session counts master slashes and adds their independent score bonus', () => {
-    const session = new GameSession({ mode: 'brawl60', seed: 'master-slash', contentVersion: 'v' }, GAMEPLAY_CONFIG);
-    const question: QuestionInstance = { id: 'multi', theme: 'math', prompt: { text: '斩全部偶数' }, targets: [{ id: 'a', text: '2' }, { id: 'b', text: '4' }], baseCorrectTargetIds: ['a', 'b'], activeRules: ['multi'], timeLimitMs: 3000 };
-    session.start(); session.beginQuestion(); session.tick(1000);
-    const result = session.resolveSuccess(question, true);
-    assert.equal(result?.kind, 'masterSlash');
-    assert.equal(result?.masterHit, false);
-    assert.equal(result?.scoreDelta, 225);
-    assert.equal(session.state.masterSlashCount, 1);
-});
-
-test('question preview time does not reduce the measured answer window', () => {
-    const entry = { mode: 'brawl60' as const, seed: 'preview-window', contentVersion: 'v' };
-    const session = new GameSession(entry, GAMEPLAY_CONFIG); session.start(); session.tick(300); session.beginQuestion(); session.tick(120);
-    const q: QuestionInstance = { id: 'preview-q', theme: 'math', prompt: { text: '1+1=?' }, targets: [{ id: 'a', text: '2' }, { id: 'b', text: '3' }], baseCorrectTargetIds: ['a'], activeRules: ['standard'], timeLimitMs: 3000 };
-    assert.equal(session.resolveSuccess(q)?.reactionMs, 120);
-});
-
-test('master hit window starts after target entrance settles', () => {
-    const question: QuestionInstance = { id: 'master-hit-window', theme: 'math', prompt: { text: '1+1=?' }, targets: [{ id: 'a', text: '2' }, { id: 'b', text: '3' }], baseCorrectTargetIds: ['a'], activeRules: ['standard'], timeLimitMs: 3000 };
-    const withinWindow = new GameSession({ mode: 'brawl60', seed: 'master-hit-within', contentVersion: 'v' }, GAMEPLAY_CONFIG);
-    withinWindow.start(); withinWindow.beginQuestion(); withinWindow.tick(990);
-    assert.equal(withinWindow.resolveSuccess(question)?.masterHit, true);
-
-    const outsideWindow = new GameSession({ mode: 'brawl60', seed: 'master-hit-outside', contentVersion: 'v' }, GAMEPLAY_CONFIG);
-    outsideWindow.start(); outsideWindow.beginQuestion(); outsideWindow.tick(1000);
-    assert.equal(outsideWindow.resolveSuccess(question)?.masterHit, false);
-});
-
-test('endless brawl only ends on life depletion and heals every fifth consecutive correct answer', () => {
-    const question: QuestionInstance = { id: 'endless-q', theme: 'math', prompt: { text: '1+1=?' }, targets: [{ id: 'a', text: '2' }, { id: 'b', text: '3' }], baseCorrectTargetIds: ['a'], activeRules: ['standard'], timeLimitMs: 3_000 };
-    const session = new GameSession({ mode: 'brawl60', seed: 'endless', contentVersion: 'v' }, GAMEPLAY_CONFIG);
-    session.start();
-    session.tick(10 * 60_000);
+test('tutorial retry resets the same question window without life, combo or error penalties', () => {
+    const entry = { mode: 'brawl60' as const, seed: 'retry', contentVersion: 'v' };
+    const session = new GameSession(entry, GAMEPLAY_CONFIG); session.start(); session.tick(120); session.beginQuestion(); session.tick(480);
+    session.state.combo = 4; session.state.score = 700;
+    session.cancelQuestion();
+    assert.equal(session.state.phase, 'resolving');
+    assert.equal(session.retryQuestion(), true);
     assert.equal(session.state.phase, 'playing');
-    assert.equal(session.state.remainingMs, 0);
-    assert.equal(session.state.elapsedMs, 10 * 60_000);
-
-    session.beginQuestion();
-    session.resolveFailure('wrong');
-    session.continueAfterFeedback();
-    assert.equal(session.state.life, 2);
-
-    let fifthLifeDelta = 0;
-    for (let index = 1; index <= 5; index++) {
-        session.beginQuestion();
-        fifthLifeDelta = session.resolveSuccess(question)?.lifeDelta ?? 0;
-        session.continueAfterFeedback();
-    }
-    assert.equal(fifthLifeDelta, 1);
-    assert.equal(session.state.combo, 5);
-    assert.equal(session.state.life, 3);
-
-    for (let index = 6; index <= 10; index++) {
-        session.beginQuestion();
-        const result = session.resolveSuccess(question);
-        if (index === 10) assert.equal(result?.lifeDelta, 0);
-        session.continueAfterFeedback();
-    }
-    assert.equal(session.state.life, 3);
-
-    const timed = new GameSession({ mode: 'daily', seed: 'timed', contentVersion: 'v' }, GAMEPLAY_CONFIG);
-    timed.start();
-    timed.beginQuestion(); timed.resolveFailure('wrong'); timed.continueAfterFeedback();
-    for (let index = 0; index < 5; index++) {
-        timed.beginQuestion(); timed.resolveSuccess(question); timed.continueAfterFeedback();
-    }
-    assert.equal(timed.state.life, 2);
-    timed.tick(60_000);
-    assert.equal(timed.state.phase, 'finished');
+    assert.equal(session.questionElapsedMs(), 0);
+    assert.deepEqual({ life: session.state.life, combo: session.state.combo, score: session.state.score, errors: session.state.errorCount }, { life: 3, combo: 4, score: 700, errors: 0 });
+    assert.equal(session.retryQuestion(), false);
 });
 
 test('result finalization atomically records growth, level-up and new best score', () => {
@@ -701,8 +412,7 @@ test('result finalization atomically records growth, level-up and new best score
         levelTarget: 500,
     });
     const presentation = createResultPresentation(committed.result);
-    assert.equal(presentation.modeLabel, '无尽乱斗');
-    assert.equal(presentation.headline, '极限新纪录！');
+    assert.equal(presentation.headline, '新纪录！');
     assert.equal(presentation.comparison, '刷新纪录 +120');
     assert.equal(presentation.fastestReaction, '384ms');
     assert.equal(presentation.sharePrimary, true);
@@ -736,7 +446,7 @@ test('result presentation keeps replay and share actions contextual across modes
     }, player).result;
     const presentation = createResultPresentation(daily);
     assert.equal(presentation.modeLabel, '今日挑战');
-    assert.equal(presentation.headline, '挑战未达成');
+    assert.equal(presentation.headline, '今日挑战完成');
     assert.equal(presentation.fastestReaction, '—');
     assert.equal(presentation.replayLabel, '再战今日');
     assert.equal(presentation.shareLabel, '挑战好友');
@@ -752,12 +462,10 @@ test('daily completion records attempts and compares against the local daily bes
     assert.ok(first);
     if (!first) return;
     assert.deepEqual(first.record, {
-        dateKey: '2026-08-20', recipeId: challenge.recipe.id, attempts: 1, bestScore: 620, lastScore: 620, completed: true,
-        targetScore: challenge.targetScore, targetAchieved: false, tutorialBaseline: [],
+        dateKey: '2026-08-20', recipeId: challenge.recipe.id, attempts: 1, bestScore: 620, lastScore: 620, completed: true, tutorialBaseline: [],
     });
     assert.deepEqual(first.result, {
         dateKey: '2026-08-20', recipeId: challenge.recipe.id, attempts: 1, previousBestScore: 0, bestScore: 620, isNewBest: true,
-        targetScore: challenge.targetScore, targetAchieved: false, firstAchievement: false,
     });
     const second = recordDailyRun(first.record, run(580));
     assert.ok(second);
@@ -768,110 +476,35 @@ test('daily completion records attempts and compares against the local daily bes
     const result = { ...finalizeResult(run(580), { level: 2, xp: 500, bestScore: 900 }).result, daily: second.result };
     const presentation = createResultPresentation(result);
     assert.equal(presentation.modeLabel, `今日挑战 · ${challenge.recipe.title}`);
-    assert.equal(presentation.headline, '挑战未达成');
-    assert.equal(presentation.comparison, `距离今日目标 ${challenge.targetScore - 580} 分`);
+    assert.equal(presentation.headline, '今日挑战完成');
+    assert.equal(presentation.comparison, '距离今日最佳 40 分');
     assert.equal(presentation.replayLabel, '再战今日');
     const home = createDailyHomePresentation(challenge, second.record);
-    assert.equal(home.status, `最佳 620 · 还差 ${challenge.targetScore - 620}`);
-    assert.equal(home.goal, `目标 ${challenge.targetScore} 分`);
-    assert.equal(home.achieved, false);
-
-    const achieved = recordDailyRun(second.record, run(challenge.targetScore + 100));
-    assert.ok(achieved);
-    if (!achieved) return;
-    assert.equal(achieved.result.targetAchieved, true);
-    assert.equal(achieved.result.firstAchievement, true);
-    assert.equal(achieved.record.targetAchieved, true);
-    assert.equal(typeof achieved.record.achievedAt, 'number');
-    const achievedResult = { ...finalizeResult(run(challenge.targetScore + 100), { level: 2, xp: 500, bestScore: 900 }).result, daily: achieved.result };
-    const achievedPresentation = createResultPresentation(achievedResult);
-    assert.equal(achievedPresentation.headline, '今日目标达成！');
-    assert.equal(achievedPresentation.comparison, `目标 ${challenge.targetScore} 分 · 已达成`);
-    assert.equal(createDailyHomePresentation(challenge, achieved.record).status, `已达标 · 最佳 ${challenge.targetScore + 100}`);
+    assert.equal(home.status, '今日最佳 620 · 已战 2 次');
+    assert.equal(home.actionLabel, '再战今日');
 });
 
-test('daily challenge starts without tutorial state and reuses the same-day record', () => {
+test('daily challenge freezes the first-attempt tutorial baseline for same-day replays', () => {
     const challenge = createDailyChallenge(new Date(2026, 7, 20, 9, 0, 0), CONTENT_VERSION);
-    const first = beginDailyRun(undefined, challenge.entry, { reverse: true, rotate: true, bomb: true });
+    const first = beginDailyRun(undefined, challenge.entry, { reverse: true, bomb: true });
     assert.ok(first);
     if (!first) return;
-    assert.deepEqual(first.tutorialBaseline, []);
-    const replay = beginDailyRun(first, challenge.entry, { reverse: true, rotate: true, bomb: true, multi: true, order: true });
+    assert.deepEqual(first.tutorialBaseline, ['reverse', 'bomb']);
+    assert.deepEqual(dailyTutorialProgress(first), { reverse: true, bomb: true });
+    const replay = beginDailyRun(first, challenge.entry, { reverse: true, bomb: true, multi: true, order: true, stroop: true });
     assert.equal(replay, first);
-    assert.deepEqual(replay?.tutorialBaseline, []);
+    assert.deepEqual(replay?.tutorialBaseline, ['reverse', 'bomb']);
     const tomorrow = createDailyChallenge(new Date(2026, 7, 21, 9, 0, 0), CONTENT_VERSION);
-    const nextDay = beginDailyRun(first, tomorrow.entry, { reverse: true, rotate: true, bomb: true, multi: true });
-    assert.deepEqual(nextDay?.tutorialBaseline, []);
+    const nextDay = beginDailyRun(first, tomorrow.entry, { reverse: true, bomb: true, multi: true });
+    assert.deepEqual(nextDay?.tutorialBaseline, ['reverse', 'multi', 'bomb']);
 });
 
 test('expanded content catalog contains five times the recommended family counts', () => {
     const counts = Object.fromEntries(Object.keys(CONTENT_FAMILY_TARGETS).map((theme) => [theme, 0])) as Record<keyof typeof CONTENT_FAMILY_TARGETS, number>;
     for (const family of CONTENT_FAMILIES) counts[family.theme] += 1;
     assert.deepEqual(counts, CONTENT_FAMILY_TARGETS);
-    assert.equal(CONTENT_FAMILIES.length, 165);
+    assert.equal(CONTENT_FAMILIES.length, 105);
     assert.equal(new Set(CONTENT_FAMILIES.map((family) => family.id)).size, CONTENT_FAMILIES.length);
-    assert.ok(!CONTENT_FAMILIES.some((family) => family.kind === 'life-use'));
-});
-
-test('question-bank registry reports audited base records instead of generated combinations', () => {
-    const stats = getQuestionBankStats();
-    assert.equal(stats.baseRecordCount, 1004);
-    assert.equal(stats.packCount, 19);
-    assert.deepEqual(stats.byTheme, {
-        math: 0,
-        vision: 0,
-        hanzi: 300,
-        english: 136,
-        life: 30,
-        geography: 60,
-        knowledge: 404,
-        history: 74,
-    });
-    assert.equal(new Set(QUESTION_BANK_PACKS.map((pack) => pack.id)).size, QUESTION_BANK_PACKS.length);
-});
-
-test('new relationship and common-knowledge packs keep short answers and clean choices', () => {
-    assert.equal(HANZI_ANTONYM_FACTS.length, 100);
-    assert.equal(HANZI_SYNONYM_FACTS.length, 100);
-    for (const fact of [...HANZI_ANTONYM_FACTS, ...HANZI_SYNONYM_FACTS]) {
-        assert.ok(Array.from(fact.left).length <= 4, fact.left);
-        assert.ok(Array.from(fact.right).length <= 4, fact.right);
-        assert.ok(!fact.leftDistractors.includes(fact.left));
-        assert.ok(!fact.rightDistractors.includes(fact.right));
-    }
-
-    const expansions = [
-        KNOWLEDGE_SCIENCE_EXPANSION,
-        KNOWLEDGE_NATURE_EXPANSION,
-        KNOWLEDGE_CULTURE_EXPANSION,
-        KNOWLEDGE_CIVIC_FACTS,
-    ];
-    for (const pool of expansions) {
-        assert.equal(pool.length, 56);
-        for (const fact of pool) {
-            assert.ok(Array.from(fact.prompt).length <= 12, fact.prompt);
-            assert.ok(Array.from(fact.answer).length <= 4, `${fact.prompt}: ${fact.answer}`);
-            assert.ok(!fact.wrong.includes(fact.answer));
-            assert.equal(new Set(fact.wrong).size, fact.wrong.length);
-        }
-    }
-});
-
-test('warmup catalog includes distinct equation and symbol-matching questions', () => {
-    for (const kind of ['math-equation', 'vision-match'] as const) {
-        const families = CONTENT_FAMILIES.filter((family) => family.kind === kind);
-        assert.equal(families.length, 5);
-        for (const family of families) {
-            const generator = new QuestionGenerator(new SeededRng(`warmup-${family.id}`), GAMEPLAY_CONFIG);
-            const question = generator.next({
-                phase: 'warmup', difficultyStage: 0, targetCount: 3, questionTimeMs: 3_000,
-                speed: 0.72, family, rules: ['standard'],
-            });
-            assert.deepEqual(validateQuestion(question, evaluateRules(question)), []);
-            assert.equal(question.baseCorrectTargetIds.length, 1);
-            assert.equal(question.targets.length, 3);
-        }
-    }
 });
 
 test('reviewed fact pools contain unique answers and safe idiom distractors', () => {
@@ -882,37 +515,9 @@ test('reviewed fact pools contain unique answers and safe idiom distractors', ()
         assert.ok(!idiom.wrong.includes(answer));
     }
     assert.equal(new Set(ENGLISH_WORDS.map((word) => word.en)).size, ENGLISH_WORDS.length);
-    assert.ok(ENGLISH_WORDS.length >= 96);
-    assert.ok(ENGLISH_ANTONYMS.length >= 40);
-    assert.ok(IDIOMS.length >= 100);
-    assert.equal(new Set(LIFE_CATEGORY_FACTS.map((fact) => fact.item)).size, LIFE_CATEGORY_FACTS.length);
+    assert.equal(new Set(LIFE_FACTS.map((fact) => fact.item)).size, LIFE_FACTS.length);
     assert.equal(new Set(GEOGRAPHY_FACTS.map((fact) => fact.country)).size, GEOGRAPHY_FACTS.length);
     assert.equal(new Set(GEOGRAPHY_FACTS.map((fact) => fact.capital)).size, GEOGRAPHY_FACTS.length);
-    assert.ok(GEOGRAPHY_FACTS.length >= 60);
-    for (const fact of GEOGRAPHY_FACTS) {
-        assert.ok(Array.from(fact.country).length <= 4, fact.country);
-        assert.ok(Array.from(fact.capital).length <= 4, fact.capital);
-    }
-    const triviaPools = [
-        KNOWLEDGE_SCIENCE_FACTS, KNOWLEDGE_NATURE_FACTS, KNOWLEDGE_CULTURE_FACTS,
-        HISTORY_MODERN_OPENING_FACTS, HISTORY_MODERN_AWAKENING_FACTS, HISTORY_MODERN_RESISTANCE_FACTS,
-        HISTORY_ANCIENT_FACTS, HISTORY_MYTH_FACTS,
-    ];
-    for (const pool of triviaPools) {
-        assert.equal(new Set(pool.map((fact) => fact.prompt)).size, pool.length);
-        for (const fact of pool) {
-            assert.equal(new Set(fact.wrong).size, fact.wrong.length);
-            assert.ok(!fact.wrong.includes(fact.answer));
-            assert.ok(Array.from(fact.answer).length <= 4, `${fact.prompt}: ${fact.answer}`);
-        }
-    }
-    for (const pool of [KNOWLEDGE_SCIENCE_FACTS, KNOWLEDGE_NATURE_FACTS, KNOWLEDGE_CULTURE_FACTS]) {
-        assert.ok(pool.length >= 60);
-        for (const fact of pool) {
-            assert.ok(Array.from(fact.prompt).length <= 12, fact.prompt);
-            assert.ok(Array.from(fact.answer).length <= 4, `${fact.prompt}: ${fact.answer}`);
-        }
-    }
 });
 
 test('brawl director exposes exact four-phase boundaries and rising pressure', () => {
@@ -934,8 +539,7 @@ test('brawl director exposes exact four-phase boundaries and rising pressure', (
 
 test('target density respects content readability and compound-rule pressure', () => {
     assert.equal(targetCountForFamily(6, 'math-add', ['bomb', 'reverse']), 4);
-    assert.equal(targetCountForFamily(5, 'math-property', ['bomb', 'multi']), 5);
-    assert.equal(targetCountForFamily(6, 'math-property', ['multi', 'reverse']), 4);
+    assert.equal(targetCountForFamily(6, 'math-property', ['multi', 'reverse']), 5);
     assert.equal(targetCountForFamily(6, 'vision-odd', ['standard']), 6);
     assert.equal(targetCountForFamily(6, 'vision-odd', ['bomb', 'reverse']), 5);
     assert.equal(targetCountForFamily(6, 'hanzi-order', ['bomb', 'order']), 5);
@@ -960,97 +564,6 @@ test('portrait target formations use at most two targets per row with clear spac
     }
     assert.deepEqual(calculatePortraitTargetLayout(5, 750, 1624).map((position) => position.row), [0, 0, 1, 2, 2]);
     assert.deepEqual(calculatePortraitTargetLayout(6, 750, 1624).map((position) => position.row), [0, 0, 1, 1, 2, 2]);
-});
-
-test('friend challenge creator result is shareable without comparing against a target', () => {
-    const config: FriendChallengeConfig = { themeIds: ['math', 'vision'], enabledRules: ['reverse'], durationMs: 90_000 };
-    const commit = finalizeResult({
-        entry: { mode: 'friendChallenge', seed: 'creator', contentVersion: CONTENT_VERSION, challengeConfig: config, challengeRole: 'creator' },
-        score: 980, maxCombo: 8, correctCount: 9, errorCount: 2, accuracy: 9 / 11,
-    }, { level: 1, xp: 0, bestScore: 800 });
-    const result = commit.result;
-    assert.equal(commit.player.bestScore, 800);
-    assert.equal(result.isNewRecord, false);
-    assert.equal(result.challenge, undefined);
-    const presentation = createResultPresentation(result);
-    assert.equal(presentation.modeLabel, '好友挑战 · 90 秒');
-    assert.equal(presentation.headline, '挑战成绩已生成！');
-    assert.equal(presentation.replayLabel, '同配置再来一局');
-    assert.equal(presentation.shareLabel, '分享挑战');
-    assert.equal(presentation.sharePrimary, true);
-});
-
-test('target skins use their source canvas instead of auto-trim bounds for visual sizing', () => {
-    const targetExtent = 184.8;
-    const sourceCanvas = 384;
-    const scale = targetSkinPixelScale(sourceCanvas, sourceCanvas, targetExtent);
-
-    assert.equal(scale * sourceCanvas, targetExtent);
-    assert.equal(targetSkinPixelScale(0, 0, targetExtent), targetExtent);
-});
-
-test('target skin optical scales keep visible subject areas within a small error', () => {
-    assert.equal(targetSkinVisualScale('blue_circle'), TARGET_SKIN_VISUAL_SCALE.circle);
-    assert.equal(targetSkinVisualScale('red_hexagon'), TARGET_SKIN_VISUAL_SCALE.hexagon);
-    assert.equal(targetSkinVisualScale('yellow_square'), TARGET_SKIN_VISUAL_SCALE.square);
-    assert.equal(targetSkinVisualScale(COLOR_QUESTION_TARGET_SKIN), TARGET_SKIN_VISUAL_SCALE.white_square);
-    assert.equal(targetSkinVisualScale('unknown_skin'), 1);
-});
-
-test('target content layouts follow the three supported artwork shapes', () => {
-    const circle = targetContentLayout('blue_circle', 'roundedSquare');
-    const hexagon = targetContentLayout('green_hexagon', 'roundedSquare');
-    const square = targetContentLayout('red_square', 'circle');
-
-    assert.ok(square.width > hexagon.width);
-    assert.ok(circle.height > hexagon.height);
-    assert.deepEqual(targetContentLayout(undefined, 'circle'), circle);
-    assert.equal(targetShapeForSkin('purple_circle'), 'circle');
-    assert.equal(targetShapeForSkin('cyan_hexagon'), 'hexagon');
-    assert.equal(targetShapeForSkin(COLOR_QUESTION_TARGET_SKIN), 'roundedSquare');
-});
-
-test('active gameplay target skins contain only colored squares, circles, and hexagons', () => {
-    assert.deepEqual(ACTIVE_TARGET_SKINS, [
-        'blue_circle',
-        'blue_hexagon',
-        'cyan_circle',
-        'cyan_hexagon',
-        'cyan_square',
-        'green_circle',
-        'green_hexagon',
-        'green_square',
-        'orange_hexagon',
-        'orange_square',
-        'purple_circle',
-        'purple_square',
-        'red_circle',
-        'red_hexagon',
-        'red_square',
-        'yellow_hexagon',
-        'yellow_square',
-    ]);
-    assert.ok(ACTIVE_TARGET_SKINS.every((skin) => /_(square|circle|hexagon)$/.test(skin)));
-    assert.ok(!ACTIVE_TARGET_SKINS.includes(COLOR_QUESTION_TARGET_SKIN as never));
-    assert.deepEqual(ALL_TARGET_SKINS, [...ACTIVE_TARGET_SKINS, COLOR_QUESTION_TARGET_SKIN]);
-    assert.equal(targetSkinForAnswer('红', ACTIVE_TARGET_SKINS[0]), COLOR_QUESTION_TARGET_SKIN);
-    assert.equal(targetSkinForAnswer(undefined, ACTIVE_TARGET_SKINS[0]), ACTIVE_TARGET_SKINS[0]);
-});
-
-test('one question uses every artwork color at most once while shapes may repeat', () => {
-    const randomized = [
-        'red_circle',
-        'blue_circle',
-        'red_square',
-        'cyan_circle',
-        'blue_hexagon',
-        'green_circle',
-    ] as const;
-    const selected = uniqueColorTargetSkins(randomized);
-
-    assert.deepEqual(selected, ['red_circle', 'blue_circle', 'cyan_circle', 'green_circle']);
-    assert.equal(selected.filter((skin) => skin.endsWith('_circle')).length, 4);
-    assert.equal(new Set(selected.map((skin) => skin.slice(0, skin.lastIndexOf('_')))).size, selected.length);
 });
 
 test('portrait target motion preserves lanes and separates every phase throughout flight', () => {
@@ -1117,17 +630,6 @@ test('soft target separation is deterministic and capped for an invalid overlapp
     });
 });
 
-test('rotation rule spins targets deterministically after their entrance settles', () => {
-    const motion = {
-        startX: -400, targetX: 0, startY: 100, groundY: -500, ceilingY: 500,
-        duration: 3, velocityY: 200, gravity: -300, entranceAngle: 10, phase: 1, speed: 1,
-    };
-    assert.equal(evaluatePortraitTargetRotation(motion, 0, true), 10);
-    assert.equal(evaluatePortraitTargetRotation(motion, 1, false), 0);
-    assert.equal(evaluatePortraitTargetRotation(motion, 1, true), 120);
-    assert.equal(evaluatePortraitTargetRotation({ ...motion, phase: -1 }, 1, true), -120);
-});
-
 test('each phase schedules its intended themes and rule beats', () => {
     const warmup = pipeline('warmup');
     for (let i = 0; i < 20; i++) {
@@ -1145,18 +647,14 @@ test('each phase schedules its intended themes and rule beats', () => {
 
     const twist = pipeline('twist');
     const twistRules = Array.from({ length: 6 }, () => twist.director.next(30_000).rules);
-    assert.deepEqual(twistRules.map((rules) => rules.join('+')).sort(), ['multi', 'reverse', 'reverse', 'rotate', 'standard', 'standard']);
+    assert.deepEqual(twistRules.map((rules) => rules.join('+')).sort(), ['multi', 'reverse', 'reverse', 'standard', 'stroop', 'stroop']);
 
     const climax = pipeline('climax');
     for (let i = 0; i < 15; i++) {
         const directive = climax.director.next(50_000);
         const question = climax.generator.next(directive);
         assert.equal(directive.rules.length, 2);
-        const hasLongChoice = question.targets.some((target) => !target.isBomb && [...target.text.trim()].length >= 4);
-        const expectedRules = hasLongChoice && directive.rules.includes('rotate')
-            ? directive.rules.filter((rule) => rule !== 'rotate')
-            : directive.rules;
-        assert.deepEqual(question.activeRules, expectedRules.length ? expectedRules : ['standard']);
+        assert.deepEqual(question.activeRules, directive.rules);
         assert.deepEqual(validateQuestion(question, evaluateRules(question)), []);
     }
 });
@@ -1184,7 +682,7 @@ test('brawl topic and question-family order varies across fresh session seeds', 
     assert.ok(signatures.size > 24);
 });
 
-test('run seed factory refreshes every attempt while keeping the daily recipe stable', () => {
+test('run seed factory refreshes free-play but keeps the daily recipe reproducible', () => {
     const fixedDate = new Date(2026, 7, 20, 12, 0, 0);
     const factory = new RunSeedFactory(() => fixedDate, () => 123_456_789);
     const first = factory.create('brawl60', CONTENT_VERSION);
@@ -1194,13 +692,10 @@ test('run seed factory refreshes every attempt while keeping the daily recipe st
 
     const dailyA = factory.create('daily', CONTENT_VERSION);
     const dailyB = factory.create('daily', CONTENT_VERSION);
-    assert.notEqual(dailyA.seed, dailyB.seed);
-    assert.equal(dailyA.recipeId, dailyB.recipeId);
-    assert.equal(dailyA.dailyTargetScore, dailyB.dailyTargetScore);
+    assert.equal(dailyA.seed, dailyB.seed);
     assert.equal(dailyA.dailyDate, '2026-08-20');
     assert.ok(dailyRecipeById(dailyA.recipeId));
-    assert.equal(dailyA.dailyTargetScore, dailyRecipeById(dailyA.recipeId)?.targetScore);
-    assert.match(dailyA.seed, /^daily:[^:]+:2026-08-20:[a-z-]+:attempt:[a-z0-9]+:[a-z0-9]+:[a-z0-9]+$/);
+    assert.match(dailyA.seed, /^daily:[^:]+:2026-08-20:[a-z-]+$/);
 });
 
 test('local daily challenge rotates seven recipes and rolls over at local midnight', () => {
@@ -1282,20 +777,10 @@ test('1000 seeds survive full multi-round deterministic legality regression', ()
             const second = secondPipeline.generator.next(secondDirective);
             assert.deepEqual(first, second);
             assert.deepEqual(validateQuestion(first, evaluateRules(first)), []);
-            assert.equal(first.prompt.text.startsWith('斩'), false);
-            assert.equal(first.prompt.text.startsWith('反向·'), false);
-            assert.equal(first.prompt.text.includes('全部'), false);
-            assert.ok(first.targets.length <= firstDirective.targetCount + (firstDirective.rules.includes('bomb') ? 1 : 0));
-            if (slashRuleCount(firstDirective.rules) >= 2) {
-                assert.ok(first.targets.filter((target) => !target.isBomb).length <= 4);
-            }
+            assert.ok(first.targets.length <= firstDirective.targetCount);
             assert.ok(first.targets.length >= 2);
             assert.equal(first.timeLimitMs, firstDirective.questionTimeMs);
-            if (first.activeRules.includes('rotate')) {
-                assert.ok(first.targets.filter((target) => !target.isBomb).every((target) => [...target.text.trim()].length < 4));
-            }
             const constraint = evaluateRules(first);
-            if (first.activeRules.includes('multi')) assert.ok(constraint.requiredTargetIds.length >= 2);
             if (constraint.matchMode === 'all' && constraint.requiredTargetIds.length > 1) {
                 assertCompletesAcrossSeparateStrokes(constraint);
                 multiStepFamilyIds.add(first.familyId ?? '');
@@ -1309,344 +794,6 @@ test('1000 seeds survive full multi-round deterministic legality regression', ()
         .sort();
     assert.deepEqual([...multiStepFamilyIds].sort(), expectedMultiStepFamilies);
     assert.ok(multiStepQuestions > 10_000);
-});
-
-test('question appearance keeps semantic questions and answers on rolling cooldowns', () => {
-    const family = CONTENT_FAMILIES.find((candidate) => candidate.kind === 'knowledge-science')!;
-    const generator = new QuestionGenerator(new SeededRng('semantic-question-cooldown'), GAMEPLAY_CONFIG);
-    const seen = new Set<string>();
-    for (let index = 0; index < 40; index++) {
-        const question = generator.next({
-            phase: 'action', difficultyStage: 1, targetCount: 4, questionTimeMs: 2_600,
-            speed: 1, family, rules: ['standard'],
-        });
-        const textById = new Map(question.targets.map((target) => [target.id, target.text]));
-        const answer = question.baseCorrectTargetIds.map((id) => textById.get(id)).sort().join('→');
-        const signature = `${question.prompt.text}|${answer}`;
-        assert.ok(!seen.has(signature), `semantic question repeated too soon: ${signature}`);
-        seen.add(signature);
-    }
-});
-
-test('tower exposes the fixed 60-second 1-30 progression and unlock schedule', () => {
-    const expectedRequired = [
-        [1, 8], [2, 8], [3, 9], [4, 9], [5, 9], [6, 9], [7, 10], [9, 10],
-        [10, 10], [12, 10], [13, 10], [14, 10], [15, 11], [19, 11], [20, 12],
-        [24, 12], [25, 13], [29, 13], [30, 15],
-    ];
-    for (const [floor, required] of expectedRequired) {
-        const config = towerFloorConfig(floor);
-        assert.equal(config.floor, floor);
-        assert.equal(config.durationMs, 60_000);
-        assert.equal(config.requiredCorrect, required);
-        assert.ok(config.targetCount >= 3 && config.targetCount <= 5);
-    }
-    assert.deepEqual(unlockedRulesForTower(0), ['standard', 'bomb']);
-    assert.deepEqual(unlockedRulesForTower(1), ['standard', 'bomb']);
-    assert.deepEqual(unlockedRulesForTower(2), ['standard', 'bomb', 'multi']);
-    assert.deepEqual(unlockedRulesForTower(3), ['standard', 'bomb', 'multi', 'order']);
-    assert.deepEqual(unlockedRulesForTower(4), ['standard', 'bomb', 'multi', 'order', 'reverse']);
-    assert.deepEqual(unlockedRulesForTower(5), ['standard', 'bomb', 'multi', 'order', 'reverse', 'rotate']);
-    assert.deepEqual(unlockedRulesForTower(13), ['standard', 'bomb', 'multi', 'order', 'reverse', 'rotate']);
-    assert.deepEqual(unlockedRulesForTower(14), ['standard', 'bomb', 'multi', 'order', 'reverse', 'rotate']);
-    assert.equal(towerFloorConfig(14).unlockedRule, undefined);
-    assert.deepEqual(towerFloorConfig(14).familyKinds, ['vision-stroop']);
-    assert.equal(towerFloorConfig(6).unlocksCompoundRules, true);
-    assert.equal(towerFloorConfig(15).unlocksCompoundRules, false);
-
-    assert.deepEqual(new TowerDirector(new SeededRng('floor-2-unlock'), 2).next(0).rules, ['multi']);
-    assert.deepEqual(new TowerDirector(new SeededRng('floor-3-unlock'), 3).next(0).rules, ['order']);
-    assert.deepEqual(new TowerDirector(new SeededRng('floor-4-unlock'), 4).next(0).rules, ['reverse']);
-    assert.deepEqual(new TowerDirector(new SeededRng('floor-5-unlock'), 5).next(0).rules, ['rotate']);
-    assert.deepEqual(new TowerDirector(new SeededRng('floor-6-unlock'), 6).next(0).rules, ['multi', 'reverse']);
-});
-
-test('color identification remains a question family without becoming a rule unlock', () => {
-    const tower = new TowerDirector(new SeededRng('floor-14-color-family'), 14);
-    for (let index = 0; index < 30; index++) {
-        const directive = tower.next(index * 1_000);
-        assert.equal(directive.family.kind, 'vision-stroop');
-        assert.ok(directive.rules.every((rule) => rule === 'standard' || rule === 'bomb'));
-    }
-    assert.ok(dailyRecipeById('logic-detective')?.familyKinds.includes('vision-stroop'));
-});
-
-test('daily topics merge logic and vision while common knowledge and history also join core modes', () => {
-    const logic = dailyRecipeById('logic-detective');
-    assert.ok(logic?.familyKinds.some((kind) => kind.startsWith('math-')));
-    assert.ok(logic?.familyKinds.some((kind) => kind.startsWith('vision-')));
-    assert.equal(dailyRecipeById('common-knowledge')?.title, '常识万花筒');
-    assert.equal(dailyRecipeById('life-instinct'), undefined);
-
-    const knowledge = new Brawl60Director(new SeededRng('daily-knowledge-topic'), 'common-knowledge');
-    for (let index = 0; index < 80; index++) {
-        assert.equal(knowledge.next((index * 1_997) % 60_000).family.theme, 'knowledge');
-    }
-
-    const history = new Brawl60Director(new SeededRng('daily-history-topic'), 'history-adventure');
-    let modern = 0;
-    for (let index = 0; index < 100; index++) {
-        const family = history.next((index * 1_997) % 60_000).family;
-        assert.equal(family.theme, 'history');
-        if (family.kind.startsWith('history-modern-')) modern++;
-    }
-    assert.ok(modern >= 50);
-
-    const ordinary = new Brawl60Director(new SeededRng('ordinary-includes-all-topics'));
-    const ordinaryThemes = new Set(Array.from({ length: 500 }, (_, index) =>
-        ordinary.next([15_000, 30_000, 50_000][index % 3]).family.theme,
-    ));
-    assert.ok(ordinaryThemes.has('knowledge'));
-    assert.ok(ordinaryThemes.has('history'));
-
-    const tower = new TowerDirector(new SeededRng('tower-includes-all-topics'), 20);
-    const towerThemes = new Set(Array.from({ length: 500 }, (_, index) => tower.next(index * 1_000).family.theme));
-    assert.ok(towerThemes.has('knowledge'));
-    assert.ok(towerThemes.has('history'));
-});
-
-test('tower bombs add a hazard without replacing answer candidates', () => {
-    const seed = 'tower-floor-1-bomb-regression';
-    const director = new TowerDirector(new SeededRng(`${seed}:director`), 1);
-    const generator = new QuestionGenerator(new SeededRng(`${seed}:gameplay`), GAMEPLAY_CONFIG);
-    let directive = director.next(0);
-    for (let index = 1; !directive.rules.includes('bomb') && index < 4; index++) {
-        directive = director.next(index * 1_000);
-    }
-    assert.deepEqual(directive.rules, ['bomb']);
-    assert.equal(directive.targetCount, 3);
-    const question = generator.next(directive);
-    assert.equal(question.targets.filter((target) => !target.isBomb).length, 3);
-    assert.equal(question.targets.filter((target) => target.isBomb).length, 1);
-    assert.equal(question.targets.length, 4);
-});
-
-test('tower bomb placement varies by seed instead of staying in the final slot', () => {
-    const positions = new Set<number>();
-    for (let seedIndex = 0; seedIndex < 40; seedIndex++) {
-        const seed = `tower-floor-1-bomb-position-${seedIndex}`;
-        const director = new TowerDirector(new SeededRng(`${seed}:director`), 1);
-        const generator = new QuestionGenerator(new SeededRng(`${seed}:gameplay`), GAMEPLAY_CONFIG);
-        let directive = director.next(0);
-        for (let index = 1; !directive.rules.includes('bomb') && index < 4; index++) {
-            directive = director.next(index * 1_000);
-        }
-        const question = generator.next(directive);
-        positions.add(question.targets.findIndex((target) => target.isBomb));
-    }
-    assert.ok(positions.size > 1);
-    assert.ok([...positions].some((position) => position !== 3));
-});
-
-test('tower director is deterministic per attempt and legal across 100 seeds and 30 floors', () => {
-    for (let seedIndex = 0; seedIndex < 100; seedIndex++) {
-        for (let floor = 1; floor <= 30; floor++) {
-            const seed = `tower-${seedIndex}-floor-${floor}`;
-            const firstDirector = new TowerDirector(new SeededRng(`${seed}:director`), floor);
-            const secondDirector = new TowerDirector(new SeededRng(`${seed}:director`), floor);
-            const firstGenerator = new QuestionGenerator(new SeededRng(`${seed}:gameplay`), GAMEPLAY_CONFIG);
-            const secondGenerator = new QuestionGenerator(new SeededRng(`${seed}:gameplay`), GAMEPLAY_CONFIG);
-            for (let index = 0; index < 12; index++) {
-                const firstDirective = firstDirector.next(index * 2_000);
-                const secondDirective = secondDirector.next(index * 2_000);
-                assert.deepEqual(firstDirective, secondDirective);
-                assert.equal(familySupportsRules(firstDirective.family, firstDirective.rules), true);
-                if (firstDirective.rules.includes('rotate')) {
-                    assert.equal(firstDirective.rules.includes('reverse'), false);
-                    assert.equal(isDirectionSensitiveFamily(firstDirective.family.kind), false);
-                }
-                const first = firstGenerator.next(firstDirective);
-                const second = secondGenerator.next(secondDirective);
-                assert.deepEqual(first, second);
-                assert.deepEqual(validateQuestion(first, evaluateRules(first)), []);
-                if (first.activeRules.includes('rotate')) {
-                    assert.ok(first.targets.filter((target) => !target.isBomb).every((target) => [...target.text.trim()].length < 4));
-                }
-            }
-        }
-    }
-});
-
-test('ordinary brawl keeps English and history as rare accents', () => {
-    const director = new Brawl60Director(new SeededRng('reduced-language-history-weights'));
-    const counts = new Map<string, number>();
-    const elapsed = [15_000, 30_000, 50_000];
-    for (let index = 0; index < 3_000; index++) {
-        const theme = director.next(elapsed[index % elapsed.length]).family.theme;
-        counts.set(theme, (counts.get(theme) ?? 0) + 1);
-    }
-    assert.ok((counts.get('english') ?? 0) / 3_000 < 0.06);
-    assert.ok((counts.get('history') ?? 0) / 3_000 < 0.06);
-    assert.ok((counts.get('knowledge') ?? 0) > (counts.get('english') ?? 0));
-    assert.ok((counts.get('knowledge') ?? 0) > (counts.get('history') ?? 0));
-});
-
-test('category question pools exclude context-dependent items and polysemous English words', () => {
-    assert.ok(!ENGLISH_WORDS.some((word) => word.en === 'ORANGE' || word.en === 'FISH'));
-    assert.ok(ENGLISH_WORDS.some((word) => word.en === 'GRAY' && word.category === '颜色'));
-    assert.ok(ENGLISH_WORDS.some((word) => word.en === 'ZEBRA' && word.category === '动物'));
-
-    const excludedLifeItems = new Set(['垃圾袋', '海绵', '抹布', '剪刀', '胶带', '口罩', '牙刷']);
-    assert.ok(LIFE_CATEGORY_FACTS.every((fact) => !excludedLifeItems.has(fact.item)));
-    assert.equal(new Set(LIFE_CATEGORY_FACTS.map((fact) => fact.item)).size, LIFE_CATEGORY_FACTS.length);
-    for (const category of ['清洁工具', '厨房用品', '学习用品', '安全用品', '交通工具']) {
-        assert.equal(LIFE_CATEGORY_FACTS.filter((fact) => fact.category === category).length, 6);
-    }
-});
-
-test('tower progress rewards first clears once and restores the latest checkpoint', () => {
-    const entry = { mode: 'tower' as const, seed: 'tower-attempt-a', contentVersion: CONTENT_VERSION, towerFloor: 5 };
-    const run: RunResult = { entry, score: 1_000, maxCombo: 7, correctCount: 10, errorCount: 1, accuracy: 10 / 11, remainingMs: 30_000 };
-    const first = commitTowerFloor(DEFAULT_TOWER_PROGRESS, run, 2);
-    assert.equal(first.result.cleared, true);
-    assert.equal(first.result.firstClear, true);
-    assert.equal(first.result.timeBonus, 60);
-    assert.equal(first.result.towerPointsGained, 220);
-    assert.equal(first.result.runTotalScore, 220);
-    assert.equal(first.progress.highestClearedFloor, 5);
-    assert.equal(first.progress.lastCheckpointFloor, 5);
-    const repeat = commitTowerFloor(first.progress, run, 2);
-    assert.equal(repeat.result.firstClear, false);
-    assert.equal(repeat.result.towerPointsGained, 14);
-    assert.equal(repeat.result.runTotalScore, 234);
-    const floor6Run: RunResult = { ...run, entry: { ...entry, seed: 'tower-floor-6', towerFloor: 6 }, correctCount: 12 };
-    const floor6 = commitTowerFloor({ ...first.progress, highestClearedFloor: 5, currentFloor: 6 }, floor6Run, 2);
-    assert.equal(floor6.result.unlockedLabel, '双规则');
-});
-
-test('tower scoring rewards faster clears while staying near a chapter-scale total', () => {
-    const maximumFirstClearTotal = Array.from({ length: 30 }, (_, index) =>
-        towerPointsForClear(999_999, index + 1, true, 60_000),
-    ).reduce((sum, points) => sum + points, 0);
-    assert.equal(maximumFirstClearTotal, 12_750);
-    assert.equal(towerTimeBonus(30_999), 60);
-    assert.ok(towerPointsForClear(1_000, 10, true, 40_000) > towerPointsForClear(1_000, 10, true, 10_000));
-    assert.equal(towerPointsForClear(999_999, 30, false, 60_000), 50);
-
-    const migrated = normalizeTowerProgress({
-        currentFloor: 17,
-        highestClearedFloor: 16,
-        lastCheckpointFloor: 15,
-        totalTowerPoints: 51_096,
-        bestContinuousScore: 0,
-        maxCombo: 18,
-        chapterOneCompleted: false,
-        activeRun: { startFloor: 1, totalScore: 51_096, maxCombo: 18 },
-    });
-    assert.equal(migrated.scoringVersion, 3);
-    assert.equal(migrated.totalTowerPoints, 4_400);
-    assert.equal(migrated.activeRun?.totalScore, 4_400);
-    assert.equal(migrated.highestClearedFloor, 16);
-});
-
-test('tower target stays cleared after life depletion and only fails below the target', () => {
-    const base = { entry: { mode: 'tower' as const, seed: 'tower-fail', contentVersion: CONTENT_VERSION, towerFloor: 10 }, score: 900, maxCombo: 5, errorCount: 2, accuracy: 0.8 };
-    const dead = commitTowerFloor(DEFAULT_TOWER_PROGRESS, { ...base, correctCount: 12 }, 0);
-    assert.equal(dead.result.cleared, true);
-    assert.equal(dead.result.failureReason, undefined);
-    const short = commitTowerFloor(DEFAULT_TOWER_PROGRESS, { ...base, correctCount: 9 }, 1);
-    assert.equal(short.result.cleared, false);
-    assert.equal(short.result.failureReason, 'targetMissed');
-    const deadShort = commitTowerFloor(DEFAULT_TOWER_PROGRESS, { ...base, correctCount: 9 }, 0);
-    assert.equal(deadShort.result.cleared, false);
-    assert.equal(deadShort.result.failureReason, 'lifeDepleted');
-});
-
-test('tower retries receive fresh seeds while a supplied seed remains reproducible', () => {
-    let entropy = 10;
-    const factory = new RunSeedFactory(() => new Date('2026-08-24T12:00:00+08:00'), () => entropy++);
-    const first = factory.create('tower', CONTENT_VERSION, 8);
-    const retry = factory.create('tower', CONTENT_VERSION, 8);
-    assert.notEqual(first.seed, retry.seed);
-    assert.equal(first.towerFloor, 8);
-    assert.match(first.seed, /^tower:floor-8:/);
-});
-
-test('brawl rule pool follows tower unlocks and learned legacy tutorials', () => {
-    const allowed = allowedBrawlRules(DEFAULT_TOWER_PROGRESS, { reverse: true });
-    assert.deepEqual([...allowed].sort(), ['bomb', 'reverse', 'standard']);
-    const director = new Brawl60Director(new SeededRng('locked-brawl'), 'mixed', allowed, false);
-    for (let index = 0; index < 80; index++) {
-        const directive = director.next((index * 997) % 60_000);
-        assert.ok(directive.rules.every((rule) => rule === 'standard' || allowed.has(rule)));
-        assert.ok(directive.rules.filter((rule) => rule !== 'standard' && rule !== 'bomb').length <= 1);
-    }
-});
-
-test('save v1 migration preserves player settings daily-compatible fields and adds tower defaults', () => {
-    const migrated = migrateV1ToV2({
-        schemaVersion: 1,
-        player: { level: 4, xp: 1_560, bestScore: 8_800 },
-        settings: { music: false, sfx: true, vibration: false, quality: 'low' },
-        tutorials: { bomb: true, rotate: true },
-        daily: {
-            dateKey: '2026-08-20', recipeId: 'number-lab', attempts: 2, bestScore: 1700,
-            lastScore: 1700, completed: true, tutorialBaseline: [],
-        } as any,
-    });
-    assert.equal(migrated.schemaVersion, 2);
-    assert.deepEqual(migrated.player, { level: 4, xp: 1_560, bestScore: 8_800 });
-    assert.equal(migrated.settings.music, false);
-    assert.equal(migrated.tutorials.bomb, true);
-    assert.equal(migrated.tutorials.rotate, true);
-    assert.equal(migrated.daily?.targetScore, dailyRecipeById('number-lab')?.targetScore);
-    assert.equal(migrated.daily?.targetAchieved, true);
-    assert.deepEqual(migrated.tower, DEFAULT_TOWER_PROGRESS);
-});
-
-test('save v2 migration adds a valid default friend challenge configuration', () => {
-    const migrated = migrateV2ToV3({
-        schemaVersion: 2,
-        player: { level: 2, xp: 700, bestScore: 900 },
-        settings: { music: true, sfx: true, vibration: true, quality: 'auto' },
-        tutorials: {},
-        tower: DEFAULT_TOWER_PROGRESS,
-    });
-    assert.equal(migrated.schemaVersion, 3);
-    assert.deepEqual(migrated.lastFriendChallengeConfig, DEFAULT_FRIEND_CHALLENGE_CONFIG);
-});
-
-test('save v3 migration preserves the legacy best score for the local brawl leaderboard', () => {
-    const migrated = migrateV3ToV4({
-        schemaVersion: 3,
-        player: { level: 2, xp: 700, bestScore: 975 },
-        settings: { music: true, sfx: true, vibration: true, quality: 'auto' },
-        tutorials: {},
-        tower: DEFAULT_TOWER_PROGRESS,
-        lastFriendChallengeConfig: DEFAULT_FRIEND_CHALLENGE_CONFIG,
-    });
-    assert.equal(migrated.schemaVersion, 4);
-    assert.equal(migrated.leaderboard.brawlBestScore, 975);
-});
-
-test('save v4 migration creates detailed brawl and trial leaderboard records', () => {
-    const migrated = migrateV4ToV5({
-        schemaVersion: 4,
-        player: { level: 2, xp: 700, bestScore: 975 },
-        settings: { music: true, sfx: true, vibration: true, quality: 'auto' },
-        tutorials: {}, tower: DEFAULT_TOWER_PROGRESS,
-        lastFriendChallengeConfig: DEFAULT_FRIEND_CHALLENGE_CONFIG,
-        leaderboard: { brawlBestScore: 975 },
-    });
-    assert.equal(migrated.schemaVersion, 5);
-    assert.equal(migrated.leaderboard.brawlBest.rankScore, 975);
-    assert.equal(migrated.leaderboard.trialAnsweredCount, 0);
-});
-
-test('local leaderboard sorts persisted player scores and reports an off-screen self rank', () => {
-    const record = brawlRecordFromRun({
-        entry: { mode: 'brawl60', seed: 'rank', contentVersion: 'v' }, score: 0,
-        elapsedMs: 300_000, maxCombo: 30, correctCount: 120, errorCount: 5, accuracy: 120 / 125, masterSlashCount: 10,
-    });
-    const leading = createLocalLeaderboard('brawl', { brawl: record, trial: { highestFloor: 0, answeredCount: 0, accuracy: 0 } });
-    assert.equal(leading.top[0].id, 'self');
-    assert.equal(leading.top[0].score, record.rankScore);
-    assert.equal(leading.self.rank, 1);
-
-    const newcomer = createLocalLeaderboard('trial', { brawl: emptyBrawlRecord(), trial: { highestFloor: 0, answeredCount: 0, accuracy: 0 } });
-    assert.equal(newcomer.top.length, 10);
-    assert.equal(newcomer.self.rank, 13);
-    assert.equal(newcomer.self.score, 0);
 });
 
 test('home portrait layout keeps every section separated across common safe areas', () => {
@@ -1678,13 +825,4 @@ test('home portrait layout keeps every section separated across common safe area
         assert.ok(rankBottom - navigationTop >= 18 - 0.001, `${profile.name} rank/navigation overlap`);
         assert.equal(layout.navigationY - 64, -profile.height * 0.5 + profile.bottom);
     }
-});
-
-test('home portrait layout survives incomplete WeChat safe-area values', () => {
-    const layout = calculateHomePortraitLayout(Number.NaN, Number.NaN, Number.POSITIVE_INFINITY);
-
-    assert.ok(Number.isFinite(layout.contentScale));
-    assert.ok(Number.isFinite(layout.sectionGap));
-    assert.ok(Number.isFinite(layout.navigationY));
-    for (const y of Object.values(layout.sectionY)) assert.ok(Number.isFinite(y));
 });
