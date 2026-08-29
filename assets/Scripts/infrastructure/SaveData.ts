@@ -68,6 +68,8 @@ export interface SaveDataV5 {
     tower: TowerProgress;
     lastFriendChallengeConfig: FriendChallengeConfig;
     leaderboard: SaveLeaderboardV5;
+    recentQuestionIds: string[];
+    recentQuestionSignatures: string[];
 }
 
 const DEFAULT_SETTINGS: SaveSettings = { music: true, sfx: true, vibration: true, quality: 'auto' };
@@ -81,6 +83,8 @@ export function createDefaultSave(): SaveDataV5 {
         tower: clone(DEFAULT_TOWER_PROGRESS),
         lastFriendChallengeConfig: clone(DEFAULT_FRIEND_CHALLENGE_CONFIG),
         leaderboard: { brawlBest: emptyBrawlRecord(), trialAnsweredCount: 0, trialCorrectCount: 0 },
+        recentQuestionIds: [],
+        recentQuestionSignatures: [],
     };
 }
 
@@ -176,7 +180,35 @@ export function normalizeV5(parsed: Partial<SaveDataV5>): SaveDataV5 {
             trialAnsweredCount: answered,
             trialCorrectCount: Math.min(answered, finiteNonNegative(parsed.leaderboard?.trialCorrectCount)),
         },
+        recentQuestionIds: normalizeRecentQuestionIds(parsed.recentQuestionIds),
+        recentQuestionSignatures: normalizeRecentQuestionSignatures(parsed.recentQuestionSignatures),
     };
+}
+
+function normalizeRecentQuestionIds(value: unknown): string[] {
+    if (!Array.isArray(value)) return [];
+    const result: string[] = [];
+    for (const item of value) {
+        if (typeof item !== 'string' || !item.trim()) continue;
+        const id = item.trim().slice(0, 120);
+        const existing = result.indexOf(id);
+        if (existing >= 0) result.splice(existing, 1);
+        result.push(id);
+    }
+    return result.slice(-300);
+}
+
+function normalizeRecentQuestionSignatures(value: unknown): string[] {
+    if (!Array.isArray(value)) return [];
+    const result: string[] = [];
+    for (const item of value) {
+        if (typeof item !== 'string' || !item.trim()) continue;
+        const signature = item.trim().slice(0, 240);
+        const existing = result.indexOf(signature);
+        if (existing >= 0) result.splice(existing, 1);
+        result.push(signature);
+    }
+    return result.slice(-300);
 }
 
 function normalizeBrawlRecord(value: Partial<BrawlLeaderboardRecord> | undefined): BrawlLeaderboardRecord {

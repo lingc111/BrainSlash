@@ -3,7 +3,7 @@ import { mkdir, writeFile } from 'node:fs/promises';
 import { join } from 'node:path';
 import { QUESTION_BANK_PACKS } from '../assets/Scripts/domain/QuestionBankRegistry.ts';
 
-const CONTENT_VERSION = '1.18.0-static-5000';
+const CONTENT_VERSION = '1.19.0-variety';
 const outputDir = join(process.cwd(), 'assets', 'resources', 'question-banks');
 const packsById = new Map(QUESTION_BANK_PACKS.map((pack) => [pack.id, pack]));
 const byTheme = new Map();

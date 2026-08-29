@@ -108,6 +108,25 @@ export class SaveService {
         return true;
     }
 
+    public rememberQuestion(ids: readonly string[], semanticSignature: string): void {
+        for (const raw of ids) {
+            const id = raw.trim();
+            if (!id) continue;
+            const existing = this.data.recentQuestionIds.indexOf(id);
+            if (existing >= 0) this.data.recentQuestionIds.splice(existing, 1);
+            this.data.recentQuestionIds.push(id);
+        }
+        if (this.data.recentQuestionIds.length > 300) {
+            this.data.recentQuestionIds.splice(0, this.data.recentQuestionIds.length - 300);
+        }
+        const existingSignature = this.data.recentQuestionSignatures.indexOf(semanticSignature);
+        if (existingSignature >= 0) this.data.recentQuestionSignatures.splice(existingSignature, 1);
+        this.data.recentQuestionSignatures.push(semanticSignature);
+        if (this.data.recentQuestionSignatures.length > 300) {
+            this.data.recentQuestionSignatures.splice(0, this.data.recentQuestionSignatures.length - 300);
+        }
+    }
+
     private persist(): void {
         try { sys.localStorage.setItem(KEY_V5, JSON.stringify(this.data)); } catch { /* Storage can be unavailable in preview. */ }
     }

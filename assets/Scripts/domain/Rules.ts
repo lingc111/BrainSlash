@@ -16,13 +16,26 @@ export function questionPreviewDurationSeconds(rules: readonly RuleId[]): number
     return slashRuleCount(rules) >= 2 ? 0.7 : 0.3;
 }
 
-/** Extra airborne time for dense choices or rules that require mental remapping. */
-export function questionFlightDurationSeconds(baseSeconds: number, rules: readonly RuleId[], answerCount = 0): number {
+export function maximumAnswerTextLength(targets: readonly TargetSpec[]): number {
+    return targets.reduce((maximum, target) => target.isBomb
+        ? maximum
+        : Math.max(maximum, Array.from(target.text.trim()).length), 0);
+}
+
+/** Extra airborne time for dense choices, long answers, or rules that require mental remapping. */
+export function questionFlightDurationSeconds(
+    baseSeconds: number,
+    rules: readonly RuleId[],
+    answerCount = 0,
+    maximumAnswerLength = 0,
+): number {
     const safeBase = Math.max(0.9, baseSeconds);
     const ruleCount = slashRuleCount(rules);
     const fiveAnswerReadabilityTime = answerCount === 5 ? 0.75 : 0;
-    if (ruleCount === 0) return safeBase + fiveAnswerReadabilityTime;
-    return safeBase + fiveAnswerReadabilityTime + (ruleCount >= 2 ? 1.65 : 1.35);
+    const longAnswerReadabilityTime = maximumAnswerLength >= 4 ? 0.75 : 0;
+    const readabilityTime = fiveAnswerReadabilityTime + longAnswerReadabilityTime;
+    if (ruleCount === 0) return safeBase + readabilityTime;
+    return safeBase + readabilityTime + (ruleCount >= 2 ? 1.65 : 1.35);
 }
 
 export function rulesForReadableTargets(rules: readonly RuleId[], targets: readonly TargetSpec[]): RuleId[] {

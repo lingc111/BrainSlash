@@ -4,6 +4,7 @@ import { dailyRecipeById } from './DailyChallenge';
 import type { FriendChallengeConfig, RuleId, ThemeId } from './Models';
 import { slashRuleCount } from './Rules';
 import { SeededRng } from './SeededRng';
+import { familyHasStaticQuestions } from './StaticQuestionBank';
 
 export type BrawlPhaseId = 'warmup' | 'action' | 'twist' | 'climax';
 export type DifficultyStage = 0 | 1 | 2;
@@ -43,22 +44,23 @@ export const BRAWL_PHASES: readonly BrawlPhaseSettings[] = [
     {
         id: 'action', startMs: 10_000, endMs: 25_000, difficultyStage: 1,
         targetCount: 4, questionTimeMs: 2_600, speed: 0.95,
-        themeWeights: { math: 10, vision: 10, hanzi: 4, life: 1, knowledge: 16, history: 1 },
-        ruleSequence: [['multi'], ['bomb'], ['standard'], ['order'], ['bomb']], reuseSeenFamilies: false,
+        themeWeights: { math: 4, vision: 4, hanzi: 3, english: 2, life: 2, geography: 2, knowledge: 4, history: 2 },
+        ruleSequence: [['multi'], ['bomb'], ['standard'], ['order'], ['bomb'], ['reverse'], ['rotate']], reuseSeenFamilies: false,
     },
     {
         id: 'twist', startMs: 25_000, endMs: 45_000, difficultyStage: 2,
         targetCount: 5, questionTimeMs: 2_250, speed: 1.15,
-        themeWeights: { math: 8, vision: 10, hanzi: 4, english: 1, life: 1, geography: 2, knowledge: 16, history: 1 },
-        ruleSequence: [['reverse'], ['rotate'], ['standard'], ['reverse'], ['multi'], ['standard']], reuseSeenFamilies: false,
+        themeWeights: { math: 4, vision: 4, hanzi: 3, english: 3, life: 3, geography: 3, knowledge: 4, history: 3 },
+        ruleSequence: [['reverse'], ['rotate'], ['standard'], ['reverse'], ['multi'], ['standard'], ['bomb']], reuseSeenFamilies: false,
     },
     {
         id: 'climax', startMs: 45_000, endMs: 60_001, difficultyStage: 2,
-        targetCount: 6, questionTimeMs: 1_850, speed: 1.38,
-        themeWeights: { math: 10, vision: 10, hanzi: 4, english: 1, life: 1, geography: 2, knowledge: 20, history: 1 },
+        targetCount: 5, questionTimeMs: 1_850, speed: 1.38,
+        themeWeights: { math: 4, vision: 4, hanzi: 3, english: 3, life: 3, geography: 3, knowledge: 4, history: 3 },
         ruleSequence: [
             ['bomb', 'multi'], ['bomb', 'reverse'], ['bomb', 'order'], ['bomb', 'rotate'],
             ['multi', 'reverse'], ['multi', 'rotate'], ['order', 'rotate'],
+            ['standard'], ['reverse'], ['rotate'], ['bomb'], ['bomb', 'reverse'], ['bomb', 'rotate'],
         ], reuseSeenFamilies: true,
     },
 ];
@@ -252,6 +254,7 @@ export class Brawl60Director {
     private readonly recentThemes: ThemeId[] = [];
     private readonly recentFamilyIds: string[] = [];
     private readonly seenFamilyIds = new Set<string>();
+    private readonly themeSelectionCounts = new Map<ThemeId, number>();
 
     public constructor(
         private readonly rng: SeededRng,
@@ -318,12 +321,21 @@ export class Brawl60Director {
         const availableThemes = new Set(compatible.map((family) => family.theme));
         const theme = this.pickTheme(phase, rules, availableThemes);
         const familyPool = compatible.filter((family) => family.theme === theme);
-        const reusable = phase.reuseSeenFamilies ? familyPool.filter((family) => this.seenFamilyIds.has(family.id)) : familyPool;
+        const staticPool = familyPool.filter((family) => familyHasStaticQuestions(family.kind));
+        const preferStatic = !rules.includes('multi') && !rules.includes('order')
+            && staticPool.length > 0 && this.rng.next() < 0.85;
+        const selectedPool = preferStatic ? staticPool : familyPool;
+        const reusable = phase.reuseSeenFamilies ? selectedPool.filter((family) => this.seenFamilyIds.has(family.id)) : selectedPool;
         const reusableHasCooledFamily = reusable.some((family) => !this.recentFamilyIds.includes(family.id));
-        return this.pickFromFamilyBag(phase, rules, reusableHasCooledFamily ? reusable : familyPool);
+        return this.pickFromFamilyBag(phase, rules, reusableHasCooledFamily ? reusable : selectedPool);
     }
 
     private pickTheme(phase: BrawlPhaseSettings, rules: readonly RuleId[], available: ReadonlySet<ThemeId>): ThemeId {
+        const quotaLoad = (theme: ThemeId): number =>
+            (this.themeSelectionCounts.get(theme) ?? 0) / Math.max(1, phase.themeWeights[theme] ?? 1);
+        const minimumLoad = Math.min(...Array.from(available).map(quotaLoad));
+        const quotaAvailable = new Set(Array.from(available).filter((theme) => quotaLoad(theme) <= minimumLoad + 0.25));
+        if (quotaAvailable.size) available = quotaAvailable;
         const key = `${phase.id}:${ruleKey(rules)}`;
         let bag = this.themeBags.get(key);
         if (!bag?.some((theme) => available.has(theme))) {
@@ -350,7 +362,9 @@ export class Brawl60Director {
         let index = bag.length - 1;
         while (index >= 0 && (!available.has(bag[index]) || (bag[index] === avoidTheme && bag.some((theme) => available.has(theme) && theme !== avoidTheme)))) index--;
         if (index < 0) index = bag.findIndex((theme) => available.has(theme));
-        return bag.splice(index, 1)[0];
+        const selected = bag.splice(index, 1)[0];
+        this.themeSelectionCounts.set(selected, (this.themeSelectionCounts.get(selected) ?? 0) + 1);
+        return selected;
     }
 
     private pickFromFamilyBag(phase: BrawlPhaseSettings, rules: readonly RuleId[], pool: readonly ContentFamilySpec[]): ContentFamilySpec {

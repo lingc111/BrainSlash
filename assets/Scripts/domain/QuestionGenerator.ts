@@ -36,6 +36,11 @@ import { SeededRng } from './SeededRng';
 import { staticQuestionsForFamily, type StaticQuestionRecord } from './StaticQuestionBank';
 
 type Stage = 0 | 1 | 2;
+export interface QuestionGeneratorOptions {
+    recentFactIds?: readonly string[];
+    recentSemanticSignatures?: readonly string[];
+    onQuestionAccepted?: (factIds: readonly string[], semanticSignature: string) => void;
+}
 const COLOR_WORDS = ['红', '蓝', '绿', '黄'] as const;
 const ARROWS = ['←', '↑', '→', '↓'] as const;
 const OPPOSITE_ARROW: Readonly<Record<string, string>> = { '←': '→', '→': '←', '↑': '↓', '↓': '↑' };
@@ -47,9 +52,20 @@ export class QuestionGenerator {
     private readonly recentQuestionFacts: string[][] = [];
     private readonly recentSemanticSignatures: string[] = [];
     private readonly recentAnswerSignatures: string[] = [];
+    private readonly crossSessionFactIds = new Set<string>();
+    private readonly crossSessionSemanticSignatures = new Set<string>();
     private activeFactIds: string[] = [];
 
-    public constructor(private readonly rng: SeededRng, _config: GameplayConfig) {}
+    public constructor(
+        private readonly rng: SeededRng,
+        _config: GameplayConfig,
+        private readonly options: QuestionGeneratorOptions = {},
+    ) {
+        for (const id of options.recentFactIds ?? []) if (id) this.crossSessionFactIds.add(id);
+        for (const signature of options.recentSemanticSignatures ?? []) {
+            if (signature) this.crossSessionSemanticSignatures.add(signature);
+        }
+    }
 
     public next(directive: BrawlQuestionDirective): QuestionInstance {
         this.directive = directive;
@@ -60,12 +76,13 @@ export class QuestionGenerator {
             if (validateQuestion(question, evaluateRules(question)).length) continue;
             const semanticSignature = this.semanticSignature(question);
             const answerSignature = this.answerSignature(question);
-            const semanticCooling = this.recentSemanticSignatures.includes(semanticSignature);
+            const semanticCooling = this.recentSemanticSignatures.includes(semanticSignature)
+                || this.crossSessionSemanticSignatures.has(semanticSignature);
             const answerCooling = this.recentAnswerSignatures.includes(answerSignature);
             // Relax answer variety first, then semantic variety only as a final
             // escape hatch for tiny visual pools. Fairness is never relaxed.
             if ((!semanticCooling && (!answerCooling || attempt >= 16)) || attempt >= 22) {
-                this.recordQuestionFacts();
+                this.recordQuestionFacts(semanticSignature);
                 this.recordSignature(this.recentSemanticSignatures, semanticSignature, 60);
                 this.recordSignature(this.recentAnswerSignatures, answerSignature, 8);
                 return question;
@@ -88,11 +105,16 @@ export class QuestionGenerator {
     private generate(family: ContentFamilySpec, stage: Stage): QuestionInstance {
         this.index += 1;
         const staticPool = staticQuestionsForFamily(family.kind);
-        if (staticPool.length && !this.directive.rules.includes('multi') && !this.directive.rules.includes('order')) {
+        if (staticPool.length && !this.directive.rules.includes('order')) {
             const eligible = staticPool.filter((record) => record.difficulty <= stage + 1);
             const pool = eligible.length ? eligible : staticPool;
-            const record = this.pickFact(`static:${family.kind}`, pool, (item) => item.id);
-            return this.staticChoice(family, stage, record);
+            if (this.directive.rules.includes('multi')) {
+                const multi = this.staticMultiChoice(family, stage, pool);
+                if (multi) return multi;
+            } else {
+                const record = this.pickFact(`static:${family.kind}`, pool, (item) => item.id);
+                return this.staticChoice(family, stage, record);
+            }
         }
         switch (family.kind) {
             case 'math-add': return this.mathAdd(family, stage);
@@ -140,6 +162,40 @@ export class QuestionGenerator {
             record.distractors.map(String),
             stage,
         );
+    }
+
+    private staticMultiChoice(
+        family: ContentFamilySpec,
+        stage: Stage,
+        pool: readonly StaticQuestionRecord[],
+    ): QuestionInstance | null {
+        const prompts = new Map<string, StaticQuestionRecord[]>();
+        for (const record of pool) {
+            const group = prompts.get(record.prompt) ?? [];
+            if (!group.some((candidate) => String(candidate.answer) === String(record.answer))) group.push(record);
+            prompts.set(record.prompt, group);
+        }
+        const groups = Array.from(prompts.values()).filter((group) => group.length >= 2);
+        if (!groups.length) return null;
+        const group = this.rng.pick(groups);
+        const selected = this.pickFacts(
+            `static-multi:${family.kind}:${group[0].prompt}`,
+            group,
+            2,
+            (record) => record.id,
+        );
+        const answers = selected.map((record) => String(record.answer));
+        const distractors = this.rng.shuffle(group.flatMap((record) => record.distractors.map(String)))
+            .filter((value, index, values) => !answers.includes(value) && values.indexOf(value) === index);
+        const values = this.rng.shuffle([
+            ...answers,
+            ...distractors.slice(0, Math.max(0, this.directive.targetCount - answers.length)),
+        ]);
+        const targets: TargetSpec[] = values.map((value, index) => ({ id: `t${index}`, text: value, value }));
+        const correct = targets.filter((target) => answers.includes(String(target.value))).map((target) => target.id);
+        if (correct.length < 2) return null;
+        this.appendBomb(targets);
+        return this.make(family, group[0].prompt, targets, correct, this.directive.rules, stage);
     }
 
     private make(
@@ -374,11 +430,10 @@ export class QuestionGenerator {
 
     private visionStroop(family: ContentFamilySpec, stage: Stage): QuestionInstance {
         const wanted = COLOR_WORDS[family.variant % COLOR_WORDS.length];
-        if (stage === 0) return this.makeChoice(family, `“${wanted}”`, wanted, COLOR_WORDS, stage, { allowBomb: false, allowReverse: false });
         const colors = this.includeAnswer(wanted, COLOR_WORDS, this.nonBombTargetCount());
         const targets: TargetSpec[] = colors.map((color, index) => ({
             id: `s${index}`,
-            text: COLOR_WORDS[(index + family.variant + 1) % COLOR_WORDS.length],
+            text: COLOR_WORDS[(COLOR_WORDS.indexOf(color) + 1 + family.variant % 3) % COLOR_WORDS.length],
             colorName: color,
             value: color,
         }));
@@ -593,7 +648,7 @@ export class QuestionGenerator {
             bag = this.rng.shuffle(items.map((_, index) => index));
             this.factBags.set(key, bag);
         }
-        const recent = new Set(this.recentQuestionFacts.flat());
+        const recent = new Set([...this.crossSessionFactIds, ...this.recentQuestionFacts.flat()]);
         let bagIndex = bag.length - 1;
         while (bagIndex >= 0) {
             const factId = idOf(items[bag[bagIndex]]);
@@ -613,9 +668,15 @@ export class QuestionGenerator {
         return item;
     }
 
-    private recordQuestionFacts(): void {
-        this.recentQuestionFacts.push([...this.activeFactIds]);
-        if (this.recentQuestionFacts.length > 20) this.recentQuestionFacts.shift();
+    private recordQuestionFacts(semanticSignature: string): void {
+        const accepted = [...this.activeFactIds];
+        this.recentQuestionFacts.push(accepted);
+        if (this.recentQuestionFacts.length > 30) this.recentQuestionFacts.shift();
+        if (accepted.length) {
+            for (const id of accepted) this.crossSessionFactIds.add(id);
+        }
+        this.crossSessionSemanticSignatures.add(semanticSignature);
+        this.options.onQuestionAccepted?.(accepted, semanticSignature);
     }
 
     private semanticSignature(question: QuestionInstance): string {

@@ -42,6 +42,10 @@ export function staticQuestionsForFamily(kind: ContentFamilyKind): readonly Stat
     return recordsByFamily.get(kind) ?? [];
 }
 
+export function familyHasStaticQuestions(kind: ContentFamilyKind): boolean {
+    return (recordsByFamily.get(kind)?.length ?? 0) > 0;
+}
+
 export function installedStaticQuestionCount(): number {
     return installedIds.size;
 }

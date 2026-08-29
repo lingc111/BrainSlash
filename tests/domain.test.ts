@@ -44,7 +44,7 @@ import { GestureResolver, shouldKeepIncompleteGesture } from '../assets/Scripts/
 import type { FriendChallengeConfig, PlayerProgress, QuestionInstance, RunResult } from '../assets/Scripts/domain/Models.ts';
 import { QuestionGenerator } from '../assets/Scripts/domain/QuestionGenerator.ts';
 import { createResultPresentation, finalizeResult } from '../assets/Scripts/domain/ResultSummary.ts';
-import { createMistakeRecord, evaluateRules, questionFlightDurationSeconds, questionPreviewDurationSeconds, rulesForReadableTargets, slashRuleCount, slashRuleLabel } from '../assets/Scripts/domain/Rules.ts';
+import { createMistakeRecord, evaluateRules, maximumAnswerTextLength, questionFlightDurationSeconds, questionPreviewDurationSeconds, rulesForReadableTargets, slashRuleCount, slashRuleLabel } from '../assets/Scripts/domain/Rules.ts';
 import { SeededRng } from '../assets/Scripts/domain/SeededRng.ts';
 import { validateQuestion } from '../assets/Scripts/domain/FairnessValidator.ts';
 import { difficultyAt } from '../assets/Scripts/domain/DifficultyDirector.ts';
@@ -56,7 +56,7 @@ import {
 import { RunSeedFactory } from '../assets/Scripts/app/RunSeedFactory.ts';
 import { PlatformService } from '../assets/Scripts/infrastructure/PlatformService.ts';
 import { AudioService, SoundThrottle } from '../assets/Scripts/infrastructure/AudioService.ts';
-import { migrateV1ToV2, migrateV2ToV3, migrateV3ToV4, migrateV4ToV5 } from '../assets/Scripts/infrastructure/SaveData.ts';
+import { createDefaultSave, migrateV1ToV2, migrateV2ToV3, migrateV3ToV4, migrateV4ToV5, normalizeV5 } from '../assets/Scripts/infrastructure/SaveData.ts';
 import { brawlRecordFromRun, createLocalLeaderboard, emptyBrawlRecord } from '../assets/Scripts/domain/Leaderboard.ts';
 import { TowerDirector } from '../assets/Scripts/domain/TowerDirector.ts';
 import {
@@ -435,6 +435,15 @@ test('slash rule labels describe the gesture and ignore bomb distractors', () =>
     assert.equal(questionFlightDurationSeconds(2.5, ['bomb', 'multi']), 3.85);
     assert.equal(questionFlightDurationSeconds(2.25, ['standard'], 5), 3);
     assert.equal(questionFlightDurationSeconds(2.25, ['bomb'], 5), 3);
+    assert.equal(questionFlightDurationSeconds(2.5, ['standard'], 4, 3), 2.5);
+    assert.equal(questionFlightDurationSeconds(2.5, ['standard'], 4, 4), 3.25);
+    assert.equal(questionFlightDurationSeconds(2.5, ['multi'], 4, 4), 4.6);
+    assert.equal(questionFlightDurationSeconds(2.25, ['standard'], 5, 4), 3.75);
+    assert.equal(maximumAnswerTextLength([
+        { id: 'bomb', text: '五字炸弹题', isBomb: true },
+        { id: 'short', text: '三字内' },
+        { id: 'long', text: '四字答案' },
+    ]), 4);
     const shortTargets = [{ id: 'a', text: '三字内' }, { id: 'b', text: '答案' }];
     const longTargets = [{ id: 'a', text: '四字答案' }, { id: 'b', text: '答案' }];
     assert.deepEqual(rulesForReadableTargets(['rotate'], shortTargets), ['rotate']);
@@ -932,7 +941,7 @@ test('brawl director exposes exact four-phase boundaries and rising pressure', (
     assert.equal(phaseAt(44_999).id, 'twist');
     assert.equal(phaseAt(45_000).id, 'climax');
     assert.equal(phaseAt(60_000).id, 'climax');
-    assert.deepEqual([0, 10_000, 25_000, 45_000].map((elapsed) => difficultyAt(elapsed).targetCount), [3, 4, 5, 6]);
+    assert.deepEqual([0, 10_000, 25_000, 45_000].map((elapsed) => difficultyAt(elapsed).targetCount), [3, 4, 5, 5]);
     assert.deepEqual([0, 10_000, 25_000, 45_000].map((elapsed) => difficultyAt(elapsed).phase), ['warmup', 'action', 'twist', 'climax']);
     assert.ok(phaseAt(0).questionTimeMs > phaseAt(10_000).questionTimeMs);
     assert.ok(phaseAt(10_000).questionTimeMs > phaseAt(25_000).questionTimeMs);
@@ -1148,18 +1157,18 @@ test('each phase schedules its intended themes and rule beats', () => {
     }
 
     const action = pipeline('action');
-    const actionRules = Array.from({ length: 5 }, () => action.director.next(15_000).rules);
-    assert.deepEqual(actionRules.map((rules) => rules.join('+')).sort(), ['bomb', 'bomb', 'multi', 'order', 'standard']);
+    const actionRules = Array.from({ length: 7 }, () => action.director.next(15_000).rules);
+    assert.deepEqual(actionRules.map((rules) => rules.join('+')).sort(), ['bomb', 'bomb', 'multi', 'order', 'reverse', 'rotate', 'standard']);
 
     const twist = pipeline('twist');
-    const twistRules = Array.from({ length: 6 }, () => twist.director.next(30_000).rules);
-    assert.deepEqual(twistRules.map((rules) => rules.join('+')).sort(), ['multi', 'reverse', 'reverse', 'rotate', 'standard', 'standard']);
+    const twistRules = Array.from({ length: 7 }, () => twist.director.next(30_000).rules);
+    assert.deepEqual(twistRules.map((rules) => rules.join('+')).sort(), ['bomb', 'multi', 'reverse', 'reverse', 'rotate', 'standard', 'standard']);
 
     const climax = pipeline('climax');
     for (let i = 0; i < 15; i++) {
         const directive = climax.director.next(50_000);
         const question = climax.generator.next(directive);
-        assert.equal(directive.rules.length, 2);
+        assert.ok(directive.rules.length >= 1 && directive.rules.length <= 2);
         const hasLongChoice = question.targets.some((target) => !target.isBomb && [...target.text.trim()].length >= 4);
         const expectedRules = hasLongChoice && directive.rules.includes('rotate')
             ? directive.rules.filter((rule) => rule !== 'rotate')
@@ -1261,7 +1270,7 @@ test('theme and family bags enforce cooldowns across long mixed runs', () => {
     }
 });
 
-test('fact bag keeps repeated reviewed facts more than 20 questions apart', () => {
+test('fact bag keeps reviewed facts from non-exhausted pools more than 20 questions apart', () => {
     const { director, generator } = pipeline('fact-cooldowns');
     const lastSeen = new Map<string, number>();
     for (let i = 0; i < 800; i++) {
@@ -1269,7 +1278,9 @@ test('fact bag keeps repeated reviewed facts more than 20 questions apart', () =
         const question = generator.next(director.next(elapsed));
         for (const factId of question.factIds ?? []) {
             const previous = lastSeen.get(factId);
-            if (previous !== undefined) assert.ok(i - previous > 20, `${factId} repeated after ${i - previous} questions`);
+            if (previous !== undefined && !factId.startsWith('life:')) {
+                assert.ok(i - previous > 20, `${factId} repeated after ${i - previous} questions`);
+            }
             lastSeen.set(factId, i);
         }
     }
@@ -1377,6 +1388,20 @@ test('color identification remains a question family without becoming a rule unl
         assert.ok(directive.rules.every((rule) => rule === 'standard' || rule === 'bomb'));
     }
     assert.ok(dailyRecipeById('logic-detective')?.familyKinds.includes('vision-stroop'));
+
+    const family = CONTENT_FAMILIES.find((candidate) => candidate.kind === 'vision-stroop')!;
+    const generator = new QuestionGenerator(new SeededRng('no-read-yellow-slash-yellow'), GAMEPLAY_CONFIG);
+    for (let variant = 0; variant < 5; variant++) {
+        const question = generator.next({
+            phase: 'warmup', difficultyStage: 0, targetCount: 4, questionTimeMs: 3_000,
+            speed: 1, family: { ...family, variant }, rules: ['standard'],
+        });
+        assert.ok(question.prompt.text.startsWith('字体颜色·'));
+        const correct = question.targets.find((target) => question.baseCorrectTargetIds.includes(target.id))!;
+        const wanted = question.prompt.text.slice(-1);
+        assert.notEqual(correct.text, wanted);
+        assert.equal(correct.colorName, wanted);
+    }
 });
 
 test('daily topics merge logic and vision while common knowledge and history also join core modes', () => {
@@ -1475,18 +1500,19 @@ test('tower director is deterministic per attempt and legal across 100 seeds and
     }
 });
 
-test('ordinary brawl keeps English and history as rare accents', () => {
-    const director = new Brawl60Director(new SeededRng('reduced-language-history-weights'));
+test('ordinary brawl enforces visible quotas across all eight themes', () => {
+    const director = new Brawl60Director(new SeededRng('balanced-theme-quotas'));
     const counts = new Map<string, number>();
     const elapsed = [15_000, 30_000, 50_000];
     for (let index = 0; index < 3_000; index++) {
         const theme = director.next(elapsed[index % elapsed.length]).family.theme;
         counts.set(theme, (counts.get(theme) ?? 0) + 1);
     }
-    assert.ok((counts.get('english') ?? 0) / 3_000 < 0.06);
-    assert.ok((counts.get('history') ?? 0) / 3_000 < 0.06);
-    assert.ok((counts.get('knowledge') ?? 0) > (counts.get('english') ?? 0));
-    assert.ok((counts.get('knowledge') ?? 0) > (counts.get('history') ?? 0));
+    for (const theme of ['math', 'vision', 'hanzi', 'english', 'life', 'geography', 'knowledge', 'history']) {
+        const ratio = (counts.get(theme) ?? 0) / 3_000;
+        assert.ok(ratio >= 0.09, `${theme} quota too low: ${ratio}`);
+        assert.ok(ratio <= 0.18, `${theme} quota too high: ${ratio}`);
+    }
 });
 
 test('category question pools exclude context-dependent items and polysemous English words', () => {
@@ -1639,6 +1665,21 @@ test('save v4 migration creates detailed brawl and trial leaderboard records', (
     assert.equal(migrated.schemaVersion, 5);
     assert.equal(migrated.leaderboard.brawlBest.rankScore, 975);
     assert.equal(migrated.leaderboard.trialAnsweredCount, 0);
+});
+
+test('save v5 keeps only the newest 300 unique cross-session question ids', () => {
+    const base = createDefaultSave();
+    const recentQuestionIds = [
+        ...Array.from({ length: 350 }, (_, index) => `static.question.${index}`),
+        'static.question.100',
+    ];
+    const recentQuestionSignatures = Array.from({ length: 340 }, (_, index) => `signature-${index}`);
+    const normalized = normalizeV5({ ...base, recentQuestionIds, recentQuestionSignatures });
+    assert.equal(normalized.recentQuestionIds.length, 300);
+    assert.equal(normalized.recentQuestionIds.at(-1), 'static.question.100');
+    assert.equal(new Set(normalized.recentQuestionIds).size, 300);
+    assert.equal(normalized.recentQuestionSignatures.length, 300);
+    assert.equal(normalized.recentQuestionSignatures[0], 'signature-40');
 });
 
 test('local leaderboard sorts persisted player scores and reports an off-screen self rank', () => {
