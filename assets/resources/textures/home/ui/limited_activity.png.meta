@@ -41,14 +41,14 @@
       "userData": {
         "trimThreshold": 1,
         "rotated": false,
-        "offsetX": 0,
+        "offsetX": 4,
         "offsetY": 0,
-        "trimX": 0,
+        "trimX": 8,
         "trimY": 0,
-        "width": 1122,
-        "height": 1402,
-        "rawWidth": 1122,
-        "rawHeight": 1402,
+        "width": 552,
+        "height": 630,
+        "rawWidth": 560,
+        "rawHeight": 630,
         "borderTop": 0,
         "borderBottom": 0,
         "borderLeft": 0,
@@ -60,17 +60,17 @@
         "meshType": 0,
         "vertices": {
           "rawPosition": [
-            -561,
-            -701,
+            -276,
+            -315,
             0,
-            561,
-            -701,
+            276,
+            -315,
             0,
-            -561,
-            701,
+            -276,
+            315,
             0,
-            561,
-            701,
+            276,
+            315,
             0
           ],
           "indexes": [
@@ -82,33 +82,33 @@
             3
           ],
           "uv": [
+            8,
+            630,
+            560,
+            630,
+            8,
             0,
-            1402,
-            1122,
-            1402,
-            0,
-            0,
-            1122,
+            560,
             0
           ],
           "nuv": [
-            0,
+            0.014285714285714285,
             0,
             1,
             0,
-            0,
+            0.014285714285714285,
             1,
             1,
             1
           ],
           "minPos": [
-            -561,
-            -701,
+            -276,
+            -315,
             0
           ],
           "maxPos": [
-            561,
-            701,
+            276,
+            315,
             0
           ]
         },
@@ -128,7 +128,7 @@
   "userData": {
     "type": "sprite-frame",
     "fixAlphaTransparencyArtifacts": false,
-    "hasAlpha": false,
+    "hasAlpha": true,
     "redirect": "d9726480-9559-401c-97d1-df17690393fd@6c48a"
   }
 }

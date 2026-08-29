@@ -1,9 +1,11 @@
 import { _decorator, Color, Component, Graphics, Label, Node, Sprite, SpriteFrame, UITransform, Vec2 } from 'cc';
+import { targetContentLayout, targetSkinPixelScale, targetSkinVisualScale } from './TargetSkinSizing';
+import { targetTextPresentation } from './TargetTypography';
 
 const { ccclass } = _decorator;
 
 export enum TargetContentType { TEXT, ICON, IMAGE }
-export type TargetShape = 'circle' | 'triangle' | 'roundedSquare' | 'pentagon' | 'hexagon';
+export type TargetShape = 'circle' | 'roundedSquare' | 'hexagon';
 
 export interface GameplayTargetData {
     id: string;
@@ -86,12 +88,13 @@ export class GameplayTarget extends Component {
     }
 
     public segmentHit(a: Vec2, b: Vec2): boolean {
-        const p = new Vec2(this.node.position.x, this.node.position.y);
-        const ab = b.clone().subtract(a);
-        const lengthSq = ab.lengthSqr();
-        const t = lengthSq === 0 ? 0 : Math.max(0, Math.min(1, p.clone().subtract(a).dot(ab) / lengthSq));
-        const nearest = a.clone().add(ab.multiplyScalar(t));
-        return Vec2.distance(nearest, p) <= this.radius;
+        const px = this.node.position.x, py = this.node.position.y;
+        const abx = b.x - a.x, aby = b.y - a.y;
+        const lengthSq = abx * abx + aby * aby;
+        const projection = lengthSq === 0 ? 0 : ((px - a.x) * abx + (py - a.y) * aby) / lengthSq;
+        const t = Math.max(0, Math.min(1, projection));
+        const dx = a.x + abx * t - px, dy = a.y + aby * t - py;
+        return dx * dx + dy * dy <= this.radius * this.radius;
     }
 
     private drawTarget(): void {
@@ -142,14 +145,33 @@ export class GameplayTarget extends Component {
 
         }
 
-        const root = makeNode('ContentRoot', this.node, this.radius * 1.3, this.radius * 1.3);
-        root.setPosition(0, 1);
+        const layout = targetContentLayout(this.data.skinSpriteFrame?.name, this.data.shape);
+        const targetText = (this.data.text ?? '').trim();
+        const presentation = targetTextPresentation(targetText);
+        const contentWidth = this.radius * Math.max(layout.width, presentation.minimumWidthScale);
+        const contentHeight = this.radius * Math.max(layout.height, presentation.minimumHeightScale);
+        const root = makeNode('ContentRoot', this.node, contentWidth, contentHeight);
+        root.setPosition(this.radius * layout.offsetX, this.radius * layout.offsetY);
         if (this.data.contentType === TargetContentType.IMAGE && this.data.spriteFrame) {
-            const image = makeNode('ImageContent', root, this.radius, this.radius).addComponent(Sprite);
+            const original = this.data.spriteFrame.originalSize;
+            const imageScale = Math.min(
+                contentWidth / Math.max(1, original.width),
+                contentHeight / Math.max(1, original.height),
+            ) * 0.9;
+            const image = makeNode(
+                'ImageContent',
+                root,
+                original.width * imageScale,
+                original.height * imageScale,
+            ).addComponent(Sprite);
+            image.sizeMode = Sprite.SizeMode.CUSTOM;
             image.spriteFrame = this.data.spriteFrame;
         } else {
-            const content = label(root, this.data.contentType === TargetContentType.ICON ? 'IconContent' : 'TextContent', this.data.text ?? '', this.data.text && this.data.text.length > 2 ? 38 : 52, this.data.contentColor ?? INK);
+            const content = label(root, this.data.contentType === TargetContentType.ICON ? 'IconContent' : 'TextContent', presentation.displayText, presentation.fontSize, this.data.contentColor ?? INK);
             content.isBold = true;
+            content.lineHeight = presentation.lineHeight;
+            ui(content.node, contentWidth, contentHeight);
+            content.overflow = Label.Overflow.SHRINK;
         }
     }
 
@@ -169,9 +191,9 @@ export class GameplayTarget extends Component {
             g.fill(); g.stroke();
             return;
         }
-        const sides = this.data.shape === 'triangle' ? 3 : this.data.shape === 'pentagon' ? 5 : 6;
+        const sides = 6;
         const points: Vec2[] = [];
-        const start = this.data.shape === 'triangle' ? Math.PI / 2 : Math.PI / 2;
+        const start = Math.PI / 2;
         for (let i = 0; i < sides; i++) {
             const angle = start + i * Math.PI * 2 / sides;
             points.push(new Vec2(Math.cos(angle) * r, Math.sin(angle) * r));
@@ -212,9 +234,9 @@ export class GameplayTarget extends Component {
 
     private drawNormalizedSkin(name: string, frame: SpriteFrame): Sprite {
         const original = frame.originalSize;
-        const rect = frame.rect;
         const targetExtent = this.radius * 2.64;
-        const pixelScale = targetExtent / Math.max(1, rect.width, rect.height);
+        const pixelScale = targetSkinPixelScale(original.width, original.height, targetExtent)
+            * targetSkinVisualScale(frame.name);
         const skin = makeNode(name, this.node, original.width * pixelScale, original.height * pixelScale).addComponent(Sprite);
         skin.sizeMode = Sprite.SizeMode.CUSTOM;
         skin.spriteFrame = frame;
