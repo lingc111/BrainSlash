@@ -38,7 +38,7 @@ export interface QuestionInstance {
 export interface ActionConstraint { requiredTargetIds: string[]; forbiddenTargetIds: string[]; matchMode: 'any' | 'all'; ordered: boolean; allowExtraHits: boolean; }
 export interface GameSessionState {
     sessionId: string; seed: string; mode: GameMode; contentVersion: string;
-    elapsedMs: number; remainingMs: number; life: number; score: number; combo: number; maxCombo: number;
+    elapsedMs: number; remainingMs: number; life: number; maxLife: number; score: number; combo: number; maxCombo: number;
     correctCount: number; errorCount: number; bestReactionMs?: number; masterSlashCount: number; phase: SessionPhase;
 }
 export type FailureKind = 'wrong' | 'bomb' | 'miss' | 'orderError';

@@ -42,8 +42,8 @@ import {
 } from '../assets/Scripts/domain/FriendChallenge.ts';
 import { GestureResolver, shouldKeepIncompleteGesture } from '../assets/Scripts/domain/GestureResolver.ts';
 import type { FriendChallengeConfig, PlayerProgress, QuestionInstance, RunResult } from '../assets/Scripts/domain/Models.ts';
-import { EXCLUDED_QUESTION_TYPES, QUESTION_TYPES } from '../assets/Scripts/domain/QuestionTypeCatalog.ts';
-import { chineseAnswerLength, poetryRecordsAreSafe } from '../assets/Scripts/domain/ExtendedQuestionGenerator.ts';
+import { EXCLUDED_QUESTION_TYPES, QUESTION_TYPES, questionTypeById } from '../assets/Scripts/domain/QuestionTypeCatalog.ts';
+import { chineseAnswerLength, generateExtendedQuestion, poetryRecordsAreSafe } from '../assets/Scripts/domain/ExtendedQuestionGenerator.ts';
 import { QuestionGenerator } from '../assets/Scripts/domain/QuestionGenerator.ts';
 import { createResultPresentation, finalizeResult } from '../assets/Scripts/domain/ResultSummary.ts';
 import { createMistakeRecord, evaluateRules, maximumAnswerTextLength, questionFlightDurationSeconds, questionPreviewDurationSeconds, rulesForReadableTargets, slashRuleCount, slashRuleLabel } from '../assets/Scripts/domain/Rules.ts';
@@ -58,9 +58,10 @@ import {
 import { RunSeedFactory } from '../assets/Scripts/app/RunSeedFactory.ts';
 import { PlatformService } from '../assets/Scripts/infrastructure/PlatformService.ts';
 import { AudioService, SoundThrottle } from '../assets/Scripts/infrastructure/AudioService.ts';
-import { createDefaultSave, migrateV1ToV2, migrateV2ToV3, migrateV3ToV4, migrateV4ToV5, normalizeV5 } from '../assets/Scripts/infrastructure/SaveData.ts';
+import { createDefaultSave, migrateV1ToV2, migrateV2ToV3, migrateV3ToV4, migrateV4ToV5, migrateV5ToV6, normalizeV5 } from '../assets/Scripts/infrastructure/SaveData.ts';
 import { brawlRecordFromRun, createLocalLeaderboard, emptyBrawlRecord } from '../assets/Scripts/domain/Leaderboard.ts';
 import { TowerDirector } from '../assets/Scripts/domain/TowerDirector.ts';
+import { TowerChallengeRuntime, towerChallengeSummary, validateTowerChallenge } from '../assets/Scripts/domain/TowerChallenge.ts';
 import {
     DEFAULT_TOWER_PROGRESS,
     allowedBrawlRules,
@@ -82,7 +83,7 @@ import {
     resolveSoftTargetSeparation,
 } from '../assets/Scripts/UI/PortraitTargetMotion.ts';
 import { ACTIVE_TARGET_SKINS, ALL_TARGET_SKINS, COLOR_QUESTION_TARGET_SKIN, TARGET_SKIN_VISUAL_SCALE, targetContentLayout, targetShapeForSkin, targetSkinForAnswer, targetSkinPixelScale, targetSkinVisualScale, uniqueColorTargetSkins } from '../assets/Scripts/UI/TargetSkinSizing.ts';
-import { targetTextPresentation } from '../assets/Scripts/UI/TargetTypography.ts';
+import { targetTextPresentation, towerOpeningTextPresentation } from '../assets/Scripts/UI/TargetTypography.ts';
 
 function pipeline(seed: string): { director: Brawl60Director; generator: QuestionGenerator } {
     return {
@@ -442,6 +443,7 @@ test('slash rule labels describe the gesture and ignore bomb distractors', () =>
     assert.equal(questionFlightDurationSeconds(2.5, ['standard'], 4, 4), 3.25);
     assert.equal(questionFlightDurationSeconds(2.5, ['multi'], 4, 4), 4.6);
     assert.equal(questionFlightDurationSeconds(2.25, ['standard'], 5, 4), 3.75);
+    assert.equal(questionFlightDurationSeconds(2.5, ['standard'], 4, 6), 4);
     assert.equal(maximumAnswerTextLength([
         { id: 'bomb', text: '五字炸弹题', isBomb: true },
         { id: 'short', text: '三字内' },
@@ -470,6 +472,48 @@ test('date and medium-length answers use the available target width', () => {
     assert.ok(date.minimumWidthScale >= 1.8);
     assert.ok(date.minimumHeightScale >= 0.9);
     assert.equal(targetTextPresentation('9月3日').fontSize, 46);
+});
+
+test('relationship answers use a large two-line layout', () => {
+    const presentation = targetTextPresentation('爱迪生—电灯');
+    assert.equal(presentation.displayText, '爱迪生\n电灯');
+    assert.equal(presentation.fontSize, 40);
+    assert.ok(presentation.minimumHeightScale >= 1.3);
+});
+
+test('all tower opening descriptions fit portrait safe widths', () => {
+    for (const visibleWidth of [750, 540, 420]) {
+        for (let floor = 1; floor <= 50; floor++) {
+            const config = towerFloorConfig(floor);
+            const detail = config.challenge.openingHint ?? towerChallengeSummary(config.challenge);
+            const presentation = towerOpeningTextPresentation(`第${floor}层 · ${config.title}`, detail, visibleWidth);
+            assert.ok(presentation.width <= visibleWidth - 64, `floor ${floor} at ${visibleWidth}`);
+            assert.ok(presentation.height <= 300, `floor ${floor} at ${visibleWidth}`);
+            assert.ok(presentation.displayText.split('\n').every((line) => Array.from(line).length <= (visibleWidth < 420 ? 10 : visibleWidth < 560 ? 12 : 14)));
+            assert.ok(presentation.displaySeconds >= 1.8);
+        }
+    }
+    const floorSeven = towerFloorConfig(7);
+    const presentation = towerOpeningTextPresentation('第7层 · 双律初见', floorSeven.challenge.openingHint!, 750);
+    assert.equal(presentation.displayText, '第7层 · 双律初见\n同时观察两条规则，\n先判断再出刀');
+});
+
+test('color and shape questions state the exact visible target', () => {
+    const cases = [
+        ['vision.15.color-shape', '选择红色三角形'],
+        ['vision.16.exclude-color', '选择非红色圆形'],
+        ['vision.17.exclude-shape', '选择红色实心三角'],
+        ['vision.18.color-shape-outline', '选择蓝色空心圆'],
+        ['vision.19.color-or-shape', '选择红色或三角形'],
+        ['vision.24.direction-color', '选择蓝色左箭头'],
+    ] as const;
+    for (const [typeId, prompt] of cases) {
+        const definition = questionTypeById(typeId);
+        assert.ok(definition, typeId);
+        const draft = generateExtendedQuestion(definition, new SeededRng(typeId), 1);
+        assert.equal(draft.prompt, prompt);
+        assert.ok(draft.correctTargetIds.length > 0);
+    }
 });
 
 test('fill-in prompts show a spaced parenthesis placeholder', () => {
@@ -1412,18 +1456,14 @@ test('question appearance keeps semantic questions and answers on rolling cooldo
     }
 });
 
-test('tower exposes the fixed 60-second 1-30 progression and unlock schedule', () => {
-    const expectedRequired = [
-        [1, 8], [2, 8], [3, 9], [4, 9], [5, 9], [6, 9], [7, 10], [9, 10],
-        [10, 10], [12, 10], [13, 10], [14, 10], [15, 11], [19, 11], [20, 12],
-        [24, 12], [25, 13], [29, 13], [30, 15],
-    ];
-    for (const [floor, required] of expectedRequired) {
+test('tower exposes the fixed 60-second 1-50 progression and unlock schedule', () => {
+    for (let floor = 1; floor <= 50; floor++) {
         const config = towerFloorConfig(floor);
         assert.equal(config.floor, floor);
         assert.equal(config.durationMs, 60_000);
-        assert.equal(config.requiredCorrect, required);
-        assert.ok(config.targetCount >= 3 && config.targetCount <= 5);
+        assert.ok(config.title.length > 0);
+        assert.ok(config.difficulty.targetCount >= 3 && config.difficulty.targetCount <= 5);
+        assert.deepEqual(validateTowerChallenge(config.challenge), []);
     }
     assert.deepEqual(unlockedRulesForTower(0), ['standard', 'bomb']);
     assert.deepEqual(unlockedRulesForTower(1), ['standard', 'bomb']);
@@ -1434,15 +1474,130 @@ test('tower exposes the fixed 60-second 1-30 progression and unlock schedule', (
     assert.deepEqual(unlockedRulesForTower(13), ['standard', 'bomb', 'multi', 'order', 'reverse', 'rotate']);
     assert.deepEqual(unlockedRulesForTower(14), ['standard', 'bomb', 'multi', 'order', 'reverse', 'rotate']);
     assert.equal(towerFloorConfig(14).unlockedRule, undefined);
-    assert.deepEqual(towerFloorConfig(14).familyKinds, ['vision-stroop']);
-    assert.equal(towerFloorConfig(6).unlocksCompoundRules, true);
+    assert.equal(towerFloorConfig(14).challenge.encounter.type, 'pool');
+    if (towerFloorConfig(14).challenge.encounter.type === 'pool') assert.deepEqual(towerFloorConfig(14).challenge.encounter.pool.familyKinds, ['vision-stroop']);
+    assert.equal(towerFloorConfig(7).unlocksCompoundRules, true);
     assert.equal(towerFloorConfig(15).unlocksCompoundRules, false);
+    assert.equal(towerFloorConfig(8).title, '一笔制敌');
+    assert.equal(towerFloorConfig(50).title, '塔巅试炼');
+    for (let floor = 1; floor <= 8; floor++) {
+        const correctObjective = towerFloorConfig(floor).challenge.objectives.find((objective) => objective.type === 'correct');
+        assert.ok(correctObjective && correctObjective.target === 8, `floor ${floor}`);
+    }
 
     assert.deepEqual(new TowerDirector(new SeededRng('floor-2-unlock'), 2).next(0).rules, ['multi']);
     assert.deepEqual(new TowerDirector(new SeededRng('floor-3-unlock'), 3).next(0).rules, ['order']);
     assert.deepEqual(new TowerDirector(new SeededRng('floor-4-unlock'), 4).next(0).rules, ['reverse']);
     assert.deepEqual(new TowerDirector(new SeededRng('floor-5-unlock'), 5).next(0).rules, ['rotate']);
-    assert.deepEqual(new TowerDirector(new SeededRng('floor-6-unlock'), 6).next(0).rules, ['multi', 'reverse']);
+    assert.deepEqual(new TowerDirector(new SeededRng('floor-7-unlock'), 7).next(0).rules, ['multi', 'reverse']);
+});
+
+test('tower challenge quota retries the same lane after failure and clears only completed supply', () => {
+    const config = towerFloorConfig(16).challenge;
+    const runtime = new TowerChallengeRuntime(config, new SeededRng('tower-quota-runtime'));
+    const session = new GameSession({ mode: 'tower', seed: 'quota', contentVersion: CONTENT_VERSION, towerFloor: 16 }, GAMEPLAY_CONFIG);
+    session.start();
+    const failedRequest = runtime.nextRequest();
+    session.state.errorCount += 1; session.state.life -= 1;
+    const afterFailure = runtime.resolve(failedRequest.requestId, false, session.state, 'wrong');
+    assert.equal(afterFailure.status, 'active');
+    assert.equal(runtime.nextRequest().laneId, failedRequest.laneId);
+
+    for (let index = 0; index < 10; index++) {
+        const request = runtime.nextRequest();
+        session.state.correctCount += 1; session.state.combo += 1; session.state.maxCombo = session.state.combo;
+        runtime.resolve(request.requestId, true, session.state);
+    }
+    assert.equal(runtime.snapshot(session.state).status, 'cleared');
+    assert.equal(Object.values(runtime.snapshot(session.state).laneSuccesses).reduce((sum, count) => sum + count, 0), 10);
+});
+
+test('tower restricted pools generate matching Stroop and Master Slash questions', () => {
+    for (const floor of [14, 28, 41]) {
+        const runtime = new TowerChallengeRuntime(towerFloorConfig(floor).challenge, new SeededRng(`runtime-${floor}`));
+        const director = new TowerDirector(new SeededRng(`director-${floor}`), floor);
+        for (let index = 0; index < 10; index++) {
+            const directive = director.next(index * 1_000, runtime.nextRequest());
+            assert.equal(directive.family.kind, 'vision-stroop');
+        }
+    }
+    const runtime = new TowerChallengeRuntime(towerFloorConfig(8).challenge, new SeededRng('master-runtime'));
+    const director = new TowerDirector(new SeededRng('master-director'), 8);
+    const generator = new QuestionGenerator(new SeededRng('master-generator'), GAMEPLAY_CONFIG);
+    for (let index = 0; index < 20; index++) {
+        const question = generator.next(director.next(index * 1_000, runtime.nextRequest()));
+        const constraint = evaluateRules(question);
+        assert.equal(constraint.matchMode, 'all');
+        assert.ok(constraint.requiredTargetIds.length > 1);
+    }
+});
+
+test('all 50 challenge plans stay completable and satisfy their requested pools across 100 seeds', () => {
+    for (let seedIndex = 0; seedIndex < 100; seedIndex++) {
+        for (let floor = 1; floor <= 50; floor++) {
+            const seed = `challenge-${seedIndex}-${floor}`;
+            const runtime = new TowerChallengeRuntime(towerFloorConfig(floor).challenge, new SeededRng(`${seed}:runtime`));
+            const director = new TowerDirector(new SeededRng(`${seed}:director`), floor);
+            const generator = new QuestionGenerator(new SeededRng(`${seed}:generator`), GAMEPLAY_CONFIG);
+            const session = new GameSession({ mode: 'tower', seed, contentVersion: CONTENT_VERSION, towerFloor: floor }, GAMEPLAY_CONFIG);
+            session.start();
+            for (let attempt = 0; attempt < 30 && runtime.snapshot(session.state).status === 'active'; attempt++) {
+                const request = runtime.nextRequest();
+                const directive = director.next(session.state.elapsedMs, request);
+                const question = generator.next(directive);
+                if (request.pool.themes) assert.ok(request.pool.themes.includes(directive.family.theme));
+                if (request.pool.familyKinds) assert.ok(request.pool.familyKinds.includes(directive.family.kind));
+                if (request.pool.requiredRules) assert.ok(request.pool.requiredRules.every((rule) => directive.rules.includes(rule)));
+                if (request.pool.forbiddenRules) assert.ok(request.pool.forbiddenRules.every((rule) => !directive.rules.includes(rule)));
+                if (request.pool.minimumComplexRuleCount) assert.ok(directive.rules.filter((rule) => rule !== 'standard').length >= request.pool.minimumComplexRuleCount);
+                if (request.pool.bombPolicy === 'required') assert.ok(directive.rules.includes('bomb'));
+                if (request.pool.bombPolicy === 'forbidden') assert.ok(!directive.rules.includes('bomb'));
+                if (request.pool.masterSlashEligible) {
+                    const constraint = evaluateRules(question);
+                    assert.equal(constraint.matchMode, 'all');
+                    assert.ok(constraint.requiredTargetIds.length > 1);
+                    session.state.masterSlashCount += 1;
+                }
+                session.state.correctCount += 1;
+                session.state.combo += 1;
+                session.state.maxCombo = Math.max(session.state.maxCombo, session.state.combo);
+                session.state.elapsedMs += 1_000;
+                session.state.remainingMs = 60_000 - session.state.elapsedMs;
+                runtime.resolve(request.requestId, true, session.state);
+            }
+            assert.equal(runtime.snapshot(session.state).status, 'cleared', `floor ${floor}, seed ${seedIndex}`);
+        }
+    }
+});
+
+test('tower has five non-healing lives while other modes keep three', () => {
+    const tower = new GameSession({ mode: 'tower', seed: 'tower-life', contentVersion: CONTENT_VERSION, towerFloor: 8 }, GAMEPLAY_CONFIG);
+    assert.equal(tower.state.life, 5);
+    assert.equal(tower.state.maxLife, 5);
+    for (const mode of ['brawl60', 'daily', 'friendChallenge'] as const) {
+        const session = new GameSession({ mode, seed: `life-${mode}`, contentVersion: CONTENT_VERSION }, GAMEPLAY_CONFIG);
+        assert.equal(session.state.life, 3);
+        assert.equal(session.state.maxLife, 3);
+    }
+    const question: QuestionInstance = { id: 'tower-life-q', theme: 'math', prompt: { text: '1+1=?' }, targets: [{ id: 'a', text: '2' }, { id: 'b', text: '3' }], baseCorrectTargetIds: ['a'], activeRules: ['standard'], timeLimitMs: 3_000 };
+    tower.start();
+    tower.beginQuestion(); tower.resolveFailure('wrong'); tower.continueAfterFeedback();
+    for (let index = 0; index < 3; index++) { tower.beginQuestion(); tower.resolveSuccess(question); tower.continueAfterFeedback(); }
+    assert.equal(tower.state.life, 4);
+});
+
+test('tower max-error constraints fail after the allowed count, before five-life depletion', () => {
+    const runtime = new TowerChallengeRuntime(towerFloorConfig(10).challenge, new SeededRng('max-errors'));
+    const session = new GameSession({ mode: 'tower', seed: 'max-errors', contentVersion: CONTENT_VERSION, towerFloor: 10 }, GAMEPLAY_CONFIG);
+    session.start();
+    for (let error = 1; error <= 4; error++) {
+        const request = runtime.nextRequest();
+        session.state.errorCount += 1; session.state.life -= 1;
+        const snapshot = runtime.resolve(request.requestId, false, session.state, 'wrong');
+        assert.equal(snapshot.status, error <= 3 ? 'active' : 'failed');
+    }
+    assert.equal(session.state.life, 1);
+    assert.equal(runtime.snapshot(session.state).failureReason, 'constraintViolated');
 });
 
 test('color identification remains a question family without becoming a rule unlock', () => {
@@ -1536,9 +1691,9 @@ test('tower bomb placement varies by seed instead of staying in the final slot',
     assert.ok([...positions].some((position) => position !== 3));
 });
 
-test('tower director is deterministic per attempt and legal across 100 seeds and 30 floors', () => {
+test('tower director is deterministic per attempt and legal across 100 seeds and 50 floors', () => {
     for (let seedIndex = 0; seedIndex < 100; seedIndex++) {
-        for (let floor = 1; floor <= 30; floor++) {
+        for (let floor = 1; floor <= 50; floor++) {
             const seed = `tower-${seedIndex}-floor-${floor}`;
             const firstDirector = new TowerDirector(new SeededRng(`${seed}:director`), floor);
             const secondDirector = new TowerDirector(new SeededRng(`${seed}:director`), floor);
@@ -1593,7 +1748,7 @@ test('category question pools exclude context-dependent items and polysemous Eng
     }
 });
 
-test('tower progress rewards first clears once and restores the latest checkpoint', () => {
+test('tower progress rewards first clears once without checkpoint rollback', () => {
     const entry = { mode: 'tower' as const, seed: 'tower-attempt-a', contentVersion: CONTENT_VERSION, towerFloor: 5 };
     const run: RunResult = { entry, score: 1_000, maxCombo: 7, correctCount: 10, errorCount: 1, accuracy: 10 / 11, remainingMs: 30_000 };
     const first = commitTowerFloor(DEFAULT_TOWER_PROGRESS, run, 2);
@@ -1603,38 +1758,52 @@ test('tower progress rewards first clears once and restores the latest checkpoin
     assert.equal(first.result.towerPointsGained, 220);
     assert.equal(first.result.runTotalScore, 220);
     assert.equal(first.progress.highestClearedFloor, 5);
-    assert.equal(first.progress.lastCheckpointFloor, 5);
     const repeat = commitTowerFloor(first.progress, run, 2);
     assert.equal(repeat.result.firstClear, false);
     assert.equal(repeat.result.towerPointsGained, 14);
     assert.equal(repeat.result.runTotalScore, 234);
-    const floor6Run: RunResult = { ...run, entry: { ...entry, seed: 'tower-floor-6', towerFloor: 6 }, correctCount: 12 };
-    const floor6 = commitTowerFloor({ ...first.progress, highestClearedFloor: 5, currentFloor: 6 }, floor6Run, 2);
-    assert.equal(floor6.result.unlockedLabel, '双规则');
+    const floor7Run: RunResult = { ...run, entry: { ...entry, seed: 'tower-floor-7', towerFloor: 7 }, correctCount: 12 };
+    const floor7 = commitTowerFloor({ ...first.progress, highestClearedFloor: 6, currentFloor: 7 }, floor7Run, 2);
+    assert.equal(floor7.result.unlockedLabel, '双规则');
+});
+
+test('floor 50 marks the MVP complete and remains replayable', () => {
+    const before = { ...DEFAULT_TOWER_PROGRESS, currentFloor: 50, highestClearedFloor: 49 };
+    const run: RunResult = {
+        entry: { mode: 'tower', seed: 'floor-50', contentVersion: CONTENT_VERSION, towerFloor: 50 },
+        score: 5_000, maxCombo: 10, correctCount: 15, errorCount: 2, accuracy: 15 / 17,
+        elapsedMs: 45_000, remainingMs: 15_000,
+    };
+    const committed = commitTowerFloor(before, run, 3);
+    assert.equal(committed.result.cleared, true);
+    assert.equal(committed.result.towerMvpCompleted, true);
+    assert.equal(committed.progress.currentFloor, 50);
+    assert.equal(committed.progress.highestClearedFloor, 50);
+    assert.equal(committed.progress.activeRun, undefined);
 });
 
 test('tower scoring rewards faster clears while staying near a chapter-scale total', () => {
-    const maximumFirstClearTotal = Array.from({ length: 30 }, (_, index) =>
+    const maximumFirstClearTotal = Array.from({ length: 50 }, (_, index) =>
         towerPointsForClear(999_999, index + 1, true, 60_000),
     ).reduce((sum, points) => sum + points, 0);
-    assert.equal(maximumFirstClearTotal, 12_750);
+    assert.equal(maximumFirstClearTotal, 26_250);
     assert.equal(towerTimeBonus(30_999), 60);
     assert.ok(towerPointsForClear(1_000, 10, true, 40_000) > towerPointsForClear(1_000, 10, true, 10_000));
-    assert.equal(towerPointsForClear(999_999, 30, false, 60_000), 50);
+    assert.equal(towerPointsForClear(999_999, 50, false, 60_000), 50);
 
     const migrated = normalizeTowerProgress({
         currentFloor: 17,
         highestClearedFloor: 16,
-        lastCheckpointFloor: 15,
+        scoringVersion: 3,
         totalTowerPoints: 51_096,
         bestContinuousScore: 0,
         maxCombo: 18,
-        chapterOneCompleted: false,
+        towerMvpCompleted: false,
         activeRun: { startFloor: 1, totalScore: 51_096, maxCombo: 18 },
     });
-    assert.equal(migrated.scoringVersion, 3);
-    assert.equal(migrated.totalTowerPoints, 4_400);
-    assert.equal(migrated.activeRun?.totalScore, 4_400);
+    assert.equal(migrated.scoringVersion, 4);
+    assert.equal(migrated.totalTowerPoints, 0);
+    assert.equal(migrated.activeRun?.totalScore, 51_096);
     assert.equal(migrated.highestClearedFloor, 16);
 });
 
@@ -1645,7 +1814,7 @@ test('tower target stays cleared after life depletion and only fails below the t
     assert.equal(dead.result.failureReason, undefined);
     const short = commitTowerFloor(DEFAULT_TOWER_PROGRESS, { ...base, correctCount: 9 }, 1);
     assert.equal(short.result.cleared, false);
-    assert.equal(short.result.failureReason, 'targetMissed');
+    assert.equal(short.result.failureReason, 'objectiveIncomplete');
     const deadShort = commitTowerFloor(DEFAULT_TOWER_PROGRESS, { ...base, correctCount: 9 }, 0);
     assert.equal(deadShort.result.cleared, false);
     assert.equal(deadShort.result.failureReason, 'lifeDepleted');
@@ -1745,6 +1914,23 @@ test('save v5 keeps only the newest 300 unique cross-session question ids', () =
     assert.equal(new Set(normalized.recentQuestionIds).size, 300);
     assert.equal(normalized.recentQuestionSignatures.length, 300);
     assert.equal(normalized.recentQuestionSignatures[0], 'signature-40');
+});
+
+test('save v6 resets only tower progress and trial statistics', () => {
+    const base = normalizeV5({
+        ...createDefaultSave(),
+        schemaVersion: 5,
+        player: { level: 5, xp: 2_200, bestScore: 9_900 },
+        tower: { ...DEFAULT_TOWER_PROGRESS, currentFloor: 30, highestClearedFloor: 29, totalTowerPoints: 8_000 },
+        leaderboard: { brawlBest: emptyBrawlRecord(7_700), trialAnsweredCount: 400, trialCorrectCount: 360 },
+    });
+    const migrated = migrateV5ToV6(base);
+    assert.equal(migrated.schemaVersion, 6);
+    assert.deepEqual(migrated.tower, DEFAULT_TOWER_PROGRESS);
+    assert.equal(migrated.leaderboard.trialAnsweredCount, 0);
+    assert.equal(migrated.leaderboard.trialCorrectCount, 0);
+    assert.equal(migrated.leaderboard.brawlBest.rankScore, base.leaderboard.brawlBest.rankScore);
+    assert.deepEqual(migrated.player, base.player);
 });
 
 test('local leaderboard sorts persisted player scores and reports an off-screen self rank', () => {

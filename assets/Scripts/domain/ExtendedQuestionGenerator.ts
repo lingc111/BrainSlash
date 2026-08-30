@@ -81,7 +81,7 @@ const MOUNTAINS: readonly Pair[] = [['喜马拉雅山脉', '亚洲'], ['阿尔�
 const WORLD_RECORDS: readonly Pair[] = [['最大海洋', '太平洋'], ['最高山峰', '珠穆朗玛峰'], ['最大洲', '亚洲'], ['最小洲', '大洋洲'], ['最长山脉', '安第斯山脉'], ['最大沙漠', '南极沙漠'], ['最深海沟', '马里亚纳海沟'], ['最大岛屿', '格陵兰岛'], ['最大半岛', '阿拉伯半岛'], ['最大湖泊', '里海'], ['最高高原', '青藏高原'], ['最大雨林', '亚马孙雨林']];
 
 const KNOWLEDGE_RELATIONS: readonly (readonly [string, string, string])[] = [
-    ['爱迪生', '改良电灯', '人物事件'], ['蔡伦', '改进造纸术', '发明'], ['牛顿', '万有引力', '人物事件'], ['袁隆平', '杂交水稻', '人物事件'],
+    ['爱迪生', '电灯', '人物事件'], ['蔡伦', '造纸术', '发明'], ['牛顿', '万有引力', '人物事件'], ['袁隆平', '杂交水稻', '人物事件'],
     ['企鹅', '南极地区', '栖息地'], ['骆驼', '沙漠', '栖息地'], ['熊猫', '竹子', '食物'], ['青蛙', '昆虫', '食物'],
     ['仙人掌', '耐旱', '植物特征'], ['向日葵', '向光', '植物特征'], ['心脏', '输送血液', '器官功能'], ['肺', '气体交换', '器官功能'],
     ['太阳能', '可再生', '能源'], ['煤炭', '不可再生', '能源'], ['水', '液体', '物态'], ['氧气', '气体', '物态'],
@@ -273,7 +273,16 @@ function visionDraft(definition: QuestionTypeDefinition, rng: SeededRng): Extend
     if (n === 11) return choice(rng, '找相同 ●△', '●△', ['△●', '●▲', '○△']);
     if (n === 12 || n === 14) return pairChoice(rng, n === 12 ? '找成对图形' : '找唯一相同', ['●', '●'], ['▲', '■']);
     if ([13, 25, 26, 27, 28, 29].includes(n)) return choice(rng, definition.label, '◒', ['●', '●', '●']);
-    if (n >= 15 && n <= 19 || n === 24) {
+    if (n === 24) {
+        const targets: TargetSpec[] = [
+            { id: 't0', text: '↑', colorName: '红', attributes: { color: '红', direction: '上' } },
+            { id: 't1', text: '←', colorName: '蓝', attributes: { color: '蓝', direction: '左' } },
+            { id: 't2', text: '→', colorName: '红', attributes: { color: '红', direction: '右' } },
+            { id: 't3', text: '↓', colorName: '黄', attributes: { color: '黄', direction: '下' } },
+        ];
+        return { prompt: '选择蓝色左箭头', targets, correctTargetIds: ['t1'] };
+    }
+    if (n >= 15 && n <= 19) {
         const targets: TargetSpec[] = [
             { id: 't0', text: '▲', colorName: '红', attributes: { color: '红', shape: '三角', outline: false, direction: '上' } },
             { id: 't1', text: '○', colorName: '蓝', attributes: { color: '蓝', shape: '圆', outline: true, direction: '左' } },
@@ -294,7 +303,14 @@ function visionDraft(definition: QuestionTypeDefinition, rng: SeededRng): Extend
             { kind: 'predicate', attribute: 'shape', operator: 'eq', value: '三角' },
         ] };
         const correct = condition ? compileCondition(targets, condition) : n === 16 ? ['t1'] : n === 17 ? ['t0'] : ['t1'];
-        return { prompt: definition.label, targets, correctTargetIds: correct };
+        const prompts: Readonly<Record<number, string>> = {
+            15: '选择红色三角形',
+            16: '选择非红色圆形',
+            17: '选择红色实心三角',
+            18: '选择蓝色空心圆',
+            19: '选择红色或三角形',
+        };
+        return { prompt: prompts[n], targets, correctTargetIds: correct };
     }
     if (n >= 20 && n <= 23) return choice(rng, definition.label, '◁▷', ['▷◁', '△▽', '◁◁']);
     if (n === 30) return choice(rng, '哪组有4个点', '••••', ['••', '•••', '•••••']);

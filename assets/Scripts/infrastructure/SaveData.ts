@@ -72,11 +72,24 @@ export interface SaveDataV5 {
     recentQuestionSignatures: string[];
 }
 
+export interface SaveDataV6 {
+    schemaVersion: 6;
+    player: PlayerProgress;
+    settings: SaveSettings;
+    tutorials: Partial<Record<RuleId, boolean>>;
+    daily?: LocalDailyRecord;
+    tower: TowerProgress;
+    lastFriendChallengeConfig: FriendChallengeConfig;
+    leaderboard: SaveLeaderboardV5;
+    recentQuestionIds: string[];
+    recentQuestionSignatures: string[];
+}
+
 const DEFAULT_SETTINGS: SaveSettings = { music: true, sfx: true, vibration: true, quality: 'auto' };
 
-export function createDefaultSave(): SaveDataV5 {
+export function createDefaultSave(): SaveDataV6 {
     return {
-        schemaVersion: 5,
+        schemaVersion: 6,
         player: { level: 1, xp: 0, bestScore: 0 },
         settings: { ...DEFAULT_SETTINGS },
         tutorials: {},
@@ -85,6 +98,30 @@ export function createDefaultSave(): SaveDataV5 {
         leaderboard: { brawlBest: emptyBrawlRecord(), trialAnsweredCount: 0, trialCorrectCount: 0 },
         recentQuestionIds: [],
         recentQuestionSignatures: [],
+    };
+}
+
+export function migrateV5ToV6(value: Partial<SaveDataV5>): SaveDataV6 {
+    const v5 = normalizeV5(value);
+    return {
+        ...v5,
+        schemaVersion: 6,
+        tower: clone(DEFAULT_TOWER_PROGRESS),
+        leaderboard: { ...v5.leaderboard, trialAnsweredCount: 0, trialCorrectCount: 0 },
+    };
+}
+
+export function migrateV4ToV6(value: Partial<SaveDataV4>): SaveDataV6 { return migrateV5ToV6(migrateV4ToV5(value)); }
+export function migrateV3ToV6(value: Partial<SaveDataV3>): SaveDataV6 { return migrateV5ToV6(migrateV3ToV5(value)); }
+export function migrateV2ToV6(value: Partial<SaveDataV2>): SaveDataV6 { return migrateV5ToV6(migrateV2ToV5(value)); }
+export function migrateV1ToV6(value: Partial<SaveDataV1>): SaveDataV6 { return migrateV5ToV6(migrateV1ToV5(value)); }
+
+export function normalizeV6(parsed: Partial<SaveDataV6>): SaveDataV6 {
+    const v5 = normalizeV5({ ...parsed, schemaVersion: 5 });
+    return {
+        ...v5,
+        schemaVersion: 6,
+        tower: normalizeTowerProgress(parsed.tower),
     };
 }
 

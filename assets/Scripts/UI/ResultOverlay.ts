@@ -2,7 +2,7 @@ import { BlockInputEvents, Button, Color, Graphics, Label, Node, UIOpacity, UITr
 import { applyGameFont } from './GameFont';
 import { AppRuntime } from '../app/AppRuntime';
 import type { GameResult, MistakeRecord } from '../domain/Models';
-import type { TowerFloorResult } from '../domain/TowerMode';
+import { TOWER_LAST_FLOOR, type TowerFloorResult } from '../domain/TowerMode';
 import { createResultPresentation, type ResultPresentation } from '../domain/ResultSummary';
 
 const INK = new Color(45, 43, 39, 255);
@@ -66,10 +66,10 @@ export function showTowerResultOverlay(parent: Node, result: TowerFloorResult, a
     const card = makeNode('TowerResultCard', overlay, 690, 1400);
     const fitScale = Math.min(1, (visible.width - 24) / 690, (visible.height - 48) / 1400);
     drawResultCard(card.addComponent(Graphics), 690, 1400);
-    makeLabel(card, 'Mode', `答题试炼塔 · 第 ${result.floor} 层`, 24, RED, 500).node.setPosition(0, 615);
+    makeLabel(card, 'Mode', `答题试炼塔 · 第${result.floor}层 · ${result.floorTitle}`, 24, RED, 580).node.setPosition(0, 615);
     const headline = result.cleared
-        ? result.floor === 30 ? '首章突破！' : `第 ${result.floor} 层突破！`
-        : result.failureReason === 'lifeDepleted' ? '生命耗尽' : '目标未完成';
+        ? result.floor === TOWER_LAST_FLOOR ? 'MVP塔巅突破！' : `第 ${result.floor} 层突破！`
+        : result.failureReason === 'lifeDepleted' ? '生命耗尽' : result.failureReason === 'timeExpired' ? '时间耗尽' : '挑战失败';
     makeLabel(card, 'Headline', headline, 50, INK, 590).node.setPosition(0, 552);
     makeLabel(card, 'ScoreCaption', '本层得分', 22, BLUE, 300).node.setPosition(0, 482);
     makeLabel(card, 'Score', String(result.score), 104, INK, 600).node.setPosition(0, 395);
@@ -77,13 +77,14 @@ export function showTowerResultOverlay(parent: Node, result: TowerFloorResult, a
     const badge = makeNode('TowerStatusBadge', card, 540, 62);
     badge.setPosition(0, 295);
     const badgeGraphic = badge.addComponent(Graphics);
-    badgeGraphic.fillColor = result.cleared ? (result.unlockedRule || result.checkpointReached ? YELLOW : GREEN) : PAPER_RAISED;
+    badgeGraphic.fillColor = result.cleared ? (result.unlockedRule || result.unlockedLabel ? YELLOW : GREEN) : PAPER_RAISED;
     badgeGraphic.strokeColor = INK; badgeGraphic.lineWidth = 3;
     badgeGraphic.roundRect(-270, -31, 540, 62, 22); badgeGraphic.fill(); badgeGraphic.stroke();
+    const progressText = result.objectiveProgress.slice(0, 2)
+        .map((item) => `${item.passed ? '✓' : '·'} ${item.label} ${Math.min(item.current, item.target)}/${item.target}`).join('  ');
     const status = result.unlockedLabel ? `新规则已解锁 · ${result.unlockedLabel}`
-        : result.checkpointReached ? `第 ${result.floor} 层检查点已保存`
-        : result.cleared ? `正确 ${result.correctCount}/${result.requiredCorrect} · 已通关`
-        : `正确 ${result.correctCount}/${result.requiredCorrect} · 再来一次`;
+        : result.cleared ? `${progressText || result.challengeSummary} · 已通关`
+        : `${result.failureLabel ?? (progressText || result.challengeSummary)} · 再来一次`;
     makeLabel(badge, 'Label', status, 25, INK, 500);
 
     const row = makeNode('TowerStats', card, 630, 132);
@@ -99,15 +100,15 @@ export function showTowerResultOverlay(parent: Node, result: TowerFloorResult, a
     growthGraphic.strokeColor = INK; growthGraphic.lineWidth = 3;
     growthGraphic.roundRect(-315, -80, 630, 160, 20); growthGraphic.fill(); growthGraphic.stroke();
     makeLabel(growth, 'Title', `本轮 ${result.runTotalScore} · 累计 ${result.totalTowerPoints}`, 30, INK, 560).node.setPosition(0, 32);
-    makeLabel(growth, 'Detail', result.cleared ? (result.floor === 30 ? '首章完成 · 可重战第30层' : `剩余 ${Math.ceil((result.remainingMs ?? 0) / 1_000)} 秒 · 下一层已开放`) : '重试会换一组新题', 23, result.cleared ? GREEN : RED, 560).node.setPosition(0, -30);
+    makeLabel(growth, 'Detail', result.cleared ? (result.floor === TOWER_LAST_FLOOR ? 'MVP塔巅已突破 · 可重战第50层' : `剩余 ${Math.ceil((result.remainingMs ?? 0) / 1_000)} 秒 · 下一层已开放`) : '重试会换一组新题，但通关要求不变', 23, result.cleared ? GREEN : RED, 560).node.setPosition(0, -30);
     makeMistakeButton(card, overlay, result.mistakes ?? [], -250);
 
-    if (result.cleared && result.floor < 30) {
+    if (result.cleared && result.floor < TOWER_LAST_FLOOR) {
         makeActionButton(card, '下一层', -390, true, actions.next);
         makeActionButton(card, '暂停爬塔', -500, false, actions.home);
     } else if (result.cleared) {
-        makeActionButton(card, '完成首章', -390, true, actions.home);
-        makeActionButton(card, '重战第30层', -500, false, actions.retry);
+        makeActionButton(card, '完成MVP塔巅', -390, true, actions.home);
+        makeActionButton(card, '重战第50层', -500, false, actions.retry);
     } else {
         makeActionButton(card, '换一组题重试', -390, true, actions.retry);
         makeActionButton(card, '返回首页', -500, false, actions.home);

@@ -3,66 +3,76 @@ import { beginDailyRun, recordDailyRun } from '../domain/DailyChallenge';
 import { normalizeFriendChallengeConfig } from '../domain/FriendChallenge';
 import { brawlRecordFromRun, isBetterBrawlRecord } from '../domain/Leaderboard';
 import type { FriendChallengeConfig, GameEntryParams, GameResult, RunResult } from '../domain/Models';
+import type { TowerChallengeSnapshot } from '../domain/TowerChallenge';
 import { finalizeResult, XP_PER_CORRECT, XP_PER_LEVEL } from '../domain/ResultSummary';
 import { commitTowerFloor, type TowerFloorResult } from '../domain/TowerMode';
 import {
     createDefaultSave,
-    migrateV1ToV5,
-    migrateV2ToV5,
-    migrateV3ToV5,
-    migrateV4ToV5,
-    normalizeV5,
+    migrateV1ToV6,
+    migrateV2ToV6,
+    migrateV3ToV6,
+    migrateV4ToV6,
+    migrateV5ToV6,
+    normalizeV6,
     type SaveDataV1,
     type SaveDataV2,
     type SaveDataV3,
     type SaveDataV4,
     type SaveDataV5,
+    type SaveDataV6,
     type SaveSettings,
 } from './SaveData';
 
-export type { SaveDataV1, SaveDataV2, SaveDataV3, SaveDataV4, SaveDataV5, SaveSettings } from './SaveData';
+export type { SaveDataV1, SaveDataV2, SaveDataV3, SaveDataV4, SaveDataV5, SaveDataV6, SaveSettings } from './SaveData';
 
 const KEY_V1 = 'brain-slash.save.v1';
 const KEY_V2 = 'brain-slash.save.v2';
 const KEY_V3 = 'brain-slash.save.v3';
 const KEY_V4 = 'brain-slash.save.v4';
 const KEY_V5 = 'brain-slash.save.v5';
+const KEY_V6 = 'brain-slash.save.v6';
 
 export class SaveService {
-    private data: SaveDataV5 = createDefaultSave();
+    private data: SaveDataV6 = createDefaultSave();
 
-    public load(): SaveDataV5 {
+    public load(): SaveDataV6 {
+        const rawV6 = safeParse(sys.localStorage.getItem(KEY_V6));
+        if (rawV6 && (rawV6 as Partial<SaveDataV6>).schemaVersion === 6) {
+            this.data = normalizeV6(rawV6 as Partial<SaveDataV6>);
+            return this.snapshot();
+        }
         const rawV5 = safeParse(sys.localStorage.getItem(KEY_V5));
         if (rawV5 && (rawV5 as Partial<SaveDataV5>).schemaVersion === 5) {
-            this.data = normalizeV5(rawV5 as Partial<SaveDataV5>);
+            this.data = migrateV5ToV6(rawV5 as Partial<SaveDataV5>);
+            this.persist();
             return this.snapshot();
         }
         const rawV4 = safeParse(sys.localStorage.getItem(KEY_V4));
         if (rawV4 && (rawV4 as Partial<SaveDataV4>).schemaVersion === 4) {
-            this.data = migrateV4ToV5(rawV4 as Partial<SaveDataV4>);
+            this.data = migrateV4ToV6(rawV4 as Partial<SaveDataV4>);
             this.persist();
             return this.snapshot();
         }
         const rawV3 = safeParse(sys.localStorage.getItem(KEY_V3));
         if (rawV3 && (rawV3 as Partial<SaveDataV3>).schemaVersion === 3) {
-            this.data = migrateV3ToV5(rawV3 as Partial<SaveDataV3>);
+            this.data = migrateV3ToV6(rawV3 as Partial<SaveDataV3>);
             this.persist();
             return this.snapshot();
         }
         const rawV2 = safeParse(sys.localStorage.getItem(KEY_V2));
         if (rawV2 && (rawV2 as Partial<SaveDataV2>).schemaVersion === 2) {
-            this.data = migrateV2ToV5(rawV2 as Partial<SaveDataV2>);
+            this.data = migrateV2ToV6(rawV2 as Partial<SaveDataV2>);
             this.persist();
             return this.snapshot();
         }
         const rawV1 = safeParse(sys.localStorage.getItem(KEY_V1));
         this.data = rawV1 && (rawV1 as Partial<SaveDataV1>).schemaVersion === 1
-            ? migrateV1ToV5(rawV1 as Partial<SaveDataV1>) : createDefaultSave();
+            ? migrateV1ToV6(rawV1 as Partial<SaveDataV1>) : createDefaultSave();
         this.persist();
         return this.snapshot();
     }
 
-    public snapshot(): SaveDataV5 { return clone(this.data); }
+    public snapshot(): SaveDataV6 { return clone(this.data); }
 
     public commitResult(run: RunResult): GameResult {
         const committed = finalizeResult(run, this.data.player);
@@ -77,8 +87,8 @@ export class SaveService {
         return daily ? { ...committed.result, daily: daily.result } : committed.result;
     }
 
-    public commitTowerResult(run: RunResult, life: number): TowerFloorResult {
-        const commit = commitTowerFloor(this.data.tower, run, life);
+    public commitTowerResult(run: RunResult, life: number, challenge?: TowerChallengeSnapshot): TowerFloorResult {
+        const commit = commitTowerFloor(this.data.tower, run, life, challenge);
         this.data.tower = commit.progress;
         this.data.leaderboard.trialAnsweredCount += Math.max(0, Math.floor(run.correctCount + run.errorCount));
         this.data.leaderboard.trialCorrectCount += Math.max(0, Math.floor(run.correctCount));
@@ -128,7 +138,7 @@ export class SaveService {
     }
 
     private persist(): void {
-        try { sys.localStorage.setItem(KEY_V5, JSON.stringify(this.data)); } catch { /* Storage can be unavailable in preview. */ }
+        try { sys.localStorage.setItem(KEY_V6, JSON.stringify(this.data)); } catch { /* Storage can be unavailable in preview. */ }
     }
 }
 

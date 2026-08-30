@@ -2,7 +2,8 @@ import { director } from 'cc';
 import { CONTENT_VERSION } from '../configs/GameConfig';
 import { canStartFriendChallenge, createFriendChallengePayload, normalizeFriendChallengeConfig, type FriendChallengeParseResult } from '../domain/FriendChallenge';
 import type { FriendChallengeConfig, GameEntryParams, GameResult, GameMode, RunResult } from '../domain/Models';
-import type { TowerFloorResult } from '../domain/TowerMode';
+import type { TowerChallengeSnapshot } from '../domain/TowerChallenge';
+import { TOWER_LAST_FLOOR, type TowerFloorResult } from '../domain/TowerMode';
 import { AnalyticsService } from '../infrastructure/AnalyticsService';
 import { AudioService } from '../infrastructure/AudioService';
 import { PlatformService } from '../infrastructure/PlatformService';
@@ -145,8 +146,8 @@ class AppRuntimeState {
         this.analytics.track('game_finish', { score: run.score, mode: run.entry.mode });
         return this.result;
     }
-    public finishTower(run: RunResult, life: number): TowerFloorResult {
-        this.towerResult = this.save.commitTowerResult(run, life);
+    public finishTower(run: RunResult, life: number, challenge?: TowerChallengeSnapshot): TowerFloorResult {
+        this.towerResult = this.save.commitTowerResult(run, life, challenge);
         void this.syncLeaderboard();
         this.analytics.track('tower_floor_finish', {
             floor: this.towerResult.floor,
@@ -158,7 +159,7 @@ class AppRuntimeState {
     }
     public nextTowerFloor(): void {
         const floor = this.towerResult?.cleared
-            ? Math.min(30, this.towerResult.floor + 1)
+            ? Math.min(TOWER_LAST_FLOOR, this.towerResult.floor + 1)
             : this.save.snapshot().tower.currentFloor;
         this.launchTowerFloor(floor);
     }

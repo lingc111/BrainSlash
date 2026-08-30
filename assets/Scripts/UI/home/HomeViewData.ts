@@ -33,8 +33,8 @@ export function createMockHomeViewData(now = Date.now()): HomeViewData {
         towerFloor: 1,
         towerHighestFloor: 0,
         towerPoints: 0,
-        towerFloorTitle: '基础试炼',
-        towerHint: '第 3 层解锁禁区',
+        towerFloorTitle: '第1层 · 基础试炼',
+        towerHint: '再过 1 层解锁多选',
         rankProgress: 7,
         rankProgressMax: 10,
     };

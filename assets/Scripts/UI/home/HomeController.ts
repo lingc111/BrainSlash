@@ -35,7 +35,7 @@ import {
     normalizeFriendChallengeConfig,
 } from '../../domain/FriendChallenge';
 import type { FriendChallengeConfig, FriendChallengeDurationMs, RuleId, ThemeId } from '../../domain/Models';
-import { nextTowerUnlock, towerFloorConfig, towerFloorLabel, towerRuleLabel } from '../../domain/TowerMode';
+import { nextTowerUnlock, towerFloorChallengeSummary, towerFloorDisplayName, towerFloorConfig, towerRuleLabel } from '../../domain/TowerMode';
 import { CountdownTimer } from './CountdownTimer';
 import { calculateHomePortraitLayout } from './HomePortraitLayout';
 import { createMockHomeViewData, HomeViewData } from './HomeViewData';
@@ -120,10 +120,11 @@ export class HomeController extends Component {
                 towerFloor: save.tower.currentFloor,
                 towerHighestFloor: save.tower.highestClearedFloor,
                 towerPoints: save.tower.totalTowerPoints,
-                towerFloorTitle: towerFloorLabel(save.tower.currentFloor),
-                towerHint: save.tower.chapterOneCompleted ? '首章完成 · 重战第30层'
+                towerFloorTitle: towerFloorDisplayName(save.tower.currentFloor),
+                towerHint: save.tower.towerMvpCompleted ? 'MVP塔巅已突破 · 可重战第50层'
                     : currentUnlock ? `本层解锁${currentUnlock}`
-                    : nextUnlock ? `再过 ${nextUnlock.floor - save.tower.currentFloor} 层解锁${nextUnlock.label}` : '本层挑战首章终点',
+                    : save.tower.currentFloor >= 8 ? `通关：${towerFloorChallengeSummary(save.tower.currentFloor)}`
+                    : nextUnlock ? `再过 ${nextUnlock.floor - save.tower.currentFloor} 层解锁${nextUnlock.label}` : '挑战塔巅试炼',
             };
         }
         // Preview and device must share one coordinate system; otherwise the
@@ -175,7 +176,7 @@ export class HomeController extends Component {
         this.data = { ...data };
         if (this.levelLabel) this.levelLabel.string = `Lv.${data.level}  ${data.rankName}`;
         if (this.energyLabel) this.energyLabel.string = `${data.energy}/${data.maxEnergy}`;
-        if (this.dailyTitleLabel) this.dailyTitleLabel.string = `第${data.towerFloor}层 · ${data.towerFloorTitle}`;
+        if (this.dailyTitleLabel) this.dailyTitleLabel.string = data.towerFloorTitle;
         if (this.dailyStatusLabel) this.dailyStatusLabel.string = `最高 ${data.towerHighestFloor} 层 · 塔积分 ${data.towerPoints}`;
         if (this.countdownLabel) this.countdownLabel.string = data.towerHint;
         if (this.dailyEventTitleLabel) this.dailyEventTitleLabel.string = data.dailyTitle;

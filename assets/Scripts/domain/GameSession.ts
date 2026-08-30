@@ -6,12 +6,14 @@ export class GameSession {
     public static readonly ENDLESS_HEAL_STREAK = 3;
     public readonly state: GameSessionState;
     private readonly durationMs: number;
+    public readonly maxLife: number;
     private questionStartedAt = 0;
     private masterWindowStartedAt = 0;
     private questionResolved = true;
     public constructor(public readonly entry: GameEntryParams, private readonly config: GameplayConfig) {
         this.durationMs = entry.challengeConfig?.durationMs ?? config.durationMs;
-        this.state = { sessionId: `${entry.seed}-${Date.now()}`, seed: entry.seed, mode: entry.mode, contentVersion: entry.contentVersion, elapsedMs: 0, remainingMs: entry.mode === 'brawl60' ? 0 : this.durationMs, life: config.maxLife, score: 0, combo: 0, maxCombo: 0, correctCount: 0, errorCount: 0, masterSlashCount: 0, phase: 'ready' };
+        this.maxLife = config.maxLifeByMode?.[entry.mode] ?? config.maxLife;
+        this.state = { sessionId: `${entry.seed}-${Date.now()}`, seed: entry.seed, mode: entry.mode, contentVersion: entry.contentVersion, elapsedMs: 0, remainingMs: entry.mode === 'brawl60' ? 0 : this.durationMs, life: this.maxLife, maxLife: this.maxLife, score: 0, combo: 0, maxCombo: 0, correctCount: 0, errorCount: 0, masterSlashCount: 0, phase: 'ready' };
     }
     public start(): void { if (this.state.phase === 'ready') this.state.phase = 'playing'; }
     public tick(deltaMs: number): boolean {
@@ -34,8 +36,8 @@ export class GameSession {
         if (masterSlash) this.state.masterSlashCount++;
         const lifeDelta = this.entry.mode === 'brawl60'
             && this.state.combo % GameSession.ENDLESS_HEAL_STREAK === 0
-            && this.state.life < this.config.maxLife ? 1 : 0;
-        this.state.life = Math.min(this.config.maxLife, this.state.life + lifeDelta);
+            && this.state.life < this.maxLife ? 1 : 0;
+        this.state.life = Math.min(this.maxLife, this.state.life + lifeDelta);
         this.state.bestReactionMs = Math.min(this.state.bestReactionMs ?? reactionMs, reactionMs); this.state.phase = 'resolving';
         return { kind: masterSlash ? 'masterSlash' : master ? 'master' : 'correct', scoreDelta, reactionMs, lifeDelta, masterHit: master, masterSlash };
     }

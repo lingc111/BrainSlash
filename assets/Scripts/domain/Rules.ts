@@ -32,7 +32,7 @@ export function questionFlightDurationSeconds(
     const safeBase = Math.max(0.9, baseSeconds);
     const ruleCount = slashRuleCount(rules);
     const fiveAnswerReadabilityTime = answerCount === 5 ? 0.75 : 0;
-    const longAnswerReadabilityTime = maximumAnswerLength >= 4 ? 0.75 : 0;
+    const longAnswerReadabilityTime = maximumAnswerLength >= 6 ? 1.5 : maximumAnswerLength >= 4 ? 0.75 : 0;
     const readabilityTime = fiveAnswerReadabilityTime + longAnswerReadabilityTime;
     if (ruleCount === 0) return safeBase + readabilityTime;
     return safeBase + readabilityTime + (ruleCount >= 2 ? 1.65 : 1.35);

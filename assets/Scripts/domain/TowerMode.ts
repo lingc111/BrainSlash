@@ -1,3 +1,6 @@
+export * from './TowerModeV2';
+
+/* Legacy 30-floor implementation retained only as migration history.
 import type { RuleId, RunResult, ThemeId } from './Models';
 import type { ContentFamilyKind } from './ContentCatalog';
 
@@ -283,3 +286,4 @@ function validActiveRun(value: unknown): value is TowerActiveRun {
         && typeof run.maxCombo === 'number' && Number.isFinite(run.maxCombo) && run.maxCombo >= 0;
 }
 function cloneTower(value: TowerProgress): TowerProgress { return JSON.parse(JSON.stringify(value)) as TowerProgress; }
+*/

@@ -1,5 +1,6 @@
 import type { FriendChallengeConfig, GameEntryParams, GameMode } from '../domain/Models';
 import { createDailyChallenge } from '../domain/DailyChallenge';
+import { TOWER_LAST_FLOOR } from '../domain/TowerMode';
 
 type Clock = () => Date;
 type EntropySource = () => number;
@@ -44,7 +45,9 @@ export class RunSeedFactory {
         }
 
         this.sequence = (this.sequence + 1) >>> 0;
-        const floor = mode === 'tower' ? Math.max(1, Math.min(30, Math.floor(towerFloor ?? 1))) : undefined;
+        const floor = mode === 'tower'
+            ? Math.max(1, Math.min(TOWER_LAST_FLOOR, Math.floor(towerFloor ?? 1)))
+            : undefined;
         const seed = [
             mode,
             ...(floor === undefined ? [] : [`floor-${floor}`]),
