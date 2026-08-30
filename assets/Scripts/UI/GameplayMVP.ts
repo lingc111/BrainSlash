@@ -34,6 +34,8 @@ const COLORS = [YELLOW,GREEN,BLUE,new Color(137,111,158,255),new Color(207,132,7
 const SKINS = ACTIVE_TARGET_SKINS;
 const DESIGN_WIDTH = 750, DESIGN_HEIGHT = 1624;
 const FRAME_TOP_INSET = 292, FRAME_BOTTOM_INSET = 12, TARGET_VISUAL_RADIUS = 132;
+const PROMPT_PAPER_WIDTH = 420, PROMPT_PAPER_HEIGHT = 246;
+const PROMPT_PAPER_BOTTOM_GAP = 8, PROMPT_CONTENT_LIFT = 10, PROMPT_PROGRESS_LIFT = 16;
 type EffectKey = typeof ALL_TARGET_SKINS[number] | 'bomb';
 interface TargetMotion extends PortraitTargetMotionPlan {
     node: Node;
@@ -93,7 +95,7 @@ export class GameplayMVP extends Component {
         const bg=image(this.node,'Background',DESIGN_WIDTH,DESIGN_HEIGHT);resources.load('textures/common/background_paper/spriteFrame',SpriteFrame,(e,f)=>{if(!e&&bg.isValid)bg.spriteFrame=f;});
         node('TargetContainer',this.node,DESIGN_WIDTH,DESIGN_HEIGHT);gfx(this.node,'SlashTrail',DESIGN_WIDTH,DESIGN_HEIGHT);node('HitEffects',this.node,DESIGN_WIDTH,DESIGN_HEIGHT);node('FloatingText',this.node,DESIGN_WIDTH,DESIGN_HEIGHT);
         const y=DESIGN_HEIGHT/2-150;const score=text(this.node,'Score','0',30);score.node.setPosition(-DESIGN_WIDTH/2+85,y);const combo=text(this.node,'Combo','0 COMBO',27,RED);combo.node.setPosition(-DESIGN_WIDTH/2+110,y-48);
-        const prompt=text(this.node,'Prompt','准备斩击',44);prompt.node.setPosition(0,y);const badge=image(this.node,'RuleBadge',230,45);badge.node.setPosition(0,y-55);badge.color=BLUE;resources.load('textures/home/paper/daily_paper/spriteFrame',SpriteFrame,(e,f)=>{if(!e&&badge.isValid)badge.spriteFrame=f;});const rule=text(this.node,'Rule','单选',25,PAPER);rule.node.setPosition(0,y-55);rule.isBold=true;ui(rule.node,220,40);rule.overflow=Label.Overflow.SHRINK;
+        const promptY=y+PROMPT_CONTENT_LIFT;const prompt=text(this.node,'Prompt','准备斩击',44);prompt.node.setPosition(0,promptY);const badge=image(this.node,'RuleBadge',230,45);badge.node.setPosition(0,promptY-55);badge.color=BLUE;resources.load('textures/home/paper/daily_paper/spriteFrame',SpriteFrame,(e,f)=>{if(!e&&badge.isValid)badge.spriteFrame=f;});const rule=text(this.node,'Rule','单选',25,PAPER);rule.node.setPosition(0,promptY-55);rule.isBold=true;ui(rule.node,220,40);rule.overflow=Label.Overflow.SHRINK;
         const timer=text(this.node,'Timer','∞',38);timer.node.setPosition(DESIGN_WIDTH/2-85,y);const life=text(this.node,'Life','♥ ♥ ♥',26,RED);life.node.setPosition(DESIGN_WIDTH/2-85,y-48);text(this.node,'Ready','READY',68,RED);
         this.buildHandDrawnChrome();this.layoutHandDrawnChrome(DESIGN_WIDTH,DESIGN_HEIGHT);
     }
@@ -112,7 +114,7 @@ export class GameplayMVP extends Component {
         resources.load('textures/gameplay/ui/Hit/spriteFrame',SpriteFrame,(e,f)=>{if(!e&&f?.isValid)this.masterHitFrame=f;});
     }
     private applyVisibleLayout():void{const background=this.node.getChildByName('Background')?.getComponent(Sprite);if(!background||!this.score)return;const v=view.getVisibleSize();ui(this.node,v.width,v.height);for(const layer of [background.node,this.targets,this.trail.node,this.effects,this.floats])ui(layer,v.width,v.height);this.layoutStaticHud(v.width,v.height);this.layoutHandDrawnChrome(v.width,v.height);this.layoutTowerReadyCard(v.width);}
-    private layoutStaticHud(width:number,height:number):void{const y=height/2-150;this.score.node.active=false;this.combo.node.active=true;setGameFontMetrics(this.combo,44,53);this.combo.color=INK;this.combo.node.setPosition(-width/2+96,y+3);this.prompt.node.setPosition(0,y);this.fitPromptTypography(this.prompt.string);this.ruleBadge?.setPosition(0,y-55);this.rule.node.setPosition(0,y-55);this.timer.node.setPosition(width/2-68,y+4);this.life.node.active=false;}
+    private layoutStaticHud(width:number,height:number):void{const y=height/2-150,promptY=y+PROMPT_CONTENT_LIFT;this.score.node.active=false;this.combo.node.active=true;setGameFontMetrics(this.combo,44,53);this.combo.color=INK;this.combo.node.setPosition(-width/2+96,y+3);this.prompt.node.setPosition(0,promptY);this.fitPromptTypography(this.prompt.string);this.ruleBadge?.setPosition(0,promptY-55);this.rule.node.setPosition(0,promptY-55);this.timer.node.setPosition(width/2-68,y+4);this.life.node.active=false;}
     private fitPromptTypography(value:string):void{const length=[...value.trim()].length,size=length<=4?44:length<=6?38:length<=9?32:26;setGameFontMetrics(this.prompt,size,Math.ceil(size*1.16));this.prompt.enableWrapText=false;this.prompt.overflow=Label.Overflow.SHRINK;ui(this.prompt.node,258,64);}
     private prepareRuleBadge():void{
         let badge=this.node.getChildByName('RuleBadge')??this.rule.node.getChildByName('Badge');
@@ -128,7 +130,7 @@ export class GameplayMVP extends Component {
         const chrome=node('HandDrawnChrome',this.node,DESIGN_WIDTH,DESIGN_HEIGHT);this.handDrawnChrome=chrome;
         const scoreIndex=this.node.getChildByName('Score')?.getSiblingIndex()??this.node.children.length;chrome.setSiblingIndex(scoreIndex);
         this.makeComboCard(chrome);
-        this.makeArtworkCard(chrome,'PromptPaperCard','gameplay_mid_title',306,230);
+        this.makeArtworkCard(chrome,'PromptPaperCard','gameplay_mid_title',PROMPT_PAPER_WIDTH,PROMPT_PAPER_HEIGHT);
         const timerCard=this.makeArtworkCard(chrome,'TimerPaperCard','gameplay_time',176,176,1.1);this.makeLifeHearts(timerCard,this.session?.state.maxLife??3);
         const friendCard=node('FriendChallengeTarget',chrome,286,32),friend=text(friendCard,'Label','',18,INK);ui(friend.node,278,30);friend.overflow=Label.Overflow.SHRINK;friendCard.active=this.session?.entry.mode==='friendChallenge'&&this.session.entry.challengeRole==='responder';this.friendTarget=friend;this.friendTargetCard=friendCard;
         const towerCard=node('TowerFloorProgress',chrome,420,58),tower=text(towerCard,'Label','',18,INK);ui(tower.node,410,56);tower.overflow=Label.Overflow.SHRINK;tower.enableWrapText=true;tower.lineHeight=21;towerCard.active=this.session?.entry.mode==='tower';this.towerProgress=tower;this.towerProgressCard=towerCard;
@@ -147,15 +149,17 @@ export class GameplayMVP extends Component {
         resources.load('textures/gameplay/ui/life_heart/spriteFrame',SpriteFrame,(e,f)=>{if(e)return;for(const heart of this.lifeHearts)if(heart.isValid)heart.spriteFrame=f;});
     }
     private layoutHandDrawnChrome(width:number,height:number):void{
-        const chrome=this.handDrawnChrome;if(!chrome?.isValid)return;ui(chrome,width,height);const hudY=height/2-168;
+        const chrome=this.handDrawnChrome;if(!chrome?.isValid)return;ui(chrome,width,height);const hudY=height/2-168,frameTop=height/2-FRAME_TOP_INSET;
         chrome.getChildByName('ComboPaperCard')?.setPosition(-width/2+96,hudY);
-        chrome.getChildByName('PromptPaperCard')?.setPosition(0,hudY-2);
+        // Keep the paper completely above the answer frame; its lower edge must never
+        // cover the playable area.
+        chrome.getChildByName('PromptPaperCard')?.setPosition(0,frameTop+PROMPT_PAPER_BOTTOM_GAP+PROMPT_PAPER_HEIGHT/2);
         chrome.getChildByName('TimerPaperCard')?.setPosition(width/2-96,hudY);
-        chrome.getChildByName('FriendChallengeTarget')?.setPosition(0,hudY-94);
-        chrome.getChildByName('TowerFloorProgress')?.setPosition(0,hudY-94);
-        chrome.getChildByName('DailyChallengeProgress')?.setPosition(0,hudY-94);
+        chrome.getChildByName('FriendChallengeTarget')?.setPosition(0,hudY-94+PROMPT_PROGRESS_LIFT);
+        chrome.getChildByName('TowerFloorProgress')?.setPosition(0,hudY-94+PROMPT_PROGRESS_LIFT);
+        chrome.getChildByName('DailyChallengeProgress')?.setPosition(0,hudY-94+PROMPT_PROGRESS_LIFT);
         const frame=this.handDrawnFrame;if(!frame?.isValid)return;const frameLayer=frame.node.parent;if(frameLayer)ui(frameLayer,width,height);
-        const frameTop=height/2-FRAME_TOP_INSET,frameBottom=-height/2+FRAME_BOTTOM_INSET,frameWidth=width-38,frameHeight=frameTop-frameBottom;ui(frame.node,frameWidth,frameHeight);frame.node.setPosition(0,(frameTop+frameBottom)/2);this.drawHandDrawnFrame(frame,frameWidth,frameHeight);
+        const frameBottom=-height/2+FRAME_BOTTOM_INSET,frameWidth=width-38,frameHeight=frameTop-frameBottom;ui(frame.node,frameWidth,frameHeight);frame.node.setPosition(0,(frameTop+frameBottom)/2);this.drawHandDrawnFrame(frame,frameWidth,frameHeight);
     }
     private drawHandDrawnFrame(g:Graphics,width:number,height:number):void{
         const w=width/2,h=height/2;g.clear();g.strokeColor=new Color(196,57,43,235);g.lineWidth=4;g.lineCap=Graphics.LineCap.ROUND;g.lineJoin=Graphics.LineJoin.ROUND;
