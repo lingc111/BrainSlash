@@ -30,12 +30,15 @@ function readPacks(): StaticQuestionPack[] {
         .filter(isStaticQuestionPack);
 }
 
-test('resources subpackage contains exactly 5000 valid static playable questions', () => {
+test('resources subpackage contains exactly 8000 semantically unique static playable questions', () => {
     const packs = readPacks();
     assert.equal(packs.length, 8);
-    assert.equal(packs.reduce((sum, pack) => sum + pack.records.length, 0), 5_000);
+    assert.equal(packs.reduce((sum, pack) => sum + pack.records.length, 0), 8_000);
     const ids = packs.flatMap((pack) => pack.records.map((record) => record.id));
-    assert.equal(new Set(ids).size, 5_000);
+    assert.equal(new Set(ids).size, 8_000);
+    const semanticKeys = packs.flatMap((pack) => pack.records.map((record) =>
+        `${record.theme}|${record.familyKind}|${record.prompt.replace(/\s+/g, '')}|${String(record.answer).replace(/\s+/g, '')}`));
+    assert.equal(new Set(semanticKeys).size, 8_000);
     for (const pack of packs) {
         for (const record of pack.records) {
             assert.equal(record.theme, pack.theme);
@@ -45,7 +48,7 @@ test('resources subpackage contains exactly 5000 valid static playable questions
     }
 });
 
-test('schema v2 content installs without changing the 5000 static-question contract', () => {
+test('schema v2 content installs without changing the 8000 static-question contract', () => {
     clearStructuredContentForTests();
     const directory = join(process.cwd(), 'assets', 'resources', 'question-banks');
     const values = readdirSync(directory).filter((name) => name.endsWith('.json'))
@@ -55,13 +58,13 @@ test('schema v2 content installs without changing the 5000 static-question contr
     assert.equal(installStructuredContentPacks(packs), 24);
     assert.equal(structuredContent('pinyin').length, 12);
     assert.equal(structuredContent('poetry-fragment').length, 12);
-    assert.equal(readPacks().reduce((sum, pack) => sum + pack.records.length, 0), 5_000);
+    assert.equal(readPacks().reduce((sum, pack) => sum + pack.records.length, 0), 8_000);
 });
 
 test('installed static questions are selected by the live generator', () => {
     clearStaticQuestionPacksForTests();
-    assert.equal(installStaticQuestionPacks(readPacks()), 5_000);
-    assert.equal(installedStaticQuestionCount(), 5_000);
+    assert.equal(installStaticQuestionPacks(readPacks()), 8_000);
+    assert.equal(installedStaticQuestionCount(), 8_000);
 
     const family = CONTENT_FAMILIES.find((item) => item.kind === 'math-add')!;
     const generator = new QuestionGenerator(new SeededRng('static-bank-live-selection'), GAMEPLAY_CONFIG);
@@ -100,6 +103,43 @@ test('cross-session history excludes recently accepted static facts', () => {
         recentSemanticSignatures: acceptedSignatures,
     }).next(directive);
     assert.notDeepEqual(second.factIds, first.factIds);
+});
+
+test('life static questions contain two real directions without semantic variants', () => {
+    clearStaticQuestionPacksForTests();
+    installStaticQuestionPacks(readPacks());
+    const family = CONTENT_FAMILIES.find((item) => item.kind === 'life-category')!;
+    const generator = new QuestionGenerator(new SeededRng('life-semantic-dedup'), GAMEPLAY_CONFIG);
+    const selected: string[] = [];
+    const prompts = new Set<string>();
+    for (let index = 0; index < 60; index++) {
+        const question = generator.next({
+            phase: 'twist', difficultyStage: 2, targetCount: 4,
+            questionTimeMs: 2_600, speed: 1, family, rules: ['standard'],
+        });
+        selected.push(...question.factIds ?? []);
+        prompts.add(question.prompt.text);
+    }
+    assert.equal(new Set(selected).size, 60);
+    assert.equal(prompts.size, 35);
+    assert.ok(selected.some((id) => id.endsWith('.item')));
+    assert.ok(selected.some((id) => id.endsWith('.category')));
+});
+
+test('an exhausted cross-session pool resumes from its oldest fact', () => {
+    clearStaticQuestionPacksForTests();
+    const packs = readPacks();
+    installStaticQuestionPacks(packs);
+    const records = packs.flatMap((pack) => pack.records)
+        .filter((record) => record.familyKind === 'history-modern-opening');
+    const family = CONTENT_FAMILIES.find((item) => item.kind === 'history-modern-opening')!;
+    const question = new QuestionGenerator(new SeededRng('oldest-history-fact'), GAMEPLAY_CONFIG, {
+        recentFactIds: records.map((record) => record.id),
+    }).next({
+        phase: 'twist', difficultyStage: 2, targetCount: 4,
+        questionTimeMs: 2_600, speed: 1, family, rules: ['standard'],
+    });
+    assert.deepEqual(question.factIds, [records[0].id]);
 });
 
 test('ordinary brawl uses static records for most compatible questions', () => {

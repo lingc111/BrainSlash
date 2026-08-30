@@ -21,6 +21,7 @@ import {
     type SaveDataV5,
     type SaveDataV6,
     type SaveSettings,
+    RECENT_QUESTION_HISTORY_LIMIT,
 } from './SaveData';
 
 export type { SaveDataV1, SaveDataV2, SaveDataV3, SaveDataV4, SaveDataV5, SaveDataV6, SaveSettings } from './SaveData';
@@ -126,14 +127,14 @@ export class SaveService {
             if (existing >= 0) this.data.recentQuestionIds.splice(existing, 1);
             this.data.recentQuestionIds.push(id);
         }
-        if (this.data.recentQuestionIds.length > 300) {
-            this.data.recentQuestionIds.splice(0, this.data.recentQuestionIds.length - 300);
+        if (this.data.recentQuestionIds.length > RECENT_QUESTION_HISTORY_LIMIT) {
+            this.data.recentQuestionIds.splice(0, this.data.recentQuestionIds.length - RECENT_QUESTION_HISTORY_LIMIT);
         }
         const existingSignature = this.data.recentQuestionSignatures.indexOf(semanticSignature);
         if (existingSignature >= 0) this.data.recentQuestionSignatures.splice(existingSignature, 1);
         this.data.recentQuestionSignatures.push(semanticSignature);
-        if (this.data.recentQuestionSignatures.length > 300) {
-            this.data.recentQuestionSignatures.splice(0, this.data.recentQuestionSignatures.length - 300);
+        if (this.data.recentQuestionSignatures.length > RECENT_QUESTION_HISTORY_LIMIT) {
+            this.data.recentQuestionSignatures.splice(0, this.data.recentQuestionSignatures.length - RECENT_QUESTION_HISTORY_LIMIT);
         }
     }
 

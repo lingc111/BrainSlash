@@ -60,8 +60,11 @@ export class QuestionGenerator {
     private readonly recentSemanticSignatures: string[] = [];
     private readonly recentAnswerSignatures: string[] = [];
     private readonly crossSessionFactIds = new Set<string>();
+    private readonly crossSessionFactRanks = new Map<string, number>();
     private readonly crossSessionSemanticSignatures = new Set<string>();
+    private factRank = 0;
     private activeFactIds: string[] = [];
+    private activeFactPoolExhausted = false;
     private activeQuestionType?: QuestionTypeDefinition;
     private activeRulesOverride?: RuleId[];
 
@@ -70,7 +73,11 @@ export class QuestionGenerator {
         _config: GameplayConfig,
         private readonly options: QuestionGeneratorOptions = {},
     ) {
-        for (const id of options.recentFactIds ?? []) if (id) this.crossSessionFactIds.add(id);
+        for (const id of options.recentFactIds ?? []) {
+            if (!id) continue;
+            this.crossSessionFactIds.add(id);
+            this.crossSessionFactRanks.set(id, this.factRank++);
+        }
         for (const signature of options.recentSemanticSignatures ?? []) {
             if (signature) this.crossSessionSemanticSignatures.add(signature);
         }
@@ -80,13 +87,14 @@ export class QuestionGenerator {
         this.directive = directive;
         for (let attempt = 0; attempt < 24; attempt++) {
             this.activeFactIds = [];
+            this.activeFactPoolExhausted = false;
             const question = this.generate(directive.family, directive.difficultyStage);
             question.activeRules = rulesForReadableTargets(question.activeRules, question.targets);
             if (validateQuestion(question, evaluateRules(question)).length) continue;
             const semanticSignature = this.semanticSignature(question);
             const answerSignature = this.answerSignature(question);
             const semanticCooling = this.recentSemanticSignatures.includes(semanticSignature)
-                || this.crossSessionSemanticSignatures.has(semanticSignature);
+                || (!this.activeFactPoolExhausted && this.crossSessionSemanticSignatures.has(semanticSignature));
             const answerCooling = this.recentAnswerSignatures.includes(answerSignature);
             // Relax answer variety first, then semantic variety only as a final
             // escape hatch for tiny visual pools. Fairness is never relaxed.
@@ -113,7 +121,11 @@ export class QuestionGenerator {
 
     private generate(family: ContentFamilySpec, stage: Stage): QuestionInstance {
         this.index += 1;
-        const staticPool = staticQuestionsForFamily(family.kind);
+        // Generated packs may contain several records that only rotate the
+        // distractors or difficulty while keeping the same question and
+        // answer. They are useful authoring variants, but must not buy extra
+        // probability in the live picker.
+        const staticPool = this.uniqueStaticQuestions(staticQuestionsForFamily(family.kind));
         this.activeQuestionType = legacyQuestionTypeForFamily(family.kind);
         this.activeRulesOverride = undefined;
         const supportsExtended = !!this.directive.typeId
@@ -125,13 +137,19 @@ export class QuestionGenerator {
             if (definition) {
                 const rules = this.rulesForQuestionType(definition);
                 if (rules) {
-                    this.activeQuestionType = definition;
-                    this.activeRulesOverride = rules;
                     const draft = generateExtendedQuestion(definition, this.rng, stage);
-                    const fitted = this.fitExtendedDraft(draft.targets, draft.correctTargetIds, draft.orderedTargetIds);
-                    const targets = fitted.targets;
-                    this.appendBomb(targets);
-                    return this.make(family, draft.prompt, targets, fitted.correctTargetIds, rules, stage, fitted.orderedTargetIds);
+                    // A pair/multi/order type is only safe when its generator
+                    // supplied genuinely valid answers for that engine. Never
+                    // promote a random distractor merely to satisfy the shape
+                    // of an engine (for example "肺 -> 气体交换 + 昆虫").
+                    if (this.draftSupportsEngine(definition, draft.correctTargetIds, draft.orderedTargetIds)) {
+                        this.activeQuestionType = definition;
+                        this.activeRulesOverride = rules;
+                        const fitted = this.fitExtendedDraft(draft.targets, draft.correctTargetIds, draft.orderedTargetIds);
+                        const targets = fitted.targets;
+                        this.appendBomb(targets);
+                        return this.make(family, draft.prompt, targets, fitted.correctTargetIds, rules, stage, fitted.orderedTargetIds);
+                    }
                 }
             }
         }
@@ -208,11 +226,14 @@ export class QuestionGenerator {
         const groups = Array.from(prompts.values()).filter((group) => group.length >= 2);
         if (!groups.length) return null;
         const group = this.rng.pick(groups);
-        const selected = this.pickFacts(
+        const pairs: Array<readonly [StaticQuestionRecord, StaticQuestionRecord]> = [];
+        for (let left = 0; left < group.length; left++) {
+            for (let right = left + 1; right < group.length; right++) pairs.push([group[left], group[right]]);
+        }
+        const selected = this.pickFact(
             `static-multi:${family.kind}:${group[0].prompt}`,
-            group,
-            2,
-            (record) => record.id,
+            pairs,
+            (pair) => pair.map((record) => record.id).sort().join('+'),
         );
         const answers = selected.map((record) => String(record.answer));
         const distractors = this.rng.shuffle(group.flatMap((record) => record.distractors.map(String)))
@@ -226,6 +247,19 @@ export class QuestionGenerator {
         if (correct.length < 2) return null;
         this.appendBomb(targets);
         return this.make(family, group[0].prompt, targets, correct, this.directive.rules, stage);
+    }
+
+    private uniqueStaticQuestions(records: readonly StaticQuestionRecord[]): StaticQuestionRecord[] {
+        const unique = new Map<string, StaticQuestionRecord>();
+        for (const record of records) {
+            const key = `${record.familyKind}|${this.normalizePrompt(record.prompt)}|${String(record.answer).trim()}`;
+            const existing = unique.get(key);
+            // Prefer the lowest difficulty so a semantic question does not
+            // disappear from early phases solely because a later variant was
+            // installed first.
+            if (!existing || record.difficulty < existing.difficulty) unique.set(key, record);
+        }
+        return Array.from(unique.values());
     }
 
     private make(
@@ -692,7 +726,21 @@ export class QuestionGenerator {
             bag = this.rng.shuffle(items.map((_, index) => index));
             this.factBags.set(key, bag);
             bagIndex = bag.findIndex((index) => !seen.has(idOf(items[index])) && !this.activeFactIds.includes(idOf(items[index])));
-            if (bagIndex < 0) bagIndex = bag.findIndex((index) => !localRecent.has(idOf(items[index])) && !this.activeFactIds.includes(idOf(items[index])));
+            if (bagIndex < 0) {
+                // Every item in this pool has been seen across sessions. From
+                // here the shuffled bag itself becomes the new no-replacement
+                // cycle. Mark this so next() does not reject and burn up to 24
+                // valid bag entries merely because the persisted history has
+                // naturally covered a small pool (history is the common case).
+                this.activeFactPoolExhausted = true;
+                let oldestRank = Number.POSITIVE_INFINITY;
+                for (let index = 0; index < bag.length; index++) {
+                    const factId = idOf(items[bag[index]]);
+                    if (localRecent.has(factId) || this.activeFactIds.includes(factId)) continue;
+                    const rank = this.crossSessionFactRanks.get(factId) ?? -1;
+                    if (rank < oldestRank) { oldestRank = rank; bagIndex = index; }
+                }
+            }
             if (bagIndex < 0) bagIndex = bag.findIndex((index) => !this.activeFactIds.includes(idOf(items[index])));
             if (bagIndex < 0) bagIndex = 0;
         }
@@ -707,7 +755,10 @@ export class QuestionGenerator {
         this.recentQuestionFacts.push(accepted);
         if (this.recentQuestionFacts.length > 30) this.recentQuestionFacts.shift();
         if (accepted.length) {
-            for (const id of accepted) this.crossSessionFactIds.add(id);
+            for (const id of accepted) {
+                this.crossSessionFactIds.add(id);
+                this.crossSessionFactRanks.set(id, this.factRank++);
+            }
         }
         this.crossSessionSemanticSignatures.add(semanticSignature);
         this.options.onQuestionAccepted?.(accepted, semanticSignature);
@@ -748,6 +799,17 @@ export class QuestionGenerator {
         const result = [...requested, ...(needsOrder ? ['order' as const] : needsMulti ? ['multi' as const] : [])];
         const normalized: RuleId[] = result.length ? Array.from(new Set(result)) : ['standard'];
         return validateRuleSet(normalized) ? normalized : null;
+    }
+
+    private draftSupportsEngine(
+        definition: QuestionTypeDefinition,
+        correctTargetIds: readonly string[],
+        orderedTargetIds?: readonly string[],
+    ): boolean {
+        if (definition.engineId === 'order') return (orderedTargetIds?.length ?? 0) >= 2;
+        const needsMultiple = definition.engineId === 'multi' || definition.engineId === 'double'
+            || definition.engineId === 'pair' || definition.engineId === 'same';
+        return !needsMultiple || correctTargetIds.length >= 2;
     }
 
     private fitExtendedDraft(

@@ -52,6 +52,7 @@ const staticDirectory = join(process.cwd(), 'assets', 'resources', 'question-ban
 const staticFiles = readdirSync(staticDirectory).filter((name) => name.endsWith('.json') && name !== 'manifest.json');
 const staticIds = new Set();
 const staticSignatures = new Map();
+const staticSemanticSignatures = new Map();
 const staticByTheme = {};
 let staticRecordCount = 0;
 let staticPackCount = 0;
@@ -93,9 +94,12 @@ for (const fileName of staticFiles) {
     const signature = JSON.stringify([record.theme, record.familyKind, record.prompt, record.answer, record.distractors]);
     if (staticSignatures.has(signature)) errors.push(`${location}: exact duplicate of ${staticSignatures.get(signature)}`);
     staticSignatures.set(signature, location);
+    const semanticSignature = JSON.stringify([record.theme, record.familyKind, String(record.prompt).replace(/\s+/g, ''), String(record.answer).replace(/\s+/g, '')]);
+    if (staticSemanticSignatures.has(semanticSignature)) errors.push(`${location}: semantic duplicate of ${staticSemanticSignatures.get(semanticSignature)}`);
+    staticSemanticSignatures.set(semanticSignature, location);
   }
 }
-if (staticRecordCount !== 5_000) errors.push(`static question count must be 5000, received ${staticRecordCount}`);
+if (staticRecordCount !== 8_000) errors.push(`static question count must be 8000, received ${staticRecordCount}`);
 
 console.log(JSON.stringify({
   curatedBase: { ...stats, packs: QUESTION_BANK_PACKS.map((pack) => ({ id: pack.id, records: pack.records.length })) },

@@ -101,7 +101,7 @@ arrow-rotation|箭头旋转规律|sequence
 group-repeat|符号分组重复|sequence
 alternating-number|数字交替规律|sequence
 size-cycle|大小文字循环|sequence
-reference-pair|参考符号对匹配|same
+reference-pair|参考符号对匹配
 duplicate-shapes|找成对图形|pair
 unique-shape|找唯一不同图形|odd-one-out
 unique-matching-shape|找唯一相同图形|same
@@ -112,8 +112,8 @@ color-shape-outline|选择蓝色空心圆|condition
 color-or-shape|选择红色或三角形|multi
 mirror|找镜像图形|compare
 not-mirror|找非镜像图形|inverse
-rotated-same|找旋转后的相同图形|same
-rotation-invariant|忽略旋转找相同图形|same
+rotated-same|找旋转后的相同图形
+rotation-invariant|忽略旋转找相同图形
 direction-color|选择蓝色左箭头|condition
 missing-corner|找缺角图形|odd-one-out
 extra-element|找多一个元素图形|odd-one-out
@@ -141,13 +141,13 @@ synonym|选择近义词
 pinyin|选择正确拼音
 pinyin-to-character|根据拼音选择汉字
 tone|选择正确声调
-homophone|选择同音字|same
-similar-character|选择形近字|same
+homophone|选择同音字
+similar-character|选择形近字
 wrong-character|找错别字|odd-one-out
 correct-character|找正确汉字
 radical-match|偏旁部首匹配|pair
 radical-to-character|根据部首选择汉字
-same-radical|选择相同部首汉字|same
+same-radical|选择相同部首汉字
 word-formation|汉字组词|pair
 two-character-word|两个字组成词语|double
 word-order|按顺序组成词语|order
@@ -175,7 +175,7 @@ missing-letter|单词缺字母|fill
 first-letter|选择首字母|fill
 last-letter|选择尾字母|fill
 letter-order|字母乱序组成单词|order
-same-first-letter|找相同首字母单词|same
+same-first-letter|找相同首字母单词
 category-odd|找不同类别单词|odd-one-out
 plural-match|单复数匹配|pair
 case-match|大小写字母匹配|pair
@@ -195,18 +195,18 @@ transport-sort|交通工具分类|condition
 food-sort|食物分类|condition
 fruit-vegetable|水果蔬菜判断|truth
 animal-sort|动物分类|condition
-job-tool|职业与工具匹配|pair
-place-item|场所与物品匹配|pair
-weather-item|天气与物品匹配|pair
-season-item|季节与物品匹配|pair
+job-tool|职业与工具匹配
+place-item|场所与物品匹配
+weather-item|天气与物品匹配
+season-item|季节与物品匹配
 safe-behavior|安全行为判断|truth
 dangerous-behavior|危险行为判断|truth
 traffic-sign|交通标志文字判断|truth
 daily-process|生活流程顺序|order
 time-scene|时间场景判断
-item-use|物品用途判断|pair
-food-source|食物来源匹配|pair
-animal-food|动物与食物匹配|pair`, 'single');
+item-use|物品用途判断
+food-source|食物来源匹配
+animal-food|动物与食物匹配`, 'single');
 
 const GEOGRAPHY = rows(`
 country-capital|国家选择首都
@@ -225,13 +225,13 @@ const KNOWLEDGE = rows(`
 correct-fact|选择正确事实
 wrong-fact|选择错误事实|inverse
 true-false|判断真伪|truth
-person-event|人物选择事件|pair
-event-person|事件选择人物|pair
-invention-inventor|发明选择发明者|pair
-animal-habitat|动物选择栖息地|pair
-animal-food|动物选择食物|pair
-plant-feature|植物选择特征|pair
-organ-function|器官选择功能|pair
+person-event|人物选择事件
+event-person|事件选择人物
+invention-inventor|发明选择发明者
+animal-habitat|动物选择栖息地
+animal-food|动物选择食物
+plant-feature|植物选择特征
+organ-function|器官选择功能
 animal-class|动物分类|condition
 plant-class|植物分类|condition
 matter-state|物态分类|condition

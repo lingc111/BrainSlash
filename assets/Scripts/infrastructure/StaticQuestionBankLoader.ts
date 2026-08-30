@@ -24,8 +24,8 @@ class StaticQuestionBankLoader {
                 }
                 installStructuredContentPacks(structuredPacks);
                 this.loadedCount = installStaticQuestionPacks(packs);
-                if (this.loadedCount !== 5_000) {
-                    console.warn(`[QuestionBank] Expected 5000 static questions, loaded ${this.loadedCount}.`);
+                if (this.loadedCount !== 8_000) {
+                    console.warn(`[QuestionBank] Expected 8000 static questions, loaded ${this.loadedCount}.`);
                 }
                 resolve(this.loadedCount);
             });

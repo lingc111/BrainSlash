@@ -58,7 +58,7 @@ import {
 import { RunSeedFactory } from '../assets/Scripts/app/RunSeedFactory.ts';
 import { PlatformService } from '../assets/Scripts/infrastructure/PlatformService.ts';
 import { AudioService, SoundThrottle } from '../assets/Scripts/infrastructure/AudioService.ts';
-import { createDefaultSave, migrateV1ToV2, migrateV2ToV3, migrateV3ToV4, migrateV4ToV5, migrateV5ToV6, normalizeV5 } from '../assets/Scripts/infrastructure/SaveData.ts';
+import { createDefaultSave, migrateV1ToV2, migrateV2ToV3, migrateV3ToV4, migrateV4ToV5, migrateV5ToV6, normalizeV5, RECENT_QUESTION_HISTORY_LIMIT } from '../assets/Scripts/infrastructure/SaveData.ts';
 import { brawlRecordFromRun, createLocalLeaderboard, emptyBrawlRecord } from '../assets/Scripts/domain/Leaderboard.ts';
 import { TowerDirector } from '../assets/Scripts/domain/TowerDirector.ts';
 import { TowerChallengeRuntime, towerChallengeSummary, validateTowerChallenge } from '../assets/Scripts/domain/TowerChallenge.ts';
@@ -514,6 +514,39 @@ test('color and shape questions state the exact visible target', () => {
         assert.equal(draft.prompt, prompt);
         assert.ok(draft.correctTargetIds.length > 0);
     }
+});
+
+test('organ-function questions never promote an unrelated distractor to a correct answer', () => {
+    const definition = questionTypeById('knowledge.10.organ-function');
+    assert.ok(definition);
+    assert.equal(definition.engineId, 'single');
+    let foundLung = false;
+    for (let seed = 0; seed < 200 && !foundLung; seed++) {
+        const draft = generateExtendedQuestion(definition, new SeededRng(`organ-function-${seed}`), 2);
+        if (draft.prompt !== '肺的功能') continue;
+        foundLung = true;
+        const correct = draft.targets
+            .filter((target) => draft.correctTargetIds.includes(target.id))
+            .map((target) => target.text);
+        assert.deepEqual(correct, ['气体交换']);
+        assert.equal(correct.includes('昆虫'), false);
+    }
+    assert.equal(foundLung, true);
+});
+
+test('plant-feature questions keep every option in the plant-feature dimension', () => {
+    const definition = questionTypeById('knowledge.09.plant-feature');
+    assert.ok(definition);
+    let foundCactus = false;
+    for (let seed = 0; seed < 200 && !foundCactus; seed++) {
+        const draft = generateExtendedQuestion(definition, new SeededRng(`plant-feature-${seed}`), 2);
+        if (draft.prompt !== '仙人掌的特征') continue;
+        foundCactus = true;
+        assert.deepEqual(new Set(draft.targets.map((target) => target.text)), new Set(['耐旱', '向光', '水生', '常绿']));
+        const correct = draft.targets.filter((target) => draft.correctTargetIds.includes(target.id)).map((target) => target.text);
+        assert.deepEqual(correct, ['耐旱']);
+    }
+    assert.equal(foundCactus, true);
 });
 
 test('fill-in prompts show a spaced parenthesis placeholder', () => {
@@ -1901,18 +1934,18 @@ test('save v4 migration creates detailed brawl and trial leaderboard records', (
     assert.equal(migrated.leaderboard.trialAnsweredCount, 0);
 });
 
-test('save v5 keeps only the newest 300 unique cross-session question ids', () => {
+test('save v5 keeps the expanded cross-session question history', () => {
     const base = createDefaultSave();
     const recentQuestionIds = [
-        ...Array.from({ length: 350 }, (_, index) => `static.question.${index}`),
+        ...Array.from({ length: RECENT_QUESTION_HISTORY_LIMIT + 50 }, (_, index) => `static.question.${index}`),
         'static.question.100',
     ];
-    const recentQuestionSignatures = Array.from({ length: 340 }, (_, index) => `signature-${index}`);
+    const recentQuestionSignatures = Array.from({ length: RECENT_QUESTION_HISTORY_LIMIT + 40 }, (_, index) => `signature-${index}`);
     const normalized = normalizeV5({ ...base, recentQuestionIds, recentQuestionSignatures });
-    assert.equal(normalized.recentQuestionIds.length, 300);
+    assert.equal(normalized.recentQuestionIds.length, RECENT_QUESTION_HISTORY_LIMIT);
     assert.equal(normalized.recentQuestionIds.at(-1), 'static.question.100');
-    assert.equal(new Set(normalized.recentQuestionIds).size, 300);
-    assert.equal(normalized.recentQuestionSignatures.length, 300);
+    assert.equal(new Set(normalized.recentQuestionIds).size, RECENT_QUESTION_HISTORY_LIMIT);
+    assert.equal(normalized.recentQuestionSignatures.length, RECENT_QUESTION_HISTORY_LIMIT);
     assert.equal(normalized.recentQuestionSignatures[0], 'signature-40');
 });
 

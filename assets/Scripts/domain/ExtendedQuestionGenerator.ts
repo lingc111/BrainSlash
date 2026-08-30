@@ -81,9 +81,12 @@ const MOUNTAINS: readonly Pair[] = [['喜马拉雅山脉', '亚洲'], ['阿尔�
 const WORLD_RECORDS: readonly Pair[] = [['最大海洋', '太平洋'], ['最高山峰', '珠穆朗玛峰'], ['最大洲', '亚洲'], ['最小洲', '大洋洲'], ['最长山脉', '安第斯山脉'], ['最大沙漠', '南极沙漠'], ['最深海沟', '马里亚纳海沟'], ['最大岛屿', '格陵兰岛'], ['最大半岛', '阿拉伯半岛'], ['最大湖泊', '里海'], ['最高高原', '青藏高原'], ['最大雨林', '亚马孙雨林']];
 
 const KNOWLEDGE_RELATIONS: readonly (readonly [string, string, string])[] = [
-    ['爱迪生', '电灯', '人物事件'], ['蔡伦', '造纸术', '发明'], ['牛顿', '万有引力', '人物事件'], ['袁隆平', '杂交水稻', '人物事件'],
-    ['企鹅', '南极地区', '栖息地'], ['骆驼', '沙漠', '栖息地'], ['熊猫', '竹子', '食物'], ['青蛙', '昆虫', '食物'],
-    ['仙人掌', '耐旱', '植物特征'], ['向日葵', '向光', '植物特征'], ['心脏', '输送血液', '器官功能'], ['肺', '气体交换', '器官功能'],
+    ['爱迪生', '电灯', '人物事件'], ['牛顿', '万有引力', '人物事件'], ['袁隆平', '杂交水稻', '人物事件'], ['屠呦呦', '青蒿素', '人物事件'],
+    ['蔡伦', '造纸术', '发明'], ['毕昇', '活字印刷', '发明'], ['张衡', '地动仪', '发明'], ['莱特兄弟', '飞机', '发明'],
+    ['企鹅', '南极地区', '栖息地'], ['骆驼', '沙漠', '栖息地'], ['北极熊', '北极', '栖息地'], ['袋鼠', '草原', '栖息地'],
+    ['熊猫', '竹子', '食物'], ['青蛙', '昆虫', '食物'], ['考拉', '桉树叶', '食物'], ['长颈鹿', '树叶', '食物'],
+    ['仙人掌', '耐旱', '植物特征'], ['向日葵', '向光', '植物特征'], ['荷花', '水生', '植物特征'], ['松树', '常绿', '植物特征'],
+    ['心脏', '输送血液', '器官功能'], ['肺', '气体交换', '器官功能'], ['胃', '消化食物', '器官功能'], ['肾脏', '形成尿液', '器官功能'],
     ['太阳能', '可再生', '能源'], ['煤炭', '不可再生', '能源'], ['水', '液体', '物态'], ['氧气', '气体', '物态'],
 ];
 const HISTORY_EVENTS: readonly Pair[] = [['秦朝建立', '公元前221年'], ['汉朝建立', '公元前202年'], ['唐朝建立', '618年'], ['宋朝建立', '960年'], ['元朝建立', '1271年'], ['明朝建立', '1368年'], ['清朝建立', '1636年'], ['辛亥革命', '1911年'], ['五四运动', '1919年'], ['抗战胜利', '1945年'], ['新中国成立', '1949年'], ['改革开放', '1978年']];
@@ -219,7 +222,11 @@ function mathDraft(definition: QuestionTypeDefinition, rng: SeededRng, stage: 0 
         if (n === 40) { prompt = '能被3整除'; predicate = (value) => value % 3 === 0; }
         if (n === 41) { prompt = '不能被3整除'; predicate = (value) => value % 3 !== 0; }
         if (n === 42) { prompt = '30的因数'; predicate = (value) => 30 % value === 0; }
-        if (n === 43) { prompt = '5的倍数'; predicate = (value) => value % 5 === 0; }
+        if (n === 43) {
+            prompt = '5的倍数'; predicate = (value) => value % 5 === 0;
+            // Multi-select must always expose at least two real matches.
+            values = rng.shuffle([10, 15, 12, 17]);
+        }
         if (n === 56) { prompt = '20到30之间'; predicate = (value) => value >= 20 && value <= 30; }
         if (n === 57) { prompt = '大于10且为偶数'; predicate = (value) => value > 10 && value % 2 === 0; }
         if (n === 58) { prompt = '不是3的倍数'; predicate = (value) => value % 3 !== 0; }
@@ -455,7 +462,23 @@ function knowledgeDraft(definition: QuestionTypeDefinition, rng: SeededRng): Ext
         const trueFact = `${relation[0]}—${relation[1]}`, wrong = `${relation[0]}—${rng.pick(KNOWLEDGE_RELATIONS.filter((item) => item[1] !== relation[1]))[1]}`;
         return choice(rng, n === 2 ? '选择错误事实' : trueFact, n === 2 ? wrong : n === 3 ? '对' : trueFact, n === 3 ? ['对', '错'] : [wrong, ...KNOWLEDGE_RELATIONS.slice(0, 2).map((item) => `${item[0]}—${item[1]}`)], n === 3 ? 2 : 4);
     }
-    if (n >= 4 && n <= 10) return choice(rng, relation[0], relation[1], pickOther(rng, KNOWLEDGE_RELATIONS.map((item) => item[1]), relation[1]));
+    if (n >= 4 && n <= 10) {
+        const relationKind = n === 4 || n === 5 ? '人物事件' : n === 6 ? '发明' : n === 7 ? '栖息地'
+            : n === 8 ? '食物' : n === 9 ? '植物特征' : '器官功能';
+        const pool = KNOWLEDGE_RELATIONS.filter((item) => item[2] === relationKind);
+        const selected = rng.pick(pool);
+        const reverseDirection = n === 5 || n === 6;
+        const prompt = n === 4 ? `${selected[0]}相关的是`
+            : n === 5 ? `${selected[1]}对应人物`
+                : n === 6 ? `${selected[1]}发明者`
+                    : n === 7 ? `${selected[0]}栖息地`
+                        : n === 8 ? `${selected[0]}的食物`
+                            : n === 9 ? `${selected[0]}的特征`
+                                : `${selected[0]}的功能`;
+        const answer = selected[reverseDirection ? 0 : 1];
+        const candidates = pool.map((item) => item[reverseDirection ? 0 : 1]);
+        return choice(rng, prompt, answer, pickOther(rng, candidates, answer));
+    }
     if (n === 11) return choice(rng, '哺乳动物', '熊猫', ['青蛙', '鲫鱼', '麻雀']);
     if (n === 12) return choice(rng, '开花植物', '向日葵', ['海带', '苔藓', '蕨类']);
     if (n === 13) return choice(rng, '常温下是气体', '氧气', ['水', '铁', '食盐']);
@@ -480,19 +503,12 @@ export function generateExtendedQuestion(definition: QuestionTypeDefinition, rng
 }
 
 function conformToEngine(definition: QuestionTypeDefinition, draft: ExtendedQuestionDraft, rng: SeededRng): ExtendedQuestionDraft {
-    if (definition.engineId === 'order' && !draft.orderedTargetIds?.length) {
-        const values = draft.targets.map((target) => target.text);
-        const numeric = values.every((value) => Number.isFinite(Number(value)));
-        return ordered(rng, definition.label, [...values].sort((a, b) => numeric
-            ? Number(a) - Number(b)
-            : a.localeCompare(b, 'zh-CN')));
-    }
-    const needsMultiple = definition.engineId === 'multi' || definition.engineId === 'double'
-        || definition.engineId === 'pair' || definition.engineId === 'same';
-    if (needsMultiple && draft.correctTargetIds.length < 2) {
-        const extra = draft.targets.find((target) => !draft.correctTargetIds.includes(target.id));
-        if (extra) return { ...draft, correctTargetIds: [...draft.correctTargetIds, extra.id] };
-    }
+    // Engine compatibility is validated by QuestionGenerator. Semantic data
+    // must never be invented here: alphabetically sorting unrelated choices
+    // does not create a real sequence, and promoting a distractor does not
+    // create a real pair.
+    void definition;
+    void rng;
     return draft;
 }
 

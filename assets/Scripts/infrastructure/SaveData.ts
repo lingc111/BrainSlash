@@ -86,6 +86,7 @@ export interface SaveDataV6 {
 }
 
 const DEFAULT_SETTINGS: SaveSettings = { music: true, sfx: true, vibration: true, quality: 'auto' };
+export const RECENT_QUESTION_HISTORY_LIMIT = 1_200;
 
 export function createDefaultSave(): SaveDataV6 {
     return {
@@ -232,7 +233,7 @@ function normalizeRecentQuestionIds(value: unknown): string[] {
         if (existing >= 0) result.splice(existing, 1);
         result.push(id);
     }
-    return result.slice(-300);
+    return result.slice(-RECENT_QUESTION_HISTORY_LIMIT);
 }
 
 function normalizeRecentQuestionSignatures(value: unknown): string[] {
@@ -245,7 +246,7 @@ function normalizeRecentQuestionSignatures(value: unknown): string[] {
         if (existing >= 0) result.splice(existing, 1);
         result.push(signature);
     }
-    return result.slice(-300);
+    return result.slice(-RECENT_QUESTION_HISTORY_LIMIT);
 }
 
 function normalizeBrawlRecord(value: Partial<BrawlLeaderboardRecord> | undefined): BrawlLeaderboardRecord {
