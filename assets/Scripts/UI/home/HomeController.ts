@@ -107,7 +107,8 @@ export class HomeController extends Component {
             this.data = {
                 ...createMockHomeViewData(),
                 level: save.player.level,
-                rankName: save.player.bestScore > 0 ? `最高 ${save.player.bestScore}` : '新手',
+                rankName: save.leaderboard.brawlBest.rankScore > 0
+                    ? `最高 ${save.leaderboard.brawlBest.rankScore}` : '新手',
                 rankProgress: save.player.xp % 500,
                 rankProgressMax: 500,
                 dailyAccent: dailyView.accent,
