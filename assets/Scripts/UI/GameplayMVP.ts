@@ -34,8 +34,9 @@ const COLORS = [YELLOW,GREEN,BLUE,new Color(137,111,158,255),new Color(207,132,7
 const SKINS = ACTIVE_TARGET_SKINS;
 const DESIGN_WIDTH = 750, DESIGN_HEIGHT = 1624;
 const FRAME_TOP_INSET = 292, FRAME_BOTTOM_INSET = 12, TARGET_VISUAL_RADIUS = 132;
-const PROMPT_PAPER_WIDTH = 420, PROMPT_PAPER_HEIGHT = 246;
+const PROMPT_PAPER_WIDTH = 400, PROMPT_PAPER_HEIGHT = 246;
 const PROMPT_PAPER_BOTTOM_GAP = 8, PROMPT_CONTENT_LIFT = 10, PROMPT_PROGRESS_LIFT = 16;
+const TIMER_CARD_RIGHT_INSET = 86, TIMER_LABEL_RIGHT_INSET = 58;
 type EffectKey = typeof ALL_TARGET_SKINS[number] | 'bomb';
 interface TargetMotion extends PortraitTargetMotionPlan {
     node: Node;
@@ -96,7 +97,7 @@ export class GameplayMVP extends Component {
         node('TargetContainer',this.node,DESIGN_WIDTH,DESIGN_HEIGHT);gfx(this.node,'SlashTrail',DESIGN_WIDTH,DESIGN_HEIGHT);node('HitEffects',this.node,DESIGN_WIDTH,DESIGN_HEIGHT);node('FloatingText',this.node,DESIGN_WIDTH,DESIGN_HEIGHT);
         const y=DESIGN_HEIGHT/2-150;const score=text(this.node,'Score','0',30);score.node.setPosition(-DESIGN_WIDTH/2+85,y);const combo=text(this.node,'Combo','0 COMBO',27,RED);combo.node.setPosition(-DESIGN_WIDTH/2+110,y-48);
         const promptY=y+PROMPT_CONTENT_LIFT;const prompt=text(this.node,'Prompt','准备斩击',44);prompt.node.setPosition(0,promptY);const badge=image(this.node,'RuleBadge',230,45);badge.node.setPosition(0,promptY-55);badge.color=BLUE;resources.load('textures/home/paper/daily_paper/spriteFrame',SpriteFrame,(e,f)=>{if(!e&&badge.isValid)badge.spriteFrame=f;});const rule=text(this.node,'Rule','单选',25,PAPER);rule.node.setPosition(0,promptY-55);rule.isBold=true;ui(rule.node,220,40);rule.overflow=Label.Overflow.SHRINK;
-        const timer=text(this.node,'Timer','∞',38);timer.node.setPosition(DESIGN_WIDTH/2-85,y);const life=text(this.node,'Life','♥ ♥ ♥',26,RED);life.node.setPosition(DESIGN_WIDTH/2-85,y-48);text(this.node,'Ready','READY',68,RED);
+        const timer=text(this.node,'Timer','∞',38);timer.node.setPosition(DESIGN_WIDTH/2-TIMER_LABEL_RIGHT_INSET,y);const life=text(this.node,'Life','♥ ♥ ♥',26,RED);life.node.setPosition(DESIGN_WIDTH/2-TIMER_LABEL_RIGHT_INSET,y-48);text(this.node,'Ready','READY',68,RED);
         this.buildHandDrawnChrome();this.layoutHandDrawnChrome(DESIGN_WIDTH,DESIGN_HEIGHT);
     }
     private bindStaticView():void {
@@ -114,7 +115,7 @@ export class GameplayMVP extends Component {
         resources.load('textures/gameplay/ui/Hit/spriteFrame',SpriteFrame,(e,f)=>{if(!e&&f?.isValid)this.masterHitFrame=f;});
     }
     private applyVisibleLayout():void{const background=this.node.getChildByName('Background')?.getComponent(Sprite);if(!background||!this.score)return;const v=view.getVisibleSize();ui(this.node,v.width,v.height);for(const layer of [background.node,this.targets,this.trail.node,this.effects,this.floats])ui(layer,v.width,v.height);this.layoutStaticHud(v.width,v.height);this.layoutHandDrawnChrome(v.width,v.height);this.layoutTowerReadyCard(v.width);}
-    private layoutStaticHud(width:number,height:number):void{const y=height/2-150,promptY=y+PROMPT_CONTENT_LIFT;this.score.node.active=false;this.combo.node.active=true;setGameFontMetrics(this.combo,44,53);this.combo.color=INK;this.combo.node.setPosition(-width/2+96,y+3);this.prompt.node.setPosition(0,promptY);this.fitPromptTypography(this.prompt.string);this.ruleBadge?.setPosition(0,promptY-55);this.rule.node.setPosition(0,promptY-55);this.timer.node.setPosition(width/2-68,y+4);this.life.node.active=false;}
+    private layoutStaticHud(width:number,height:number):void{const y=height/2-150,promptY=y+PROMPT_CONTENT_LIFT;this.score.node.active=false;this.combo.node.active=true;setGameFontMetrics(this.combo,44,53);this.combo.color=INK;this.combo.node.setPosition(-width/2+96,y+3);this.prompt.node.setPosition(0,promptY);this.fitPromptTypography(this.prompt.string);this.ruleBadge?.setPosition(0,promptY-55);this.rule.node.setPosition(0,promptY-55);this.timer.node.setPosition(width/2-TIMER_LABEL_RIGHT_INSET,y+4);this.life.node.active=false;}
     private fitPromptTypography(value:string):void{const length=[...value.trim()].length,size=length<=4?44:length<=6?38:length<=9?32:26;setGameFontMetrics(this.prompt,size,Math.ceil(size*1.16));this.prompt.enableWrapText=false;this.prompt.overflow=Label.Overflow.SHRINK;ui(this.prompt.node,258,64);}
     private prepareRuleBadge():void{
         let badge=this.node.getChildByName('RuleBadge')??this.rule.node.getChildByName('Badge');
@@ -154,7 +155,7 @@ export class GameplayMVP extends Component {
         // Keep the paper completely above the answer frame; its lower edge must never
         // cover the playable area.
         chrome.getChildByName('PromptPaperCard')?.setPosition(0,frameTop+PROMPT_PAPER_BOTTOM_GAP+PROMPT_PAPER_HEIGHT/2);
-        chrome.getChildByName('TimerPaperCard')?.setPosition(width/2-96,hudY);
+        chrome.getChildByName('TimerPaperCard')?.setPosition(width/2-TIMER_CARD_RIGHT_INSET,hudY);
         chrome.getChildByName('FriendChallengeTarget')?.setPosition(0,hudY-94+PROMPT_PROGRESS_LIFT);
         chrome.getChildByName('TowerFloorProgress')?.setPosition(0,hudY-94+PROMPT_PROGRESS_LIFT);
         chrome.getChildByName('DailyChallengeProgress')?.setPosition(0,hudY-94+PROMPT_PROGRESS_LIFT);
