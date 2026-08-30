@@ -75,13 +75,13 @@ export class HomeController extends Component {
     private settingsModal: Node | null = null;
     private friendChallengeModal: Node | null = null;
     private featureNoticeModal: Node | null = null;
+    private helpModal: Node | null = null;
     private removePendingChallengeListener: (() => void) | null = null;
     private removeUserProfileListener: (() => void) | null = null;
     private avatarMask: Node | null = null;
     private avatarRequestUrl: string | null = null;
 
     private levelLabel: Label | null = null;
-    private energyLabel: Label | null = null;
     private dailyTitleLabel: Label | null = null;
     private dailyStatusLabel: Label | null = null;
     private countdownLabel: Label | null = null;
@@ -175,7 +175,6 @@ export class HomeController extends Component {
     public refresh(data: HomeViewData): void {
         this.data = { ...data };
         if (this.levelLabel) this.levelLabel.string = `Lv.${data.level}  ${data.rankName}`;
-        if (this.energyLabel) this.energyLabel.string = `${data.energy}/${data.maxEnergy}`;
         if (this.dailyTitleLabel) this.dailyTitleLabel.string = data.towerFloorTitle;
         if (this.dailyStatusLabel) this.dailyStatusLabel.string = `最高 ${data.towerHighestFloor} 层 · 塔积分 ${data.towerPoints}`;
         if (this.countdownLabel) this.countdownLabel.string = data.towerHint;
@@ -224,6 +223,11 @@ export class HomeController extends Component {
 
     public onFlagHunterClick(): void {
         this.onDailyChallengeClick();
+    }
+
+    public onHelpClick(): void {
+        this.pulseHaptic();
+        this.showHelpModal();
     }
 
     public onHomeClick(): void {
@@ -320,10 +324,10 @@ export class HomeController extends Component {
         this.levelLabel = this.label(header, 'LevelLabel', '', -130, 8, 270, 70, 38, C.ink, 'left');
         this.drawUnderline(header, 'LevelUnderline', -112, -32, 265, C.ink, -2);
 
-        const energy = this.makeNode(header, 'Energy', 276, 0, 300, 118);
-        this.drawLightning(energy, -92, 10, 74);
-        this.energyLabel = this.label(energy, 'EnergyLabel', '', 48, 8, 190, 64, 38, C.ink, 'center');
-        this.drawUnderline(energy, 'EnergyUnderline', 45, -32, 190, C.ink, 2);
+        const help = this.makeNode(header, 'HelpButton', 340, 0, 118, 118);
+        const artwork = this.makeNode(help, 'HelpArtwork', 0, 0, 104, 104);
+        this.attachResourceTexture(artwork, 'textures/home/ui/help/spriteFrame');
+        this.bindButton(help, this.onHelpClick.bind(this));
         return header;
     }
 
@@ -851,6 +855,71 @@ export class HomeController extends Component {
         this.featureNoticeModal = null;
     }
 
+    private showHelpModal(): void {
+        this.closeHelpModal();
+        const { modal, panel } = this.makeChallengeModal('GameplayHelp', 820, 1500);
+        this.helpModal = modal;
+        this.label(panel, 'Title', '玩法说明', 0, 665, 560, 76, 48, C.ink, 'center');
+        this.label(panel, 'Subtitle', '看准规则，一刀入魂', 0, 608, 620, 44, 24, C.inkSoft, 'center');
+        const close = this.makeChoiceButton(panel, 'CloseHelpTop', '关闭', -330, 665, 120, 68);
+        this.bindButton(close.node, () => this.closeHelpModal());
+
+        this.makeHelpSection(panel, 'TowerHelp', '试炼塔',
+            '共50层，每层60秒、5条生命。完成本层的答题、连击或专项目标，并遵守限制即可通关。逐层解锁多选、顺序、反向、旋转和双规则。',
+            482, 190, C.red);
+        this.makeHelpSection(panel, 'BrawlHelp', '无尽乱斗',
+            '没有倒计时，用3条生命挑战生存与高分。失误会掉生命并中断连击；连续答对3题时，若生命未满则回复1条。',
+            266, 190, C.yellow);
+        this.makeHelpSection(panel, 'FriendHelp', '好友对战',
+            '自选主题、规则和60/90/120秒时长。双方使用相同题序与配置，各3条生命；分享自己的目标分，好友达到更高分即挑战成功。',
+            50, 190, C.blue);
+        this.makeHelpSection(panel, 'DailyHelp', '每日主题',
+            '每天轮换一个固定主题与题序，进行60秒挑战。在3条生命内冲击当日目标分，可重复挑战刷新当日最佳成绩。',
+            -166, 190, C.green);
+        this.makeHelpSection(panel, 'MasterHelp', 'MASTER HIT / MASTER SLASH',
+            'MASTER HIT：目标入场稳定后，在650ms内正确出刀，额外+50分。\nMASTER SLASH：多目标题中，一笔不断地斩完全部正确目标，额外+100分。若同时满足快速出刀，两项奖励可叠加。',
+            -425, 272, C.yellow);
+
+        const done = this.makeChoiceButton(panel, 'CloseHelp', '我知道了', 0, -657, 300, 76);
+        done.setSelected(true);
+        this.bindButton(done.node, () => this.closeHelpModal());
+    }
+
+    private makeHelpSection(
+        parent: Node,
+        name: string,
+        title: string,
+        body: string,
+        y: number,
+        height: number,
+        accent: Color,
+    ): void {
+        const section = this.makeNode(parent, name, 0, y, 700, height);
+        const paper = section.addComponent(Graphics);
+        paper.fillColor = C.paper;
+        paper.strokeColor = new Color(C.inkSoft.r, C.inkSoft.g, C.inkSoft.b, 120);
+        paper.lineWidth = 2;
+        paper.roundRect(-350, -height / 2, 700, height, 16);
+        paper.fill();
+        paper.stroke();
+        const marker = this.graphics(section, 'Accent', -320, height / 2 - 34, 18, 46);
+        marker.fillColor = accent;
+        marker.roundRect(-7, -20, 14, 40, 7);
+        marker.fill();
+        // label() positions by node center; keep the text box inside the card,
+        // then use left alignment for the heading itself.
+        this.label(section, 'Heading', title, 20, height / 2 - 34, 590, 48, 30, C.ink, 'left');
+        const description = this.label(section, 'Description', body, 0, -18, 630, height - 76, 23, C.inkSoft, 'left');
+        description.enableWrapText = true;
+        description.overflow = Label.Overflow.SHRINK;
+        description.lineHeight = gameFontLineHeight(31);
+    }
+
+    private closeHelpModal(): void {
+        if (this.helpModal?.isValid) this.helpModal.destroy();
+        this.helpModal = null;
+    }
+
     private makeChoiceButton(parent: Node, name: string, value: string, x: number, y: number, width: number, height: number): {
         node: Node; graphic: Graphics; label: Label; setSelected: (selected: boolean) => void;
     } {
@@ -1214,17 +1283,6 @@ export class HomeController extends Component {
                 maskNode.active = true;
             }
         });
-    }
-
-    private drawLightning(parent: Node, x: number, y: number, size: number): void {
-        const shadow = this.graphics(parent, 'LightningMarker', x - 4, y, size + 34, size + 32);
-        this.polygon(shadow, [
-            [-30, 8], [-5, 42], [11, 38], [4, 13], [29, 12], [-12, -44], [-7, -10], [-28, -12],
-        ], C.yellow, new Color(0, 0, 0, 0), 0);
-        const g = this.graphics(parent, 'EnergyIcon', x, y, size, size + 16);
-        this.polygon(g, [
-            [-20, 34], [12, 34], [4, 8], [25, 8], [-12, -40], [-6, -9], [-26, -9],
-        ], C.yellow, C.ink, 5);
     }
 
     private drawTowerIcon(parent: Node): void {
