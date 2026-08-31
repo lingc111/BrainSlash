@@ -61,13 +61,20 @@ const LOCAL_RIVALS: readonly Rival[] = [
     rival('onecut', '一刀流', 51, 29, 6, .72, 1, 4, 64, .70),
 ] as const;
 
-export function calculateBrawlRankScore(record: Omit<BrawlLeaderboardRecord, 'rankScore'>): number {
-    const seconds = Math.floor(normalize(record.survivalMs) / 1_000);
-    const accuracyPercent = Math.round(normalizeAccuracy(record.accuracy) * 100);
-    return seconds * 10
-        + normalize(record.answeredCount) * 20
-        + normalize(record.maxCombo) * 15
-        + accuracyPercent * 5;
+/**
+ * Turns the score earned by answering questions into the one canonical brawl
+ * score. The raw score already rewards correct answers, combo, complex rules,
+ * Master and Master Slash; accuracy is a bounded finishing multiplier instead
+ * of a second answer-count bonus.
+ */
+export function calculateBrawlRankScore(rawScore: number, accuracy: number): number {
+    const accuracyMultiplier = 0.7 + normalizeAccuracy(accuracy) * 0.3;
+    return Math.round(normalize(rawScore) * accuracyMultiplier);
+}
+
+export function applyBrawlFinalScore(run: RunResult): RunResult {
+    if (run.entry.mode !== 'brawl60') return run;
+    return { ...run, score: calculateBrawlRankScore(run.score, run.accuracy) };
 }
 
 export function brawlRecordFromRun(run: RunResult): BrawlLeaderboardRecord {
@@ -78,7 +85,7 @@ export function brawlRecordFromRun(run: RunResult): BrawlLeaderboardRecord {
         accuracy: normalizeAccuracy(run.accuracy),
         masterSlashCount: normalize(run.masterSlashCount),
     };
-    return { ...base, rankScore: calculateBrawlRankScore(base) };
+    return { ...base, rankScore: normalize(run.score) };
 }
 
 export function isBetterBrawlRecord(candidate: BrawlLeaderboardRecord, current: BrawlLeaderboardRecord): boolean {
@@ -101,7 +108,8 @@ export function emptyBrawlRecord(legacyRankScore = 0): BrawlLeaderboardRecord {
 
 function rival(id: string, name: string, seconds: number, answeredCount: number, maxCombo: number, accuracy: number, masterSlashCount: number, highestFloor: number, trialAnswered: number, trialAccuracy: number): Rival {
     const base = { survivalMs: seconds * 1_000, answeredCount, maxCombo, accuracy, masterSlashCount };
-    return { id, name, brawl: { ...base, rankScore: calculateBrawlRankScore(base) }, trial: { highestFloor, answeredCount: trialAnswered, accuracy: trialAccuracy } };
+    const estimatedRawScore = Math.round(answeredCount * accuracy) * 100 + maxCombo * 20 + masterSlashCount * 100;
+    return { id, name, brawl: { ...base, rankScore: calculateBrawlRankScore(estimatedRawScore, accuracy) }, trial: { highestFloor, answeredCount: trialAnswered, accuracy: trialAccuracy } };
 }
 
 function entry(id: string, name: string, isSelf: boolean, brawl: BrawlLeaderboardRecord, trial: TrialLeaderboardRecord): LeaderboardEntry {
@@ -109,7 +117,15 @@ function entry(id: string, name: string, isSelf: boolean, brawl: BrawlLeaderboar
 }
 
 function compareBrawl(a: BrawlLeaderboardRecord, b: BrawlLeaderboardRecord): number {
-    return b.rankScore - a.rankScore || b.survivalMs - a.survivalMs || b.answeredCount - a.answeredCount || b.accuracy - a.accuracy;
+    return b.rankScore - a.rankScore
+        || b.maxCombo - a.maxCombo
+        || b.accuracy - a.accuracy
+        || correctAnswers(b) - correctAnswers(a)
+        || b.survivalMs - a.survivalMs;
+}
+
+function correctAnswers(record: BrawlLeaderboardRecord): number {
+    return Math.round(record.answeredCount * record.accuracy);
 }
 
 function compareTrial(a: TrialLeaderboardRecord, b: TrialLeaderboardRecord): number {

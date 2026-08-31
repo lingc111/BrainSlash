@@ -152,7 +152,7 @@ class AppRuntimeState {
     public finish(run: RunResult): GameResult {
         this.result = this.save.commitResult(run);
         if (run.entry.mode === 'brawl60') void this.syncLeaderboard();
-        this.analytics.track('game_finish', { score: run.score, mode: run.entry.mode });
+        this.analytics.track('game_finish', { score: this.result.score, mode: run.entry.mode });
         return this.result;
     }
     public finishTower(run: RunResult, life: number, challenge?: TowerChallengeSnapshot): TowerFloorResult {

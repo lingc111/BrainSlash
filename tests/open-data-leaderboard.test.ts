@@ -1,5 +1,5 @@
 import assert from 'node:assert/strict';
-import { readFileSync } from 'node:fs';
+import { readFileSync, statSync } from 'node:fs';
 import test from 'node:test';
 import vm from 'node:vm';
 
@@ -9,11 +9,15 @@ function createHarness() {
     const friendRequests: PendingRequest[] = [];
     const selfRequests: PendingRequest[] = [];
     const drawn: string[] = [];
+    const fontRuns: Array<{ text: string; font: string }> = [];
     let onMessage: (message: unknown) => void = () => undefined;
     const canvasContext = {
         clearRect() { drawn.length = 0; }, save() {}, restore() {}, beginPath() {}, arc() {}, clip() {},
         fillRect() {}, fill() {}, stroke() {}, drawImage() {},
-        fillText(value: unknown) { drawn.push(String(value)); },
+        fillText(value: unknown) {
+            drawn.push(String(value));
+            fontRuns.push({ text: String(value), font: canvasContext.font });
+        },
         fillStyle: '', strokeStyle: '', lineWidth: 0, textAlign: '', textBaseline: '', font: '',
     };
     const wx = {
@@ -25,13 +29,13 @@ function createHarness() {
     };
     const source = readFileSync('build-templates/wechatgame/openDataContext/index.js', 'utf8');
     vm.runInNewContext(source, { wx, console });
-    return { drawn, friendRequests, selfRequests, send: (message: unknown) => onMessage(message) };
+    return { drawn, fontRuns, friendRequests, selfRequests, send: (message: unknown) => onMessage(message) };
 }
 
 function values(brawl: number, trial: number) {
     return [
-        { key: 'bs_brawl_score', value: String(brawl) },
-        { key: 'bs_brawl_detail', value: JSON.stringify({ s: brawl, a: 1, c: 1, r: 1 }) },
+        { key: 'bs_brawl_score_v2', value: String(brawl) },
+        { key: 'bs_brawl_detail_v2', value: JSON.stringify({ s: brawl, a: 1, c: 1, r: 1, m: 0 }) },
         { key: 'bs_trial_floor', value: String(trial) },
         { key: 'bs_trial_detail', value: JSON.stringify({ a: trial, r: 1 }) },
     ];
@@ -97,4 +101,16 @@ test('a transient empty refresh keeps the last non-empty friend snapshot', () =>
 
     assert.ok(h.drawn.includes('第 12 层'));
     assert.ok(h.drawn.includes('2'));
+});
+
+test('open-data leaderboard loads the compact rank font but keeps arbitrary nicknames on the system font', () => {
+    const h = createHarness();
+    h.send({ type: 'brainSlashLeaderboardFont', family: 'BrainSlashRank' });
+    h.send({ type: 'brainSlashLeaderboard', action: 'show', mode: 'brawl', localRecord });
+    h.friendRequests[0].success({ data: [{ nickname: '玩家🎮', KVDataList: values(200, 12) }] });
+    h.selfRequests[0].success({ KVDataList: values(100, 9) });
+
+    assert.match(h.fontRuns.find((run) => run.text === '综合 200')?.font ?? '', /BrainSlashRank/);
+    assert.doesNotMatch(h.fontRuns.find((run) => run.text === '玩家🎮')?.font ?? '', /BrainSlashRank/);
+    assert.ok(statSync('build-templates/wechatgame/openDataContext/fonts/jiangxi-rank.ttf').size < 100_000);
 });

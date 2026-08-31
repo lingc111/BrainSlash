@@ -1,0 +1,11 @@
+{
+  "name": "wechat-splash-dedupe",
+  "title": "WeChat Splash Dedupe",
+  "package_version": 2,
+  "version": "1.0.0",
+  "description": "Removes the redundant inline splash image from WeChat Mini Game builds.",
+  "author": "BrainSlash",
+  "contributions": {
+    "builder": "./dist/builder.js"
+  }
+}

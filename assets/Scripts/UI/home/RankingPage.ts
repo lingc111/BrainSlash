@@ -260,7 +260,7 @@ export class RankingPage extends Component {
     private detailText(entry: LeaderboardEntry): string {
         if (this.mode === 'trial') return `${entry.trial?.answeredCount ?? 0}题 · ${percent(entry.trial?.accuracy ?? 0)}`;
         const data = entry.brawl!;
-        return `${data.answeredCount}题 · C${data.maxCombo} · ${percent(data.accuracy)}`;
+        return `答对${Math.round(data.answeredCount * data.accuracy)}题 · C${data.maxCombo} · ${percent(data.accuracy)}`;
     }
 
     private attachTexture(parent: Node, resourcePath: string): void {

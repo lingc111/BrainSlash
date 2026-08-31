@@ -17,7 +17,7 @@ test('WeChat leaderboard upload uses stable cloud keys and compact values', asyn
     });
     assert.equal(success, true);
     assert.deepEqual(uploaded.map((item) => item.key), [
-        'bs_brawl_score', 'bs_brawl_detail', 'bs_trial_floor', 'bs_trial_detail',
+        'bs_brawl_score_v2', 'bs_brawl_detail_v2', 'bs_trial_floor', 'bs_trial_detail',
     ]);
     assert.equal(uploaded[0].value, '2715');
     assert.equal(uploaded[2].value, '18');
@@ -56,5 +56,24 @@ test('friend leaderboard requests the dedicated WeChat friend-interaction scope'
     const result = await new PlatformService().authorizeFriendInteraction();
     assert.equal(result.status, 'authorized');
     assert.equal(requestedScope, 'scope.WxFriendInteraction');
+    delete (globalThis as { wx?: unknown }).wx;
+});
+
+test('WeChat leaderboard loads its font in the main domain before messaging the open data domain', () => {
+    const events: unknown[] = [];
+    (globalThis as { wx?: unknown }).wx = {
+        loadFont(path: string) {
+            events.push(['loadFont', path]);
+            return 'BrainSlashRank';
+        },
+        getOpenDataContext: () => ({ postMessage: (message: unknown) => events.push(message) }),
+    };
+    const platform = new PlatformService();
+    platform.postLeaderboardMessage({ type: 'brainSlashLeaderboard', action: 'show' });
+    assert.deepEqual(events, [
+        ['loadFont', 'openDataContext/fonts/jiangxi-rank.ttf'],
+        { type: 'brainSlashLeaderboardFont', family: 'BrainSlashRank' },
+        { type: 'brainSlashLeaderboard', action: 'show' },
+    ]);
     delete (globalThis as { wx?: unknown }).wx;
 });

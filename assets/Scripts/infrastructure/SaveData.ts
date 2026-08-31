@@ -85,12 +85,25 @@ export interface SaveDataV6 {
     recentQuestionSignatures: string[];
 }
 
+export interface SaveDataV7 {
+    schemaVersion: 7;
+    player: PlayerProgress;
+    settings: SaveSettings;
+    tutorials: Partial<Record<RuleId, boolean>>;
+    daily?: LocalDailyRecord;
+    tower: TowerProgress;
+    lastFriendChallengeConfig: FriendChallengeConfig;
+    leaderboard: SaveLeaderboardV5;
+    recentQuestionIds: string[];
+    recentQuestionSignatures: string[];
+}
+
 const DEFAULT_SETTINGS: SaveSettings = { music: true, sfx: true, vibration: true, quality: 'auto' };
 export const RECENT_QUESTION_HISTORY_LIMIT = 1_200;
 
-export function createDefaultSave(): SaveDataV6 {
+export function createDefaultSave(): SaveDataV7 {
     return {
-        schemaVersion: 6,
+        schemaVersion: 7,
         player: { level: 1, xp: 0, bestScore: 0 },
         settings: { ...DEFAULT_SETTINGS },
         tutorials: {},
@@ -100,6 +113,23 @@ export function createDefaultSave(): SaveDataV6 {
         recentQuestionIds: [],
         recentQuestionSignatures: [],
     };
+}
+
+/** Legacy composite brawl scores cannot be converted to the new final-score
+ * scale because the raw per-question score was not stored. Start the V2 brawl
+ * season clean while preserving every unrelated piece of progress. */
+export function migrateV6ToV7(value: Partial<SaveDataV6>): SaveDataV7 {
+    const v6 = normalizeV6(value);
+    return {
+        ...v6,
+        schemaVersion: 7,
+        leaderboard: { ...v6.leaderboard, brawlBest: emptyBrawlRecord() },
+    };
+}
+
+export function normalizeV7(parsed: Partial<SaveDataV7>): SaveDataV7 {
+    const v6 = normalizeV6({ ...parsed, schemaVersion: 6 });
+    return { ...v6, schemaVersion: 7 };
 }
 
 export function migrateV5ToV6(value: Partial<SaveDataV5>): SaveDataV6 {

@@ -11,8 +11,11 @@ const HEIGHT = 1450;
 const VIEW_OFFSET_Y = 20;
 const ROW_Y = [-28, -104, -180, -256, -332, -408, -484];
 const DISPLAY_ORDER = [1, 0, 2, 3, 4, 5, 6, 7, 8, 9];
-const KEYS = ['bs_brawl_score', 'bs_brawl_detail', 'bs_trial_floor', 'bs_trial_detail'];
+const KEYS = ['bs_brawl_score_v2', 'bs_brawl_detail_v2', 'bs_trial_floor', 'bs_trial_detail'];
 const images = Object.create(null);
+const GAME_FONT_SCALE = 1.1;
+const RANK_FONT_GLYPHS = new Set(Array.from(' 0123456789C%·…第层综合题答对试炼榜加载中乱斗暂无好友成绩'));
+let rankFontFamily = '';
 
 let visible = false;
 let mode = 'brawl';
@@ -25,6 +28,13 @@ let requestInFlight = false;
 let hasFriendSnapshot = false;
 
 wx.onMessage((message) => {
+    if (message?.type === 'brainSlashLeaderboardFont') {
+        const family = typeof message.family === 'string' ? message.family.trim() : '';
+        if (!family || family === rankFontFamily) return;
+        rankFontFamily = family;
+        if (visible) render();
+        return;
+    }
     if (!message || message.type !== 'brainSlashLeaderboard') return;
     if (message.action === 'hide') {
         visible = false;
@@ -144,7 +154,7 @@ function fromCloud(item, id, isSelf) {
     const values = Object.create(null);
     const list = Array.isArray(item.KVDataList) ? item.KVDataList : [];
     list.forEach((pair) => { if (pair && typeof pair.key === 'string') values[pair.key] = pair.value; });
-    const brawlDetail = parseJson(values.bs_brawl_detail);
+    const brawlDetail = parseJson(values.bs_brawl_detail_v2);
     const trialDetail = parseJson(values.bs_trial_detail);
     const entry = {
         id: item.openid || id,
@@ -152,11 +162,12 @@ function fromCloud(item, id, isSelf) {
         avatarUrl: item.avatarUrl || '',
         isSelf,
         brawl: {
-            rankScore: integer(values.bs_brawl_score),
+            rankScore: integer(values.bs_brawl_score_v2),
             survivalMs: integer(brawlDetail.s),
             answeredCount: integer(brawlDetail.a),
             maxCombo: integer(brawlDetail.c),
             accuracy: ratio(brawlDetail.r),
+            masterSlashCount: integer(brawlDetail.m),
         },
         trial: {
             highestFloor: integer(values.bs_trial_floor),
@@ -170,7 +181,7 @@ function fromCloud(item, id, isSelf) {
 function createSelfEntry() {
     return mergeLocalSelf({
         id: 'self', name: '我', avatarUrl: '', isSelf: true,
-        brawl: { rankScore: 0, survivalMs: 0, answeredCount: 0, maxCombo: 0, accuracy: 0 },
+        brawl: { rankScore: 0, survivalMs: 0, answeredCount: 0, maxCombo: 0, accuracy: 0, masterSlashCount: 0 },
         trial: { highestFloor: 0, answeredCount: 0, accuracy: 0 },
     });
 }
@@ -187,6 +198,7 @@ function mergeLocalSelf(entry) {
             answeredCount: integer(localRecord.brawl.answeredCount),
             maxCombo: integer(localRecord.brawl.maxCombo),
             accuracy: ratio(localRecord.brawl.accuracy),
+            masterSlashCount: integer(localRecord.brawl.masterSlashCount),
         };
     }
     if (localRecord && localRecord.trial && integer(localRecord.trial.highestFloor) >= entry.trial.highestFloor) {
@@ -224,6 +236,7 @@ function sameRecords(a, b) {
         && a.brawl.answeredCount === b.brawl.answeredCount
         && a.brawl.maxCombo === b.brawl.maxCombo
         && a.brawl.accuracy === b.brawl.accuracy
+        && a.brawl.masterSlashCount === b.brawl.masterSlashCount
         && a.trial.highestFloor === b.trial.highestFloor
         && a.trial.answeredCount === b.trial.answeredCount
         && a.trial.accuracy === b.trial.accuracy;
@@ -235,9 +248,10 @@ function comparePerformance(a, b) {
 
 function compareBrawl(a, b) {
     return b.brawl.rankScore - a.brawl.rankScore
-        || b.brawl.survivalMs - a.brawl.survivalMs
-        || b.brawl.answeredCount - a.brawl.answeredCount
-        || b.brawl.accuracy - a.brawl.accuracy;
+        || b.brawl.maxCombo - a.brawl.maxCombo
+        || b.brawl.accuracy - a.brawl.accuracy
+        || correctAnswers(b.brawl) - correctAnswers(a.brawl)
+        || b.brawl.survivalMs - a.brawl.survivalMs;
 }
 
 function compareTrial(a, b) {
@@ -252,7 +266,7 @@ function drawPodium(entry, displayIndex) {
     const avatarY = [204, 223, 204][displayIndex];
     const avatarDiameter = [88, 112, 92][displayIndex];
     drawAvatar(entry.avatarUrl, avatarX, avatarY, avatarDiameter, false);
-    drawText(entry.name, x, 101, 31, '#1f1d19', 'center', true, 190);
+    drawText(entry.name, x, 101, 31, '#1f1d19', 'center', true, 190, true);
     drawText(scoreText(entry), x, 59, 30, '#1f1d19', 'center', true, 176);
     drawText(detailText(entry), x + 12, 27, 20, '#59544b', 'center', true, 242);
 }
@@ -261,7 +275,7 @@ function drawRow(entry, rowIndex) {
     const y = ROW_Y[rowIndex];
     drawText(String(entry.rank || rowIndex + 4), -300, y, 29, '#1f1d19', 'center', true, 56);
     drawAvatar(entry.avatarUrl, -242, y, 40, true);
-    drawText(entry.name, -207, y + 13, 25, '#1f1d19', 'left', true, 250);
+    drawText(entry.name, -207, y + 13, 25, '#1f1d19', 'left', true, 250, true);
     drawText(detailText(entry), -207, y - 16, 20, '#59544b', 'left', true, 330);
     drawText(scoreText(entry), 244, y, 25, '#1f1d19', 'center', true, 154);
 }
@@ -269,7 +283,7 @@ function drawRow(entry, rowIndex) {
 function drawSelf(entry, rank) {
     drawText(String(rank), -333, -643, 42, '#1f1d19', 'center', true, 90);
     drawAvatar(entry.avatarUrl, -253, -680, 114, false);
-    drawText(entry.name || '我', -30, -620, 34, '#1f1d19', 'center', true, 275);
+    drawText(entry.name || '我', -30, -620, 34, '#1f1d19', 'center', true, 275, true);
     drawText(detailText(entry), -5, -671, 22, '#59544b', 'center', true, 385);
     drawText(scoreText(entry), 244, -676, 31, '#1f1d19', 'center', true, 178);
 }
@@ -281,21 +295,41 @@ function scoreText(entry) {
 function detailText(entry) {
     if (mode === 'trial') return `${entry.trial.answeredCount}题 · ${percent(entry.trial.accuracy)}`;
     const data = entry.brawl;
-    return `${data.answeredCount}题 · C${data.maxCombo} · ${percent(data.accuracy)}`;
+    return `答对${correctAnswers(data)}题 · C${data.maxCombo} · ${percent(data.accuracy)}`;
 }
 
-function drawText(value, x, y, size, color, align, bold, maxWidth) {
+function correctAnswers(record) { return Math.round(record.answeredCount * record.accuracy); }
+
+function drawText(value, x, y, size, color, align, bold, maxWidth, useSystemFont = false) {
     const scale = drawingScale();
+    const text = String(value);
     context.save();
     context.fillStyle = color;
     context.textAlign = align;
     context.textBaseline = 'middle';
-    context.font = `${bold ? 'bold ' : ''}${Math.max(10, Math.round(size * scale))}px sans-serif`;
+    const usesRankFont = !useSystemFont && Boolean(rankFontFamily);
+    const pixelSize = Math.max(10, Math.round(size * (usesRankFont ? GAME_FONT_SCALE : 1) * scale));
+    if (usesRankFont) {
+        // wx.loadFont returns a directly usable family identifier. Keep the
+        // Canvas declaration identical to the form recommended by WeChat.
+        context.font = `${pixelSize}px ${JSON.stringify(rankFontFamily)}`;
+        warnForMissingRankGlyph(text);
+    } else {
+        context.font = `${bold ? 'bold ' : ''}${pixelSize}px sans-serif`;
+    }
     const px = canvasX(x);
     const py = canvasY(y);
-    if (maxWidth) context.fillText(String(value), px, py, maxWidth * scale);
-    else context.fillText(String(value), px, py);
+    if (maxWidth) context.fillText(text, px, py, maxWidth * scale);
+    else context.fillText(text, px, py);
     context.restore();
+}
+
+function warnForMissingRankGlyph(value) {
+    for (const character of value) {
+        if (RANK_FONT_GLYPHS.has(character)) continue;
+        console.warn(`[BrainSlashOpenData] rank font subset is missing: ${character}`);
+        return;
+    }
 }
 
 function drawAvatar(url, x, y, diameter, drawOutline) {

@@ -33,6 +33,7 @@ type WxApi = {
         success?: () => void;
         fail?: (error: unknown) => void;
     }) => void;
+    loadFont?: (path: string) => string | null;
     getOpenDataContext?: () => { postMessage: (message: unknown) => void };
     getStorageSync?: (key: string) => unknown;
     setStorageSync?: (key: string, value: string) => void;
@@ -60,10 +61,13 @@ interface AuthorizationButtonRect {
 }
 
 const PROFILE_STORAGE_KEY = 'brain-slash.wechat-profile.v1';
+const LEADERBOARD_FONT_PATH = 'openDataContext/fonts/jiangxi-rank.ttf';
 
 export const LEADERBOARD_CLOUD_KEYS = {
-    brawlScore: 'bs_brawl_score',
-    brawlDetail: 'bs_brawl_detail',
+    // V2 starts a clean leaderboard because legacy values used a different
+    // survival/answer-count formula and cannot be compared with final scores.
+    brawlScore: 'bs_brawl_score_v2',
+    brawlDetail: 'bs_brawl_detail_v2',
     trialFloor: 'bs_trial_floor',
     trialDetail: 'bs_trial_detail',
 } as const;
@@ -84,6 +88,7 @@ export class PlatformService {
     private readonly userProfileListeners = new Set<() => void>();
     private userInfoButton: ReturnType<NonNullable<WxApi['createUserInfoButton']>> | null = null;
     private authorizationSession = 0;
+    private leaderboardFontFamily: string | null | undefined;
     private get wx(): WxApi | undefined { return (globalThis as { wx?: WxApi }).wx; }
     public vibrate(enabled: boolean, type: 'light' | 'medium' | 'heavy' = 'light'): void { if (enabled) this.wx?.vibrateShort?.({ type }); }
     public share(payload: FriendChallengePayload): void {
@@ -260,7 +265,29 @@ export class PlatformService {
     }
 
     public postLeaderboardMessage(message: unknown): void {
-        try { this.wx?.getOpenDataContext?.().postMessage(message); } catch (error) {
+        try {
+            const wxApi = this.wx;
+            const openDataContext = wxApi?.getOpenDataContext?.();
+            if (!openDataContext) return;
+            if (this.leaderboardFontFamily === undefined) {
+                try {
+                    this.leaderboardFontFamily = wxApi?.loadFont?.(LEADERBOARD_FONT_PATH) || null;
+                    if (!this.leaderboardFontFamily) console.warn(`[Platform] Leaderboard font failed to load: ${LEADERBOARD_FONT_PATH}`);
+                } catch (error) {
+                    this.leaderboardFontFamily = null;
+                    console.warn('[Platform] Leaderboard font failed to load', error);
+                }
+            }
+            if (this.leaderboardFontFamily) {
+                // Fonts must be registered in the main domain on real devices.
+                // The open data domain can then use the returned family token.
+                openDataContext.postMessage({
+                    type: 'brainSlashLeaderboardFont',
+                    family: this.leaderboardFontFamily,
+                });
+            }
+            openDataContext.postMessage(message);
+        } catch (error) {
             console.warn('[Platform] Failed to message open data context', error);
         }
     }
@@ -272,7 +299,7 @@ export class PlatformService {
         const trial = records.trial;
         const KVDataList = [
             { key: LEADERBOARD_CLOUD_KEYS.brawlScore, value: String(Math.max(0, Math.floor(brawl.rankScore))) },
-            { key: LEADERBOARD_CLOUD_KEYS.brawlDetail, value: JSON.stringify({ s: brawl.survivalMs, a: brawl.answeredCount, c: brawl.maxCombo, r: brawl.accuracy }) },
+            { key: LEADERBOARD_CLOUD_KEYS.brawlDetail, value: JSON.stringify({ s: brawl.survivalMs, a: brawl.answeredCount, c: brawl.maxCombo, r: brawl.accuracy, m: brawl.masterSlashCount }) },
             { key: LEADERBOARD_CLOUD_KEYS.trialFloor, value: String(Math.max(0, Math.floor(trial.highestFloor))) },
             { key: LEADERBOARD_CLOUD_KEYS.trialDetail, value: JSON.stringify({ a: trial.answeredCount, r: trial.accuracy }) },
         ];

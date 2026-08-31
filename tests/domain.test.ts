@@ -58,8 +58,8 @@ import {
 import { RunSeedFactory } from '../assets/Scripts/app/RunSeedFactory.ts';
 import { PlatformService } from '../assets/Scripts/infrastructure/PlatformService.ts';
 import { AudioService, SoundThrottle } from '../assets/Scripts/infrastructure/AudioService.ts';
-import { createDefaultSave, migrateV1ToV2, migrateV2ToV3, migrateV3ToV4, migrateV4ToV5, migrateV5ToV6, normalizeV5, RECENT_QUESTION_HISTORY_LIMIT } from '../assets/Scripts/infrastructure/SaveData.ts';
-import { brawlRecordFromRun, createLocalLeaderboard, emptyBrawlRecord } from '../assets/Scripts/domain/Leaderboard.ts';
+import { createDefaultSave, migrateV1ToV2, migrateV2ToV3, migrateV3ToV4, migrateV4ToV5, migrateV5ToV6, migrateV6ToV7, normalizeV5, RECENT_QUESTION_HISTORY_LIMIT } from '../assets/Scripts/infrastructure/SaveData.ts';
+import { applyBrawlFinalScore, brawlRecordFromRun, calculateBrawlRankScore, createLocalLeaderboard, emptyBrawlRecord } from '../assets/Scripts/domain/Leaderboard.ts';
 import { TowerDirector } from '../assets/Scripts/domain/TowerDirector.ts';
 import { TowerChallengeRuntime, towerChallengeSummary, validateTowerChallenge } from '../assets/Scripts/domain/TowerChallenge.ts';
 import {
@@ -2053,9 +2053,32 @@ test('save v6 resets only tower progress and trial statistics', () => {
     assert.deepEqual(migrated.player, base.player);
 });
 
+test('save v7 starts a clean final-score brawl season without resetting other progress', () => {
+    const base = migrateV5ToV6(normalizeV5({
+        ...createDefaultSave(), schemaVersion: 5,
+        player: { level: 5, xp: 2_200, bestScore: 9_900 },
+        leaderboard: { brawlBest: emptyBrawlRecord(7_700), trialAnsweredCount: 400, trialCorrectCount: 360 },
+    }));
+    const migrated = migrateV6ToV7(base);
+    assert.equal(migrated.schemaVersion, 7);
+    assert.equal(migrated.leaderboard.brawlBest.rankScore, 0);
+    assert.equal(migrated.leaderboard.trialAnsweredCount, base.leaderboard.trialAnsweredCount);
+    assert.deepEqual(migrated.player, base.player);
+});
+
+test('brawl final score applies accuracy once without a separate answer-count bonus', () => {
+    assert.equal(calculateBrawlRankScore(2_000, 1), 2_000);
+    assert.equal(calculateBrawlRankScore(2_000, .5), 1_700);
+    const scored = applyBrawlFinalScore({
+        entry: { mode: 'brawl60', seed: 'score', contentVersion: 'v' }, score: 2_000,
+        elapsedMs: 60_000, maxCombo: 8, correctCount: 10, errorCount: 2, accuracy: .5, masterSlashCount: 1,
+    });
+    assert.equal(scored.score, 1_700);
+});
+
 test('local leaderboard sorts persisted player scores and reports an off-screen self rank', () => {
     const record = brawlRecordFromRun({
-        entry: { mode: 'brawl60', seed: 'rank', contentVersion: 'v' }, score: 0,
+        entry: { mode: 'brawl60', seed: 'rank', contentVersion: 'v' }, score: 20_000,
         elapsedMs: 300_000, maxCombo: 30, correctCount: 120, errorCount: 5, accuracy: 120 / 125, masterSlashCount: 10,
     });
     const leading = createLocalLeaderboard('brawl', { brawl: record, trial: { highestFloor: 0, answeredCount: 0, accuracy: 0 } });
