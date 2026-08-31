@@ -80,7 +80,10 @@ export class RankingPage extends Component {
         if (this.brawlSelection) this.brawlSelection.active = mode === 'brawl';
         if (this.trialSelection) this.trialSelection.active = mode === 'trial';
         this.refreshScores();
-        this.refreshOpenDataLeaderboard();
+        // All leaderboard keys are fetched together. Switching tabs only
+        // changes the projection/sort of the current friend snapshot; asking
+        // WeChat for the same data again can return a transient empty list.
+        this.refreshOpenDataLeaderboard(false);
         if (!EDITOR) AppRuntime.audio.play('ui');
     }
 
@@ -193,10 +196,12 @@ export class RankingPage extends Component {
         view.fps = 10;
         this.openDataView = viewNode;
         this.localDataNodes.forEach((node) => { node.active = false; });
-        this.scheduleOnce(() => this.refreshOpenDataLeaderboard(), 0);
+        // onEnable owns the initial request. Scheduling a second request here
+        // created two concurrent cloud reads on first entry and allowed a later
+        // transient empty response to supersede the valid one.
     }
 
-    private refreshOpenDataLeaderboard(): void {
+    private refreshOpenDataLeaderboard(refreshCloudData = true): void {
         if (EDITOR || !this.openDataView?.activeInHierarchy) return;
         const save = AppRuntime.save.snapshot();
         const answeredCount = save.leaderboard.trialAnsweredCount;
@@ -204,6 +209,7 @@ export class RankingPage extends Component {
             type: 'brainSlashLeaderboard',
             action: 'show',
             mode: this.mode,
+            refreshCloudData,
             profile: AppRuntime.platform.authorizedUserProfile(),
             localRecord: {
                 brawl: save.leaderboard.brawlBest,

@@ -20,11 +20,16 @@ let localRecord = null;
 let localProfile = null;
 let friends = [];
 let selfCloud = null;
+let requestGeneration = 0;
+let requestInFlight = false;
+let hasFriendSnapshot = false;
 
 wx.onMessage((message) => {
     if (!message || message.type !== 'brainSlashLeaderboard') return;
     if (message.action === 'hide') {
         visible = false;
+        requestGeneration += 1;
+        requestInFlight = false;
         clear();
         return;
     }
@@ -33,35 +38,78 @@ wx.onMessage((message) => {
     mode = message.mode === 'trial' ? 'trial' : 'brawl';
     localRecord = message.localRecord || null;
     localProfile = message.profile || null;
-    requestCloudData();
+    // Both modes use the same four cloud keys. A tab switch must only sort and
+    // render the cached snapshot; refetching here caused occasional empty
+    // WeChat responses to erase every friend and change the self rank to 1.
+    const shouldRefreshCloud = message.refreshCloudData !== false;
+    if (hasFriendSnapshot) render();
+    else drawLoading();
+    if (shouldRefreshCloud) requestCloudData();
+    else if (!requestInFlight && !hasFriendSnapshot) requestCloudData();
 });
 
 function requestCloudData() {
+    const generation = ++requestGeneration;
+    requestInFlight = true;
+    let nextFriends = friends;
+    let nextSelfCloud = selfCloud;
+    let friendSettled = false;
+    let friendSucceeded = false;
+    let selfSettled = typeof wx.getUserCloudStorage !== 'function';
+    const commitWhenReady = () => {
+        // A new cloud refresh starts a new generation. Never let older
+        // callbacks replace it, and commit friend/self data as one snapshot so
+        // the self entry cannot briefly be counted twice.
+        if (!visible || generation !== requestGeneration || !friendSettled || !selfSettled) return;
+        requestInFlight = false;
+        friends = nextFriends;
+        selfCloud = nextSelfCloud;
+        if (friendSucceeded) hasFriendSnapshot = true;
+        render();
+    };
     wx.getFriendCloudStorage({
         keyList: KEYS,
         success(result) {
-            friends = Array.isArray(result.data) ? result.data : [];
-            render();
+            if (generation !== requestGeneration) return;
+            const received = Array.isArray(result.data) ? result.data : [];
+            // Once a non-empty snapshot has been displayed, a single empty
+            // response during a refresh is treated as transient. Friend access
+            // cannot legitimately disappear because the user tapped a tab.
+            if (received.length > 0 || !hasFriendSnapshot || friends.length === 0) nextFriends = received;
+            friendSucceeded = true;
+            friendSettled = true;
+            commitWhenReady();
         },
         fail(error) {
+            if (generation !== requestGeneration) return;
             console.warn('[BrainSlashOpenData] getFriendCloudStorage failed', error);
-            friends = [];
-            render();
+            friendSettled = true;
+            commitWhenReady();
         },
     });
     if (typeof wx.getUserCloudStorage === 'function') {
         wx.getUserCloudStorage({
             keyList: KEYS,
             success(result) {
-                selfCloud = result || null;
-                render();
+                if (generation !== requestGeneration) return;
+                nextSelfCloud = result || null;
+                selfSettled = true;
+                commitWhenReady();
             },
             fail() {
-                selfCloud = null;
-                render();
+                if (generation !== requestGeneration) return;
+                nextSelfCloud = null;
+                selfSettled = true;
+                commitWhenReady();
             },
         });
     }
+    commitWhenReady();
+}
+
+function drawLoading() {
+    clear();
+    drawText(mode === 'trial' ? '试炼榜加载中…' : '乱斗榜加载中…', 0, -40, 28, '#59544b', 'center', true);
 }
 
 function render() {
@@ -82,12 +130,12 @@ function render() {
 function createRanking() {
     const entries = friends.map((item, index) => fromCloud(item, `friend-${index}`, false));
     const cloudSelf = selfCloud ? fromCloud(selfCloud, 'self', true) : createSelfEntry();
-    const matchIndex = entries.findIndex((entry) => sameUser(entry, cloudSelf));
+    const matchIndex = findSelfIndex(entries, cloudSelf);
     if (matchIndex >= 0) entries.splice(matchIndex, 1);
     entries.push(cloudSelf);
-    entries.sort(mode === 'trial'
-        ? (a, b) => b.trial.highestFloor - a.trial.highestFloor || b.trial.accuracy - a.trial.accuracy || b.trial.answeredCount - a.trial.answeredCount
-        : (a, b) => b.brawl.rankScore - a.brawl.rankScore || b.brawl.survivalMs - a.brawl.survivalMs || b.brawl.answeredCount - a.brawl.answeredCount);
+    entries.sort((a, b) => comparePerformance(a, b)
+        || Number(b.isSelf) - Number(a.isSelf)
+        || String(a.id).localeCompare(String(b.id)));
     entries.forEach((entry, index) => { entry.rank = index + 1; });
     return entries;
 }
@@ -154,6 +202,48 @@ function mergeLocalSelf(entry) {
 function sameUser(a, b) {
     return a.id === b.id || (a.avatarUrl && b.avatarUrl && a.avatarUrl === b.avatarUrl)
         || (a.name !== '微信好友' && b.name !== '我' && a.name === b.name);
+}
+
+function findSelfIndex(entries, cloudSelf) {
+    const identityMatch = entries.findIndex((entry) => sameUser(entry, cloudSelf));
+    if (identityMatch >= 0) return identityMatch;
+    // getUserCloudStorage does not always expose openid/profile fields. Its KV
+    // payload does match the current user's row in getFriendCloudStorage, so a
+    // unique score/detail match is a safe fallback for removing that duplicate.
+    if (!selfCloud) return -1;
+    const matches = [];
+    entries.forEach((entry, index) => {
+        if (sameRecords(entry, cloudSelf)) matches.push(index);
+    });
+    return matches.length === 1 ? matches[0] : -1;
+}
+
+function sameRecords(a, b) {
+    return a.brawl.rankScore === b.brawl.rankScore
+        && a.brawl.survivalMs === b.brawl.survivalMs
+        && a.brawl.answeredCount === b.brawl.answeredCount
+        && a.brawl.maxCombo === b.brawl.maxCombo
+        && a.brawl.accuracy === b.brawl.accuracy
+        && a.trial.highestFloor === b.trial.highestFloor
+        && a.trial.answeredCount === b.trial.answeredCount
+        && a.trial.accuracy === b.trial.accuracy;
+}
+
+function comparePerformance(a, b) {
+    return mode === 'trial' ? compareTrial(a, b) : compareBrawl(a, b);
+}
+
+function compareBrawl(a, b) {
+    return b.brawl.rankScore - a.brawl.rankScore
+        || b.brawl.survivalMs - a.brawl.survivalMs
+        || b.brawl.answeredCount - a.brawl.answeredCount
+        || b.brawl.accuracy - a.brawl.accuracy;
+}
+
+function compareTrial(a, b) {
+    return b.trial.highestFloor - a.trial.highestFloor
+        || b.trial.accuracy - a.trial.accuracy
+        || b.trial.answeredCount - a.trial.answeredCount;
 }
 
 function drawPodium(entry, displayIndex) {
