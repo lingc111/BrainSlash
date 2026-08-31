@@ -803,7 +803,7 @@ export class HomeController extends Component {
         const config = entry.challengeConfig;
         const { modal, panel } = this.makeChallengeModal('PendingFriendChallenge', 760, 980);
         this.friendChallengeModal = modal;
-        this.makeChallengeClose(panel, -310, 385);
+        this.makeChallengeClose(panel, -310, 385, () => AppRuntime.discardPendingFriendChallenge());
         this.label(panel, 'Title', '好友向你发起挑战', 0, 350, 620, 72, 43, C.ink, 'center');
         this.label(panel, 'TargetCaption', '目标分数', 0, 245, 300, 42, 23, C.blue, 'center');
         this.label(panel, 'TargetScore', String(entry.targetScore ?? 0), 0, 160, 500, 110, 82, C.red, 'center');
@@ -840,9 +840,12 @@ export class HomeController extends Component {
         return { modal, panel };
     }
 
-    private makeChallengeClose(parent: Node, x: number, y: number): void {
+    private makeChallengeClose(parent: Node, x: number, y: number, beforeClose?: () => void): void {
         const close = this.makeChoiceButton(parent, 'CloseChallenge', '关闭', x, y, 120, 68);
-        this.bindButton(close.node, () => this.closeFriendChallengeModal());
+        this.bindButton(close.node, () => {
+            beforeClose?.();
+            this.closeFriendChallengeModal();
+        });
     }
 
     private closeFriendChallengeModal(): void {

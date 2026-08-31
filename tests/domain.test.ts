@@ -211,6 +211,49 @@ test('platform adapter recovers a share opened before the warm-start listener is
     }
 });
 
+test('platform adapter accepts raw percent-encoded WeChat query values', () => {
+    const host = globalThis as typeof globalThis & { wx?: Record<string, unknown> };
+    const previousWx = host.wx;
+    const payload = createFriendChallengePayload({
+        entry: {
+            mode: 'friendChallenge', seed: 'encoded-seed', contentVersion: CONTENT_VERSION,
+            challengeConfig: { themeIds: ['math', 'english'], enabledRules: ['standard', 'reverse'], durationMs: 90_000 },
+            challengeRole: 'creator',
+        },
+        score: 880,
+    });
+    const encodedQuery = Object.fromEntries(new URLSearchParams(encodeFriendChallengeQuery(payload)).entries());
+    encodedQuery.themes = encodeURIComponent(encodedQuery.themes);
+    encodedQuery.rules = encodeURIComponent(encodedQuery.rules);
+    host.wx = { getEnterOptionsSync: () => ({ query: encodedQuery }) };
+    try {
+        const result = new PlatformService().readChallenge(CONTENT_VERSION);
+        assert.equal(result.status, 'valid');
+        if (result.status === 'valid') assert.deepEqual(result.entry.challengeConfig, payload.config);
+    } finally {
+        host.wx = previousWx;
+    }
+});
+
+test('platform adapter falls back when latest-entry options temporarily throw', () => {
+    const host = globalThis as typeof globalThis & { wx?: Record<string, unknown> };
+    const previousWx = host.wx;
+    const payload = createFriendChallengePayload({
+        entry: { mode: 'brawl60', seed: 'fallback-seed', contentVersion: CONTENT_VERSION, recipeId: 'mixed' },
+        score: 720,
+    });
+    const query = Object.fromEntries(new URLSearchParams(encodeFriendChallengeQuery(payload)).entries());
+    host.wx = {
+        getEnterOptionsSync: () => { throw new Error('base library not ready'); },
+        getLaunchOptionsSync: () => ({ query }),
+    };
+    try {
+        assert.equal(new PlatformService().readChallenge(CONTENT_VERSION).status, 'valid');
+    } finally {
+        host.wx = previousWx;
+    }
+});
+
 test('friend target HUD reports behind, tied and ahead score states', () => {
     assert.deepEqual(friendTargetPresentation(650, 800), { text: '好友目标 800 · 还差 150', tone: 'behind', scoreDelta: -150 });
     assert.deepEqual(friendTargetPresentation(800, 800), { text: '好友 800 · 已追平', tone: 'tied', scoreDelta: 0 });

@@ -5,9 +5,9 @@ import { encodeFriendChallengeQuery, friendChallengeConfigSummary, parseFriendCh
 type WxApi = {
     vibrateShort?: (options?: { type?: 'light' | 'medium' | 'heavy' }) => void;
     shareAppMessage?: (options: { title: string; query: string }) => void;
-    getLaunchOptionsSync?: () => { query?: Record<string, string> };
-    getEnterOptionsSync?: () => { query?: Record<string, string> };
-    onShow?: (listener: (options: { query?: Record<string, string> }) => void) => void;
+    getLaunchOptionsSync?: () => { query?: Record<string, unknown> };
+    getEnterOptionsSync?: () => { query?: Record<string, unknown> };
+    onShow?: (listener: (options: { query?: Record<string, unknown> }) => void) => void;
     getUserProfile?: (options: {
         desc: string;
         success: (result: { userInfo?: { nickName?: string; avatarUrl?: string } }) => void;
@@ -92,20 +92,22 @@ export class PlatformService {
         this.wx?.shareAppMessage?.({ title: `我在脑斩拿到 ${payload.targetScore} 分${suffix}，敢来挑战吗？`, query });
     }
     public readChallenge(contentVersion: string): FriendChallengeParseResult {
+        const wxApi = this.wx;
+        // getEnterOptionsSync represents both cold and warm entry and must be
+        // preferred. Some base-library/device combinations expose it but throw
+        // while the game is starting, so only then fall back to launch options.
+        if (wxApi?.getEnterOptionsSync) {
+            try {
+                return parseFriendChallengeQuery(normalizeWechatQuery(wxApi.getEnterOptionsSync().query), contentVersion);
+            } catch { /* Fall back to the cold-launch API below. */ }
+        }
         try {
-            const wxApi = this.wx;
-            // getLaunchOptionsSync only represents the process cold start. A
-            // share card may reopen a process kept alive by WeChat before our
-            // Cocos scene registered onShow, so prefer the latest enter options.
-            const query = wxApi?.getEnterOptionsSync
-                ? wxApi.getEnterOptionsSync().query
-                : wxApi?.getLaunchOptionsSync?.().query;
-            return parseFriendChallengeQuery(query, contentVersion);
-        } catch { return { status: 'invalid' }; }
+            return parseFriendChallengeQuery(normalizeWechatQuery(wxApi?.getLaunchOptionsSync?.().query), contentVersion);
+        } catch { return { status: 'none' }; }
     }
     public onChallengeOpened(contentVersion: string, listener: (result: FriendChallengeParseResult) => void): void {
         this.wx?.onShow?.((options) => {
-            const result = parseFriendChallengeQuery(options.query, contentVersion);
+            const result = parseFriendChallengeQuery(normalizeWechatQuery(options.query), contentVersion);
             if (result.status !== 'none') listener(result);
         });
     }
@@ -302,6 +304,20 @@ export class PlatformService {
         if (this.wx?.removeStorageSync) this.wx.removeStorageSync(PROFILE_STORAGE_KEY);
         else (globalThis as { localStorage?: Storage }).localStorage?.removeItem(PROFILE_STORAGE_KEY);
     }
+}
+
+/** WeChat has returned both decoded query values and raw percent-encoded values
+ * across runtimes. Normalize either shape before applying strict validation. */
+function normalizeWechatQuery(query: Readonly<Record<string, unknown>> | undefined): Record<string, string> | undefined {
+    if (!query) return undefined;
+    const normalized: Record<string, string> = {};
+    for (const [key, value] of Object.entries(query)) {
+        if (typeof value !== 'string' && typeof value !== 'number') continue;
+        const text = String(value);
+        try { normalized[key] = decodeURIComponent(text); }
+        catch { normalized[key] = text; }
+    }
+    return normalized;
 }
 
 function wxErrorMessage(error: unknown): string {

@@ -86,6 +86,12 @@ class AppRuntimeState {
         this.pendingFriendChallenge = false;
         return true;
     }
+    public discardPendingFriendChallenge(): boolean {
+        if (!this.pendingFriendChallenge) return false;
+        this.pendingFriendChallenge = false;
+        this.entry = this.seedFactory.create('brawl60', CONTENT_VERSION);
+        return true;
+    }
     public challengeLaunchNotice(): string | null { return this.launchNotice; }
     public consumeChallengeLaunchNotice(): string | null {
         const notice = this.launchNotice;
