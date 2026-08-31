@@ -7,7 +7,11 @@
       "enable": true,
       "customSplash": {
         "complete": true,
+<<<<<<< HEAD
         "form": "https://creator-api.cocos.com/api/form/show?sid=facd37075500ab07aad85c9827dce746"
+=======
+        "form": "https://creator-api.cocos.com/api/form/show?sid=a4056c97c9a086becbe524e5798d0225"
+>>>>>>> 03decfe (游戏开机动画)
       }
     },
     "removeSplash": {

@@ -35,5 +35,15 @@
         }
       }
     }
+  },
+  "splash-setting": {
+    "logo": {
+      "image": "project://settings/图标.png",
+      "type": "none"
+    },
+    "background": {
+      "image": "project://settings/splash.png",
+      "type": "custom"
+    }
   }
 }
