@@ -1314,6 +1314,19 @@ test('run seed factory refreshes every attempt while keeping the daily recipe st
     assert.match(dailyA.seed, /^daily:[^:]+:2026-08-20:[a-z-]+:attempt:[a-z0-9]+:[a-z0-9]+:[a-z0-9]+$/);
 });
 
+test('friend challenge replay preserves the exact shared seed and configuration', () => {
+    const factory = new RunSeedFactory(() => new Date(2026, 7, 20, 12, 0, 0), () => 123_456_789);
+    const entry = factory.createFriendChallenge({
+        themeIds: ['math', 'history'], enabledRules: ['standard', 'reverse'], durationMs: 90_000,
+    }, CONTENT_VERSION);
+    const replay = factory.createReplay(entry, CONTENT_VERSION);
+    const brawl = factory.create('brawl60', CONTENT_VERSION);
+
+    assert.deepEqual(replay, entry);
+    assert.notEqual(replay, entry);
+    assert.notEqual(factory.createReplay(brawl, CONTENT_VERSION).seed, brawl.seed);
+});
+
 test('local daily challenge rotates seven recipes and rolls over at local midnight', () => {
     const challenges = Array.from({ length: 8 }, (_, offset) => createDailyChallenge(new Date(2026, 7, 17 + offset, 12, 0, 0), CONTENT_VERSION));
     assert.equal(new Set(challenges.slice(0, 7).map((challenge) => challenge.recipe.id)).size, 7);

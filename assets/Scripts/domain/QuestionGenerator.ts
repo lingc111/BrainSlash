@@ -30,7 +30,7 @@ import {
     KNOWLEDGE_SCIENCE_EXPANSION,
 } from './KnowledgeExpansionCatalog';
 import { validateQuestion } from './FairnessValidator';
-import type { QuestionInstance, RuleId, TargetSpec, ThemeId } from './Models';
+import type { GameEntryParams, QuestionInstance, RuleId, TargetSpec, ThemeId } from './Models';
 import { evaluateRules, rulesForReadableTargets } from './Rules';
 import { SeededRng } from './SeededRng';
 import { staticQuestionsForFamily, type StaticQuestionRecord } from './StaticQuestionBank';
@@ -47,6 +47,14 @@ export interface QuestionGeneratorOptions {
     recentFactIds?: readonly string[];
     recentSemanticSignatures?: readonly string[];
     onQuestionAccepted?: (factIds: readonly string[], semanticSignature: string) => void;
+}
+
+/** Shared challenges must depend only on their seed and configuration, never local play history. */
+export function questionGeneratorOptionsForEntry(
+    entry: Pick<GameEntryParams, 'mode'>,
+    options: QuestionGeneratorOptions,
+): QuestionGeneratorOptions {
+    return entry.mode === 'friendChallenge' ? {} : options;
 }
 const COLOR_WORDS = ['红', '蓝', '绿', '黄'] as const;
 const ARROWS = ['←', '↑', '→', '↓'] as const;

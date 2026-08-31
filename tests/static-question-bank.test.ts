@@ -5,7 +5,7 @@ import test from 'node:test';
 import { GAMEPLAY_CONFIG } from '../assets/Scripts/configs/GameConfig.ts';
 import { Brawl60Director } from '../assets/Scripts/domain/Brawl60Director.ts';
 import { CONTENT_FAMILIES } from '../assets/Scripts/domain/ContentCatalog.ts';
-import { QuestionGenerator } from '../assets/Scripts/domain/QuestionGenerator.ts';
+import { QuestionGenerator, questionGeneratorOptionsForEntry } from '../assets/Scripts/domain/QuestionGenerator.ts';
 import { evaluateRules } from '../assets/Scripts/domain/Rules.ts';
 import { SeededRng } from '../assets/Scripts/domain/SeededRng.ts';
 import {
@@ -103,6 +103,32 @@ test('cross-session history excludes recently accepted static facts', () => {
         recentSemanticSignatures: acceptedSignatures,
     }).next(directive);
     assert.notDeepEqual(second.factIds, first.factIds);
+});
+
+test('friend challenge ignores cross-session history and reproduces the shared question', () => {
+    clearStaticQuestionPacksForTests();
+    installStaticQuestionPacks(readPacks());
+    const family = CONTENT_FAMILIES.find((item) => item.kind === 'math-add')!;
+    const directive = {
+        phase: 'action' as const, difficultyStage: 2 as const, targetCount: 4,
+        questionTimeMs: 2_600, speed: 1, family, rules: ['standard' as const],
+    };
+    const history = {
+        recentFactIds: ['static.math.add.001', 'static.math.add.002'],
+        recentSemanticSignatures: ['different-local-session'],
+        onQuestionAccepted: () => assert.fail('friend challenges must not update local question history'),
+    };
+    const first = new QuestionGenerator(
+        new SeededRng('friend-history-independent'), GAMEPLAY_CONFIG,
+        questionGeneratorOptionsForEntry({ mode: 'friendChallenge' }, history),
+    ).next(directive);
+    const second = new QuestionGenerator(
+        new SeededRng('friend-history-independent'), GAMEPLAY_CONFIG,
+        questionGeneratorOptionsForEntry({ mode: 'friendChallenge' }, {}),
+    ).next(directive);
+
+    assert.deepEqual(second, first);
+    assert.equal(questionGeneratorOptionsForEntry({ mode: 'brawl60' }, history), history);
 });
 
 test('life static questions contain two real directions without semantic variants', () => {

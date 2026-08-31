@@ -126,14 +126,10 @@ class AppRuntimeState {
     }
     public replay(): void {
         if (this.transitioning) return;
-        // Free-play, tower and daily theme battles all refresh their attempt seed.
-        // Daily still keeps the local-day recipe and target score unchanged.
-        if (this.entry.mode === 'friendChallenge' && this.entry.challengeRole === 'creator' && this.entry.challengeConfig) {
-            this.entry = this.seedFactory.createFriendChallenge(this.entry.challengeConfig, CONTENT_VERSION);
-        } else if (this.entry.mode === 'brawl60' || this.entry.mode === 'daily' || this.entry.mode === 'tower') {
-            this.entry = this.seedFactory.create(this.entry.mode, CONTENT_VERSION, this.entry.towerFloor);
-            if (this.entry.mode === 'daily') this.save.beginDaily(this.entry);
-        }
+        // Friend challenges must replay the shared seed so creator and responder
+        // always see the same question sequence. Other modes get a fresh attempt.
+        this.entry = this.seedFactory.createReplay(this.entry, CONTENT_VERSION);
+        if (this.entry.mode === 'daily') this.save.beginDaily(this.entry);
         this.result = null; this.towerResult = null;
         this.transitioning = true; this.gameplayLaunchAuthorized = true;
         this.analytics.track('game_start', { mode: this.entry.mode, seed: this.entry.seed });

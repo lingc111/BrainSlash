@@ -62,6 +62,17 @@ export class RunSeedFactory {
         const entry = this.create('friendChallenge', contentVersion);
         return { ...entry, recipeId: undefined, challengeConfig: clone(config), challengeRole: 'creator' };
     }
+
+    /** Friend challenges replay the exact shared question sequence; other modes start a fresh attempt. */
+    public createReplay(entry: GameEntryParams, contentVersion: string): GameEntryParams {
+        if (entry.mode === 'friendChallenge') {
+            return {
+                ...entry,
+                ...(entry.challengeConfig ? { challengeConfig: clone(entry.challengeConfig) } : {}),
+            };
+        }
+        return this.create(entry.mode, contentVersion, entry.towerFloor);
+    }
 }
 
 function clone<T>(value: T): T { return JSON.parse(JSON.stringify(value)) as T; }
