@@ -298,7 +298,13 @@ export class HomeController extends Component {
         if (EDITOR) return;
 
         this.removePendingChallengeListener = AppRuntime.onPendingFriendChallenge(() => {
-            this.scheduleOnce(() => this.showPendingFriendChallenge(), 0);
+            this.scheduleOnce(() => {
+                if (AppRuntime.hasPendingFriendChallenge()) this.showPendingFriendChallenge();
+                else {
+                    const challengeNotice = AppRuntime.consumeChallengeLaunchNotice();
+                    if (challengeNotice) this.showChallengeLaunchNotice(challengeNotice);
+                }
+            }, 0);
         });
         this.updateHeaderAvatar();
         this.removeUserProfileListener = AppRuntime.platform.onAuthorizedUserProfileChanged(() => {
@@ -306,6 +312,10 @@ export class HomeController extends Component {
         });
         if (AppRuntime.hasPendingFriendChallenge()) this.scheduleOnce(() => this.showPendingFriendChallenge(), 0);
         else if (AppRuntime.consumeFriendChallengeSetupRequest()) this.scheduleOnce(() => this.showFriendChallengeSetup(), 0);
+        else {
+            const challengeNotice = AppRuntime.consumeChallengeLaunchNotice();
+            if (challengeNotice) this.scheduleOnce(() => this.showChallengeLaunchNotice(challengeNotice), 0);
+        }
     }
 
     private buildHeader(parent: Node): Node {
@@ -685,6 +695,7 @@ export class HomeController extends Component {
         };
         this.bindButton(authorization, installWechatAuthorization);
         if (!EDITOR) this.scheduleOnce(installWechatAuthorization, 0);
+        this.label(modal, 'CurrentVersion', `当前版本　${CONTENT_VERSION}`, 0, -232, 500, 40, 21, C.inkSoft, 'center');
         const close = this.makeNode(modal, 'CloseSettings', 0, -300, 300, 76);
         const closeG = close.addComponent(Graphics); closeG.fillColor = C.yellow; closeG.strokeColor = C.ink; closeG.lineWidth = 4; closeG.roundRect(-150, -38, 300, 76, 14); closeG.fill(); closeG.stroke();
         this.label(close, 'Label', '完成', 0, 0, 260, 60, 30, C.ink, 'center');
@@ -846,6 +857,17 @@ export class HomeController extends Component {
         this.label(panel, 'Title', '主题', 0, 92, 420, 70, 42, C.ink, 'center');
         this.label(panel, 'Message', '功能暂未开放', 0, 18, 440, 56, 28, C.inkSoft, 'center');
         const close = this.makeChoiceButton(panel, 'CloseFeatureNotice', '我知道了', 0, -100, 260, 72);
+        close.setSelected(true);
+        this.bindButton(close.node, () => this.closeFeatureNotice());
+    }
+
+    private showChallengeLaunchNotice(message: string): void {
+        this.closeFeatureNotice();
+        const { modal, panel } = this.makeChallengeModal('ChallengeLaunchNotice', 620, 430);
+        this.featureNoticeModal = modal;
+        this.label(panel, 'Title', '好友挑战', 0, 105, 480, 70, 42, C.ink, 'center');
+        this.label(panel, 'Message', message, 0, 18, 520, 90, 27, C.inkSoft, 'center');
+        const close = this.makeChoiceButton(panel, 'CloseChallengeNotice', '我知道了', 0, -112, 260, 72);
         close.setSelected(true);
         this.bindButton(close.node, () => this.closeFeatureNotice());
     }

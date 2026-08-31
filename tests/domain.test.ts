@@ -180,6 +180,37 @@ test('platform adapter shares and receives cold or warm friend challenge links',
     }
 });
 
+test('platform adapter recovers a share opened before the warm-start listener is registered', () => {
+    const host = globalThis as typeof globalThis & { wx?: Record<string, unknown> };
+    const previousWx = host.wx;
+    const payload = createFriendChallengePayload({
+        entry: {
+            mode: 'friendChallenge', seed: 'latest-enter-seed', contentVersion: CONTENT_VERSION,
+            challengeConfig: { themeIds: ['math'], enabledRules: ['standard'], durationMs: 60_000 },
+            challengeRole: 'creator',
+        },
+        score: 920,
+    });
+    const challengeQuery = decodeQuery(encodeFriendChallengeQuery(payload));
+    host.wx = {
+        // The process originally cold-started from the ordinary home entry.
+        getLaunchOptionsSync: () => ({ query: { source: 'home' } }),
+        // WeChat then retained that process and reopened it from a share card.
+        getEnterOptionsSync: () => ({ query: challengeQuery }),
+    };
+    try {
+        const result = new PlatformService().readChallenge(CONTENT_VERSION);
+        assert.equal(result.status, 'valid');
+        if (result.status === 'valid') {
+            assert.equal(result.entry.seed, payload.seed);
+            assert.equal(result.entry.targetScore, payload.targetScore);
+            assert.deepEqual(result.entry.challengeConfig, payload.config);
+        }
+    } finally {
+        host.wx = previousWx;
+    }
+});
+
 test('friend target HUD reports behind, tied and ahead score states', () => {
     assert.deepEqual(friendTargetPresentation(650, 800), { text: '好友目标 800 · 还差 150', tone: 'behind', scoreDelta: -150 });
     assert.deepEqual(friendTargetPresentation(800, 800), { text: '好友 800 · 已追平', tone: 'tied', scoreDelta: 0 });

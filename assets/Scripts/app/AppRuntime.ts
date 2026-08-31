@@ -65,9 +65,11 @@ class AppRuntimeState {
         } else if (challenge.status === 'expired') {
             this.pendingFriendChallenge = false;
             this.launchNotice = '好友挑战版本已过期，请发起新挑战';
+            return true;
         } else if (challenge.status === 'invalid') {
             this.pendingFriendChallenge = false;
             this.launchNotice = '好友挑战链接无效，已返回普通模式';
+            return true;
         }
         return false;
     }
@@ -85,6 +87,11 @@ class AppRuntimeState {
         return true;
     }
     public challengeLaunchNotice(): string | null { return this.launchNotice; }
+    public consumeChallengeLaunchNotice(): string | null {
+        const notice = this.launchNotice;
+        this.launchNotice = null;
+        return notice;
+    }
     public consumeFriendChallengeSetupRequest(): boolean {
         const requested = this.friendChallengeSetupRequested;
         this.friendChallengeSetupRequested = false;

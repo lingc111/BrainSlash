@@ -6,6 +6,7 @@ type WxApi = {
     vibrateShort?: (options?: { type?: 'light' | 'medium' | 'heavy' }) => void;
     shareAppMessage?: (options: { title: string; query: string }) => void;
     getLaunchOptionsSync?: () => { query?: Record<string, string> };
+    getEnterOptionsSync?: () => { query?: Record<string, string> };
     onShow?: (listener: (options: { query?: Record<string, string> }) => void) => void;
     getUserProfile?: (options: {
         desc: string;
@@ -92,7 +93,13 @@ export class PlatformService {
     }
     public readChallenge(contentVersion: string): FriendChallengeParseResult {
         try {
-            const query = this.wx?.getLaunchOptionsSync?.().query;
+            const wxApi = this.wx;
+            // getLaunchOptionsSync only represents the process cold start. A
+            // share card may reopen a process kept alive by WeChat before our
+            // Cocos scene registered onShow, so prefer the latest enter options.
+            const query = wxApi?.getEnterOptionsSync
+                ? wxApi.getEnterOptionsSync().query
+                : wxApi?.getLaunchOptionsSync?.().query;
             return parseFriendChallengeQuery(query, contentVersion);
         } catch { return { status: 'invalid' }; }
     }
