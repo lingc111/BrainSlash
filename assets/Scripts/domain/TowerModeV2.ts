@@ -1,5 +1,4 @@
 import type { RuleId, RunResult, ThemeId } from './Models';
-import type { ContentFamilyKind } from './ContentCatalog';
 import { TOWER_CHALLENGE_VERSION, towerChallengeSummary, type TowerChallengeConfig, type TowerChallengeProgressItem, type TowerChallengeSnapshot, type TowerConstraint, type TowerObjective, type TowerQuestionPool, type TowerQuotaLane } from './TowerChallenge';
 
 export const TOWER_LAST_FLOOR = 50;
@@ -44,9 +43,9 @@ const SINGLE_RULES: readonly (readonly RuleId[])[] = [['standard'], ['bomb'], ['
 const MIXED_RULES: readonly (readonly RuleId[])[] = [...TOWER_DOUBLE_RULES, ...SINGLE_RULES];
 const ALL_POOL: TowerQuestionPool = { allowedRuleSets: MIXED_RULES };
 const DOUBLE_POOL: TowerQuestionPool = { allowedRuleSets: TOWER_DOUBLE_RULES, minimumComplexRuleCount: 2 };
-const MASTER_POOL: TowerQuestionPool = { allowedRuleSets: [['multi'], ['bomb', 'multi'], ['multi', 'reverse'], ['multi', 'rotate']], requiredRules: ['multi'], masterSlashEligible: true };
-const MASTER_DOUBLE_POOL: TowerQuestionPool = { allowedRuleSets: [['bomb', 'multi'], ['multi', 'reverse'], ['multi', 'rotate']], requiredRules: ['multi'], minimumComplexRuleCount: 2, masterSlashEligible: true };
-const STROOP_POOL: TowerQuestionPool = { familyKinds: ['vision-stroop'], allowedRuleSets: [['standard'], ['bomb']] };
+const MASTER_POOL: TowerQuestionPool = { allowedRuleSets: [['multi'], ['bomb', 'multi'], ['multi', 'reverse'], ['multi', 'rotate']], requiredRules: ['multi'], requiredCapabilities: ['multi', 'master-slash'], masterSlashEligible: true };
+const MASTER_DOUBLE_POOL: TowerQuestionPool = { allowedRuleSets: [['bomb', 'multi'], ['multi', 'reverse'], ['multi', 'rotate']], requiredRules: ['multi'], requiredCapabilities: ['multi', 'master-slash'], minimumComplexRuleCount: 2, masterSlashEligible: true };
+const STROOP_POOL: TowerQuestionPool = { themes: ['vision'], requiredCapabilities: ['stroop'], allowedRuleSets: [['standard'], ['bomb']] };
 const BOMB_POOL: TowerQuestionPool = { allowedRuleSets: [['bomb'], ['bomb', 'multi'], ['bomb', 'order'], ['bomb', 'reverse'], ['bomb', 'rotate']], bombPolicy: 'required' };
 
 const correct = (target: number): TowerObjective => ({ type: 'correct', target, label: `答对${target}题` });
@@ -62,7 +61,6 @@ function lane(id: string, label: string, requiredSuccesses: number, pool: TowerQ
 function quotaChallenge(lanes: readonly TowerQuotaLane[], constraints: readonly TowerConstraint[] = [], objectives: readonly TowerObjective[] = [complete()]): TowerChallengeConfig { return { encounter: { type: 'quotaDeck', order: 'balanced', lanes, fallbackPool: ALL_POOL }, objectives, constraints }; }
 function rulesPool(allowedRuleSets: readonly (readonly RuleId[])[], extra: Omit<TowerQuestionPool, 'allowedRuleSets'> = {}): TowerQuestionPool { return { ...extra, allowedRuleSets }; }
 function themePool(themes: readonly ThemeId[], allowedRuleSets: readonly (readonly RuleId[])[] = MIXED_RULES): TowerQuestionPool { return { themes, allowedRuleSets }; }
-function familyPool(familyKinds: readonly ContentFamilyKind[], allowedRuleSets: readonly (readonly RuleId[])[]): TowerQuestionPool { return { familyKinds, allowedRuleSets }; }
 
 interface FloorSpec { title: string; challenge: TowerChallengeConfig; }
 const F: FloorSpec[] = [];
@@ -88,12 +86,12 @@ add('双律一笔', poolChallenge(MASTER_DOUBLE_POOL, [correct(10), master(2)]))
 add('顺序专精', quotaRule('order', 6, 4));
 add('不断之刃', poolChallenge(DOUBLE_POOL, [correct(11), combo(8)]));
 add('心算冲刺', poolChallenge(themePool(['math'], [['standard'], ['reverse'], ['bomb'], ['bomb', 'reverse']]), [correct(10)], [deadline(48)]));
-add('汉字成序', poolChallenge(familyPool(['hanzi-order'], [['order'], ['bomb', 'order']]), [correct(8), combo(5)]));
-add('英语归类', poolChallenge(familyPool(['english-category'], [['multi'], ['bomb', 'multi'], ['multi', 'reverse'], ['multi', 'rotate']]), [correct(10)], [maxErrors(3)]));
+add('汉字成序', poolChallenge({ themes: ['hanzi'], requiredCapabilities: ['order'], allowedRuleSets: [['order'], ['bomb', 'order']] }, [correct(8), combo(5)]));
+add('英语归类', poolChallenge({ themes: ['english'], requiredCapabilities: ['category', 'multi'], allowedRuleSets: [['multi'], ['bomb', 'multi'], ['multi', 'reverse'], ['multi', 'rotate']] }, [correct(10)], [maxErrors(3)]));
 add('双律连斩', poolChallenge(DOUBLE_POOL, [correct(10), combo(6)]));
 add('三式精通', threePairQuota(3));
 add('不容错过', poolChallenge(ALL_POOL, [correct(11)], [noMiss()]));
-add('分类一笔', poolChallenge({ ...MASTER_POOL, familyKinds: ['english-category', 'life-category'] }, [correct(11), master(2)], [maxErrors(3)]));
+add('分类一笔', poolChallenge({ ...MASTER_POOL, themes: ['english', 'life'], requiredCapabilities: ['category', 'multi', 'master-slash'] }, [correct(11), master(2)], [maxErrors(3)]));
 add('色彩压迫', poolChallenge(STROOP_POOL, [correct(10), combo(6)]));
 add('逆势而行', quotaRule('reverse', 8, 3));
 add('极速混合', poolChallenge(ALL_POOL, [correct(12)], [deadline(42)]));

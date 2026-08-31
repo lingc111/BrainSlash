@@ -8,7 +8,6 @@ import { AnalyticsService } from '../infrastructure/AnalyticsService';
 import { AudioService } from '../infrastructure/AudioService';
 import { PlatformService } from '../infrastructure/PlatformService';
 import { SaveService } from '../infrastructure/SaveService';
-import { staticQuestionBankLoader } from '../infrastructure/StaticQuestionBankLoader';
 import { RunSeedFactory } from './RunSeedFactory';
 
 class AppRuntimeState {
@@ -33,7 +32,6 @@ class AppRuntimeState {
     public initialize(): void {
         const data = this.save.load();
         this.audio.enabled = data.settings.sfx;
-        staticQuestionBankLoader.preload();
         void this.syncLeaderboard();
         if (!this.launchOptionsRead) {
             this.launchOptionsRead = true;
@@ -184,9 +182,7 @@ class AppRuntimeState {
         this.loadGameplayScene();
     }
     private loadGameplayScene(): void {
-        void staticQuestionBankLoader.load().finally(() => {
-            director.loadScene('Gameplay', () => { this.transitioning = false; });
-        });
+        director.loadScene('Gameplay', () => { this.transitioning = false; });
     }
     public share(): void {
         if (!this.result) return;

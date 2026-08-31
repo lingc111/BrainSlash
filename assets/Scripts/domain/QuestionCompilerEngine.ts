@@ -1,5 +1,5 @@
 import type { GameplayConfig } from '../configs/GameConfig';
-import type { BrawlQuestionDirective } from './Brawl60Director';
+import type { TemplateCompileDirective } from './QuestionPolicy';
 import {
     ENGLISH_ANTONYMS,
     ENGLISH_WORDS,
@@ -33,36 +33,29 @@ import { validateQuestion } from './FairnessValidator';
 import type { GameEntryParams, QuestionInstance, RuleId, TargetSpec, ThemeId } from './Models';
 import { evaluateRules, rulesForReadableTargets } from './Rules';
 import { SeededRng } from './SeededRng';
-import { staticQuestionsForFamily, type StaticQuestionRecord } from './StaticQuestionBank';
-import { generateExtendedQuestion } from './ExtendedQuestionGenerator';
-import {
-    legacyQuestionTypeForFamily,
-    questionTypeById,
-    type QuestionTypeDefinition,
-} from './QuestionTypeCatalog';
-import { validateRuleSet } from '../configs/GameConfig';
 
 type Stage = 0 | 1 | 2;
-export interface QuestionGeneratorOptions {
+export interface QuestionCompilerEngineOptions {
     recentFactIds?: readonly string[];
     recentSemanticSignatures?: readonly string[];
     onQuestionAccepted?: (factIds: readonly string[], semanticSignature: string) => void;
 }
 
 /** Shared challenges must depend only on their seed and configuration, never local play history. */
-export function questionGeneratorOptionsForEntry(
+export function compilerOptionsForEntry(
     entry: Pick<GameEntryParams, 'mode'>,
-    options: QuestionGeneratorOptions,
-): QuestionGeneratorOptions {
+    options: QuestionCompilerEngineOptions,
+): QuestionCompilerEngineOptions {
     return entry.mode === 'friendChallenge' ? {} : options;
 }
 const COLOR_WORDS = ['红', '蓝', '绿', '黄'] as const;
 const ARROWS = ['←', '↑', '→', '↓'] as const;
 const OPPOSITE_ARROW: Readonly<Record<string, string>> = { '←': '→', '→': '←', '↑': '↓', '↓': '↑' };
 
-export class QuestionGenerator {
+/** @internal Concrete template algorithms. Only QuestionCompiler may call this class. */
+export class QuestionCompilerEngine {
     private index = 0;
-    private directive!: BrawlQuestionDirective;
+    private directive!: TemplateCompileDirective;
     private readonly factBags = new Map<string, number[]>();
     private readonly recentQuestionFacts: string[][] = [];
     private readonly recentSemanticSignatures: string[] = [];
@@ -73,13 +66,11 @@ export class QuestionGenerator {
     private factRank = 0;
     private activeFactIds: string[] = [];
     private activeFactPoolExhausted = false;
-    private activeQuestionType?: QuestionTypeDefinition;
-    private activeRulesOverride?: RuleId[];
 
     public constructor(
         private readonly rng: SeededRng,
         _config: GameplayConfig,
-        private readonly options: QuestionGeneratorOptions = {},
+        private readonly options: QuestionCompilerEngineOptions = {},
     ) {
         for (const id of options.recentFactIds ?? []) {
             if (!id) continue;
@@ -91,7 +82,7 @@ export class QuestionGenerator {
         }
     }
 
-    public next(directive: BrawlQuestionDirective): QuestionInstance {
+    public compile(directive: TemplateCompileDirective): QuestionInstance {
         this.directive = directive;
         for (let attempt = 0; attempt < 24; attempt++) {
             this.activeFactIds = [];
@@ -113,65 +104,11 @@ export class QuestionGenerator {
                 return question;
             }
         }
-        this.activeFactIds = [];
-        return {
-            id: `math-property.safe-${this.index}`,
-            familyId: 'math-property.safe',
-            factIds: [],
-            theme: 'math',
-            prompt: { text: '偶数' },
-            targets: [{ id: 'safe-2', text: '2', value: 2 }, { id: 'safe-3', text: '3', value: 3 }],
-            baseCorrectTargetIds: ['safe-2'],
-            activeRules: ['standard'],
-            timeLimitMs: directive.questionTimeMs,
-        };
+        throw new Error(`Template ${directive.family.kind} could not produce a legal non-repeating question`);
     }
 
     private generate(family: ContentFamilySpec, stage: Stage): QuestionInstance {
         this.index += 1;
-        // Generated packs may contain several records that only rotate the
-        // distractors or difficulty while keeping the same question and
-        // answer. They are useful authoring variants, but must not buy extra
-        // probability in the live picker.
-        const staticPool = this.uniqueStaticQuestions(staticQuestionsForFamily(family.kind));
-        this.activeQuestionType = legacyQuestionTypeForFamily(family.kind);
-        this.activeRulesOverride = undefined;
-        const supportsExtended = !!this.directive.typeId
-            && !this.directive.rules.includes('multi')
-            && !this.directive.rules.includes('order')
-            && this.directive.rules.filter((rule) => rule !== 'standard').length <= 1;
-        if (supportsExtended) {
-            const definition = questionTypeById(this.directive.typeId!);
-            if (definition) {
-                const rules = this.rulesForQuestionType(definition);
-                if (rules) {
-                    const draft = generateExtendedQuestion(definition, this.rng, stage);
-                    // A pair/multi/order type is only safe when its generator
-                    // supplied genuinely valid answers for that engine. Never
-                    // promote a random distractor merely to satisfy the shape
-                    // of an engine (for example "肺 -> 气体交换 + 昆虫").
-                    if (this.draftSupportsEngine(definition, draft.correctTargetIds, draft.orderedTargetIds)) {
-                        this.activeQuestionType = definition;
-                        this.activeRulesOverride = rules;
-                        const fitted = this.fitExtendedDraft(draft.targets, draft.correctTargetIds, draft.orderedTargetIds);
-                        const targets = fitted.targets;
-                        this.appendBomb(targets);
-                        return this.make(family, draft.prompt, targets, fitted.correctTargetIds, rules, stage, fitted.orderedTargetIds);
-                    }
-                }
-            }
-        }
-        if (staticPool.length && !this.directive.rules.includes('order')) {
-            const eligible = staticPool.filter((record) => record.difficulty <= stage + 1);
-            const pool = eligible.length ? eligible : staticPool;
-            if (this.directive.rules.includes('multi')) {
-                const multi = this.staticMultiChoice(family, stage, pool);
-                if (multi) return multi;
-            } else {
-                const record = this.pickFact(`static:${family.kind}`, pool, (item) => item.id);
-                return this.staticChoice(family, stage, record);
-            }
-        }
         switch (family.kind) {
             case 'math-add': return this.mathAdd(family, stage);
             case 'math-subtract': return this.mathSubtract(family, stage);
@@ -210,66 +147,6 @@ export class QuestionGenerator {
         }
     }
 
-    private staticChoice(family: ContentFamilySpec, stage: Stage, record: StaticQuestionRecord): QuestionInstance {
-        return this.makeChoice(
-            family,
-            record.prompt,
-            String(record.answer),
-            record.distractors.map(String),
-            stage,
-        );
-    }
-
-    private staticMultiChoice(
-        family: ContentFamilySpec,
-        stage: Stage,
-        pool: readonly StaticQuestionRecord[],
-    ): QuestionInstance | null {
-        const prompts = new Map<string, StaticQuestionRecord[]>();
-        for (const record of pool) {
-            const group = prompts.get(record.prompt) ?? [];
-            if (!group.some((candidate) => String(candidate.answer) === String(record.answer))) group.push(record);
-            prompts.set(record.prompt, group);
-        }
-        const groups = Array.from(prompts.values()).filter((group) => group.length >= 2);
-        if (!groups.length) return null;
-        const group = this.rng.pick(groups);
-        const pairs: Array<readonly [StaticQuestionRecord, StaticQuestionRecord]> = [];
-        for (let left = 0; left < group.length; left++) {
-            for (let right = left + 1; right < group.length; right++) pairs.push([group[left], group[right]]);
-        }
-        const selected = this.pickFact(
-            `static-multi:${family.kind}:${group[0].prompt}`,
-            pairs,
-            (pair) => pair.map((record) => record.id).sort().join('+'),
-        );
-        const answers = selected.map((record) => String(record.answer));
-        const distractors = this.rng.shuffle(group.flatMap((record) => record.distractors.map(String)))
-            .filter((value, index, values) => !answers.includes(value) && values.indexOf(value) === index);
-        const values = this.rng.shuffle([
-            ...answers,
-            ...distractors.slice(0, Math.max(0, this.directive.targetCount - answers.length)),
-        ]);
-        const targets: TargetSpec[] = values.map((value, index) => ({ id: `t${index}`, text: value, value }));
-        const correct = targets.filter((target) => answers.includes(String(target.value))).map((target) => target.id);
-        if (correct.length < 2) return null;
-        this.appendBomb(targets);
-        return this.make(family, group[0].prompt, targets, correct, this.directive.rules, stage);
-    }
-
-    private uniqueStaticQuestions(records: readonly StaticQuestionRecord[]): StaticQuestionRecord[] {
-        const unique = new Map<string, StaticQuestionRecord>();
-        for (const record of records) {
-            const key = `${record.familyKind}|${this.normalizePrompt(record.prompt)}|${String(record.answer).trim()}`;
-            const existing = unique.get(key);
-            // Prefer the lowest difficulty so a semantic question does not
-            // disappear from early phases solely because a later variant was
-            // installed first.
-            if (!existing || record.difficulty < existing.difficulty) unique.set(key, record);
-        }
-        return Array.from(unique.values());
-    }
-
     private make(
         family: ContentFamilySpec,
         prompt: string,
@@ -279,11 +156,9 @@ export class QuestionGenerator {
         _stage: Stage,
         orderedTargetIds?: string[],
     ): QuestionInstance {
-        const activeRules = [...(this.activeRulesOverride ?? this.directive.rules)];
+        const activeRules = [...this.directive.rules];
         return {
             id: `${family.id}-${this.index}`,
-            typeId: this.activeQuestionType?.typeId,
-            engineId: this.activeQuestionType?.engineId,
             familyId: family.id,
             theme: family.theme,
             factIds: [...this.activeFactIds],
@@ -704,7 +579,7 @@ export class QuestionGenerator {
     }
 
     private appendBomb(targets: TargetSpec[]): void {
-        if (!(this.directive.bombEnabled ?? (this.activeRulesOverride ?? this.directive.rules).includes('bomb'))) return;
+        if (!(this.directive.bombEnabled ?? this.directive.rules.includes('bomb'))) return;
         const insertIndex = this.rng.int(0, targets.length);
         targets.splice(insertIndex, 0, { id: 'bomb', text: '爆', isBomb: true });
     }
@@ -798,44 +673,4 @@ export class QuestionGenerator {
         if (history.length > limit) history.shift();
     }
 
-    private rulesForQuestionType(definition: QuestionTypeDefinition): RuleId[] | null {
-        const requested = this.directive.rules.filter((rule) => rule !== 'standard' && rule !== 'multi' && rule !== 'order');
-        if (definition.engineId === 'inverse' && requested.includes('reverse')) return null;
-        const needsOrder = definition.engineId === 'order';
-        const needsMulti = definition.engineId === 'multi' || definition.engineId === 'double'
-            || definition.engineId === 'pair' || definition.engineId === 'same';
-        const result = [...requested, ...(needsOrder ? ['order' as const] : needsMulti ? ['multi' as const] : [])];
-        const normalized: RuleId[] = result.length ? Array.from(new Set(result)) : ['standard'];
-        return validateRuleSet(normalized) ? normalized : null;
-    }
-
-    private draftSupportsEngine(
-        definition: QuestionTypeDefinition,
-        correctTargetIds: readonly string[],
-        orderedTargetIds?: readonly string[],
-    ): boolean {
-        if (definition.engineId === 'order') return (orderedTargetIds?.length ?? 0) >= 2;
-        const needsMultiple = definition.engineId === 'multi' || definition.engineId === 'double'
-            || definition.engineId === 'pair' || definition.engineId === 'same';
-        return !needsMultiple || correctTargetIds.length >= 2;
-    }
-
-    private fitExtendedDraft(
-        targets: readonly TargetSpec[],
-        correctTargetIds: readonly string[],
-        orderedTargetIds?: readonly string[],
-    ): { targets: TargetSpec[]; correctTargetIds: string[]; orderedTargetIds?: string[] } {
-        const cap = Math.max(2, this.directive.targetCount);
-        const answerIds = orderedTargetIds?.length ? [...orderedTargetIds].slice(0, cap) : [...correctTargetIds];
-        const answers = targets.filter((target) => answerIds.includes(target.id));
-        const distractors = this.rng.shuffle(targets.filter((target) => !answerIds.includes(target.id)));
-        const selected = [...answers, ...distractors.slice(0, Math.max(0, cap - answers.length))];
-        const selectedIds = new Set(selected.map((target) => target.id));
-        const fittedOrder = orderedTargetIds?.filter((id) => selectedIds.has(id));
-        return {
-            targets: this.rng.shuffle(selected),
-            correctTargetIds: correctTargetIds.filter((id) => selectedIds.has(id)),
-            orderedTargetIds: fittedOrder?.length ? fittedOrder : undefined,
-        };
-    }
 }

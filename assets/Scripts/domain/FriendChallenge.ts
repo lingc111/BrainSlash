@@ -7,7 +7,7 @@ import type {
     RunResult,
     ThemeId,
 } from './Models';
-import { legalRuleSetsForTheme } from './Brawl60Director';
+import { legalRuleSetsForTheme } from './QuestionPolicy';
 
 const MAX_SEED_LENGTH = 256;
 const MAX_TOKEN_LENGTH = 64;

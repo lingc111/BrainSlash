@@ -1,12 +1,14 @@
-import type { ContentFamilyKind } from './ContentCatalog';
 import type { FailureKind, GameSessionState, RuleId, ThemeId } from './Models';
 import { SeededRng } from './SeededRng';
+import type { QuestionCapability } from './QuestionSystem';
 
 export const TOWER_CHALLENGE_VERSION = 1;
 
 export interface TowerQuestionPool {
     themes?: readonly ThemeId[];
-    familyKinds?: readonly ContentFamilyKind[];
+    requiredCapabilities?: readonly QuestionCapability[];
+    forbiddenCapabilities?: readonly QuestionCapability[];
+    requiredTags?: readonly string[];
     allowedRuleSets?: readonly (readonly RuleId[])[];
     requiredRules?: readonly RuleId[];
     forbiddenRules?: readonly RuleId[];

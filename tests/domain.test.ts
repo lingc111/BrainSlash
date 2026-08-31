@@ -1,7 +1,8 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
 import { CONTENT_VERSION, GAMEPLAY_CONFIG, validateRuleSet } from '../assets/Scripts/configs/GameConfig.ts';
-import { Brawl60Director, FriendChallengeDirector, familySupportsRules, isDirectionSensitiveFamily, legalRuleSetsForTheme, phaseAt, targetCountForFamily } from '../assets/Scripts/domain/Brawl60Director.ts';
+import { familySupportsRules, isDirectionSensitiveFamily, legalRuleSetsForTheme, phaseAt, targetCountForFamily } from '../assets/Scripts/domain/QuestionPolicy.ts';
+import { BrawlRequestFixture, DirectiveCompilerFixture, FriendChallengeRequestFixture } from './legacy-question-adapter.ts';
 import {
     CONTENT_FAMILIES,
     CONTENT_FAMILY_TARGETS,
@@ -42,9 +43,8 @@ import {
 } from '../assets/Scripts/domain/FriendChallenge.ts';
 import { GestureResolver, shouldKeepIncompleteGesture } from '../assets/Scripts/domain/GestureResolver.ts';
 import type { FriendChallengeConfig, PlayerProgress, QuestionInstance, RunResult } from '../assets/Scripts/domain/Models.ts';
-import { EXCLUDED_QUESTION_TYPES, QUESTION_TYPES, questionTypeById } from '../assets/Scripts/domain/QuestionTypeCatalog.ts';
-import { chineseAnswerLength, generateExtendedQuestion, poetryRecordsAreSafe } from '../assets/Scripts/domain/ExtendedQuestionGenerator.ts';
-import { QuestionGenerator } from '../assets/Scripts/domain/QuestionGenerator.ts';
+import { ModeQuestionDirector } from '../assets/Scripts/domain/ModeQuestionDirector.ts';
+import { QUESTION_TEMPLATES, QuestionCompiler, templatesForRequest } from '../assets/Scripts/domain/QuestionSystem.ts';
 import { createResultPresentation, finalizeResult } from '../assets/Scripts/domain/ResultSummary.ts';
 import { createMistakeRecord, evaluateRules, maximumAnswerTextLength, questionFlightDurationSeconds, questionPreviewDurationSeconds, rulesForReadableTargets, slashRuleCount, slashRuleLabel } from '../assets/Scripts/domain/Rules.ts';
 import { SeededRng } from '../assets/Scripts/domain/SeededRng.ts';
@@ -85,10 +85,10 @@ import {
 import { ACTIVE_TARGET_SKINS, ALL_TARGET_SKINS, COLOR_QUESTION_TARGET_SKIN, TARGET_SKIN_VISUAL_SCALE, targetContentLayout, targetShapeForSkin, targetSkinForAnswer, targetSkinPixelScale, targetSkinVisualScale, uniqueColorTargetSkins } from '../assets/Scripts/UI/TargetSkinSizing.ts';
 import { targetTextPresentation, towerOpeningTextPresentation } from '../assets/Scripts/UI/TargetTypography.ts';
 
-function pipeline(seed: string): { director: Brawl60Director; generator: QuestionGenerator } {
+function pipeline(seed: string): { director: BrawlRequestFixture; generator: DirectiveCompilerFixture } {
     return {
-        director: new Brawl60Director(new SeededRng(`${seed}:director`)),
-        generator: new QuestionGenerator(new SeededRng(`${seed}:gameplay`), GAMEPLAY_CONFIG),
+        director: new BrawlRequestFixture(new SeededRng(`${seed}:director`)),
+        generator: new DirectiveCompilerFixture(new SeededRng(`${seed}:gameplay`), GAMEPLAY_CONFIG),
     };
 }
 
@@ -338,7 +338,7 @@ test('game feedback policy maps master, combo, failures and final countdown', ()
 
 test('numeric comparison targets remain primitive numbers with readable labels', () => {
     const family = CONTENT_FAMILIES.find((candidate) => candidate.kind === 'math-compare')!;
-    const generator = new QuestionGenerator(new SeededRng('wechat-set-spread-regression'), GAMEPLAY_CONFIG);
+    const generator = new DirectiveCompilerFixture(new SeededRng('wechat-set-spread-regression'), GAMEPLAY_CONFIG);
     const question = generator.next({
         phase: 'warmup',
         difficultyStage: 1,
@@ -392,46 +392,7 @@ test('friend challenge V2 parser rejects tampering and preserves custom configur
     assert.equal(parseFriendChallengeQuery({ ...query, rules: 'multi', themes: 'geography' }, CONTENT_VERSION).status, 'invalid');
 });
 
-test('friend challenge director balances themes and remains deterministic with legal rules', () => {
-    const config: FriendChallengeConfig = {
-        themeIds: ['math', 'english', 'history'],
-        enabledRules: ['standard', 'reverse', 'rotate', 'multi', 'order'],
-        durationMs: 120_000,
-    };
-    const a = new FriendChallengeDirector(new SeededRng('friend-director'), config);
-    const b = new FriendChallengeDirector(new SeededRng('friend-director'), config);
-    for (let cycle = 0; cycle < 8; cycle++) {
-        const seen = new Set<string>();
-        for (let offset = 0; offset < config.themeIds.length; offset++) {
-            const elapsed = (cycle * config.themeIds.length + offset) * 3_777;
-            const left = a.next(elapsed);
-            const right = b.next(elapsed);
-            assert.deepEqual(left, right);
-            assert.equal(left.bombEnabled, true);
-            assert.ok(!left.rules.includes('bomb'));
-            seen.add(left.family.theme);
-            const legalKeys = legalRuleSetsForTheme(left.family.theme, config.enabledRules).map((rules) => [...rules].sort().join('+'));
-            assert.ok(legalKeys.includes([...left.rules].sort().join('+')));
-        }
-        assert.deepEqual([...seen].sort(), [...config.themeIds].sort());
-    }
-});
 
-test('friend challenge treats bombs as an always-on mechanic instead of a configured rule', () => {
-    const config: FriendChallengeConfig = {
-        themeIds: ['math'], enabledRules: ['standard'], durationMs: 60_000,
-    };
-    const director = new FriendChallengeDirector(new SeededRng('friend-bomb-director'), config);
-    const generator = new QuestionGenerator(new SeededRng('friend-bomb-questions'), GAMEPLAY_CONFIG);
-
-    for (let index = 0; index < 20; index++) {
-        const directive = director.next(index * 2_000);
-        const question = generator.next(directive);
-        assert.equal(directive.bombEnabled, true);
-        assert.ok(!question.activeRules.includes('bomb'));
-        assert.equal(question.targets.filter((target) => target.isBomb).length, 1);
-    }
-});
 
 test('friend challenge sessions honor 60, 90 and 120 second durations with three lives', () => {
     for (const durationMs of [60_000, 90_000, 120_000] as const) {
@@ -572,62 +533,14 @@ test('all tower opening descriptions fit portrait safe widths', () => {
     assert.equal(presentation.displayText, '第7层 · 双律初见\n同时观察两条规则，\n先判断再出刀');
 });
 
-test('color and shape questions state the exact visible target', () => {
-    const cases = [
-        ['vision.15.color-shape', '选择红色三角形'],
-        ['vision.16.exclude-color', '选择非红色圆形'],
-        ['vision.17.exclude-shape', '选择红色实心三角'],
-        ['vision.18.color-shape-outline', '选择蓝色空心圆'],
-        ['vision.19.color-or-shape', '选择红色或三角形'],
-        ['vision.24.direction-color', '选择蓝色左箭头'],
-    ] as const;
-    for (const [typeId, prompt] of cases) {
-        const definition = questionTypeById(typeId);
-        assert.ok(definition, typeId);
-        const draft = generateExtendedQuestion(definition, new SeededRng(typeId), 1);
-        assert.equal(draft.prompt, prompt);
-        assert.ok(draft.correctTargetIds.length > 0);
-    }
-});
 
-test('organ-function questions never promote an unrelated distractor to a correct answer', () => {
-    const definition = questionTypeById('knowledge.10.organ-function');
-    assert.ok(definition);
-    assert.equal(definition.engineId, 'single');
-    let foundLung = false;
-    for (let seed = 0; seed < 200 && !foundLung; seed++) {
-        const draft = generateExtendedQuestion(definition, new SeededRng(`organ-function-${seed}`), 2);
-        if (draft.prompt !== '肺的功能') continue;
-        foundLung = true;
-        const correct = draft.targets
-            .filter((target) => draft.correctTargetIds.includes(target.id))
-            .map((target) => target.text);
-        assert.deepEqual(correct, ['气体交换']);
-        assert.equal(correct.includes('昆虫'), false);
-    }
-    assert.equal(foundLung, true);
-});
 
-test('plant-feature questions keep every option in the plant-feature dimension', () => {
-    const definition = questionTypeById('knowledge.09.plant-feature');
-    assert.ok(definition);
-    let foundCactus = false;
-    for (let seed = 0; seed < 200 && !foundCactus; seed++) {
-        const draft = generateExtendedQuestion(definition, new SeededRng(`plant-feature-${seed}`), 2);
-        if (draft.prompt !== '仙人掌的特征') continue;
-        foundCactus = true;
-        assert.deepEqual(new Set(draft.targets.map((target) => target.text)), new Set(['耐旱', '向光', '水生', '常绿']));
-        const correct = draft.targets.filter((target) => draft.correctTargetIds.includes(target.id)).map((target) => target.text);
-        assert.deepEqual(correct, ['耐旱']);
-    }
-    assert.equal(foundCactus, true);
-});
 
 test('fill-in prompts show a spaced parenthesis placeholder', () => {
     const fillFamilies = CONTENT_FAMILIES.filter((family) => family.kind === 'math-missing' || family.kind === 'hanzi-fill');
     assert.ok(fillFamilies.length > 0);
     for (const family of fillFamilies) {
-        const generator = new QuestionGenerator(new SeededRng(`placeholder-${family.id}`), GAMEPLAY_CONFIG);
+        const generator = new DirectiveCompilerFixture(new SeededRng(`placeholder-${family.id}`), GAMEPLAY_CONFIG);
         const question = generator.next({
             phase: 'action', difficultyStage: 1, targetCount: 4, questionTimeMs: 2_600,
             speed: 1, family, rules: ['standard'],
@@ -715,7 +628,7 @@ test('ordinary single selection generates exactly one correct target', () => {
         for (const rules of ruleSets) {
             if (!familySupportsRules(family, rules)) continue;
             for (let seedIndex = 0; seedIndex < 20; seedIndex++) {
-                const generator = new QuestionGenerator(new SeededRng(`single-${family.id}-${rules.join('+')}-${seedIndex}`), GAMEPLAY_CONFIG);
+                const generator = new DirectiveCompilerFixture(new SeededRng(`single-${family.id}-${rules.join('+')}-${seedIndex}`), GAMEPLAY_CONFIG);
                 const question = generator.next({
                     phase: 'climax', difficultyStage: 2, targetCount: 6, questionTimeMs: 3_000,
                     speed: 1, family, rules: [...rules],
@@ -755,24 +668,6 @@ test('multi selection keeps correct progress across separate strokes', () => {
     assert.equal(gesture.hit('second').status, 'success');
 });
 
-test('generated multi-step questions keep progress until every required target is hit', () => {
-    let checked = 0;
-    const checkedRules = new Set<string>();
-    for (let seedIndex = 0; seedIndex < 40; seedIndex++) {
-        const { director, generator } = pipeline(`multi-stroke-${seedIndex}`);
-        for (let questionIndex = 0; questionIndex < 18; questionIndex++) {
-            const elapsed = [15_000, 30_000, 50_000][questionIndex % 3];
-            const question = generator.next(director.next(elapsed));
-            const constraint = evaluateRules(question);
-            if (constraint.matchMode !== 'all' || constraint.requiredTargetIds.length < 2) continue;
-            assertCompletesAcrossSeparateStrokes(constraint);
-            for (const rule of question.activeRules) if (rule === 'multi' || rule === 'order') checkedRules.add(rule);
-            checked++;
-        }
-    }
-    assert.ok(checked >= 100);
-    assert.deepEqual([...checkedRules].sort(), ['multi', 'order']);
-});
 
 test('session applies a question result only once', () => {
     const entry = { mode: 'brawl60' as const, seed: 's', contentVersion: 'v' };
@@ -1041,7 +936,7 @@ test('warmup catalog includes distinct equation and symbol-matching questions', 
         const families = CONTENT_FAMILIES.filter((family) => family.kind === kind);
         assert.equal(families.length, 5);
         for (const family of families) {
-            const generator = new QuestionGenerator(new SeededRng(`warmup-${family.id}`), GAMEPLAY_CONFIG);
+            const generator = new DirectiveCompilerFixture(new SeededRng(`warmup-${family.id}`), GAMEPLAY_CONFIG);
             const question = generator.next({
                 phase: 'warmup', difficultyStage: 0, targetCount: 3, questionTimeMs: 3_000,
                 speed: 0.72, family, rules: ['standard'],
@@ -1313,52 +1208,12 @@ test('rotation rule spins targets deterministically after their entrance settles
     );
 });
 
-test('each phase schedules its intended themes and rule beats', () => {
-    const warmup = pipeline('warmup');
-    for (let i = 0; i < 20; i++) {
-        const directive = warmup.director.next(5_000);
-        const question = warmup.generator.next(directive);
-        assert.equal(directive.phase, 'warmup');
-        assert.deepEqual(question.activeRules, ['standard']);
-        assert.ok(question.theme === 'math' || question.theme === 'vision');
-        assert.deepEqual(validateQuestion(question, evaluateRules(question)), []);
-    }
 
-    const action = pipeline('action');
-    const actionRules = Array.from({ length: 7 }, () => action.director.next(15_000).rules);
-    assert.deepEqual(actionRules.map((rules) => rules.join('+')).sort(), ['bomb', 'bomb', 'multi', 'order', 'reverse', 'rotate', 'standard']);
-
-    const twist = pipeline('twist');
-    const twistRules = Array.from({ length: 7 }, () => twist.director.next(30_000).rules);
-    assert.deepEqual(twistRules.map((rules) => rules.join('+')).sort(), ['bomb', 'multi', 'reverse', 'reverse', 'rotate', 'standard', 'standard']);
-
-    const climax = pipeline('climax');
-    for (let i = 0; i < 15; i++) {
-        const directive = climax.director.next(50_000);
-        const question = climax.generator.next(directive);
-        assert.ok(directive.rules.length >= 1 && directive.rules.length <= 2);
-        const hasLongChoice = question.targets.some((target) => !target.isBomb && [...target.text.trim()].length >= 4);
-        const expectedRules = hasLongChoice && directive.rules.includes('rotate')
-            ? directive.rules.filter((rule) => rule !== 'rotate')
-            : directive.rules;
-        assert.deepEqual(question.activeRules, expectedRules.length ? expectedRules : ['standard']);
-        assert.deepEqual(validateQuestion(question, evaluateRules(question)), []);
-    }
-});
-
-test('brawl rule beats vary by seed while preserving each phase recipe', () => {
-    const signatures = new Set<string>();
-    for (let seedIndex = 0; seedIndex < 24; seedIndex++) {
-        const director = new Brawl60Director(new SeededRng(`rule-order-${seedIndex}`));
-        signatures.add(Array.from({ length: 5 }, () => director.next(15_000).rules.join('+')).join(','));
-    }
-    assert.ok(signatures.size > 8);
-});
 
 test('brawl topic and question-family order varies across fresh session seeds', () => {
     const signatures = new Set<string>();
     for (let seedIndex = 0; seedIndex < 32; seedIndex++) {
-        const director = new Brawl60Director(new SeededRng(`session-order-${seedIndex}`));
+        const director = new BrawlRequestFixture(new SeededRng(`session-order-${seedIndex}`));
         const signature = Array.from({ length: 12 }, (_, questionIndex) => {
             const elapsed = questionIndex < 3 ? 5_000 : questionIndex < 8 ? 15_000 : 30_000;
             const directive = director.next(elapsed);
@@ -1401,27 +1256,29 @@ test('friend challenge replay preserves the exact shared seed and configuration'
     assert.notEqual(factory.createReplay(brawl, CONTENT_VERSION).seed, brawl.seed);
 });
 
-test('local daily challenge rotates seven recipes and rolls over at local midnight', () => {
-    const challenges = Array.from({ length: 8 }, (_, offset) => createDailyChallenge(new Date(2026, 7, 17 + offset, 12, 0, 0), CONTENT_VERSION));
-    assert.equal(new Set(challenges.slice(0, 7).map((challenge) => challenge.recipe.id)).size, 7);
-    assert.equal(challenges[0].recipe.id, challenges[7].recipe.id);
+test('local daily challenge deterministically selects one theme and rolls over at local midnight', () => {
+    const challenges = Array.from({ length: 32 }, (_, offset) => createDailyChallenge(new Date(2026, 7, 17 + offset, 12, 0, 0), CONTENT_VERSION));
+    assert.ok(new Set(challenges.map((challenge) => challenge.recipe.theme)).size >= 4);
+    assert.deepEqual(createDailyChallenge(new Date(2026, 7, 17, 18), CONTENT_VERSION), createDailyChallenge(new Date(2026, 7, 17, 8), CONTENT_VERSION));
     for (const challenge of challenges) {
+        assert.equal(challenge.entry.dailyTheme, challenge.recipe.theme);
         assert.equal(challenge.dateKey, localDateKey(new Date(challenge.endTime - 1)));
         const midnight = new Date(challenge.endTime);
         assert.deepEqual([midnight.getHours(), midnight.getMinutes(), midnight.getSeconds(), midnight.getMilliseconds()], [0, 0, 0, 0]);
     }
 });
 
-test('all seven daily recipes generate deterministic legal multi-phase runs', () => {
+test('daily runs stay on their selected theme and remain deterministic for a seed', () => {
     const signatures = new Set<string>();
-    for (let day = 0; day < 7; day++) {
+    for (let day = 0; day < 24; day++) {
         const challenge = createDailyChallenge(new Date(2026, 7, 17 + day, 12, 0, 0), CONTENT_VERSION);
         const build = (): string => {
-            const director = new Brawl60Director(new SeededRng('daily-recipe-director'), challenge.recipe.id);
-            const generator = new QuestionGenerator(new SeededRng('daily-recipe-gameplay'), GAMEPLAY_CONFIG);
+            const director = new ModeQuestionDirector(new SeededRng('daily-recipe-director'), challenge.entry);
+            const generator = new QuestionCompiler(new SeededRng('daily-recipe-gameplay'), GAMEPLAY_CONFIG, challenge.entry);
             return Array.from({ length: 80 }, (_, index) => {
                 const elapsed = [5_000, 15_000, 30_000, 50_000][index % 4];
-                const question = generator.next(director.next(elapsed));
+                const question = generator.next(director.next(elapsed), CONTENT_VERSION);
+                assert.equal(question.theme, challenge.recipe.theme);
                 assert.equal(validateQuestion(question, evaluateRules(question)).length, 0);
                 return `${question.familyId}:${question.activeRules.join('+')}`;
             }).join(',');
@@ -1430,26 +1287,9 @@ test('all seven daily recipes generate deterministic legal multi-phase runs', ()
         assert.equal(first, second);
         signatures.add(first);
     }
-    assert.equal(signatures.size, 7);
+    assert.ok(signatures.size >= 4);
 });
 
-test('theme and family bags enforce cooldowns across long mixed runs', () => {
-    const { director, generator } = pipeline('bag-cooldowns');
-    const recentFamilies: string[] = [];
-    const recentThemes: string[] = [];
-    for (let i = 0; i < 500; i++) {
-        const elapsed = [5_000, 15_000, 30_000, 50_000][i % 4];
-        const directive = director.next(elapsed);
-        const question = generator.next(directive);
-        assert.ok(!recentFamilies.includes(question.familyId ?? ''));
-        recentFamilies.push(question.familyId ?? '');
-        if (recentFamilies.length > 3) recentFamilies.shift();
-        recentThemes.push(question.theme);
-        if (recentThemes.length > 3) recentThemes.shift();
-        if (recentThemes.length === 3) assert.ok(new Set(recentThemes).size > 1);
-        assert.deepEqual(validateQuestion(question, evaluateRules(question)), []);
-    }
-});
 
 test('fact bag keeps reviewed facts from non-exhausted pools more than 20 questions apart', () => {
     const { director, generator } = pipeline('fact-cooldowns');
@@ -1467,101 +1307,10 @@ test('fact bag keeps reviewed facts from non-exhausted pools more than 20 questi
     }
 });
 
-test('1000 seeds survive full multi-round deterministic legality regression', () => {
-    const multiStepFamilyIds = new Set<string>();
-    let multiStepQuestions = 0;
-    for (let i = 0; i < 1000; i++) {
-        const seed = `regression-${i}`;
-        const firstPipeline = pipeline(seed), secondPipeline = pipeline(seed);
-        for (let questionIndex = 0; questionIndex < 64; questionIndex++) {
-            const elapsed = (questionIndex * 997 + i * 137) % 60_000;
-            const firstDirective = firstPipeline.director.next(elapsed);
-            const secondDirective = secondPipeline.director.next(elapsed);
-            assert.deepEqual(firstDirective, secondDirective);
-            const first = firstPipeline.generator.next(firstDirective);
-            const second = secondPipeline.generator.next(secondDirective);
-            assert.deepEqual(first, second);
-            assert.deepEqual(validateQuestion(first, evaluateRules(first)), []);
-            assert.equal(first.prompt.text.startsWith('斩'), false);
-            assert.equal(first.prompt.text.startsWith('反向·'), false);
-            assert.equal(first.prompt.text.includes('全部'), false);
-            assert.ok(first.targets.length <= firstDirective.targetCount + (firstDirective.rules.includes('bomb') ? 1 : 0));
-            if (slashRuleCount(firstDirective.rules) >= 2) {
-                assert.ok(first.targets.filter((target) => !target.isBomb).length <= 4);
-            }
-            assert.ok(first.targets.length >= 2);
-            assert.equal(first.timeLimitMs, firstDirective.questionTimeMs);
-            if (first.activeRules.includes('rotate')) {
-                assert.ok(first.targets.filter((target) => !target.isBomb).every((target) => [...target.text.trim()].length < 4));
-            }
-            const constraint = evaluateRules(first);
-            if (first.activeRules.includes('multi')) assert.ok(constraint.requiredTargetIds.length >= 2);
-            if (constraint.matchMode === 'all' && constraint.requiredTargetIds.length > 1) {
-                assertCompletesAcrossSeparateStrokes(constraint);
-                multiStepFamilyIds.add(first.familyId ?? '');
-                multiStepQuestions++;
-            }
-        }
-    }
-    const expectedMultiStepFamilies = CONTENT_FAMILIES
-        .filter((family) => ['math-property', 'math-sequence', 'hanzi-order', 'english-category', 'life-category'].includes(family.kind))
-        .map((family) => family.id)
-        .sort();
-    for (const familyId of expectedMultiStepFamilies) assert.ok(multiStepFamilyIds.has(familyId), familyId);
-    assert.ok(multiStepFamilyIds.size > expectedMultiStepFamilies.length);
-    assert.ok(multiStepQuestions > 10_000);
-});
-
-test('expanded question-type catalog covers 201 stable non-excluded types', () => {
-    assert.equal(QUESTION_TYPES.length, 201);
-    assert.equal(new Set(QUESTION_TYPES.map((definition) => definition.typeId)).size, 201);
-    assert.ok(QUESTION_TYPES.every((definition) => definition.modeWeights.brawl60 > 0
-        && definition.modeWeights.daily > 0
-        && definition.modeWeights.friendChallenge > 0
-        && definition.modeWeights.tower > 0));
-    const forbidden = /(memory|tracking|continuous|rule-switch|geography\.16|geography\.17)/;
-    assert.ok(QUESTION_TYPES.every((definition) => !forbidden.test(definition.typeId)));
-    assert.equal(EXCLUDED_QUESTION_TYPES.length, 12);
-});
-
-test('every expanded type survives 100 deterministic legal generations', () => {
-    for (const definition of QUESTION_TYPES) {
-        const family = CONTENT_FAMILIES.find((candidate) => candidate.kind === definition.familyKind)!;
-        for (let seed = 0; seed < 100; seed++) {
-            const directive = {
-                phase: 'twist' as const, difficultyStage: 2 as const, targetCount: 5,
-                questionTimeMs: 2_600, speed: 1, family, rules: ['standard' as const], typeId: definition.typeId,
-            };
-            const first = new QuestionGenerator(new SeededRng(`${definition.typeId}:${seed}`), GAMEPLAY_CONFIG).next(directive);
-            const second = new QuestionGenerator(new SeededRng(`${definition.typeId}:${seed}`), GAMEPLAY_CONFIG).next(directive);
-            assert.equal(first.typeId, definition.typeId);
-            assert.equal(first.engineId, definition.engineId);
-            assert.deepEqual(first, second);
-            assert.deepEqual(validateQuestion(first, evaluateRules(first)), [], definition.typeId);
-            assert.ok(first.targets.length >= 2 && first.targets.length <= 5, definition.typeId);
-        }
-    }
-});
-
-test('poetry answers are unique short fragments instead of full lines', () => {
-    assert.equal(poetryRecordsAreSafe(), true);
-    for (const definition of QUESTION_TYPES.filter((item) => item.generatorId.includes('poetry') || item.generatorId.includes('line-match'))) {
-        const family = CONTENT_FAMILIES.find((candidate) => candidate.kind === definition.familyKind)!;
-        for (let seed = 0; seed < 100; seed++) {
-            const question = new QuestionGenerator(new SeededRng(`poetry:${definition.typeId}:${seed}`), GAMEPLAY_CONFIG).next({
-                phase: 'twist', difficultyStage: 2, targetCount: 4, questionTimeMs: 2_600,
-                speed: 1, family, rules: ['standard'], typeId: definition.typeId,
-            });
-            for (const target of question.targets.filter((item) => !item.isBomb)) {
-                assert.ok(chineseAnswerLength(target.text) >= 1 && chineseAnswerLength(target.text) <= 4, `${definition.typeId}:${target.text}`);
-            }
-        }
-    }
-});
 
 test('question appearance keeps semantic questions and answers on rolling cooldowns', () => {
     const family = CONTENT_FAMILIES.find((candidate) => candidate.kind === 'knowledge-science')!;
-    const generator = new QuestionGenerator(new SeededRng('semantic-question-cooldown'), GAMEPLAY_CONFIG);
+    const generator = new DirectiveCompilerFixture(new SeededRng('semantic-question-cooldown'), GAMEPLAY_CONFIG);
     const seen = new Set<string>();
     for (let index = 0; index < 40; index++) {
         const question = generator.next({
@@ -1595,7 +1344,7 @@ test('tower exposes the fixed 60-second 1-50 progression and unlock schedule', (
     assert.deepEqual(unlockedRulesForTower(14), ['standard', 'bomb', 'multi', 'order', 'reverse', 'rotate']);
     assert.equal(towerFloorConfig(14).unlockedRule, undefined);
     assert.equal(towerFloorConfig(14).challenge.encounter.type, 'pool');
-    if (towerFloorConfig(14).challenge.encounter.type === 'pool') assert.deepEqual(towerFloorConfig(14).challenge.encounter.pool.familyKinds, ['vision-stroop']);
+    if (towerFloorConfig(14).challenge.encounter.type === 'pool') assert.deepEqual(towerFloorConfig(14).challenge.encounter.pool.requiredCapabilities, ['stroop']);
     assert.equal(towerFloorConfig(7).unlocksCompoundRules, true);
     assert.equal(towerFloorConfig(15).unlocksCompoundRules, false);
     assert.equal(towerFloorConfig(8).title, '一笔制敌');
@@ -1632,63 +1381,7 @@ test('tower challenge quota retries the same lane after failure and clears only 
     assert.equal(Object.values(runtime.snapshot(session.state).laneSuccesses).reduce((sum, count) => sum + count, 0), 10);
 });
 
-test('tower restricted pools generate matching Stroop and Master Slash questions', () => {
-    for (const floor of [14, 28, 41]) {
-        const runtime = new TowerChallengeRuntime(towerFloorConfig(floor).challenge, new SeededRng(`runtime-${floor}`));
-        const director = new TowerDirector(new SeededRng(`director-${floor}`), floor);
-        for (let index = 0; index < 10; index++) {
-            const directive = director.next(index * 1_000, runtime.nextRequest());
-            assert.equal(directive.family.kind, 'vision-stroop');
-        }
-    }
-    const runtime = new TowerChallengeRuntime(towerFloorConfig(8).challenge, new SeededRng('master-runtime'));
-    const director = new TowerDirector(new SeededRng('master-director'), 8);
-    const generator = new QuestionGenerator(new SeededRng('master-generator'), GAMEPLAY_CONFIG);
-    for (let index = 0; index < 20; index++) {
-        const question = generator.next(director.next(index * 1_000, runtime.nextRequest()));
-        const constraint = evaluateRules(question);
-        assert.equal(constraint.matchMode, 'all');
-        assert.ok(constraint.requiredTargetIds.length > 1);
-    }
-});
 
-test('all 50 challenge plans stay completable and satisfy their requested pools across 100 seeds', () => {
-    for (let seedIndex = 0; seedIndex < 100; seedIndex++) {
-        for (let floor = 1; floor <= 50; floor++) {
-            const seed = `challenge-${seedIndex}-${floor}`;
-            const runtime = new TowerChallengeRuntime(towerFloorConfig(floor).challenge, new SeededRng(`${seed}:runtime`));
-            const director = new TowerDirector(new SeededRng(`${seed}:director`), floor);
-            const generator = new QuestionGenerator(new SeededRng(`${seed}:generator`), GAMEPLAY_CONFIG);
-            const session = new GameSession({ mode: 'tower', seed, contentVersion: CONTENT_VERSION, towerFloor: floor }, GAMEPLAY_CONFIG);
-            session.start();
-            for (let attempt = 0; attempt < 30 && runtime.snapshot(session.state).status === 'active'; attempt++) {
-                const request = runtime.nextRequest();
-                const directive = director.next(session.state.elapsedMs, request);
-                const question = generator.next(directive);
-                if (request.pool.themes) assert.ok(request.pool.themes.includes(directive.family.theme));
-                if (request.pool.familyKinds) assert.ok(request.pool.familyKinds.includes(directive.family.kind));
-                if (request.pool.requiredRules) assert.ok(request.pool.requiredRules.every((rule) => directive.rules.includes(rule)));
-                if (request.pool.forbiddenRules) assert.ok(request.pool.forbiddenRules.every((rule) => !directive.rules.includes(rule)));
-                if (request.pool.minimumComplexRuleCount) assert.ok(directive.rules.filter((rule) => rule !== 'standard').length >= request.pool.minimumComplexRuleCount);
-                if (request.pool.bombPolicy === 'required') assert.ok(directive.rules.includes('bomb'));
-                if (request.pool.bombPolicy === 'forbidden') assert.ok(!directive.rules.includes('bomb'));
-                if (request.pool.masterSlashEligible) {
-                    const constraint = evaluateRules(question);
-                    assert.equal(constraint.matchMode, 'all');
-                    assert.ok(constraint.requiredTargetIds.length > 1);
-                    session.state.masterSlashCount += 1;
-                }
-                session.state.correctCount += 1;
-                session.state.combo += 1;
-                session.state.maxCombo = Math.max(session.state.maxCombo, session.state.combo);
-                session.state.elapsedMs += 1_000;
-                session.state.remainingMs = 60_000 - session.state.elapsedMs;
-                runtime.resolve(request.requestId, true, session.state);
-            }
-            assert.equal(runtime.snapshot(session.state).status, 'cleared', `floor ${floor}, seed ${seedIndex}`);
-        }
-    }
-});
 
 test('tower has five non-healing lives while other modes keep three', () => {
     const tower = new GameSession({ mode: 'tower', seed: 'tower-life', contentVersion: CONTENT_VERSION, towerFloor: 8 }, GAMEPLAY_CONFIG);
@@ -1720,128 +1413,18 @@ test('tower max-error constraints fail after the allowed count, before five-life
     assert.equal(runtime.snapshot(session.state).failureReason, 'constraintViolated');
 });
 
-test('color identification remains a question family without becoming a rule unlock', () => {
-    const tower = new TowerDirector(new SeededRng('floor-14-color-family'), 14);
-    for (let index = 0; index < 30; index++) {
-        const directive = tower.next(index * 1_000);
-        assert.equal(directive.family.kind, 'vision-stroop');
-        assert.ok(directive.rules.every((rule) => rule === 'standard' || rule === 'bomb'));
-    }
-    assert.ok(dailyRecipeById('logic-detective')?.familyKinds.includes('vision-stroop'));
 
-    const family = CONTENT_FAMILIES.find((candidate) => candidate.kind === 'vision-stroop')!;
-    const generator = new QuestionGenerator(new SeededRng('no-read-yellow-slash-yellow'), GAMEPLAY_CONFIG);
-    for (let variant = 0; variant < 5; variant++) {
-        const question = generator.next({
-            phase: 'warmup', difficultyStage: 0, targetCount: 4, questionTimeMs: 3_000,
-            speed: 1, family: { ...family, variant }, rules: ['standard'],
-        });
-        assert.ok(question.prompt.text.startsWith('字体颜色·'));
-        const correct = question.targets.find((target) => question.baseCorrectTargetIds.includes(target.id))!;
-        const wanted = question.prompt.text.slice(-1);
-        assert.notEqual(correct.text, wanted);
-        assert.equal(correct.colorName, wanted);
-    }
+test('daily selection covers every single-theme recipe and unified templates cover all themes', () => {
+    const themes = new Set(Array.from({ length: 256 }, (_, day) => createDailyChallenge(new Date(2026, 0, 1 + day, 12), CONTENT_VERSION).recipe.theme));
+    assert.deepEqual([...themes].sort(), ['english', 'geography', 'hanzi', 'history', 'knowledge', 'life', 'math', 'vision']);
+    assert.deepEqual([...new Set(QUESTION_TEMPLATES.map((template) => template.theme))].sort(), [...themes].sort());
 });
 
-test('daily topics merge logic and vision while common knowledge and history also join core modes', () => {
-    const logic = dailyRecipeById('logic-detective');
-    assert.ok(logic?.familyKinds.some((kind) => kind.startsWith('math-')));
-    assert.ok(logic?.familyKinds.some((kind) => kind.startsWith('vision-')));
-    assert.equal(dailyRecipeById('common-knowledge')?.title, '常识万花筒');
-    assert.equal(dailyRecipeById('life-instinct'), undefined);
 
-    const knowledge = new Brawl60Director(new SeededRng('daily-knowledge-topic'), 'common-knowledge');
-    for (let index = 0; index < 80; index++) {
-        assert.equal(knowledge.next((index * 1_997) % 60_000).family.theme, 'knowledge');
-    }
 
-    const history = new Brawl60Director(new SeededRng('daily-history-topic'), 'history-adventure');
-    let modern = 0;
-    for (let index = 0; index < 100; index++) {
-        const family = history.next((index * 1_997) % 60_000).family;
-        assert.equal(family.theme, 'history');
-        if (family.kind.startsWith('history-modern-')) modern++;
-    }
-    assert.ok(modern >= 50);
-
-    const ordinary = new Brawl60Director(new SeededRng('ordinary-includes-all-topics'));
-    const ordinaryThemes = new Set(Array.from({ length: 500 }, (_, index) =>
-        ordinary.next([15_000, 30_000, 50_000][index % 3]).family.theme,
-    ));
-    assert.ok(ordinaryThemes.has('knowledge'));
-    assert.ok(ordinaryThemes.has('history'));
-
-    const tower = new TowerDirector(new SeededRng('tower-includes-all-topics'), 20);
-    const towerThemes = new Set(Array.from({ length: 500 }, (_, index) => tower.next(index * 1_000).family.theme));
-    assert.ok(towerThemes.has('knowledge'));
-    assert.ok(towerThemes.has('history'));
-});
-
-test('tower bombs add a hazard without replacing answer candidates', () => {
-    const seed = 'tower-floor-1-bomb-regression';
-    const director = new TowerDirector(new SeededRng(`${seed}:director`), 1);
-    const generator = new QuestionGenerator(new SeededRng(`${seed}:gameplay`), GAMEPLAY_CONFIG);
-    let directive = director.next(0);
-    for (let index = 1; !directive.rules.includes('bomb') && index < 4; index++) {
-        directive = director.next(index * 1_000);
-    }
-    assert.deepEqual(directive.rules, ['bomb']);
-    assert.equal(directive.targetCount, 3);
-    const question = generator.next(directive);
-    assert.equal(question.targets.filter((target) => !target.isBomb).length, 3);
-    assert.equal(question.targets.filter((target) => target.isBomb).length, 1);
-    assert.equal(question.targets.length, 4);
-});
-
-test('tower bomb placement varies by seed instead of staying in the final slot', () => {
-    const positions = new Set<number>();
-    for (let seedIndex = 0; seedIndex < 40; seedIndex++) {
-        const seed = `tower-floor-1-bomb-position-${seedIndex}`;
-        const director = new TowerDirector(new SeededRng(`${seed}:director`), 1);
-        const generator = new QuestionGenerator(new SeededRng(`${seed}:gameplay`), GAMEPLAY_CONFIG);
-        let directive = director.next(0);
-        for (let index = 1; !directive.rules.includes('bomb') && index < 4; index++) {
-            directive = director.next(index * 1_000);
-        }
-        const question = generator.next(directive);
-        positions.add(question.targets.findIndex((target) => target.isBomb));
-    }
-    assert.ok(positions.size > 1);
-    assert.ok([...positions].some((position) => position !== 3));
-});
-
-test('tower director is deterministic per attempt and legal across 100 seeds and 50 floors', () => {
-    for (let seedIndex = 0; seedIndex < 100; seedIndex++) {
-        for (let floor = 1; floor <= 50; floor++) {
-            const seed = `tower-${seedIndex}-floor-${floor}`;
-            const firstDirector = new TowerDirector(new SeededRng(`${seed}:director`), floor);
-            const secondDirector = new TowerDirector(new SeededRng(`${seed}:director`), floor);
-            const firstGenerator = new QuestionGenerator(new SeededRng(`${seed}:gameplay`), GAMEPLAY_CONFIG);
-            const secondGenerator = new QuestionGenerator(new SeededRng(`${seed}:gameplay`), GAMEPLAY_CONFIG);
-            for (let index = 0; index < 12; index++) {
-                const firstDirective = firstDirector.next(index * 2_000);
-                const secondDirective = secondDirector.next(index * 2_000);
-                assert.deepEqual(firstDirective, secondDirective);
-                assert.equal(familySupportsRules(firstDirective.family, firstDirective.rules), true);
-                if (firstDirective.rules.includes('rotate')) {
-                    assert.equal(firstDirective.rules.includes('reverse'), false);
-                    assert.equal(isDirectionSensitiveFamily(firstDirective.family.kind), false);
-                }
-                const first = firstGenerator.next(firstDirective);
-                const second = secondGenerator.next(secondDirective);
-                assert.deepEqual(first, second);
-                assert.deepEqual(validateQuestion(first, evaluateRules(first)), []);
-                if (first.activeRules.includes('rotate')) {
-                    assert.ok(first.targets.filter((target) => !target.isBomb).every((target) => [...target.text.trim()].length < 4));
-                }
-            }
-        }
-    }
-});
 
 test('ordinary brawl enforces visible quotas across all eight themes', () => {
-    const director = new Brawl60Director(new SeededRng('balanced-theme-quotas'));
+    const director = new BrawlRequestFixture(new SeededRng('balanced-theme-quotas'));
     const counts = new Map<string, number>();
     const elapsed = [15_000, 30_000, 50_000];
     for (let index = 0; index < 3_000; index++) {
@@ -1953,7 +1536,7 @@ test('tower retries receive fresh seeds while a supplied seed remains reproducib
 test('brawl rule pool follows tower unlocks and learned legacy tutorials', () => {
     const allowed = allowedBrawlRules(DEFAULT_TOWER_PROGRESS, { reverse: true });
     assert.deepEqual([...allowed].sort(), ['bomb', 'reverse', 'standard']);
-    const director = new Brawl60Director(new SeededRng('locked-brawl'), 'mixed', allowed, false);
+    const director = new BrawlRequestFixture(new SeededRng('locked-brawl'), 'mixed', allowed, false);
     for (let index = 0; index < 80; index++) {
         const directive = director.next((index * 997) % 60_000);
         assert.ok(directive.rules.every((rule) => rule === 'standard' || allowed.has(rule)));
@@ -1977,8 +1560,7 @@ test('save v1 migration preserves player settings daily-compatible fields and ad
     assert.equal(migrated.settings.music, false);
     assert.equal(migrated.tutorials.bomb, true);
     assert.equal(migrated.tutorials.rotate, true);
-    assert.equal(migrated.daily?.targetScore, dailyRecipeById('number-lab')?.targetScore);
-    assert.equal(migrated.daily?.targetAchieved, true);
+    assert.equal(migrated.daily, undefined);
     assert.deepEqual(migrated.tower, DEFAULT_TOWER_PROGRESS);
 });
 

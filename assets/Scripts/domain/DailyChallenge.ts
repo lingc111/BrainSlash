@@ -1,23 +1,13 @@
 import type { DailyChallengeResult, GameEntryParams, RuleId, RunResult, ThemeId } from './Models';
-import type { ContentFamilyKind } from './ContentCatalog';
-
 export type DailyRecipeId =
-    | 'number-lab'
-    | 'logic-detective'
-    | 'word-case'
-    | 'world-tour'
-    | 'common-knowledge'
-    | 'history-adventure'
-    | 'english-sprint';
+    | 'daily-math' | 'daily-vision' | 'daily-hanzi' | 'daily-english'
+    | 'daily-life' | 'daily-geography' | 'daily-knowledge' | 'daily-history';
 
 export interface DailyRecipe {
     id: DailyRecipeId;
     title: string;
     accent: string;
-    themeWeights: Readonly<Record<ThemeId, number>>;
-    familyKinds: readonly ContentFamilyKind[];
-    allowedRules: readonly RuleId[];
-    speedMultiplier: number;
+    theme: ThemeId;
     targetScore: number;
 }
 
@@ -52,41 +42,14 @@ export interface DailyHomePresentation {
 }
 
 const RECIPES: readonly DailyRecipe[] = [
-    {
-        id: 'number-lab', title: '数字训练营', accent: '数', themeWeights: weights({ math: 8 }),
-        familyKinds: ['math-add', 'math-subtract', 'math-multiply', 'math-property', 'math-compare', 'math-sequence'],
-        allowedRules: ['standard', 'bomb', 'multi', 'order', 'reverse', 'rotate'], speedMultiplier: 1.04, targetScore: 1600,
-    },
-    {
-        id: 'logic-detective', title: '逻辑侦探社', accent: '探', themeWeights: weights({ math: 4, vision: 6 }),
-        familyKinds: ['math-property', 'math-compare', 'math-sequence', 'vision-odd', 'vision-count', 'vision-stroop', 'vision-pattern'],
-        allowedRules: ['standard', 'bomb', 'multi', 'order', 'reverse', 'rotate'], speedMultiplier: 1, targetScore: 1500,
-    },
-    {
-        id: 'word-case', title: '文字谜案局', accent: '字', themeWeights: weights({ hanzi: 8 }),
-        familyKinds: ['hanzi-fill', 'hanzi-order', 'hanzi-antonym', 'hanzi-synonym'],
-        allowedRules: ['standard', 'bomb', 'order', 'reverse', 'rotate'], speedMultiplier: 0.92, targetScore: 1200,
-    },
-    {
-        id: 'world-tour', title: '世界漫游记', accent: '游', themeWeights: weights({ geography: 8 }),
-        familyKinds: ['geography-capital', 'geography-country'],
-        allowedRules: ['standard', 'bomb', 'reverse', 'rotate'], speedMultiplier: 0.94, targetScore: 1200,
-    },
-    {
-        id: 'common-knowledge', title: '常识万花筒', accent: '知', themeWeights: weights({ knowledge: 8 }),
-        familyKinds: ['knowledge-science', 'knowledge-nature', 'knowledge-culture', 'knowledge-civic'],
-        allowedRules: ['standard', 'bomb', 'reverse', 'rotate'], speedMultiplier: 0.96, targetScore: 1300,
-    },
-    {
-        id: 'history-adventure', title: '历史奇遇记', accent: '史', themeWeights: weights({ history: 8 }),
-        familyKinds: ['history-modern-opening', 'history-modern-awakening', 'history-modern-resistance', 'history-ancient', 'history-myth'],
-        allowedRules: ['standard', 'bomb', 'reverse', 'rotate'], speedMultiplier: 0.92, targetScore: 1200,
-    },
-    {
-        id: 'english-sprint', title: '双语快问', accent: '译', themeWeights: weights({ english: 8 }),
-        familyKinds: ['english-meaning', 'english-category', 'english-antonym'],
-        allowedRules: ['standard', 'bomb', 'multi', 'reverse', 'rotate'], speedMultiplier: 0.96, targetScore: 1400,
-    },
+    { id: 'daily-math', title: '今日主题 · 数学', accent: '数', theme: 'math', targetScore: 1500 },
+    { id: 'daily-vision', title: '今日主题 · 眼力', accent: '眼', theme: 'vision', targetScore: 1400 },
+    { id: 'daily-hanzi', title: '今日主题 · 汉字', accent: '字', theme: 'hanzi', targetScore: 1200 },
+    { id: 'daily-english', title: '今日主题 · 英语', accent: '译', theme: 'english', targetScore: 1300 },
+    { id: 'daily-life', title: '今日主题 · 生活', accent: '生', theme: 'life', targetScore: 1300 },
+    { id: 'daily-geography', title: '今日主题 · 地理', accent: '地', theme: 'geography', targetScore: 1200 },
+    { id: 'daily-knowledge', title: '今日主题 · 常识', accent: '知', theme: 'knowledge', targetScore: 1300 },
+    { id: 'daily-history', title: '今日主题 · 历史', accent: '史', theme: 'history', targetScore: 1200 },
 ];
 
 export function localDateKey(now: Date): string {
@@ -104,8 +67,7 @@ export function dailyRecipeById(id?: string): DailyRecipe | undefined {
 
 export function createDailyChallenge(now: Date, contentVersion: string): DailyChallengeDefinition {
     const dateKey = localDateKey(now);
-    const dayNumber = Math.floor(Date.UTC(now.getFullYear(), now.getMonth(), now.getDate()) / 86_400_000);
-    const recipe = RECIPES[((dayNumber % RECIPES.length) + RECIPES.length) % RECIPES.length];
+    const recipe = RECIPES[stableIndex(`${contentVersion}:${dateKey}`, RECIPES.length)];
     return {
         dateKey,
         endTime: nextLocalDayStart(now),
@@ -117,6 +79,7 @@ export function createDailyChallenge(now: Date, contentVersion: string): DailyCh
             contentVersion,
             recipeId: recipe.id,
             dailyDate: dateKey,
+            dailyTheme: recipe.theme,
             dailyTargetScore: recipe.targetScore,
         },
     };
@@ -182,17 +145,10 @@ export function createDailyHomePresentation(challenge: DailyChallengeDefinition,
     };
 }
 
-function weights(preferred: Partial<Record<ThemeId, number>>): Readonly<Record<ThemeId, number>> {
-    return {
-        math: preferred.math ?? 1,
-        vision: preferred.vision ?? 1,
-        english: preferred.english ?? 1,
-        hanzi: preferred.hanzi ?? 1,
-        geography: preferred.geography ?? 1,
-        life: preferred.life ?? 1,
-        knowledge: preferred.knowledge ?? 1,
-        history: preferred.history ?? 1,
-    };
+function stableIndex(value: string, count: number): number {
+    let hash = 2166136261;
+    for (let index = 0; index < value.length; index += 1) hash = Math.imul(hash ^ value.charCodeAt(index), 16777619);
+    return (hash >>> 0) % count;
 }
 
 function positiveTarget(value: unknown): number | undefined {

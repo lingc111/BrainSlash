@@ -1,14 +1,14 @@
 import { _decorator, Color, Component, director, EventTouch, game, Game, Graphics, Label, Mask, Node, NodePool, ResolutionPolicy, resources, screen, Sprite, SpriteFrame, tween, Tween, UIOpacity, UITransform, Vec2, Vec3, view } from 'cc';
 import { AppRuntime } from '../app/AppRuntime';
 import { GAMEPLAY_CONFIG } from '../configs/GameConfig';
-import { Brawl60Director, FriendChallengeDirector, type BrawlQuestionDirective } from '../domain/Brawl60Director';
 import { dailyRecipeById } from '../domain/DailyChallenge';
 import { GameSession } from '../domain/GameSession';
 import { friendTargetPresentation } from '../domain/FriendChallenge';
 import { countdownWarningSecond, failureFeedback, successFeedback } from '../domain/GameFeedback';
 import { GestureResolver, GestureProgress, shouldKeepIncompleteGesture } from '../domain/GestureResolver';
 import type { ActionConstraint, FailureKind, MistakeRecord, QuestionInstance, RunResult, TargetSpec } from '../domain/Models';
-import { QuestionGenerator, questionGeneratorOptionsForEntry } from '../domain/QuestionGenerator';
+import { ModeQuestionDirector } from '../domain/ModeQuestionDirector';
+import { QuestionCompiler, type QuestionRequest } from '../domain/QuestionSystem';
 import { createMistakeRecord, evaluateRules, maximumAnswerTextLength, questionFlightDurationSeconds, questionPreviewDurationSeconds, slashRuleLabel } from '../domain/Rules';
 import { SeededRng } from '../domain/SeededRng';
 import { TowerDirector } from '../domain/TowerDirector';
@@ -50,7 +50,7 @@ function image(parent:Node,name:string,w:number,h:number):Sprite { const s=node(
 
 @ccclass('GameplayMVP')
 export class GameplayMVP extends Component {
-    private session!:GameSession; private generator!:QuestionGenerator; private director!:Brawl60Director|FriendChallengeDirector|TowerDirector; private visual!:SeededRng;
+    private session!:GameSession; private generator!:QuestionCompiler; private director!:ModeQuestionDirector|TowerDirector; private visual!:SeededRng;
     private question:QuestionInstance|null=null; private constraint:ActionConstraint|null=null; private gesture:GestureResolver|null=null;
     private targets!:Node; private effects!:Node; private floats!:Node; private trail!:Graphics;
     private score!:Label; private combo!:Label; private prompt!:Label; private rule!:Label; private ruleBadge:Node|null=null; private timer!:Label; private life!:Label;
@@ -64,7 +64,7 @@ export class GameplayMVP extends Component {
     private trailAge=1; private trailVisible=false; private readonly trailOuterColor=new Color(148,187,199,95); private readonly trailInnerColor=new Color(255,253,241,235);
     private finished=false; private reverseFrame:Node|null=null;
     private paused=false; private hidden=false; private hitStopActive=false; private targetRevealPending=false; private revealToken=0; private lastCountdownSecond=-1;
-    private currentDirective:BrawlQuestionDirective|null=null;
+    private currentDirective:QuestionRequest|null=null;
     private readyDurationSeconds=GAMEPLAY_CONFIG.readyMs/1000;
     private readonly mistakes:MistakeRecord[]=[];
     private currentSkins:(typeof SKINS[number])[]=[]; private currentMotionPhases:number[]=[];
@@ -77,7 +77,7 @@ export class GameplayMVP extends Component {
         view.setDesignResolutionSize(DESIGN_WIDTH,DESIGN_HEIGHT,ResolutionPolicy.SHOW_ALL);
         const editorPreview=this.node.getChildByName('TargetContainer')?.getChildByName('EditorPreviewTargets');if(editorPreview){editorPreview.active=false;editorPreview.destroy();}
         AppRuntime.initialize();if(!AppRuntime.consumeGameplayLaunch()){AppRuntime.home();return;}AppRuntime.consumePendingFriendChallenge();const saved=AppRuntime.save.snapshot();this.session=new GameSession(AppRuntime.entry,GAMEPLAY_CONFIG);const daily=saved.daily;this.dailyBest=AppRuntime.entry.mode==='daily'&&daily?.dateKey===AppRuntime.entry.dailyDate&&daily.recipeId===AppRuntime.entry.recipeId?daily.bestScore:0;
-        const historyOptions=questionGeneratorOptionsForEntry(AppRuntime.entry,{recentFactIds:saved.recentQuestionIds,recentSemanticSignatures:saved.recentQuestionSignatures,onQuestionAccepted:(ids,signature)=>AppRuntime.save.rememberQuestion(ids,signature)});this.generator=new QuestionGenerator(new SeededRng(`${AppRuntime.entry.seed}:gameplay`),GAMEPLAY_CONFIG,historyOptions);this.director=AppRuntime.entry.mode==='tower'?new TowerDirector(new SeededRng(`${AppRuntime.entry.seed}:director`),AppRuntime.entry.towerFloor??saved.tower.currentFloor):AppRuntime.entry.mode==='friendChallenge'&&AppRuntime.entry.challengeConfig?new FriendChallengeDirector(new SeededRng(`${AppRuntime.entry.seed}:director`),AppRuntime.entry.challengeConfig):new Brawl60Director(new SeededRng(`${AppRuntime.entry.seed}:director`),AppRuntime.entry.recipeId,AppRuntime.entry.mode==='brawl60'?allowedBrawlRules(saved.tower,saved.tutorials):undefined,AppRuntime.entry.mode!=='brawl60'||saved.tower.highestClearedFloor>=15);this.visual=new SeededRng(`${AppRuntime.entry.seed}:visual`);
+        const historyOptions={recentFactIds:saved.recentQuestionIds,recentSemanticSignatures:saved.recentQuestionSignatures,onQuestionAccepted:(ids:readonly string[],signature:string)=>AppRuntime.save.rememberQuestion(ids,signature)};this.generator=new QuestionCompiler(new SeededRng(`${AppRuntime.entry.seed}:gameplay`),GAMEPLAY_CONFIG,AppRuntime.entry,historyOptions);this.director=AppRuntime.entry.mode==='tower'?new TowerDirector(new SeededRng(`${AppRuntime.entry.seed}:director`),AppRuntime.entry.towerFloor??saved.tower.currentFloor):new ModeQuestionDirector(new SeededRng(`${AppRuntime.entry.seed}:director`),AppRuntime.entry,AppRuntime.entry.mode==='brawl60'?allowedBrawlRules(saved.tower,saved.tutorials):undefined,AppRuntime.entry.mode!=='brawl60'||saved.tower.highestClearedFloor>=15);this.visual=new SeededRng(`${AppRuntime.entry.seed}:visual`);
         if(AppRuntime.entry.mode==='tower'){const floor=AppRuntime.entry.towerFloor??saved.tower.currentFloor;this.towerChallenge=new TowerChallengeRuntime(towerFloorConfig(floor).challenge,new SeededRng(`${AppRuntime.entry.seed}:challenge`));}
         this.bindStaticView();this.prepareTowerReadyCard();applyGameFontToTree(this.node);screen.on('window-resize',this.handleResize,this);game.on(Game.EVENT_HIDE,this.onHide,this);game.on(Game.EVENT_SHOW,this.onShow,this);this.scheduleOnce(this.handleResize,0);
         this.scheduleOnce(()=>{this.node.getChildByName('Ready')?.destroy();AppRuntime.audio.play('ui');this.session.start();this.spawn();},this.readyDurationSeconds);
@@ -169,7 +169,7 @@ export class GameplayMVP extends Component {
     }
     private spawn():void {
         if(this.session.state.phase!=='playing')return;
-        if(this.towerChallenge){this.towerRequest=this.towerChallenge.nextRequest();this.currentDirective=(this.director as TowerDirector).next(this.session.state.elapsedMs,this.towerRequest);}else this.currentDirective=this.director.next(this.session.state.elapsedMs);this.question=this.generator.next(this.currentDirective);this.presentCurrentQuestion();
+        if(this.towerChallenge){this.towerRequest=this.towerChallenge.nextRequest();this.currentDirective=(this.director as TowerDirector).next(this.session.state.elapsedMs,this.towerRequest);}else this.currentDirective=this.director.next(this.session.state.elapsedMs);this.question=this.generator.next(this.currentDirective,this.session.entry.contentVersion);this.presentCurrentQuestion();
     }
     private presentCurrentQuestion():void{
         if(!this.question||!this.currentDirective||this.session.state.phase!=='playing')return;

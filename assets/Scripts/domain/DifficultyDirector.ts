@@ -1,4 +1,4 @@
-import { phaseAt, type BrawlPhaseId } from './Brawl60Director';
+import { phaseAt, type BrawlPhaseId } from './QuestionPolicy';
 
 export interface DifficultySettings { stage: 0 | 1 | 2; phase: BrawlPhaseId; targetCount: number; speed: number; }
 export function difficultyAt(elapsedMs: number): DifficultySettings {
