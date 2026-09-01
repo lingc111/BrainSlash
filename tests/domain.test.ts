@@ -885,7 +885,7 @@ test('daily challenge starts without tutorial state and reuses the same-day reco
 });
 
 test('unified template catalog contains one stable entry per cognitive template', () => {
-    assert.equal(QUESTION_TEMPLATES.length, 68);
+    assert.equal(QUESTION_TEMPLATES.length, 67);
     assert.equal(new Set(QUESTION_TEMPLATES.map((template) => template.id)).size, QUESTION_TEMPLATES.length);
     assert.ok(QUESTION_TEMPLATES.every((template) => template.enabled && template.difficultyBands.length === 5));
 });
@@ -1481,18 +1481,32 @@ test('MVP arithmetic inventory enforces adult operand floors and contains no app
             assert.ok(operands[0] >= 100 && operands[1] >= 100, question.prompt);
         } else if (question.templateId === 'math-multiply') {
             assert.ok(operands[0] >= 10 && operands[1] >= 10, question.prompt);
+            assert.ok(operands.every((value) => value <= 999), question.prompt);
+            assert.ok(Number(question.answer) >= 10 && Number(question.answer) <= 999, question.prompt);
+            assert.ok(question.wrong.every((value) => Number(value) >= 10 && Number(value) <= 999), question.prompt);
         } else if (question.templateId === 'math-divide') {
             assert.ok(operands[1] >= 10 && Number(question.answer) >= 10, question.prompt);
+            assert.ok(operands.every((value) => value <= 999), question.prompt);
+            assert.ok(Number(question.answer) <= 999, question.prompt);
         } else if (question.templateId === 'math-mixed') {
             assert.ok(operands[0] >= 10 && operands[1] >= 10, question.prompt);
+            assert.ok(operands.every((value) => value <= 999), question.prompt);
+            assert.ok(Number(question.answer) >= 10 && Number(question.answer) <= 999, question.prompt);
+            assert.ok(question.wrong.every((value) => Number(value) >= 10 && Number(value) <= 999), question.prompt);
         } else if (question.templateId === 'math-digit-reverse') {
             const source = question.prompt.match(/^\d{5,}/)?.[0] ?? '';
             assert.equal(String(question.answer), Array.from(source).reverse().join(''));
             assert.ok(question.wrong.every((choice) => String(choice).length === String(question.answer).length));
         } else if (question.templateId === 'math-remainder') {
             assert.equal(operands[0] % operands[1], question.answer);
+            assert.ok(operands[0] <= 99 && operands[1] <= 99, question.prompt);
+            assert.ok(Number(question.answer) >= 0 && Number(question.answer) <= 9, question.prompt);
+            assert.ok(Number(question.answer) < operands[1], question.prompt);
+            assert.ok(question.wrong.every((value) => Number(value) >= 0 && Number(value) <= 9 && Number(value) < operands[1]), question.prompt);
         }
     }
+    assert.ok(!QUESTION_TEMPLATES.some((template) => template.id === ('english-first-letter' as never)));
+    assert.ok(!MVP_QUESTION_INVENTORY.some((question) => /首字母/.test(question.prompt)));
 });
 
 test('subtraction choices keep their minus sign instead of using relation layout', () => {
@@ -1534,6 +1548,16 @@ test('historical person questions only use people as distractors', () => {
     assert.equal(fact.answer, '李鸿章');
     assert.equal(fact.wrong.length, 3);
     assert.ok(fact.wrong.every((answer) => people.has(answer)), fact.wrong.join(','));
+});
+
+test('radical questions only use radical-shaped distractors, never years', () => {
+    const facts = EXPANSION_TRIVIA_PACKS['hanzi-radical']!;
+    const late = facts.find((item) => item.prompt === '“晚”的部首')!;
+    assert.equal(late.answer, '日');
+    assert.equal(late.wrong.length, 3);
+    for (const fact of facts) {
+        assert.ok(!fact.wrong.some((choice) => /^\d{3,4}年$/.test(choice)), `${fact.prompt}: ${fact.wrong.join(',')}`);
+    }
 });
 
 test('science expansion distractors stay in the answer semantic type', () => {
@@ -1747,7 +1771,6 @@ test('migrated V1 templates compile from traceable reviewed or MVP inventory rec
     const migratedTemplates = [
         ['hanzi-pinyin', /^(?:fact\.hanzi\.pinyin\.|mvp\.hanzi\.)/],
         ['hanzi-poetry', /^(?:fact\.hanzi\.poetry\.|mvp\.hanzi\.)/],
-        ['english-first-letter', /^(?:fact\.english\.words\.|mvp\.english\.)/],
         ['english-length', /^(?:fact\.english\.words\.|mvp\.english\.)/],
     ] as const;
     for (const [id, factIdPattern] of migratedTemplates) {

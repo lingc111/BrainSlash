@@ -7,6 +7,12 @@ import { QUESTION_TEMPLATES } from '../assets/Scripts/domain/QuestionSystem.ts';
 import { MVP_QUESTION_INVENTORY, MVP_THEME_TARGETS } from '../assets/Scripts/domain/MvpQuestionInventory.ts';
 
 const errors = [];
+for (const sourceFile of ['assets/Scripts/domain/MvpQuestionInventory.ts', 'assets/Scripts/domain/TowerChallenge.ts']) {
+  const source = await readFile(path.resolve(sourceFile), 'utf8');
+  if (/\[\.\.\.[^\]]*\.(?:values|keys|entries)\(\)\]/.test(source)) {
+    errors.push(`${sourceFile}: iterable spread is unsafe in the WeChat transform`);
+  }
+}
 const templateIds = new Set();
 for (const template of QUESTION_TEMPLATES) {
   if (!template.id || templateIds.has(template.id)) errors.push(`duplicate or empty template id: ${template.id}`);
@@ -92,7 +98,13 @@ for (const [index, question] of MVP_QUESTION_INVENTORY.entries()) {
       }
     } else if (question.templateId === 'math-remainder') {
       const match = question.prompt.match(/^(\d+)÷(\d+)的余数$/);
-      if (!match || Number(match[2]) < 10 || Number(match[1]) % Number(match[2]) !== question.answer) errors.push(`${question.id}: incorrect remainder`);
+      if (!match || Number(match[1]) > 99 || Number(match[2]) > 99
+          || Number(question.answer) < 0 || Number(question.answer) > 9
+          || Number(question.answer) >= Number(match[2])
+          || Number(match[1]) % Number(match[2]) !== question.answer) errors.push(`${question.id}: incorrect or out-of-range remainder`);
+      if (question.wrong.some((choice) => Number(choice) < 0 || Number(choice) > 9 || Number(choice) >= Number(match?.[2]))) {
+        errors.push(`${question.id}: invalid remainder distractor`);
+      }
     } else {
       const expression = question.prompt.replace('=?', '').replaceAll('×', '*').replaceAll('÷', '/');
       if (!/^[0-9+*/-]+$/.test(expression)) errors.push(`${question.id}: unsafe arithmetic expression`);
@@ -100,13 +112,18 @@ for (const [index, question] of MVP_QUESTION_INVENTORY.entries()) {
       const operands = question.prompt.match(/\d+/g)?.map(Number) ?? [];
       if ((question.templateId === 'math-add' || question.templateId === 'math-subtract')
           && operands.slice(0, 2).some((value) => value < 100)) errors.push(`${question.id}: add/sub operand below three digits`);
-      if (question.templateId === 'math-multiply' && operands.slice(0, 2).some((value) => value < 10)) errors.push(`${question.id}: multiply operand below two digits`);
-      if (question.templateId === 'math-divide' && (operands[1] < 10 || Number(question.answer) < 10)) errors.push(`${question.id}: divide operand below two digits`);
-      if (question.templateId === 'math-mixed' && (operands[0] < 10 || operands[1] < 10)) errors.push(`${question.id}: mixed-operation factor below two digits`);
+      if (question.templateId === 'math-multiply' && (operands.slice(0, 2).some((value) => value < 10 || value > 999)
+          || Number(question.answer) > 999 || question.wrong.some((choice) => Number(choice) > 999))) errors.push(`${question.id}: multiply value outside two/three digits`);
+      if (question.templateId === 'math-divide' && (operands[1] < 10 || Number(question.answer) < 10
+          || operands.some((value) => value > 999) || Number(question.answer) > 999)) errors.push(`${question.id}: divide value outside two/three digits`);
+      if (question.templateId === 'math-mixed' && (operands[0] < 10 || operands[1] < 10 || operands.some((value) => value > 999)
+          || Number(question.answer) > 999 || question.wrong.some((choice) => Number(choice) > 999))) errors.push(`${question.id}: mixed-operation value outside two/three digits`);
     }
   }
 }
 if (QUESTION_TEMPLATES.some((template) => template.id === 'math-rounding' || template.tags.includes('rounding'))) errors.push('rounding template must not exist');
+if (QUESTION_TEMPLATES.some((template) => template.id === 'english-first-letter')
+    || MVP_QUESTION_INVENTORY.some((question) => /首字母/.test(question.prompt))) errors.push('English first-letter questions must not exist');
 if (MVP_QUESTION_INVENTORY.length !== 10_000) errors.push(`MVP inventory must contain exactly 10000 questions, got ${MVP_QUESTION_INVENTORY.length}`);
 for (const [theme, target] of Object.entries(MVP_THEME_TARGETS)) {
   if (inventoryByTheme[theme] !== target) errors.push(`${theme}: expected ${target} MVP questions, got ${inventoryByTheme[theme]}`);
@@ -148,6 +165,10 @@ for (const pack of QUESTION_BANK_PACKS) {
           || record.fields.parts.some((part) => Array.from(part).length > 6)) {
         errors.push(`${pack.id}[${index}]: process choices are not glanceable`);
       }
+    }
+    if (record.kind === 'hanzi.radical' && Array.isArray(record.fields.wrong)
+        && record.fields.wrong.some((choice) => /^\d{3,4}年$/.test(choice))) {
+      errors.push(`${pack.id}[${index}]: radical distractors must not contain years`);
     }
   });
 }

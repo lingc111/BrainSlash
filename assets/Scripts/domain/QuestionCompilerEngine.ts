@@ -54,6 +54,8 @@ export function compilerOptionsForEntry(
     return entry.mode === 'friendChallenge' ? {} : options;
 }
 const COLOR_WORDS = ['红', '蓝', '绿', '黄'] as const;
+// U+2190–U+2193 are plain text arrows. Do not replace them with emoji-style
+// arrows such as ⬅️/⬆️/➡️/⬇️ or append the emoji variation selector U+FE0F.
 const ARROWS = ['←', '↑', '→', '↓'] as const;
 const OPPOSITE_ARROW: Readonly<Record<string, string>> = { '←': '→', '→': '←', '↑': '↓', '↓': '↑' };
 const ENGLISH_CONTENT_WORDS = [...ENGLISH_WORDS, ...ENGLISH_EXTRA_WORDS] as const;
@@ -164,7 +166,6 @@ export class QuestionCompilerEngine {
             case 'english-meaning': return this.englishMeaning(template, stage);
             case 'english-category': return this.englishCategory(template, stage);
             case 'english-antonym': return this.englishAntonym(template, stage);
-            case 'english-first-letter': return this.englishFirstLetter(template, stage);
             case 'english-length': return this.englishLength(template, stage);
             case 'english-missing-letter': return this.englishMissingLetter(template, stage);
             case 'english-synonym': return this.expansionTrivia(template, stage);
@@ -280,12 +281,18 @@ export class QuestionCompilerEngine {
     }
 
     private mathMultiply(template: QuestionTemplate, stage: Stage): QuestionInstance {
-        const minimum = 10 + this.difficultyIndex * 8;
-        const maximum = minimum + 13 + stage * 3;
-        const a = this.rng.int(minimum, maximum);
-        const b = this.rng.int(minimum, maximum);
+        const minimum = 10 + this.difficultyIndex * 2;
+        const maximum = Math.min(99, 35 + this.difficultyIndex * 7 + stage * 4);
+        let a: number;
+        let b: number;
+        do {
+            a = this.rng.int(minimum, maximum);
+            b = this.rng.int(minimum, maximum);
+        } while (a * b > 999);
         const answer = a * b;
-        return this.makeChoice(template, `${a}×${b}=?`, answer, [answer - a, answer + a, answer - b, answer + b, a + b], stage);
+        return this.makeChoice(template, `${a}×${b}=?`, answer,
+            [answer - a, answer - 2, answer - 1, answer + 1, answer + 2, answer + a]
+                .filter((value) => value >= 10 && value <= 999), stage);
     }
 
     private mathProperty(template: QuestionTemplate, stage: Stage): QuestionInstance {
@@ -540,7 +547,12 @@ export class QuestionCompilerEngine {
     }
 
     private visionMirror(template: QuestionTemplate, stage: Stage): QuestionInstance {
-        const mirrors: Readonly<Record<string, string>> = { '←': '→', '→': '←', '↖': '↗', '↗': '↖', '↙': '↘', '↘': '↙' };
+        // WeChat renders the diagonal U+2196–U+2199 characters as blue-square
+        // emoji on some devices. Repeated horizontal text arrows preserve the
+        // mirror task without depending on those platform glyphs.
+        const mirrors: Readonly<Record<string, string>> = {
+            '←': '→', '→': '←', '←←': '→→', '→→': '←←', '←←←': '→→→', '→→→': '←←←',
+        };
         const source = this.rng.pick(Object.keys(mirrors));
         return this.makeChoice(template, `${source}的左右镜像`, mirrors[source], Object.values(mirrors), stage);
     }
@@ -590,24 +602,35 @@ export class QuestionCompilerEngine {
     }
 
     private mathDivide(template: QuestionTemplate, stage: Stage): QuestionInstance {
-        const minimum = 10 + this.difficultyIndex * 8;
-        const divisor = this.rng.int(minimum, minimum + 13 + stage * 3);
-        const answer = this.rng.int(minimum, minimum + 13 + stage * 4);
+        const minimum = 10 + this.difficultyIndex * 2;
+        const maximum = Math.min(99, 35 + this.difficultyIndex * 7 + stage * 4);
+        let divisor: number;
+        let answer: number;
+        do {
+            divisor = this.rng.int(minimum, maximum);
+            answer = this.rng.int(minimum, maximum);
+        } while (divisor * answer > 999);
         const dividend = divisor * answer;
         return this.makeChoice(template, `${dividend}÷${divisor}=?`, answer,
             [answer - 2, answer - 1, answer + 1, answer + 2, divisor], stage);
     }
 
     private mathMixed(template: QuestionTemplate, stage: Stage): QuestionInstance {
-        const minimum = 10 + this.difficultyIndex * 8;
-        const multiplier = this.rng.int(minimum, minimum + 13 + stage * 3);
-        const factor = this.rng.int(minimum, minimum + 13 + stage * 3);
+        const minimum = 10 + this.difficultyIndex * 2;
+        const maximum = Math.min(45, 28 + this.difficultyIndex * 3 + stage * 2);
+        let multiplier: number;
+        let factor: number;
+        do {
+            multiplier = this.rng.int(minimum, maximum);
+            factor = this.rng.int(minimum, maximum);
+        } while (multiplier * factor > 900);
         const offset = this.rng.int(20, 79 + this.difficultyIndex * 20 + stage * 20);
-        const subtract = this.rng.next() < 0.5 && multiplier * factor > offset;
+        const subtract = multiplier * factor + offset > 999 || (this.rng.next() < 0.5 && multiplier * factor > offset);
         const answer = subtract ? multiplier * factor - offset : multiplier * factor + offset;
         const operator = subtract ? '-' : '+';
         return this.makeChoice(template, `${multiplier}×${factor}${operator}${offset}=?`, answer,
-            [answer - multiplier, answer + multiplier, answer - 1, answer + 1, multiplier * (factor + offset)], stage);
+            [answer - multiplier, answer - 2, answer - 1, answer + 1, answer + 2, answer + multiplier]
+                .filter((value) => value >= 10 && value <= 999), stage);
     }
 
     private mathOperator(template: QuestionTemplate, stage: Stage): QuestionInstance {
@@ -630,12 +653,12 @@ export class QuestionCompilerEngine {
     }
 
     private mathRemainder(template: QuestionTemplate, stage: Stage): QuestionInstance {
-        const divisor = this.rng.int(10 + this.difficultyIndex * 8, 23 + this.difficultyIndex * 8);
-        const quotient = this.rng.int(12 + this.difficultyIndex * 8, 29 + this.difficultyIndex * 8);
-        const remainder = this.rng.int(1, divisor - 1);
+        const divisor = this.rng.int(4 + this.difficultyIndex * 2, 11 + this.difficultyIndex * 2);
+        const remainder = this.rng.int(1, Math.min(9, divisor - 1));
+        const quotient = this.rng.int(2, Math.floor((99 - remainder) / divisor));
         const dividend = divisor * quotient + remainder;
         return this.makeChoice(template, `${dividend}÷${divisor}的余数`, remainder,
-            [0, remainder - 1, remainder + 1, divisor - remainder, divisor], stage);
+            Array.from({ length: Math.min(10, divisor) }, (_, value) => value), stage);
     }
 
     private mathFractionCompare(template: QuestionTemplate, stage: Stage): QuestionInstance {
@@ -696,13 +719,6 @@ export class QuestionCompilerEngine {
         for (const item of ENGLISH_ANTONYMS) antonymWords.push(item[0], item[1]);
         const candidates = this.rng.shuffle(antonymWords).filter((word) => word !== promptWord);
         return this.makeChoice(template, `${promptWord} 的反义词`, answer, candidates, stage);
-    }
-
-    private englishFirstLetter(template: QuestionTemplate, stage: Stage): QuestionInstance {
-        const word = this.pickFact('english-first-letter', ENGLISH_CONTENT_WORDS, reviewedFactIdForRecord);
-        const answer = word.en[0];
-        const candidates = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ'.split('').filter((letter) => letter !== answer);
-        return this.makeChoice(template, `${word.en}首字母`, answer, candidates, stage);
     }
 
     private englishLength(template: QuestionTemplate, stage: Stage): QuestionInstance {

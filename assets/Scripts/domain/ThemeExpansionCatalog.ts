@@ -10,6 +10,7 @@ export interface OrderedFact {
 type ExpansionTriviaFact = TriviaFact & { id: string };
 
 const TYPE_SAFE_DISTRACTORS: Readonly<Record<string, readonly string[]>> = {
+    radical: ['亻', '氵', '木', '艹', '日', '目', '口', '足', '女', '钅', '纟', '讠'],
     person: ['林则徐', '魏源', '曾国藩', '左宗棠', '李鸿章', '康有为', '梁启超', '孙中山', '鲁迅', '蔡元培', '毛泽东', '周恩来'],
     'myth-person': ['盘古', '女娲', '夸父', '精卫', '后羿', '嫦娥', '大禹', '燧人氏', '伏羲', '神农'],
     date: ['1840年', '1842年', '1860年', '1894年', '1898年', '1911年', '1919年', '1921年', '1931年', '1937年', '1945年'],
@@ -85,6 +86,9 @@ const TYPE_SAFE_DISTRACTORS: Readonly<Record<string, readonly string[]>> = {
 };
 
 function relationAnswerGroup(prefix: string, prompt: string, answer: string): string {
+    // A radical can itself be “日” or “月”. Classify the question by its
+    // explicit semantics before the generic date-suffix rule below.
+    if (prefix.startsWith('radical.') || /部首/.test(prompt)) return 'radical';
     if ((/神话|传说/.test(prompt) || prefix.includes('history.myth')) && /人物|英雄|神鸟/.test(prompt)) return 'myth-person';
     if (/人物|作者|领导人|指挥者|作曲者|作词者|皇帝|建立者|发明者|科学家|工程师|先驱|学者|高僧|名将/.test(prompt)) return 'person';
     if (prefix.includes('history.myth') && /日子/.test(prompt)) return 'myth-date';

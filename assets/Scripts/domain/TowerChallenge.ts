@@ -225,7 +225,8 @@ function constraintValue(constraint: TowerConstraint, state: GameSessionState, b
 function balancedDeck(lanes: readonly TowerQuotaLane[], rng: SeededRng): TowerQuotaLane[] {
     const remaining = new Map(lanes.map((lane) => [lane.id, lane.requiredSuccesses]));
     const result: TowerQuotaLane[] = [];
-    while ([...remaining.values()].some((count) => count > 0)) {
+    // Keep Map iterator conversion explicit for the WeChat JS transform.
+    while (Array.from(remaining.values()).some((count) => count > 0)) {
         const round = rng.shuffle(lanes.filter((lane) => (remaining.get(lane.id) ?? 0) > 0));
         for (const lane of round) {
             result.push(lane);

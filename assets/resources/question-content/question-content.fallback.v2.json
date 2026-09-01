@@ -1,6 +1,6 @@
 {
   "schemaVersion": 2,
-  "contentVersion": "2.3.2-math-variety",
+  "contentVersion": "2.3.3-question-quality",
   "bundleKind": "fallback",
   "templates": [
     {
@@ -1409,46 +1409,6 @@
       "targetCap": 4,
       "directionSensitive": false,
       "rotationSafe": false,
-      "enabled": true
-    },
-    {
-      "id": "english-first-letter",
-      "theme": "english",
-      "engine": "single",
-      "capabilities": [
-        "single",
-        "short-text"
-      ],
-      "sourceKind": "reviewed-facts",
-      "tags": [
-        "spelling",
-        "first-letter"
-      ],
-      "difficultyBands": [
-        1,
-        2,
-        3,
-        4,
-        5
-      ],
-      "supportedRuleSets": [
-        [
-          "standard"
-        ],
-        [
-          "reverse"
-        ],
-        [
-          "bomb"
-        ],
-        [
-          "bomb",
-          "reverse"
-        ]
-      ],
-      "targetCap": 4,
-      "directionSensitive": false,
-      "rotationSafe": true,
       "enabled": true
     },
     {
@@ -4020,7 +3980,6 @@
         "english",
         "english-meaning",
         "english-category",
-        "english-first-letter",
         "english-length",
         "english-missing-letter"
       ],
@@ -4041,7 +4000,6 @@
         "english",
         "english-meaning",
         "english-category",
-        "english-first-letter",
         "english-length",
         "english-missing-letter"
       ],
@@ -4062,7 +4020,6 @@
         "english",
         "english-meaning",
         "english-category",
-        "english-first-letter",
         "english-length",
         "english-missing-letter"
       ],
@@ -4083,7 +4040,6 @@
         "english",
         "english-meaning",
         "english-category",
-        "english-first-letter",
         "english-length",
         "english-missing-letter"
       ],
@@ -4104,7 +4060,6 @@
         "english",
         "english-meaning",
         "english-category",
-        "english-first-letter",
         "english-length",
         "english-missing-letter"
       ],
@@ -4125,7 +4080,6 @@
         "english",
         "english-meaning",
         "english-category",
-        "english-first-letter",
         "english-length",
         "english-missing-letter"
       ],
@@ -4146,7 +4100,6 @@
         "english",
         "english-meaning",
         "english-category",
-        "english-first-letter",
         "english-length",
         "english-missing-letter"
       ],
@@ -4167,7 +4120,6 @@
         "english",
         "english-meaning",
         "english-category",
-        "english-first-letter",
         "english-length",
         "english-missing-letter"
       ],
@@ -4188,7 +4140,6 @@
         "english",
         "english-meaning",
         "english-category",
-        "english-first-letter",
         "english-length",
         "english-missing-letter"
       ],
@@ -4209,7 +4160,6 @@
         "english",
         "english-meaning",
         "english-category",
-        "english-first-letter",
         "english-length",
         "english-missing-letter"
       ],
@@ -4230,7 +4180,6 @@
         "english",
         "english-meaning",
         "english-category",
-        "english-first-letter",
         "english-length",
         "english-missing-letter"
       ],
@@ -4251,7 +4200,6 @@
         "english",
         "english-meaning",
         "english-category",
-        "english-first-letter",
         "english-length",
         "english-missing-letter"
       ],
@@ -4272,7 +4220,6 @@
         "english",
         "english-meaning",
         "english-category",
-        "english-first-letter",
         "english-length",
         "english-missing-letter"
       ],
@@ -4293,7 +4240,6 @@
         "english",
         "english-meaning",
         "english-category",
-        "english-first-letter",
         "english-length",
         "english-missing-letter"
       ],
@@ -4314,7 +4260,6 @@
         "english",
         "english-meaning",
         "english-category",
-        "english-first-letter",
         "english-length",
         "english-missing-letter"
       ],
@@ -4335,7 +4280,6 @@
         "english",
         "english-meaning",
         "english-category",
-        "english-first-letter",
         "english-length",
         "english-missing-letter"
       ],
@@ -10846,9 +10790,10 @@
       "answer": 100,
       "wrong": [
         90,
+        98,
         99,
         101,
-        110
+        102
       ],
       "verified": true
     },
@@ -10857,13 +10802,14 @@
       "theme": "math",
       "templateId": "math-multiply",
       "difficulty": 1,
-      "prompt": "10×13=?",
-      "answer": 130,
+      "prompt": "10×12=?",
+      "answer": 120,
       "wrong": [
-        120,
-        129,
-        131,
-        140
+        110,
+        118,
+        119,
+        121,
+        122
       ],
       "verified": true
     },
@@ -10872,13 +10818,14 @@
       "theme": "math",
       "templateId": "math-multiply",
       "difficulty": 1,
-      "prompt": "10×16=?",
-      "answer": 160,
+      "prompt": "11×12=?",
+      "answer": 132,
       "wrong": [
-        150,
-        159,
-        161,
-        170
+        121,
+        130,
+        131,
+        133,
+        134
       ],
       "verified": true
     },
@@ -10887,13 +10834,14 @@
       "theme": "math",
       "templateId": "math-multiply",
       "difficulty": 1,
-      "prompt": "10×19=?",
-      "answer": 190,
+      "prompt": "11×13=?",
+      "answer": 143,
       "wrong": [
-        180,
-        189,
-        191,
-        200
+        132,
+        141,
+        142,
+        144,
+        145
       ],
       "verified": true
     },
@@ -10902,13 +10850,14 @@
       "theme": "math",
       "templateId": "math-multiply",
       "difficulty": 1,
-      "prompt": "10×23=?",
-      "answer": 230,
+      "prompt": "11×14=?",
+      "answer": 154,
       "wrong": [
-        220,
-        229,
-        231,
-        240
+        143,
+        152,
+        153,
+        155,
+        156
       ],
       "verified": true
     },
@@ -10917,14 +10866,14 @@
       "theme": "math",
       "templateId": "math-multiply",
       "difficulty": 1,
-      "prompt": "11×12=?",
-      "answer": 132,
+      "prompt": "10×16=?",
+      "answer": 160,
       "wrong": [
-        121,
-        131,
-        133,
-        143,
-        142
+        150,
+        158,
+        159,
+        161,
+        162
       ],
       "verified": true
     },
@@ -10933,14 +10882,14 @@
       "theme": "math",
       "templateId": "math-multiply",
       "difficulty": 1,
-      "prompt": "11×15=?",
-      "answer": 165,
+      "prompt": "13×13=?",
+      "answer": 169,
       "wrong": [
-        154,
-        164,
-        166,
-        176,
-        175
+        156,
+        167,
+        168,
+        170,
+        171
       ],
       "verified": true
     },
@@ -10949,14 +10898,14 @@
       "theme": "math",
       "templateId": "math-multiply",
       "difficulty": 1,
-      "prompt": "11×18=?",
-      "answer": 198,
+      "prompt": "11×16=?",
+      "answer": 176,
       "wrong": [
-        187,
-        197,
-        199,
-        209,
-        208
+        165,
+        174,
+        175,
+        177,
+        178
       ],
       "verified": true
     },
@@ -10965,14 +10914,14 @@
       "theme": "math",
       "templateId": "math-multiply",
       "difficulty": 1,
-      "prompt": "11×22=?",
-      "answer": 242,
+      "prompt": "13×14=?",
+      "answer": 182,
       "wrong": [
-        231,
-        241,
-        243,
-        253,
-        252
+        169,
+        180,
+        181,
+        183,
+        184
       ],
       "verified": true
     },
@@ -10981,14 +10930,14 @@
       "theme": "math",
       "templateId": "math-multiply",
       "difficulty": 1,
-      "prompt": "12×11=?",
-      "answer": 132,
+      "prompt": "10×19=?",
+      "answer": 190,
       "wrong": [
-        120,
-        131,
-        133,
-        144,
-        142
+        180,
+        188,
+        189,
+        191,
+        192
       ],
       "verified": true
     },
@@ -10997,14 +10946,14 @@
       "theme": "math",
       "templateId": "math-multiply",
       "difficulty": 1,
-      "prompt": "12×14=?",
-      "answer": 168,
+      "prompt": "14×14=?",
+      "answer": 196,
       "wrong": [
-        156,
-        167,
-        169,
-        180,
-        178
+        182,
+        194,
+        195,
+        197,
+        198
       ],
       "verified": true
     },
@@ -11013,14 +10962,14 @@
       "theme": "math",
       "templateId": "math-multiply",
       "difficulty": 1,
-      "prompt": "12×17=?",
-      "answer": 204,
+      "prompt": "10×20=?",
+      "answer": 200,
       "wrong": [
-        192,
-        203,
-        205,
-        216,
-        214
+        190,
+        198,
+        199,
+        201,
+        202
       ],
       "verified": true
     },
@@ -11045,67 +10994,19 @@
       "theme": "math",
       "templateId": "math-divide",
       "difficulty": 1,
-      "prompt": "130÷10=?",
-      "answer": 13,
+      "prompt": "120÷10=?",
+      "answer": 12,
       "wrong": [
+        10,
         11,
-        12,
+        13,
         14,
-        15,
-        23
+        22
       ],
       "verified": true
     },
     {
       "id": "mvp.math.0183",
-      "theme": "math",
-      "templateId": "math-divide",
-      "difficulty": 1,
-      "prompt": "160÷10=?",
-      "answer": 16,
-      "wrong": [
-        14,
-        15,
-        17,
-        18,
-        26
-      ],
-      "verified": true
-    },
-    {
-      "id": "mvp.math.0184",
-      "theme": "math",
-      "templateId": "math-divide",
-      "difficulty": 1,
-      "prompt": "190÷10=?",
-      "answer": 19,
-      "wrong": [
-        17,
-        18,
-        20,
-        21,
-        29
-      ],
-      "verified": true
-    },
-    {
-      "id": "mvp.math.0185",
-      "theme": "math",
-      "templateId": "math-divide",
-      "difficulty": 1,
-      "prompt": "230÷10=?",
-      "answer": 23,
-      "wrong": [
-        21,
-        22,
-        24,
-        25,
-        33
-      ],
-      "verified": true
-    },
-    {
-      "id": "mvp.math.0186",
       "theme": "math",
       "templateId": "math-divide",
       "difficulty": 1,
@@ -11121,18 +11022,66 @@
       "verified": true
     },
     {
+      "id": "mvp.math.0184",
+      "theme": "math",
+      "templateId": "math-divide",
+      "difficulty": 1,
+      "prompt": "143÷11=?",
+      "answer": 13,
+      "wrong": [
+        11,
+        12,
+        14,
+        15,
+        23
+      ],
+      "verified": true
+    },
+    {
+      "id": "mvp.math.0185",
+      "theme": "math",
+      "templateId": "math-divide",
+      "difficulty": 1,
+      "prompt": "154÷11=?",
+      "answer": 14,
+      "wrong": [
+        12,
+        13,
+        15,
+        16,
+        24
+      ],
+      "verified": true
+    },
+    {
+      "id": "mvp.math.0186",
+      "theme": "math",
+      "templateId": "math-divide",
+      "difficulty": 1,
+      "prompt": "160÷10=?",
+      "answer": 16,
+      "wrong": [
+        14,
+        15,
+        17,
+        18,
+        26
+      ],
+      "verified": true
+    },
+    {
       "id": "mvp.math.0187",
       "theme": "math",
       "templateId": "math-divide",
       "difficulty": 1,
-      "prompt": "165÷11=?",
-      "answer": 15,
+      "prompt": "169÷13=?",
+      "answer": 13,
       "wrong": [
-        13,
+        11,
+        12,
         14,
-        16,
-        17,
-        25
+        15,
+        23
       ],
       "verified": true
     },
@@ -11141,14 +11090,14 @@
       "theme": "math",
       "templateId": "math-divide",
       "difficulty": 1,
-      "prompt": "198÷11=?",
-      "answer": 18,
+      "prompt": "176÷11=?",
+      "answer": 16,
       "wrong": [
-        16,
+        14,
+        15,
         17,
-        19,
-        20,
-        28
+        18,
+        26
       ],
       "verified": true
     },
@@ -11157,14 +11106,14 @@
       "theme": "math",
       "templateId": "math-divide",
       "difficulty": 1,
-      "prompt": "242÷11=?",
-      "answer": 22,
+      "prompt": "182÷13=?",
+      "answer": 14,
       "wrong": [
-        20,
-        21,
-        23,
-        24,
-        32
+        12,
+        13,
+        15,
+        16,
+        24
       ],
       "verified": true
     },
@@ -11173,14 +11122,14 @@
       "theme": "math",
       "templateId": "math-divide",
       "difficulty": 1,
-      "prompt": "132÷12=?",
-      "answer": 11,
+      "prompt": "190÷10=?",
+      "answer": 19,
       "wrong": [
-        9,
-        10,
-        12,
-        13,
-        21
+        17,
+        18,
+        20,
+        21,
+        29
       ],
       "verified": true
     },
@@ -11189,7 +11138,7 @@
       "theme": "math",
       "templateId": "math-divide",
       "difficulty": 1,
-      "prompt": "168÷12=?",
+      "prompt": "196÷14=?",
       "answer": 14,
       "wrong": [
         12,
@@ -11205,14 +11154,14 @@
       "theme": "math",
       "templateId": "math-divide",
       "difficulty": 1,
-      "prompt": "204÷12=?",
-      "answer": 17,
+      "prompt": "200÷10=?",
+      "answer": 20,
       "wrong": [
-        15,
-        16,
         18,
         19,
-        27
+        21,
+        22,
+        30
       ],
       "verified": true
     },
@@ -11225,9 +11174,10 @@
       "answer": 70,
       "wrong": [
         60,
+        68,
         69,
         71,
-        80
+        72
       ],
       "verified": true
     },
@@ -11236,13 +11186,14 @@
       "theme": "math",
       "templateId": "math-mixed",
       "difficulty": 1,
-      "prompt": "10×11+34=?",
-      "answer": 144,
+      "prompt": "10×11+38=?",
+      "answer": 148,
       "wrong": [
-        134,
-        143,
-        145,
-        154
+        138,
+        146,
+        147,
+        149,
+        150
       ],
       "verified": true
     },
@@ -11251,13 +11202,14 @@
       "theme": "math",
       "templateId": "math-mixed",
       "difficulty": 1,
-      "prompt": "10×12-38=?",
-      "answer": 82,
+      "prompt": "10×13+36=?",
+      "answer": 166,
       "wrong": [
-        72,
-        81,
-        83,
-        92
+        156,
+        164,
+        165,
+        167,
+        168
       ],
       "verified": true
     },
@@ -11266,13 +11218,14 @@
       "theme": "math",
       "templateId": "math-mixed",
       "difficulty": 1,
-      "prompt": "10×14-32=?",
-      "answer": 108,
+      "prompt": "10×15+34=?",
+      "answer": 184,
       "wrong": [
-        98,
-        107,
-        109,
-        118
+        174,
+        182,
+        183,
+        185,
+        186
       ],
       "verified": true
     },
@@ -11281,13 +11234,14 @@
       "theme": "math",
       "templateId": "math-mixed",
       "difficulty": 1,
-      "prompt": "10×15+36=?",
-      "answer": 186,
+      "prompt": "10×17-33=?",
+      "answer": 137,
       "wrong": [
-        176,
-        185,
-        187,
-        196
+        127,
+        135,
+        136,
+        138,
+        139
       ],
       "verified": true
     },
@@ -11296,13 +11250,14 @@
       "theme": "math",
       "templateId": "math-mixed",
       "difficulty": 1,
-      "prompt": "10×17+30=?",
-      "answer": 200,
+      "prompt": "10×19-31=?",
+      "answer": 159,
       "wrong": [
-        190,
-        199,
-        201,
-        210
+        149,
+        157,
+        158,
+        160,
+        161
       ],
       "verified": true
     },
@@ -11311,13 +11266,14 @@
       "theme": "math",
       "templateId": "math-mixed",
       "difficulty": 1,
-      "prompt": "10×18-34=?",
-      "answer": 146,
+      "prompt": "10×20+39=?",
+      "answer": 239,
       "wrong": [
-        136,
-        145,
-        147,
-        156
+        229,
+        237,
+        238,
+        240,
+        241
       ],
       "verified": true
     },
@@ -11326,13 +11282,14 @@
       "theme": "math",
       "templateId": "math-mixed",
       "difficulty": 1,
-      "prompt": "10×19+38=?",
-      "answer": 228,
+      "prompt": "10×22-38=?",
+      "answer": 182,
       "wrong": [
-        218,
-        227,
-        229,
-        238
+        172,
+        180,
+        181,
+        183,
+        184
       ],
       "verified": true
     },
@@ -11341,13 +11298,14 @@
       "theme": "math",
       "templateId": "math-mixed",
       "difficulty": 1,
-      "prompt": "10×21+32=?",
-      "answer": 242,
+      "prompt": "10×24-36=?",
+      "answer": 204,
       "wrong": [
-        232,
-        241,
-        243,
-        252
+        194,
+        202,
+        203,
+        205,
+        206
       ],
       "verified": true
     },
@@ -11356,13 +11314,14 @@
       "theme": "math",
       "templateId": "math-mixed",
       "difficulty": 1,
-      "prompt": "10×22-36=?",
-      "answer": 184,
+      "prompt": "11×10+34=?",
+      "answer": 144,
       "wrong": [
-        174,
-        183,
-        185,
-        194
+        133,
+        142,
+        143,
+        145,
+        146
       ],
       "verified": true
     },
@@ -11371,14 +11330,14 @@
       "theme": "math",
       "templateId": "math-mixed",
       "difficulty": 1,
-      "prompt": "11×10+30=?",
-      "answer": 140,
+      "prompt": "11×12+32=?",
+      "answer": 164,
       "wrong": [
-        129,
-        139,
-        141,
-        151,
-        150
+        153,
+        162,
+        163,
+        165,
+        166
       ],
       "verified": true
     },
@@ -11387,14 +11346,14 @@
       "theme": "math",
       "templateId": "math-mixed",
       "difficulty": 1,
-      "prompt": "11×11-34=?",
-      "answer": 87,
+      "prompt": "11×14-31=?",
+      "answer": 123,
       "wrong": [
-        76,
-        86,
-        88,
-        98,
-        97
+        112,
+        121,
+        122,
+        124,
+        125
       ],
       "verified": true
     },
@@ -11431,7 +11390,7 @@
       "theme": "math",
       "templateId": "math-operator",
       "difficulty": 1,
-      "prompt": "102( )12=1224",
+      "prompt": "11( )12=132",
       "answer": "×",
       "wrong": [
         "+",
@@ -11445,7 +11404,7 @@
       "theme": "math",
       "templateId": "math-operator",
       "difficulty": 1,
-      "prompt": "1339( )13=103",
+      "prompt": "143( )13=11",
       "answer": "÷",
       "wrong": [
         "+",
@@ -11487,7 +11446,7 @@
       "theme": "math",
       "templateId": "math-operator",
       "difficulty": 1,
-      "prompt": "106( )16=1696",
+      "prompt": "13( )13=169",
       "answer": "×",
       "wrong": [
         "+",
@@ -11501,7 +11460,7 @@
       "theme": "math",
       "templateId": "math-operator",
       "difficulty": 1,
-      "prompt": "1819( )17=107",
+      "prompt": "176( )16=11",
       "answer": "÷",
       "wrong": [
         "+",
@@ -11543,7 +11502,7 @@
       "theme": "math",
       "templateId": "math-operator",
       "difficulty": 1,
-      "prompt": "110( )20=2200",
+      "prompt": "14( )14=196",
       "answer": "×",
       "wrong": [
         "+",
@@ -11557,7 +11516,7 @@
       "theme": "math",
       "templateId": "math-operator",
       "difficulty": 1,
-      "prompt": "2331( )21=111",
+      "prompt": "200( )20=10",
       "answer": "÷",
       "wrong": [
         "+",
@@ -11751,12 +11710,12 @@
       "theme": "math",
       "templateId": "math-remainder",
       "difficulty": 1,
-      "prompt": "101÷10的余数",
-      "answer": 1,
+      "prompt": "10÷4的余数",
+      "answer": 2,
       "wrong": [
         0,
-        2,
-        9
+        1,
+        3
       ],
       "verified": true
     },
@@ -11765,13 +11724,13 @@
       "theme": "math",
       "templateId": "math-remainder",
       "difficulty": 1,
-      "prompt": "127÷11的余数",
-      "answer": 6,
+      "prompt": "12÷5的余数",
+      "answer": 2,
       "wrong": [
         0,
-        5,
-        7,
-        10
+        1,
+        3,
+        4
       ],
       "verified": true
     },
@@ -11780,13 +11739,14 @@
       "theme": "math",
       "templateId": "math-remainder",
       "difficulty": 1,
-      "prompt": "155÷12的余数",
-      "answer": 11,
+      "prompt": "13÷6的余数",
+      "answer": 1,
       "wrong": [
         0,
-        10,
-        12,
-        1
+        2,
+        3,
+        4,
+        5
       ],
       "verified": true
     },
@@ -11795,14 +11755,14 @@
       "theme": "math",
       "templateId": "math-remainder",
       "difficulty": 1,
-      "prompt": "173÷13的余数",
-      "answer": 4,
+      "prompt": "14÷6的余数",
+      "answer": 2,
       "wrong": [
         0,
+        1,
         3,
-        5,
-        9,
-        12
+        4,
+        5
       ],
       "verified": true
     },
@@ -11811,14 +11771,14 @@
       "theme": "math",
       "templateId": "math-remainder",
       "difficulty": 1,
-      "prompt": "204÷14的余数",
-      "answer": 8,
+      "prompt": "15÷7的余数",
+      "answer": 1,
       "wrong": [
         0,
-        7,
-        9,
-        6,
-        13
+        2,
+        3,
+        4,
+        5
       ],
       "verified": true
     },
@@ -11827,14 +11787,14 @@
       "theme": "math",
       "templateId": "math-remainder",
       "difficulty": 1,
-      "prompt": "237÷15的余数",
-      "answer": 12,
+      "prompt": "16÷7的余数",
+      "answer": 2,
       "wrong": [
         0,
-        11,
-        13,
+        1,
         3,
-        14
+        4,
+        5
       ],
       "verified": true
     },
@@ -11843,12 +11803,14 @@
       "theme": "math",
       "templateId": "math-remainder",
       "difficulty": 1,
-      "prompt": "257÷16的余数",
-      "answer": 1,
+      "prompt": "17÷6的余数",
+      "answer": 5,
       "wrong": [
         0,
+        1,
         2,
-        15
+        3,
+        4
       ],
       "verified": true
     },
@@ -11857,14 +11819,12 @@
       "theme": "math",
       "templateId": "math-remainder",
       "difficulty": 1,
-      "prompt": "293÷17的余数",
-      "answer": 4,
+      "prompt": "18÷4的余数",
+      "answer": 2,
       "wrong": [
         0,
-        3,
-        5,
-        13,
-        16
+        1,
+        3
       ],
       "verified": true
     },
@@ -11873,14 +11833,14 @@
       "theme": "math",
       "templateId": "math-remainder",
       "difficulty": 1,
-      "prompt": "331÷18的余数",
-      "answer": 7,
+      "prompt": "18÷8的余数",
+      "answer": 2,
       "wrong": [
         0,
-        6,
-        8,
-        11,
-        17
+        1,
+        3,
+        4,
+        5
       ],
       "verified": true
     },
@@ -11889,13 +11849,14 @@
       "theme": "math",
       "templateId": "math-remainder",
       "difficulty": 1,
-      "prompt": "371÷19的余数",
-      "answer": 10,
+      "prompt": "19÷6的余数",
+      "answer": 1,
       "wrong": [
         0,
-        9,
-        11,
-        18
+        2,
+        3,
+        4,
+        5
       ],
       "verified": true
     },
@@ -11904,14 +11865,14 @@
       "theme": "math",
       "templateId": "math-remainder",
       "difficulty": 1,
-      "prompt": "413÷20的余数",
-      "answer": 13,
+      "prompt": "19÷9的余数",
+      "answer": 1,
       "wrong": [
         0,
-        12,
-        14,
-        7,
-        19
+        2,
+        3,
+        4,
+        5
       ],
       "verified": true
     },
@@ -11920,14 +11881,14 @@
       "theme": "math",
       "templateId": "math-remainder",
       "difficulty": 1,
-      "prompt": "457÷21的余数",
-      "answer": 16,
+      "prompt": "20÷8的余数",
+      "answer": 4,
       "wrong": [
         0,
-        15,
-        17,
-        5,
-        20
+        1,
+        2,
+        3,
+        5
       ],
       "verified": true
     },
@@ -13335,7 +13296,7 @@
       "wrong": [
         "木",
         "艹",
-        "目"
+        "日"
       ],
       "sourceFactId": "fact.hanzi.radical.0u28m1i",
       "id": "mvp.hanzi.0929",
@@ -13349,7 +13310,7 @@
       "wrong": [
         "木",
         "艹",
-        "目"
+        "日"
       ],
       "sourceFactId": "fact.hanzi.radical.0ts90cj",
       "id": "mvp.hanzi.0930",
@@ -13363,7 +13324,7 @@
       "wrong": [
         "氵",
         "艹",
-        "目"
+        "日"
       ],
       "sourceFactId": "fact.hanzi.radical.0ti9enk",
       "id": "mvp.hanzi.0931",
@@ -13377,7 +13338,7 @@
       "wrong": [
         "氵",
         "艹",
-        "目"
+        "日"
       ],
       "sourceFactId": "fact.hanzi.radical.0vg6mid",
       "id": "mvp.hanzi.0932",
@@ -13585,22 +13546,6 @@
     },
     {
       "theme": "english",
-      "templateId": "english-first-letter",
-      "prompt": "CAT的首字母",
-      "answer": "C",
-      "wrong": [
-        "A",
-        "B",
-        "D",
-        "E",
-        "F"
-      ],
-      "sourceFactId": "fact.english.words.0mh9c78",
-      "id": "mvp.english.0003",
-      "verified": true
-    },
-    {
-      "theme": "english",
       "templateId": "english-length",
       "prompt": "CAT有几个字母",
       "answer": 3,
@@ -13611,7 +13556,7 @@
         5
       ],
       "sourceFactId": "fact.english.words.0mh9c78",
-      "id": "mvp.english.0004",
+      "id": "mvp.english.0003",
       "verified": true
     },
     {
@@ -13627,7 +13572,7 @@
         "L"
       ],
       "sourceFactId": "fact.english.words.0mh9c78",
-      "id": "mvp.english.0005",
+      "id": "mvp.english.0004",
       "verified": true
     },
     {
@@ -13643,7 +13588,7 @@
         "老虎"
       ],
       "sourceFactId": "fact.english.words.0vb53uy",
-      "id": "mvp.english.0006",
+      "id": "mvp.english.0005",
       "verified": true
     },
     {
@@ -13659,23 +13604,7 @@
         "自然"
       ],
       "sourceFactId": "fact.english.words.0vb53uy",
-      "id": "mvp.english.0007",
-      "verified": true
-    },
-    {
-      "theme": "english",
-      "templateId": "english-first-letter",
-      "prompt": "DOG的首字母",
-      "answer": "D",
-      "wrong": [
-        "A",
-        "B",
-        "C",
-        "E",
-        "F"
-      ],
-      "sourceFactId": "fact.english.words.0vb53uy",
-      "id": "mvp.english.0008",
+      "id": "mvp.english.0006",
       "verified": true
     },
     {
@@ -13690,7 +13619,7 @@
         5
       ],
       "sourceFactId": "fact.english.words.0vb53uy",
-      "id": "mvp.english.0009",
+      "id": "mvp.english.0007",
       "verified": true
     },
     {
@@ -13706,7 +13635,7 @@
         "L"
       ],
       "sourceFactId": "fact.english.words.0vb53uy",
-      "id": "mvp.english.0010",
+      "id": "mvp.english.0008",
       "verified": true
     },
     {
@@ -13722,7 +13651,7 @@
         "老虎"
       ],
       "sourceFactId": "fact.english.words.0rhzgmj",
-      "id": "mvp.english.0011",
+      "id": "mvp.english.0009",
       "verified": true
     },
     {
@@ -13738,23 +13667,7 @@
         "自然"
       ],
       "sourceFactId": "fact.english.words.0rhzgmj",
-      "id": "mvp.english.0012",
-      "verified": true
-    },
-    {
-      "theme": "english",
-      "templateId": "english-first-letter",
-      "prompt": "BIRD的首字母",
-      "answer": "B",
-      "wrong": [
-        "A",
-        "C",
-        "D",
-        "E",
-        "F"
-      ],
-      "sourceFactId": "fact.english.words.0rhzgmj",
-      "id": "mvp.english.0013",
+      "id": "mvp.english.0010",
       "verified": true
     },
     {
@@ -13769,7 +13682,7 @@
         6
       ],
       "sourceFactId": "fact.english.words.0rhzgmj",
-      "id": "mvp.english.0014",
+      "id": "mvp.english.0011",
       "verified": true
     },
     {
@@ -13785,7 +13698,7 @@
         "L"
       ],
       "sourceFactId": "fact.english.words.0rhzgmj",
-      "id": "mvp.english.0015",
+      "id": "mvp.english.0012",
       "verified": true
     },
     {
@@ -13801,7 +13714,7 @@
         "老虎"
       ],
       "sourceFactId": "fact.english.words.0iwt27k",
-      "id": "mvp.english.0016",
+      "id": "mvp.english.0013",
       "verified": true
     },
     {
@@ -13817,23 +13730,7 @@
         "自然"
       ],
       "sourceFactId": "fact.english.words.0iwt27k",
-      "id": "mvp.english.0017",
-      "verified": true
-    },
-    {
-      "theme": "english",
-      "templateId": "english-first-letter",
-      "prompt": "ZEBRA的首字母",
-      "answer": "Z",
-      "wrong": [
-        "A",
-        "B",
-        "C",
-        "D",
-        "E"
-      ],
-      "sourceFactId": "fact.english.words.0iwt27k",
-      "id": "mvp.english.0018",
+      "id": "mvp.english.0014",
       "verified": true
     },
     {
@@ -13848,7 +13745,7 @@
         7
       ],
       "sourceFactId": "fact.english.words.0iwt27k",
-      "id": "mvp.english.0019",
+      "id": "mvp.english.0015",
       "verified": true
     },
     {
@@ -13864,7 +13761,7 @@
         "T"
       ],
       "sourceFactId": "fact.english.words.0iwt27k",
-      "id": "mvp.english.0020",
+      "id": "mvp.english.0016",
       "verified": true
     },
     {
@@ -13880,7 +13777,7 @@
         "老虎"
       ],
       "sourceFactId": "fact.english.words.137n8si",
-      "id": "mvp.english.0021",
+      "id": "mvp.english.0017",
       "verified": true
     },
     {
@@ -13896,23 +13793,7 @@
         "自然"
       ],
       "sourceFactId": "fact.english.words.137n8si",
-      "id": "mvp.english.0022",
-      "verified": true
-    },
-    {
-      "theme": "english",
-      "templateId": "english-first-letter",
-      "prompt": "LION的首字母",
-      "answer": "L",
-      "wrong": [
-        "A",
-        "B",
-        "C",
-        "D",
-        "E"
-      ],
-      "sourceFactId": "fact.english.words.137n8si",
-      "id": "mvp.english.0023",
+      "id": "mvp.english.0018",
       "verified": true
     },
     {
@@ -13927,7 +13808,7 @@
         6
       ],
       "sourceFactId": "fact.english.words.137n8si",
-      "id": "mvp.english.0024",
+      "id": "mvp.english.0019",
       "verified": true
     },
     {
@@ -13943,7 +13824,7 @@
         "L"
       ],
       "sourceFactId": "fact.english.words.137n8si",
-      "id": "mvp.english.0025",
+      "id": "mvp.english.0020",
       "verified": true
     },
     {
@@ -13959,7 +13840,7 @@
         "狮子"
       ],
       "sourceFactId": "fact.english.words.0v3nkzj",
-      "id": "mvp.english.0026",
+      "id": "mvp.english.0021",
       "verified": true
     },
     {
@@ -13975,23 +13856,7 @@
         "自然"
       ],
       "sourceFactId": "fact.english.words.0v3nkzj",
-      "id": "mvp.english.0027",
-      "verified": true
-    },
-    {
-      "theme": "english",
-      "templateId": "english-first-letter",
-      "prompt": "TIGER的首字母",
-      "answer": "T",
-      "wrong": [
-        "A",
-        "B",
-        "C",
-        "D",
-        "E"
-      ],
-      "sourceFactId": "fact.english.words.0v3nkzj",
-      "id": "mvp.english.0028",
+      "id": "mvp.english.0022",
       "verified": true
     },
     {
@@ -14006,7 +13871,7 @@
         7
       ],
       "sourceFactId": "fact.english.words.0v3nkzj",
-      "id": "mvp.english.0029",
+      "id": "mvp.english.0023",
       "verified": true
     },
     {
@@ -14022,7 +13887,7 @@
         "L"
       ],
       "sourceFactId": "fact.english.words.0v3nkzj",
-      "id": "mvp.english.0030",
+      "id": "mvp.english.0024",
       "verified": true
     },
     {
@@ -14038,7 +13903,7 @@
         "狮子"
       ],
       "sourceFactId": "fact.english.words.1a3yp9x",
-      "id": "mvp.english.0031",
+      "id": "mvp.english.0025",
       "verified": true
     },
     {
@@ -14054,23 +13919,7 @@
         "自然"
       ],
       "sourceFactId": "fact.english.words.1a3yp9x",
-      "id": "mvp.english.0032",
-      "verified": true
-    },
-    {
-      "theme": "english",
-      "templateId": "english-first-letter",
-      "prompt": "HORSE的首字母",
-      "answer": "H",
-      "wrong": [
-        "A",
-        "B",
-        "C",
-        "D",
-        "E"
-      ],
-      "sourceFactId": "fact.english.words.1a3yp9x",
-      "id": "mvp.english.0033",
+      "id": "mvp.english.0026",
       "verified": true
     },
     {
@@ -14085,7 +13934,7 @@
         7
       ],
       "sourceFactId": "fact.english.words.1a3yp9x",
-      "id": "mvp.english.0034",
+      "id": "mvp.english.0027",
       "verified": true
     },
     {
@@ -14101,7 +13950,7 @@
         "L"
       ],
       "sourceFactId": "fact.english.words.1a3yp9x",
-      "id": "mvp.english.0035",
+      "id": "mvp.english.0028",
       "verified": true
     },
     {
@@ -14117,7 +13966,7 @@
         "狮子"
       ],
       "sourceFactId": "fact.english.words.1ajfczs",
-      "id": "mvp.english.0036",
+      "id": "mvp.english.0029",
       "verified": true
     },
     {
@@ -14133,23 +13982,7 @@
         "自然"
       ],
       "sourceFactId": "fact.english.words.1ajfczs",
-      "id": "mvp.english.0037",
-      "verified": true
-    },
-    {
-      "theme": "english",
-      "templateId": "english-first-letter",
-      "prompt": "PANDA的首字母",
-      "answer": "P",
-      "wrong": [
-        "A",
-        "B",
-        "C",
-        "D",
-        "E"
-      ],
-      "sourceFactId": "fact.english.words.1ajfczs",
-      "id": "mvp.english.0038",
+      "id": "mvp.english.0030",
       "verified": true
     },
     {
@@ -14164,7 +13997,7 @@
         7
       ],
       "sourceFactId": "fact.english.words.1ajfczs",
-      "id": "mvp.english.0039",
+      "id": "mvp.english.0031",
       "verified": true
     },
     {
@@ -14180,7 +14013,7 @@
         "L"
       ],
       "sourceFactId": "fact.english.words.1ajfczs",
-      "id": "mvp.english.0040",
+      "id": "mvp.english.0032",
       "verified": true
     },
     {
@@ -14196,7 +14029,7 @@
         "狮子"
       ],
       "sourceFactId": "fact.english.words.1rxsl47",
-      "id": "mvp.english.0041",
+      "id": "mvp.english.0033",
       "verified": true
     },
     {
@@ -14212,23 +14045,7 @@
         "自然"
       ],
       "sourceFactId": "fact.english.words.1rxsl47",
-      "id": "mvp.english.0042",
-      "verified": true
-    },
-    {
-      "theme": "english",
-      "templateId": "english-first-letter",
-      "prompt": "RED的首字母",
-      "answer": "R",
-      "wrong": [
-        "A",
-        "B",
-        "C",
-        "D",
-        "E"
-      ],
-      "sourceFactId": "fact.english.words.1rxsl47",
-      "id": "mvp.english.0043",
+      "id": "mvp.english.0034",
       "verified": true
     },
     {
@@ -14243,7 +14060,7 @@
         5
       ],
       "sourceFactId": "fact.english.words.1rxsl47",
-      "id": "mvp.english.0044",
+      "id": "mvp.english.0035",
       "verified": true
     },
     {
@@ -14259,7 +14076,7 @@
         "L"
       ],
       "sourceFactId": "fact.english.words.1rxsl47",
-      "id": "mvp.english.0045",
+      "id": "mvp.english.0036",
       "verified": true
     },
     {
@@ -14275,7 +14092,7 @@
         "狮子"
       ],
       "sourceFactId": "fact.english.words.0via4bw",
-      "id": "mvp.english.0046",
+      "id": "mvp.english.0037",
       "verified": true
     },
     {
@@ -14291,23 +14108,7 @@
         "自然"
       ],
       "sourceFactId": "fact.english.words.0via4bw",
-      "id": "mvp.english.0047",
-      "verified": true
-    },
-    {
-      "theme": "english",
-      "templateId": "english-first-letter",
-      "prompt": "BLUE的首字母",
-      "answer": "B",
-      "wrong": [
-        "A",
-        "C",
-        "D",
-        "E",
-        "F"
-      ],
-      "sourceFactId": "fact.english.words.0via4bw",
-      "id": "mvp.english.0048",
+      "id": "mvp.english.0038",
       "verified": true
     },
     {
@@ -14322,7 +14123,7 @@
         6
       ],
       "sourceFactId": "fact.english.words.0via4bw",
-      "id": "mvp.english.0049",
+      "id": "mvp.english.0039",
       "verified": true
     },
     {
@@ -14338,7 +14139,7 @@
         "L"
       ],
       "sourceFactId": "fact.english.words.0via4bw",
-      "id": "mvp.english.0050",
+      "id": "mvp.english.0040",
       "verified": true
     },
     {
@@ -14354,7 +14155,7 @@
         "狮子"
       ],
       "sourceFactId": "fact.english.words.0wak7kz",
-      "id": "mvp.english.0051",
+      "id": "mvp.english.0041",
       "verified": true
     },
     {
@@ -14370,23 +14171,7 @@
         "自然"
       ],
       "sourceFactId": "fact.english.words.0wak7kz",
-      "id": "mvp.english.0052",
-      "verified": true
-    },
-    {
-      "theme": "english",
-      "templateId": "english-first-letter",
-      "prompt": "GREEN的首字母",
-      "answer": "G",
-      "wrong": [
-        "A",
-        "B",
-        "C",
-        "D",
-        "E"
-      ],
-      "sourceFactId": "fact.english.words.0wak7kz",
-      "id": "mvp.english.0053",
+      "id": "mvp.english.0042",
       "verified": true
     },
     {
@@ -14401,7 +14186,7 @@
         7
       ],
       "sourceFactId": "fact.english.words.0wak7kz",
-      "id": "mvp.english.0054",
+      "id": "mvp.english.0043",
       "verified": true
     },
     {
@@ -14417,7 +14202,7 @@
         "L"
       ],
       "sourceFactId": "fact.english.words.0wak7kz",
-      "id": "mvp.english.0055",
+      "id": "mvp.english.0044",
       "verified": true
     },
     {
@@ -14433,7 +14218,7 @@
         "狮子"
       ],
       "sourceFactId": "fact.english.words.1af7c8z",
-      "id": "mvp.english.0056",
+      "id": "mvp.english.0045",
       "verified": true
     },
     {
@@ -14449,23 +14234,7 @@
         "自然"
       ],
       "sourceFactId": "fact.english.words.1af7c8z",
-      "id": "mvp.english.0057",
-      "verified": true
-    },
-    {
-      "theme": "english",
-      "templateId": "english-first-letter",
-      "prompt": "BLACK的首字母",
-      "answer": "B",
-      "wrong": [
-        "A",
-        "C",
-        "D",
-        "E",
-        "F"
-      ],
-      "sourceFactId": "fact.english.words.1af7c8z",
-      "id": "mvp.english.0058",
+      "id": "mvp.english.0046",
       "verified": true
     },
     {
@@ -14480,7 +14249,7 @@
         7
       ],
       "sourceFactId": "fact.english.words.1af7c8z",
-      "id": "mvp.english.0059",
+      "id": "mvp.english.0047",
       "verified": true
     },
     {
@@ -14496,7 +14265,7 @@
         "L"
       ],
       "sourceFactId": "fact.english.words.1af7c8z",
-      "id": "mvp.english.0060",
+      "id": "mvp.english.0048",
       "verified": true
     },
     {
@@ -14510,7 +14279,7 @@
         "QUIET"
       ],
       "sourceFactId": "fact.english.synonyms.0beuttf",
-      "id": "mvp.english.1501",
+      "id": "mvp.english.1201",
       "verified": true
     },
     {
@@ -14524,7 +14293,7 @@
         "SHORT"
       ],
       "sourceFactId": "fact.english.synonyms.1g76yd7",
-      "id": "mvp.english.1502",
+      "id": "mvp.english.1202",
       "verified": true
     },
     {
@@ -14538,7 +14307,7 @@
         "WIDE"
       ],
       "sourceFactId": "fact.english.synonyms.0wazetv",
-      "id": "mvp.english.1503",
+      "id": "mvp.english.1203",
       "verified": true
     },
     {
@@ -14552,7 +14321,7 @@
         "WAIT"
       ],
       "sourceFactId": "fact.english.synonyms.1qazt9t",
-      "id": "mvp.english.1504",
+      "id": "mvp.english.1204",
       "verified": true
     },
     {
@@ -14566,7 +14335,7 @@
         "LOUD"
       ],
       "sourceFactId": "fact.english.synonyms.0zjx05h",
-      "id": "mvp.english.1505",
+      "id": "mvp.english.1205",
       "verified": true
     },
     {
@@ -14580,7 +14349,7 @@
         "TIRED"
       ],
       "sourceFactId": "fact.english.synonyms.1otpsea",
-      "id": "mvp.english.1506",
+      "id": "mvp.english.1206",
       "verified": true
     },
     {
@@ -14594,7 +14363,7 @@
         "BRIGHT"
       ],
       "sourceFactId": "fact.english.synonyms.0ibzrk4",
-      "id": "mvp.english.1507",
+      "id": "mvp.english.1207",
       "verified": true
     },
     {
@@ -14608,7 +14377,7 @@
         "ENTER"
       ],
       "sourceFactId": "fact.english.synonyms.0bubk1n",
-      "id": "mvp.english.1508",
+      "id": "mvp.english.1208",
       "verified": true
     },
     {
@@ -14622,7 +14391,7 @@
         "HARD"
       ],
       "sourceFactId": "fact.english.synonyms.1imgeqn",
-      "id": "mvp.english.1509",
+      "id": "mvp.english.1209",
       "verified": true
     },
     {
@@ -14636,7 +14405,7 @@
         "HARD"
       ],
       "sourceFactId": "fact.english.synonyms.1iwg0fm",
-      "id": "mvp.english.1510",
+      "id": "mvp.english.1210",
       "verified": true
     },
     {
@@ -14650,7 +14419,7 @@
         "HARD"
       ],
       "sourceFactId": "fact.english.synonyms.1j6fm4l",
-      "id": "mvp.english.1511",
+      "id": "mvp.english.1211",
       "verified": true
     },
     {
@@ -14664,7 +14433,7 @@
         "RIGHT"
       ],
       "sourceFactId": "fact.english.synonyms.1h8ie9s",
-      "id": "mvp.english.1512",
+      "id": "mvp.english.1212",
       "verified": true
     },
     {

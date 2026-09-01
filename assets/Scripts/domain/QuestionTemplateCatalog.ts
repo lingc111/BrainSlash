@@ -8,7 +8,7 @@ export type QuestionTemplateId =
     | 'vision-mirror' | 'vision-symmetry' | 'vision-grid-position' | 'vision-rotation'
     | 'hanzi-fill' | 'hanzi-order' | 'hanzi-antonym' | 'hanzi-synonym' | 'hanzi-pinyin' | 'hanzi-poetry'
     | 'hanzi-radical' | 'hanzi-homophone' | 'hanzi-compose'
-    | 'english-meaning' | 'english-category' | 'english-antonym' | 'english-first-letter' | 'english-length'
+    | 'english-meaning' | 'english-category' | 'english-antonym' | 'english-length'
     | 'english-missing-letter' | 'english-synonym' | 'english-word-order'
     | 'life-category' | 'life-use' | 'life-place' | 'life-public-sign' | 'life-safe-behavior' | 'life-process'
     | 'geography-capital' | 'geography-country' | 'geography-continent' | 'geography-landmark'
@@ -50,7 +50,7 @@ const ROTATION_SAFE_TEMPLATE_IDS = new Set<QuestionTemplateId>([
     'math-property', 'math-compare', 'math-sequence',
     'vision-odd', 'vision-match', 'vision-symmetry',
     'hanzi-fill', 'hanzi-order', 'hanzi-radical', 'hanzi-homophone', 'hanzi-compose',
-    'english-first-letter', 'english-length', 'english-missing-letter',
+    'english-length', 'english-missing-letter',
 ]);
 
 function define(
@@ -105,7 +105,6 @@ export const QUESTION_TEMPLATES: readonly QuestionTemplate[] = [
     define('english-meaning', 'english', 'pair', ['single', 'short-text'], 'reviewed-facts', ['meaning']),
     define('english-category', 'english', 'condition', ['single', 'multi', 'master-slash', 'category', 'short-text'], 'reviewed-facts', ['category'], MULTI_RULES, 5),
     define('english-antonym', 'english', 'pair', ['single', 'short-text'], 'reviewed-facts', ['antonym']),
-    define('english-first-letter', 'english', 'single', ['single', 'short-text'], 'reviewed-facts', ['spelling', 'first-letter']),
     define('english-length', 'english', 'count', ['single', 'numeric'], 'reviewed-facts', ['spelling', 'length']),
     define('english-missing-letter', 'english', 'fill', ['single', 'short-text'], 'reviewed-facts', ['spelling', 'fill']),
     define('english-synonym', 'english', 'pair', ['single', 'short-text'], 'reviewed-facts', ['synonym']),

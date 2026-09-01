@@ -151,6 +151,25 @@ test('action and climax multiplication division avoid kindergarten-sized operand
     }
 });
 
+test('direction questions use readable text arrows instead of emoji arrows', () => {
+    const entry: GameEntryParams = { mode: 'brawl60', seed: 'text-directions', contentVersion: CONTENT_VERSION };
+    const compiler = new QuestionCompiler(new SeededRng(`${entry.seed}:compiler`), GAMEPLAY_CONFIG, entry);
+    // Bare diagonal arrows are prohibited too: WeChat promotes them to emoji
+    // even without an explicit U+FE0F emoji variation selector.
+    const emojiArrows = /[⬅⬆➡⬇↔↕↖↗↙↘]\uFE0F?|\uFE0F/;
+    const textArrows = /[←↑→↓]/;
+    for (const templateId of ['vision-direction', 'vision-mirror', 'vision-rotation'] as const) {
+        for (let index = 0; index < 20; index += 1) {
+            const question = compiler.next({ templateIds: [templateId], themes: ['vision'], rules: ['standard'],
+                difficulty: 4, targetCount: 4, questionTimeMs: 2_600, speed: 1, phase: 'action' }, CONTENT_VERSION);
+            assert.ok(!emojiArrows.test(question.prompt.text), question.prompt.text);
+            assert.ok(question.targets.every((target) => !emojiArrows.test(target.text)), question.targets.map((target) => target.text).join(','));
+            assert.ok(textArrows.test(question.prompt.text)
+                || question.targets.some((target) => textArrows.test(target.text)), question.prompt.text);
+        }
+    }
+});
+
 test('difficulty-three property questions rotate 2 3 5 and 7 multiples', () => {
     const entry: GameEntryParams = { mode: 'brawl60', seed: 'multiple-variety', contentVersion: CONTENT_VERSION };
     const compiler = new QuestionCompiler(new SeededRng(`${entry.seed}:compiler`), GAMEPLAY_CONFIG, entry);

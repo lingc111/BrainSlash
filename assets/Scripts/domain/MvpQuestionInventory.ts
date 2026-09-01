@@ -109,8 +109,6 @@ function reviewedSeeds(theme: ThemeId): Seed[] {
                     wrong: uniqueWrong(fields.zh, meaningPool), sourceFactId: record.id });
                 seeds.push({ theme, templateId: 'english-category', prompt: `${word}所属类别`, answer: fields.category,
                     wrong: uniqueWrong(fields.category, categoryPool), sourceFactId: record.id });
-                seeds.push({ theme, templateId: 'english-first-letter', prompt: `${word}的首字母`, answer: word[0],
-                    wrong: uniqueWrong(word[0], 'ABCDEFGHIJKLMNOPQRSTUVWXYZ'.split('')), sourceFactId: record.id });
                 seeds.push({ theme, templateId: 'english-length', prompt: `${word}有几个字母`, answer: word.length,
                     wrong: uniqueWrong(word.length, [word.length - 2, word.length - 1, word.length + 1, word.length + 2]), sourceFactId: record.id });
                 const missing = Math.floor(word.length / 2);
@@ -137,7 +135,10 @@ function reviewedSeeds(theme: ThemeId): Seed[] {
         if (seed.wrong.length < 3) continue;
         unique.set(`${seed.templateId}|${seed.prompt}|${seed.answer}`, seed);
     }
-    return [...unique.values()];
+    // Do not spread Map iterators here. Cocos' WeChat transform can lower
+    // iterable spread as array concat and leave a single iterator object,
+    // making the runtime believe the themed seed pool contains one item.
+    return Array.from(unique.values());
 }
 
 function expandTheme(theme: ThemeId, target: number): MvpChoiceQuestion[] {
@@ -165,22 +166,39 @@ function arithmeticInventory(): MvpChoiceQuestion[] {
         items[Math.floor(index * items.length / count)]);
     const wrongNumbers = (answer: number, stride: number) =>
         [answer - stride, answer - 1, answer + 1, answer + stride, answer + 10];
+    const boundedArithmeticWrong = (answer: number, stride: number) =>
+        [answer - stride, answer - 2, answer - 1, answer + 1, answer + 2, answer + stride]
+            .filter((value) => value >= 10 && value <= 999);
+    const productPairs: Array<readonly [number, number]> = [];
+    for (let a = 10; a <= 99; a += 1) for (let b = a; b <= 99; b += 1) {
+        if (a * b <= 999) productPairs.push([a, b]);
+    }
+    productPairs.sort((left, right) => left[0] * left[1] - right[0] * right[1]);
+    const selectedProductPairs = take(productPairs, 300);
+    const remainderProblems: Array<readonly [number, number, number]> = [];
+    for (let dividend = 10; dividend <= 99; dividend += 1) for (let divisor = 4; divisor <= 19; divisor += 1) {
+        const remainder = dividend % divisor;
+        if (Math.floor(dividend / divisor) >= 2 && remainder >= 1 && remainder <= 9) {
+            remainderProblems.push([dividend, divisor, remainder]);
+        }
+    }
+    const selectedRemainders = take(remainderProblems, 300);
     for (let difficulty = 1 as 1 | 2 | 3 | 4 | 5; difficulty <= 5; difficulty = (difficulty + 1) as typeof difficulty) {
         const base = 100 + (difficulty - 1) * 140;
         const additions: Array<readonly [number, number]> = [];
         const subtractions: Array<readonly [number, number]> = [];
-        const products: Array<readonly [number, number]> = [];
-        const divisions: Array<readonly [number, number]> = [];
         const mixed: Array<readonly [number, number, number, boolean]> = [];
         for (let offset = 0; offset < 20; offset += 1) for (let step = 0; step < 20; step += 1) {
             additions.push([base + offset, 100 + difficulty * 20 + step]);
             subtractions.push([base + 220 + offset, 100 + difficulty * 18 + step]);
         }
-        const factorMin = 10 + (difficulty - 1) * 14;
-        for (let a = factorMin; a < factorMin + 14; a += 1) for (let b = factorMin; b < factorMin + 14; b += 1) {
-            products.push([a, b]);
-            divisions.push([a, b]);
-            for (let offset = 20; offset < 30; offset += 1) mixed.push([a, b, offset + difficulty * 10, (a + b + offset) % 2 === 0]);
+        const factorMin = 10 + (difficulty - 1) * 2;
+        for (let a = factorMin; a < factorMin + 16; a += 1) for (let b = factorMin; b < factorMin + 16; b += 1) {
+            if (a * b > 900) continue;
+            for (let offset = 20; offset < 30; offset += 1) {
+                const adjustedOffset = offset + difficulty * 10;
+                if (a * b + adjustedOffset <= 999) mixed.push([a, b, adjustedOffset, (a + b + offset) % 2 === 0]);
+            }
         }
         for (const [a, b] of take(additions, 60)) {
             const answer = a + b; push('math-add', difficulty, `${a}+${b}=?`, answer, wrongNumbers(answer, 10));
@@ -188,25 +206,26 @@ function arithmeticInventory(): MvpChoiceQuestion[] {
         for (const [minuend, subtrahend] of take(subtractions, 60)) {
             const answer = minuend - subtrahend; push('math-subtract', difficulty, `${minuend}-${subtrahend}=?`, answer, wrongNumbers(answer, 10));
         }
-        for (const [a, b] of take(products, 60)) {
-            const answer = a * b; push('math-multiply', difficulty, `${a}×${b}=?`, answer, wrongNumbers(answer, a));
+        for (const [a, b] of selectedProductPairs.slice((difficulty - 1) * 60, difficulty * 60)) {
+            const answer = a * b; push('math-multiply', difficulty, `${a}×${b}=?`, answer, boundedArithmeticWrong(answer, a));
         }
-        for (const [divisor, answer] of take(divisions, 60)) {
+        for (const [divisor, answer] of selectedProductPairs.slice((difficulty - 1) * 60, difficulty * 60)) {
             push('math-divide', difficulty, `${divisor * answer}÷${divisor}=?`, answer, wrongNumbers(answer, 2));
         }
         for (const [a, b, offset, subtract] of take(mixed, 140)) {
             const answer = subtract ? a * b - offset : a * b + offset;
-            push('math-mixed', difficulty, `${a}×${b}${subtract ? '-' : '+'}${offset}=?`, answer, wrongNumbers(answer, a));
+            push('math-mixed', difficulty, `${a}×${b}${subtract ? '-' : '+'}${offset}=?`, answer, boundedArithmeticWrong(answer, a));
         }
         const operators = ['+', '-', '×', '÷'] as const;
         for (let index = 0; index < 60; index += 1) {
             const operator = operators[index % operators.length];
             const left = base + index;
             const right = operator === '×' || operator === '÷' ? factorMin + index % 14 : 100 + index;
+            const [factorLeft, factorRight] = selectedProductPairs[(difficulty - 1) * 60 + index];
             const prompt = operator === '+' ? `${left}( )${right}=${left + right}`
                 : operator === '-' ? `${left + right}( )${right}=${left}`
-                    : operator === '×' ? `${left}( )${right}=${left * right}`
-                        : `${left * right}( )${right}=${left}`;
+                    : operator === '×' ? `${factorLeft}( )${factorRight}=${factorLeft * factorRight}`
+                        : `${factorLeft * factorRight}( )${factorRight}=${factorLeft}`;
             push('math-operator', difficulty, prompt, operator, ['+', '-', '×', '÷'].filter((item) => item !== operator));
         }
         const reverseSources: string[] = [];
@@ -225,13 +244,9 @@ function arithmeticInventory(): MvpChoiceQuestion[] {
             });
             push('math-digit-reverse', difficulty, `${source}反转后`, answer, wrong);
         }
-        for (let index = 0; index < 60; index += 1) {
-            const divisor = factorMin + index % 14;
-            const quotient = factorMin + index;
-            const remainder = 1 + index * 5 % (divisor - 1);
-            const dividend = divisor * quotient + remainder;
+        for (const [dividend, divisor, remainder] of selectedRemainders.slice((difficulty - 1) * 60, difficulty * 60)) {
             push('math-remainder', difficulty, `${dividend}÷${divisor}的余数`, remainder,
-                [0, remainder - 1, remainder + 1, divisor - remainder, divisor - 1]);
+                Array.from({ length: Math.min(10, divisor) }, (_, value) => value));
         }
     }
     return output;
