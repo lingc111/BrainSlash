@@ -136,9 +136,9 @@ export class RankingPage extends Component {
 
     private buildPodium(parent: Node): void {
         const podium = [
-            { asset: 'ranking_silver', x: -250, y: 207, size: [156, 190] as [number, number], faceX: -248, faceY: 204, avatarSize: 88 },
+            { asset: 'ranking_silver', x: -250, y: 207, size: [156, 190] as [number, number], faceX: -248, faceY: 212, avatarSize: 104 },
             { asset: 'ranking_gold', x: 0, y: 232, size: [210, 236] as [number, number], faceX: -3, faceY: 223, avatarSize: 112 },
-            { asset: 'ranking_bronze', x: 250, y: 207, size: [156, 190] as [number, number], faceX: 250, faceY: 204, avatarSize: 92 },
+            { asset: 'ranking_bronze', x: 250, y: 207, size: [156, 190] as [number, number], faceX: 250, faceY: 212, avatarSize: 104 },
         ];
 
         podium.forEach((item, index) => {

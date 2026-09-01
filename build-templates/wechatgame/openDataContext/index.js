@@ -263,8 +263,8 @@ function compareTrial(a, b) {
 function drawPodium(entry, displayIndex) {
     const x = [-250, 0, 250][displayIndex];
     const avatarX = [-248, -3, 250][displayIndex];
-    const avatarY = [204, 223, 204][displayIndex];
-    const avatarDiameter = [88, 112, 92][displayIndex];
+    const avatarY = [212, 223, 212][displayIndex];
+    const avatarDiameter = [104, 112, 104][displayIndex];
     drawAvatar(entry.avatarUrl, avatarX, avatarY, avatarDiameter, false);
     drawText(entry.name, x, 101, 31, '#1f1d19', 'center', true, 190, true);
     drawText(scoreText(entry), x, 59, 30, '#1f1d19', 'center', true, 176);
