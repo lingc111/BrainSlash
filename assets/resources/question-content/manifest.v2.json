@@ -1,21 +1,21 @@
 {
   "schemaVersion": 2,
-  "contentVersion": "2.1.0-expanded-question-content",
+  "contentVersion": "2.2.0-content-density",
   "bundle": "question-content",
   "bundles": [
     {
       "kind": "production",
       "file": "question-content.v2.json",
-      "sha256": "e02dcf98c33d0dff6a00dd94d4854d521b30c2c2c725bb0a05d08f626c012a86",
+      "sha256": "ba1a45a505bb045aa4d7ebd152eba6133f5ca690de4f27ba6ee900e02b97a0b9",
       "templateCount": 66,
-      "factCount": 1202
+      "factCount": 1979
     },
     {
       "kind": "fallback",
       "file": "question-content.fallback.v2.json",
-      "sha256": "350368fdf410570df8b030c25973c35527e6b619695f21fbfa9b0cd7626051b4",
+      "sha256": "480a0734144d461fc46941a1d1af71e13d9e5de11e5e00e72b831f494d2c28b1",
       "templateCount": 66,
-      "factCount": 312
+      "factCount": 360
     }
   ]
 }

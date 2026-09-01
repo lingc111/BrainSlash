@@ -66,8 +66,25 @@ for (const pack of QUESTION_BANK_PACKS) {
     if (factKeys.has(key)) errors.push(`${pack.id}[${index}]: duplicate of ${factKeys.get(key)}`);
     factKeys.set(key, `${pack.id}[${index}]`);
     if (Array.isArray(record.fields.wrong)) {
+      if (record.fields.wrong.length < 3) errors.push(`${pack.id}[${index}]: fewer than three distractors`);
       if (record.fields.wrong.includes(record.fields.answer)) errors.push(`${pack.id}[${index}]: answer appears in distractors`);
       if (new Set(record.fields.wrong).size !== record.fields.wrong.length) errors.push(`${pack.id}[${index}]: duplicate distractors`);
+      if (record.fields.wrong.some((choice) => typeof choice !== 'string')
+          || ('answer' in record.fields && typeof record.fields.answer !== 'string')) {
+        errors.push(`${pack.id}[${index}]: answer choices must be strings`);
+      }
+    }
+    if (Array.isArray(record.fields.parts) && record.fields.parts.some((part) => typeof part !== 'string')) {
+      errors.push(`${pack.id}[${index}]: ordered choices must be strings`);
+    }
+    if (record.kind === 'life.process') {
+      if (typeof record.fields.prompt !== 'string' || Array.from(record.fields.prompt).length > 6 || record.fields.prompt.includes('顺序')) {
+        errors.push(`${pack.id}[${index}]: process prompt is not concise`);
+      }
+      if (!Array.isArray(record.fields.parts) || record.fields.parts.length !== 4
+          || record.fields.parts.some((part) => Array.from(part).length > 6)) {
+        errors.push(`${pack.id}[${index}]: process choices are not glanceable`);
+      }
     }
   });
 }
@@ -79,7 +96,7 @@ for (const template of QUESTION_TEMPLATES) {
   if (template.sourceKind === 'reviewed-facts') {
     const factCount = QUESTION_BANK_PACKS.filter((pack) => pack.templateIds.includes(template.id))
       .reduce((sum, pack) => sum + pack.records.filter((record) => record.enabled).length, 0);
-    if (factCount < 8) errors.push(`${template.id}: only ${factCount} enabled facts; minimum is 8`);
+    if (factCount < 30) errors.push(`${template.id}: only ${factCount} enabled facts; minimum is 30`);
   }
 }
 
@@ -90,6 +107,9 @@ console.log(JSON.stringify({
       .map((theme) => [theme, QUESTION_TEMPLATES.filter((item) => item.theme === theme).length])),
   },
   reviewedFacts: getQuestionBankStats(),
+  factsByTemplate: Object.fromEntries(QUESTION_TEMPLATES.filter((template) => template.sourceKind === 'reviewed-facts')
+    .map((template) => [template.id, QUESTION_BANK_PACKS.filter((pack) => pack.templateIds.includes(template.id))
+      .reduce((sum, pack) => sum + pack.records.filter((record) => record.enabled).length, 0)])),
 }, null, 2));
 
 if (errors.length) {

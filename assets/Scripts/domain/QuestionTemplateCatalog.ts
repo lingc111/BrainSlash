@@ -35,6 +35,8 @@ export interface QuestionTemplate {
     supportedRuleSets: readonly (readonly RuleId[])[];
     targetCap: number;
     directionSensitive?: boolean;
+    /** Every generated target stays below the rotation readability cutoff. */
+    rotationSafe: boolean;
     enabled: boolean;
 }
 
@@ -44,6 +46,13 @@ const MULTI_RULES: readonly (readonly RuleId[])[] = [['standard'], ['multi'], ['
 const SEQUENCE_RULES: readonly (readonly RuleId[])[] = [['standard'], ['reverse'], ['bomb'], ['order'], ['bomb', 'order']];
 const ORDER_RULES: readonly (readonly RuleId[])[] = [['order'], ['bomb', 'order']];
 const STROOP_RULES: readonly (readonly RuleId[])[] = [['standard'], ['bomb']];
+const ROTATION_SAFE_TEMPLATE_IDS = new Set<QuestionTemplateId>([
+    'math-add', 'math-subtract', 'math-multiply', 'math-property', 'math-compare',
+    'math-sequence', 'math-missing', 'math-divide', 'math-mixed',
+    'vision-odd', 'vision-match', 'vision-symmetry',
+    'hanzi-fill', 'hanzi-order', 'hanzi-radical', 'hanzi-homophone', 'hanzi-compose',
+    'english-first-letter', 'english-length', 'english-missing-letter',
+]);
 
 function define(
     id: QuestionTemplateId,
@@ -57,7 +66,7 @@ function define(
     directionSensitive = false,
 ): QuestionTemplate {
     return { id, theme, engine, capabilities, sourceKind, tags, difficultyBands: DIFFICULTIES,
-        supportedRuleSets, targetCap, directionSensitive, enabled: true };
+        supportedRuleSets, targetCap, directionSensitive, rotationSafe: ROTATION_SAFE_TEMPLATE_IDS.has(id), enabled: true };
 }
 
 export const QUESTION_TEMPLATES: readonly QuestionTemplate[] = [

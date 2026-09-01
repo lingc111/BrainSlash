@@ -24,6 +24,7 @@ import {
 } from './KnowledgeExpansionCatalog';
 import type { ThemeId } from './Models';
 import { EXPANSION_ORDER_PACKS, EXPANSION_TRIVIA_PACKS } from './ThemeExpansionCatalog';
+import { ENGLISH_EXTRA_WORDS } from './EnglishVocabularyExpansion';
 
 export type QuestionBankStorage = 'curated' | 'relationship';
 
@@ -63,6 +64,7 @@ const RAW_QUESTION_BANK_PACKS: readonly RawQuestionBankPack[] = [
     { id: 'hanzi.radical', label: '汉字部首', theme: 'hanzi', storage: 'relationship', templateIds: ['hanzi-radical'], rawRecords: EXPANSION_TRIVIA_PACKS['hanzi-radical']! },
     { id: 'hanzi.compose', label: '汉字组成', theme: 'hanzi', storage: 'relationship', templateIds: ['hanzi-compose'], rawRecords: EXPANSION_TRIVIA_PACKS['hanzi-compose']! },
     { id: 'english.words', label: '英语词汇', theme: 'english', storage: 'curated', templateIds: ['english-meaning', 'english-category', 'english-first-letter', 'english-length', 'english-missing-letter'], rawRecords: ENGLISH_WORDS },
+    { id: 'english.words.extra', label: '英语词汇扩展', theme: 'english', storage: 'curated', templateIds: ['english-meaning', 'english-category', 'english-first-letter', 'english-length', 'english-missing-letter'], rawRecords: ENGLISH_EXTRA_WORDS },
     { id: 'english.antonyms', label: '英语反义词', theme: 'english', storage: 'relationship', templateIds: ['english-antonym'], rawRecords: ENGLISH_ANTONYMS },
     { id: 'english.synonyms', label: '英语近义词', theme: 'english', storage: 'relationship', templateIds: ['english-synonym'], rawRecords: EXPANSION_TRIVIA_PACKS['english-synonym']! },
     { id: 'english.sentences', label: '英语句序', theme: 'english', storage: 'curated', templateIds: ['english-word-order'], rawRecords: EXPANSION_ORDER_PACKS['english-word-order']! },
@@ -88,10 +90,15 @@ const RAW_QUESTION_BANK_PACKS: readonly RawQuestionBankPack[] = [
     { id: 'knowledge.physics', label: '物理常识', theme: 'knowledge', storage: 'curated', templateIds: ['knowledge-physics'], rawRecords: EXPANSION_TRIVIA_PACKS['knowledge-physics']! },
     { id: 'knowledge.technology', label: '科技常识', theme: 'knowledge', storage: 'curated', templateIds: ['knowledge-technology'], rawRecords: EXPANSION_TRIVIA_PACKS['knowledge-technology']! },
     { id: 'history.opening', label: '近代开端', theme: 'history', storage: 'curated', templateIds: ['history-modern-opening'], rawRecords: HISTORY_MODERN_OPENING_FACTS },
+    { id: 'history.opening.extra', label: '近代开端扩展', theme: 'history', storage: 'curated', templateIds: ['history-modern-opening'], rawRecords: EXPANSION_TRIVIA_PACKS['history-modern-opening']! },
     { id: 'history.awakening', label: '近代觉醒', theme: 'history', storage: 'curated', templateIds: ['history-modern-awakening'], rawRecords: HISTORY_MODERN_AWAKENING_FACTS },
+    { id: 'history.awakening.extra', label: '近代觉醒扩展', theme: 'history', storage: 'curated', templateIds: ['history-modern-awakening'], rawRecords: EXPANSION_TRIVIA_PACKS['history-modern-awakening']! },
     { id: 'history.resistance', label: '抗战常识', theme: 'history', storage: 'curated', templateIds: ['history-modern-resistance'], rawRecords: HISTORY_MODERN_RESISTANCE_FACTS },
+    { id: 'history.resistance.extra', label: '抗战常识扩展', theme: 'history', storage: 'curated', templateIds: ['history-modern-resistance'], rawRecords: EXPANSION_TRIVIA_PACKS['history-modern-resistance']! },
     { id: 'history.ancient', label: '古代常识', theme: 'history', storage: 'curated', templateIds: ['history-ancient'], rawRecords: HISTORY_ANCIENT_FACTS },
+    { id: 'history.ancient.extra', label: '古代常识扩展', theme: 'history', storage: 'curated', templateIds: ['history-ancient'], rawRecords: EXPANSION_TRIVIA_PACKS['history-ancient']! },
     { id: 'history.myth', label: '神话常识', theme: 'history', storage: 'curated', templateIds: ['history-myth'], rawRecords: HISTORY_MYTH_FACTS },
+    { id: 'history.myth.extra', label: '神话常识扩展', theme: 'history', storage: 'curated', templateIds: ['history-myth'], rawRecords: EXPANSION_TRIVIA_PACKS['history-myth']! },
     { id: 'history.chronology', label: '历史时序', theme: 'history', storage: 'curated', templateIds: ['history-chronology'], rawRecords: EXPANSION_ORDER_PACKS['history-chronology']! },
     { id: 'history.person-event', label: '历史人物事件', theme: 'history', storage: 'relationship', templateIds: ['history-person-event'], rawRecords: EXPANSION_TRIVIA_PACKS['history-person-event']! },
 ];

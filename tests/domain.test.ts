@@ -19,6 +19,7 @@ import {
     LIFE_CATEGORY_FACTS,
 } from '../assets/Scripts/domain/ContentCatalog.ts';
 import { HANZI_ANTONYM_FACTS, HANZI_SYNONYM_FACTS } from '../assets/Scripts/domain/HanziRelationCatalog.ts';
+import { EXPANSION_ORDER_PACKS, EXPANSION_TRIVIA_PACKS } from '../assets/Scripts/domain/ThemeExpansionCatalog.ts';
 import {
     KNOWLEDGE_CIVIC_FACTS,
     KNOWLEDGE_CULTURE_EXPANSION,
@@ -888,17 +889,17 @@ test('unified template catalog contains one stable entry per cognitive template'
 
 test('question-bank registry reports audited base records instead of generated combinations', () => {
     const stats = getQuestionBankStats();
-    assert.equal(stats.baseRecordCount, 1202);
-    assert.equal(stats.packCount, 39);
+    assert.equal(stats.baseRecordCount, 1979);
+    assert.equal(stats.packCount, 45);
     assert.deepEqual(stats.byTheme, {
         math: 0,
         vision: 0,
-        hanzi: 340,
-        english: 152,
-        life: 92,
-        geography: 92,
-        knowledge: 436,
-        history: 90,
+        hanzi: 420,
+        english: 400,
+        life: 245,
+        geography: 180,
+        knowledge: 524,
+        history: 210,
     });
     assert.equal(new Set(QUESTION_BANK_PACKS.map((pack) => pack.id)).size, QUESTION_BANK_PACKS.length);
 });
@@ -1433,11 +1434,62 @@ test('ordinary brawl enforces visible quotas across all eight themes', () => {
     }
     for (const theme of ['math', 'vision', 'hanzi', 'english', 'life', 'geography', 'knowledge', 'history']) {
         const ratio = (counts.get(theme) ?? 0) / 3_000;
-        const minimum = theme === 'math' ? 0.25 : 0.07;
-        const maximum = theme === 'math' ? 0.35 : 0.18;
+        const minimum = theme === 'math' ? 0.42 : 0.05;
+        const maximum = theme === 'math' ? 0.50 : 0.18;
         assert.ok(ratio >= minimum, `${theme} quota too low: ${ratio}`);
         assert.ok(ratio <= maximum, `${theme} quota too high: ${ratio}`);
     }
+});
+
+test('subtraction choices keep their minus sign instead of using relation layout', () => {
+    const presentation = targetTextPresentation('7-2');
+    assert.equal(presentation.displayText, '7-2');
+    assert.equal(presentation.displayText.includes('\n'), false);
+});
+
+test('expanded choices remain scalar and Chinese process questions stay glanceable', () => {
+    for (const pool of Object.values(EXPANSION_TRIVIA_PACKS)) {
+        for (const fact of pool ?? []) {
+            assert.equal(typeof fact.prompt, 'string');
+            assert.equal(typeof fact.answer, 'string');
+            assert.ok(fact.wrong.every((choice) => typeof choice === 'string'));
+            assert.ok(!fact.wrong.some((choice) => /object|set/i.test(choice)));
+        }
+    }
+
+    const processes = EXPANSION_ORDER_PACKS['life-process'] ?? [];
+    assert.equal(processes.length, 30);
+    for (const fact of processes) {
+        assert.ok(Array.from(fact.prompt).length <= 6, fact.prompt);
+        assert.ok(!fact.prompt.includes('顺序'), fact.prompt);
+        assert.equal(fact.parts.length, 4);
+        for (const part of fact.parts) {
+            assert.equal(typeof part, 'string');
+            assert.ok(Array.from(part).length <= 6, `${fact.prompt}: ${part}`);
+        }
+    }
+});
+
+test('historical person questions only use people as distractors', () => {
+    const fact = EXPANSION_TRIVIA_PACKS['history-modern-opening']!
+        .find((item) => item.prompt === '创办江南制造总局的人物')!;
+    const people = new Set([
+        '林则徐', '魏源', '曾国藩', '左宗棠', '李鸿章', '康有为', '梁启超', '孙中山',
+        '鲁迅', '蔡元培', '毛泽东', '周恩来',
+    ]);
+    assert.equal(fact.answer, '李鸿章');
+    assert.equal(fact.wrong.length, 3);
+    assert.ok(fact.wrong.every((answer) => people.has(answer)), fact.wrong.join(','));
+});
+
+test('science expansion distractors stay in the answer semantic type', () => {
+    const fact = (templateId: keyof typeof EXPANSION_TRIVIA_PACKS, prompt: string) =>
+        EXPANSION_TRIVIA_PACKS[templateId]!.find((item) => item.prompt === prompt)!;
+    assert.deepEqual(fact('knowledge-astronomy', '月球本身是否发光').wrong, ['会', '是', '不是']);
+    assert.deepEqual(fact('knowledge-astronomy', '太阳系中有几颗行星').wrong, ['七颗', '九颗', '十颗']);
+    assert.deepEqual(fact('knowledge-biology', '血液中运输氧气的细胞').wrong, ['白细胞', '血小板', '神经细胞']);
+    assert.deepEqual(fact('knowledge-physics', '水沸腾时液体变成').wrong, ['固体', '液体', '等离子体']);
+    assert.deepEqual(fact('knowledge-technology', '太阳能电池板把光能转为').wrong, ['热能', '机械能', '化学能']);
 });
 
 test('category question pools exclude context-dependent items and polysemous English words', () => {
@@ -1449,7 +1501,7 @@ test('category question pools exclude context-dependent items and polysemous Eng
     assert.ok(LIFE_CATEGORY_FACTS.every((fact) => !excludedLifeItems.has(fact.item)));
     assert.equal(new Set(LIFE_CATEGORY_FACTS.map((fact) => fact.item)).size, LIFE_CATEGORY_FACTS.length);
     for (const category of ['清洁工具', '厨房用品', '学习用品', '安全用品', '交通工具']) {
-        assert.equal(LIFE_CATEGORY_FACTS.filter((fact) => fact.category === category).length, 12);
+        assert.equal(LIFE_CATEGORY_FACTS.filter((fact) => fact.category === category).length, 25);
     }
 });
 

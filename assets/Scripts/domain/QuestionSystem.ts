@@ -39,6 +39,7 @@ export class QuestionCompiler {
     private readonly engine: QuestionCompilerEngine;
     private readonly bags = new Map<string, QuestionTemplate[]>();
     private readonly recentTemplateIds: string[] = [];
+    private arithmeticQuestionsSinceDivision = 0;
 
     public constructor(private readonly rng: SeededRng, config: GameplayConfig, entry: GameEntryParams, options: QuestionCompilerEngineOptions = {}) {
         this.engine = new QuestionCompilerEngine(rng.fork('instances'), config, compilerOptionsForEntry(entry, options));
@@ -50,10 +51,26 @@ export class QuestionCompiler {
         const key = candidates.map((item) => item.id).sort().join('|');
         let bag = this.bags.get(key);
         if (!bag?.some((item) => candidates.includes(item))) { bag = this.rng.shuffle(candidates); this.bags.set(key, bag); }
-        let index = bag.length - 1;
-        while (index > 0 && this.recentTemplateIds.includes(bag[index].id)) index -= 1;
+        const division = candidates.find((template) => template.id === 'math-divide');
+        let index = -1;
+        // A short run should still expose division. Do not rely on a six-item
+        // arithmetic shuffle finishing before the player leaves the run.
+        if (division && this.arithmeticQuestionsSinceDivision >= 2) {
+            index = bag.findIndex((template) => template.id === division.id);
+            if (index < 0) {
+                bag = this.rng.shuffle(candidates);
+                this.bags.set(key, bag);
+                index = bag.findIndex((template) => template.id === division.id);
+            }
+        }
+        if (index < 0) {
+            index = bag.length - 1;
+            while (index > 0 && this.recentTemplateIds.includes(bag[index].id)) index -= 1;
+        }
         const template = bag.splice(index, 1)[0];
         if (!bag.length) this.bags.delete(key);
+        if (template.id === 'math-divide') this.arithmeticQuestionsSinceDivision = 0;
+        else if (template.tags.includes('arithmetic')) this.arithmeticQuestionsSinceDivision += 1;
         this.recentTemplateIds.push(template.id);
         if (this.recentTemplateIds.length > Math.min(8, Math.max(2, candidates.length - 1))) this.recentTemplateIds.shift();
         const directive: QuestionCompileDirective = {

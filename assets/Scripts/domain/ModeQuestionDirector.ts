@@ -24,8 +24,8 @@ export class ModeQuestionDirector {
         const themes = forceBrawlArithmetic ? ['math' as const] : this.themesForQuestion(phase.themeWeights);
         const forceSelectedMathArithmetic = !forceBrawlArithmetic && themes[0] === 'math'
             && (this.entry.mode === 'daily'
-                ? this.consumeMixCredit('daily:math', 0.6)
-                : this.entry.mode === 'friendChallenge' && this.consumeMixCredit('friend:math', 0.65));
+                ? this.consumeMixCredit('daily:math', 0.75)
+                : this.entry.mode === 'friendChallenge' && this.consumeMixCredit('friend:math', 0.8));
         let requiredTags = forceBrawlArithmetic || forceSelectedMathArithmetic ? ['arithmetic'] : [];
         if (requiredTags.length && this.entry.mode === 'friendChallenge') {
             const enabledRules = (this.entry.challengeConfig as FriendChallengeConfig).enabledRules;

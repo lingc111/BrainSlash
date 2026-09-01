@@ -64,7 +64,9 @@ function wrapDisplayLine(value: string, maximumCharacters: number): string[] {
 export function targetTextPresentation(value: string): TargetTextPresentation {
     const text = value.trim();
     const characters = Array.from(text);
-    const relationParts = text.split(/[—→-]/).map((part) => part.trim()).filter(Boolean);
+    // ASCII hyphen is the subtraction operator in generated math choices.
+    // Only visual relation separators may trigger the two-line relation layout.
+    const relationParts = text.split(/[—→]/).map((part) => part.trim()).filter(Boolean);
 
     if (relationParts.length === 2 && relationParts.every((part) => Array.from(part).length <= 5)) {
         return {

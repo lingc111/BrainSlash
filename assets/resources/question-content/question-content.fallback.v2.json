@@ -1,6 +1,6 @@
 {
   "schemaVersion": 2,
-  "contentVersion": "2.1.0-expanded-question-content",
+  "contentVersion": "2.2.0-content-density",
   "bundleKind": "fallback",
   "templates": [
     {
@@ -39,6 +39,7 @@
       ],
       "targetCap": 4,
       "directionSensitive": false,
+      "rotationSafe": true,
       "enabled": true
     },
     {
@@ -77,6 +78,7 @@
       ],
       "targetCap": 4,
       "directionSensitive": false,
+      "rotationSafe": true,
       "enabled": true
     },
     {
@@ -115,6 +117,7 @@
       ],
       "targetCap": 4,
       "directionSensitive": false,
+      "rotationSafe": true,
       "enabled": true
     },
     {
@@ -159,6 +162,7 @@
       ],
       "targetCap": 5,
       "directionSensitive": false,
+      "rotationSafe": true,
       "enabled": true
     },
     {
@@ -197,6 +201,7 @@
       ],
       "targetCap": 4,
       "directionSensitive": false,
+      "rotationSafe": true,
       "enabled": true
     },
     {
@@ -239,6 +244,7 @@
       ],
       "targetCap": 4,
       "directionSensitive": false,
+      "rotationSafe": true,
       "enabled": true
     },
     {
@@ -277,6 +283,7 @@
       ],
       "targetCap": 4,
       "directionSensitive": false,
+      "rotationSafe": true,
       "enabled": true
     },
     {
@@ -315,6 +322,7 @@
       ],
       "targetCap": 4,
       "directionSensitive": false,
+      "rotationSafe": false,
       "enabled": true
     },
     {
@@ -354,6 +362,7 @@
       ],
       "targetCap": 4,
       "directionSensitive": false,
+      "rotationSafe": true,
       "enabled": true
     },
     {
@@ -393,6 +402,7 @@
       ],
       "targetCap": 4,
       "directionSensitive": false,
+      "rotationSafe": true,
       "enabled": true
     },
     {
@@ -432,6 +442,7 @@
       ],
       "targetCap": 4,
       "directionSensitive": false,
+      "rotationSafe": false,
       "enabled": true
     },
     {
@@ -471,6 +482,7 @@
       ],
       "targetCap": 4,
       "directionSensitive": false,
+      "rotationSafe": false,
       "enabled": true
     },
     {
@@ -508,6 +520,7 @@
       ],
       "targetCap": 6,
       "directionSensitive": true,
+      "rotationSafe": false,
       "enabled": true
     },
     {
@@ -545,6 +558,7 @@
       ],
       "targetCap": 6,
       "directionSensitive": false,
+      "rotationSafe": true,
       "enabled": true
     },
     {
@@ -583,6 +597,7 @@
       ],
       "targetCap": 6,
       "directionSensitive": false,
+      "rotationSafe": false,
       "enabled": true
     },
     {
@@ -614,6 +629,7 @@
       ],
       "targetCap": 6,
       "directionSensitive": false,
+      "rotationSafe": false,
       "enabled": true
     },
     {
@@ -651,6 +667,7 @@
       ],
       "targetCap": 6,
       "directionSensitive": true,
+      "rotationSafe": false,
       "enabled": true
     },
     {
@@ -688,6 +705,7 @@
       ],
       "targetCap": 6,
       "directionSensitive": false,
+      "rotationSafe": true,
       "enabled": true
     },
     {
@@ -725,6 +743,7 @@
       ],
       "targetCap": 6,
       "directionSensitive": true,
+      "rotationSafe": false,
       "enabled": true
     },
     {
@@ -762,6 +781,7 @@
       ],
       "targetCap": 6,
       "directionSensitive": false,
+      "rotationSafe": true,
       "enabled": true
     },
     {
@@ -799,6 +819,7 @@
       ],
       "targetCap": 6,
       "directionSensitive": false,
+      "rotationSafe": false,
       "enabled": true
     },
     {
@@ -836,6 +857,7 @@
       ],
       "targetCap": 6,
       "directionSensitive": true,
+      "rotationSafe": false,
       "enabled": true
     },
     {
@@ -875,6 +897,7 @@
       ],
       "targetCap": 4,
       "directionSensitive": false,
+      "rotationSafe": true,
       "enabled": true
     },
     {
@@ -908,6 +931,7 @@
       ],
       "targetCap": 5,
       "directionSensitive": false,
+      "rotationSafe": true,
       "enabled": true
     },
     {
@@ -946,6 +970,7 @@
       ],
       "targetCap": 4,
       "directionSensitive": false,
+      "rotationSafe": false,
       "enabled": true
     },
     {
@@ -984,6 +1009,7 @@
       ],
       "targetCap": 4,
       "directionSensitive": false,
+      "rotationSafe": false,
       "enabled": true
     },
     {
@@ -1022,6 +1048,7 @@
       ],
       "targetCap": 4,
       "directionSensitive": false,
+      "rotationSafe": false,
       "enabled": true
     },
     {
@@ -1061,6 +1088,7 @@
       ],
       "targetCap": 4,
       "directionSensitive": false,
+      "rotationSafe": false,
       "enabled": true
     },
     {
@@ -1099,6 +1127,7 @@
       ],
       "targetCap": 4,
       "directionSensitive": false,
+      "rotationSafe": true,
       "enabled": true
     },
     {
@@ -1137,6 +1166,7 @@
       ],
       "targetCap": 4,
       "directionSensitive": false,
+      "rotationSafe": true,
       "enabled": true
     },
     {
@@ -1175,6 +1205,7 @@
       ],
       "targetCap": 4,
       "directionSensitive": false,
+      "rotationSafe": true,
       "enabled": true
     },
     {
@@ -1213,6 +1244,7 @@
       ],
       "targetCap": 4,
       "directionSensitive": false,
+      "rotationSafe": false,
       "enabled": true
     },
     {
@@ -1258,6 +1290,7 @@
       ],
       "targetCap": 5,
       "directionSensitive": false,
+      "rotationSafe": false,
       "enabled": true
     },
     {
@@ -1296,6 +1329,7 @@
       ],
       "targetCap": 4,
       "directionSensitive": false,
+      "rotationSafe": false,
       "enabled": true
     },
     {
@@ -1335,6 +1369,7 @@
       ],
       "targetCap": 4,
       "directionSensitive": false,
+      "rotationSafe": true,
       "enabled": true
     },
     {
@@ -1374,6 +1409,7 @@
       ],
       "targetCap": 4,
       "directionSensitive": false,
+      "rotationSafe": true,
       "enabled": true
     },
     {
@@ -1413,6 +1449,7 @@
       ],
       "targetCap": 4,
       "directionSensitive": false,
+      "rotationSafe": true,
       "enabled": true
     },
     {
@@ -1451,6 +1488,7 @@
       ],
       "targetCap": 4,
       "directionSensitive": false,
+      "rotationSafe": false,
       "enabled": true
     },
     {
@@ -1484,6 +1522,7 @@
       ],
       "targetCap": 5,
       "directionSensitive": false,
+      "rotationSafe": false,
       "enabled": true
     },
     {
@@ -1529,6 +1568,7 @@
       ],
       "targetCap": 5,
       "directionSensitive": false,
+      "rotationSafe": false,
       "enabled": true
     },
     {
@@ -1567,6 +1607,7 @@
       ],
       "targetCap": 4,
       "directionSensitive": false,
+      "rotationSafe": false,
       "enabled": true
     },
     {
@@ -1605,6 +1646,7 @@
       ],
       "targetCap": 4,
       "directionSensitive": false,
+      "rotationSafe": false,
       "enabled": true
     },
     {
@@ -1643,6 +1685,7 @@
       ],
       "targetCap": 4,
       "directionSensitive": false,
+      "rotationSafe": false,
       "enabled": true
     },
     {
@@ -1681,6 +1724,7 @@
       ],
       "targetCap": 4,
       "directionSensitive": false,
+      "rotationSafe": false,
       "enabled": true
     },
     {
@@ -1714,6 +1758,7 @@
       ],
       "targetCap": 5,
       "directionSensitive": false,
+      "rotationSafe": false,
       "enabled": true
     },
     {
@@ -1752,6 +1797,7 @@
       ],
       "targetCap": 4,
       "directionSensitive": false,
+      "rotationSafe": false,
       "enabled": true
     },
     {
@@ -1790,6 +1836,7 @@
       ],
       "targetCap": 4,
       "directionSensitive": false,
+      "rotationSafe": false,
       "enabled": true
     },
     {
@@ -1828,6 +1875,7 @@
       ],
       "targetCap": 4,
       "directionSensitive": false,
+      "rotationSafe": false,
       "enabled": true
     },
     {
@@ -1866,6 +1914,7 @@
       ],
       "targetCap": 4,
       "directionSensitive": false,
+      "rotationSafe": false,
       "enabled": true
     },
     {
@@ -1904,6 +1953,7 @@
       ],
       "targetCap": 4,
       "directionSensitive": false,
+      "rotationSafe": false,
       "enabled": true
     },
     {
@@ -1942,6 +1992,7 @@
       ],
       "targetCap": 4,
       "directionSensitive": false,
+      "rotationSafe": false,
       "enabled": true
     },
     {
@@ -1980,6 +2031,7 @@
       ],
       "targetCap": 4,
       "directionSensitive": false,
+      "rotationSafe": false,
       "enabled": true
     },
     {
@@ -2018,6 +2070,7 @@
       ],
       "targetCap": 4,
       "directionSensitive": false,
+      "rotationSafe": false,
       "enabled": true
     },
     {
@@ -2056,6 +2109,7 @@
       ],
       "targetCap": 4,
       "directionSensitive": false,
+      "rotationSafe": false,
       "enabled": true
     },
     {
@@ -2094,6 +2148,7 @@
       ],
       "targetCap": 4,
       "directionSensitive": false,
+      "rotationSafe": false,
       "enabled": true
     },
     {
@@ -2132,6 +2187,7 @@
       ],
       "targetCap": 4,
       "directionSensitive": false,
+      "rotationSafe": false,
       "enabled": true
     },
     {
@@ -2170,6 +2226,7 @@
       ],
       "targetCap": 4,
       "directionSensitive": false,
+      "rotationSafe": false,
       "enabled": true
     },
     {
@@ -2208,6 +2265,7 @@
       ],
       "targetCap": 4,
       "directionSensitive": false,
+      "rotationSafe": false,
       "enabled": true
     },
     {
@@ -2246,6 +2304,7 @@
       ],
       "targetCap": 4,
       "directionSensitive": false,
+      "rotationSafe": false,
       "enabled": true
     },
     {
@@ -2284,6 +2343,7 @@
       ],
       "targetCap": 4,
       "directionSensitive": false,
+      "rotationSafe": false,
       "enabled": true
     },
     {
@@ -2322,6 +2382,7 @@
       ],
       "targetCap": 4,
       "directionSensitive": false,
+      "rotationSafe": false,
       "enabled": true
     },
     {
@@ -2360,6 +2421,7 @@
       ],
       "targetCap": 4,
       "directionSensitive": false,
+      "rotationSafe": false,
       "enabled": true
     },
     {
@@ -2398,6 +2460,7 @@
       ],
       "targetCap": 4,
       "directionSensitive": false,
+      "rotationSafe": false,
       "enabled": true
     },
     {
@@ -2436,6 +2499,7 @@
       ],
       "targetCap": 4,
       "directionSensitive": false,
+      "rotationSafe": false,
       "enabled": true
     },
     {
@@ -2469,6 +2533,7 @@
       ],
       "targetCap": 5,
       "directionSensitive": false,
+      "rotationSafe": false,
       "enabled": true
     },
     {
@@ -2507,6 +2572,7 @@
       ],
       "targetCap": 4,
       "directionSensitive": false,
+      "rotationSafe": false,
       "enabled": true
     }
   ],
@@ -4032,6 +4098,174 @@
       "enabled": true
     },
     {
+      "id": "fact.english.words.extra.0ubz9ll",
+      "kind": "english.words.extra",
+      "fields": {
+        "en": "ANT",
+        "zh": "蚂蚁",
+        "category": "动物"
+      },
+      "tags": [
+        "english",
+        "english-meaning",
+        "english-category",
+        "english-first-letter",
+        "english-length",
+        "english-missing-letter"
+      ],
+      "source": "internal-reviewed-catalog",
+      "reviewStatus": "reviewed",
+      "reviewedAt": "2026-09-01",
+      "enabled": true
+    },
+    {
+      "id": "fact.english.words.extra.013xmsf",
+      "kind": "english.words.extra",
+      "fields": {
+        "en": "COW",
+        "zh": "奶牛",
+        "category": "动物"
+      },
+      "tags": [
+        "english",
+        "english-meaning",
+        "english-category",
+        "english-first-letter",
+        "english-length",
+        "english-missing-letter"
+      ],
+      "source": "internal-reviewed-catalog",
+      "reviewStatus": "reviewed",
+      "reviewedAt": "2026-09-01",
+      "enabled": true
+    },
+    {
+      "id": "fact.english.words.extra.00hsc2x",
+      "kind": "english.words.extra",
+      "fields": {
+        "en": "DUCK",
+        "zh": "鸭子",
+        "category": "动物"
+      },
+      "tags": [
+        "english",
+        "english-meaning",
+        "english-category",
+        "english-first-letter",
+        "english-length",
+        "english-missing-letter"
+      ],
+      "source": "internal-reviewed-catalog",
+      "reviewStatus": "reviewed",
+      "reviewedAt": "2026-09-01",
+      "enabled": true
+    },
+    {
+      "id": "fact.english.words.extra.1txh4h7",
+      "kind": "english.words.extra",
+      "fields": {
+        "en": "GOAT",
+        "zh": "山羊",
+        "category": "动物"
+      },
+      "tags": [
+        "english",
+        "english-meaning",
+        "english-category",
+        "english-first-letter",
+        "english-length",
+        "english-missing-letter"
+      ],
+      "source": "internal-reviewed-catalog",
+      "reviewStatus": "reviewed",
+      "reviewedAt": "2026-09-01",
+      "enabled": true
+    },
+    {
+      "id": "fact.english.words.extra.0cp0iv8",
+      "kind": "english.words.extra",
+      "fields": {
+        "en": "PIG",
+        "zh": "猪",
+        "category": "动物"
+      },
+      "tags": [
+        "english",
+        "english-meaning",
+        "english-category",
+        "english-first-letter",
+        "english-length",
+        "english-missing-letter"
+      ],
+      "source": "internal-reviewed-catalog",
+      "reviewStatus": "reviewed",
+      "reviewedAt": "2026-09-01",
+      "enabled": true
+    },
+    {
+      "id": "fact.english.words.extra.0m9og17",
+      "kind": "english.words.extra",
+      "fields": {
+        "en": "MOUSE",
+        "zh": "老鼠",
+        "category": "动物"
+      },
+      "tags": [
+        "english",
+        "english-meaning",
+        "english-category",
+        "english-first-letter",
+        "english-length",
+        "english-missing-letter"
+      ],
+      "source": "internal-reviewed-catalog",
+      "reviewStatus": "reviewed",
+      "reviewedAt": "2026-09-01",
+      "enabled": true
+    },
+    {
+      "id": "fact.english.words.extra.1jabpi0",
+      "kind": "english.words.extra",
+      "fields": {
+        "en": "DEER",
+        "zh": "鹿",
+        "category": "动物"
+      },
+      "tags": [
+        "english",
+        "english-meaning",
+        "english-category",
+        "english-first-letter",
+        "english-length",
+        "english-missing-letter"
+      ],
+      "source": "internal-reviewed-catalog",
+      "reviewStatus": "reviewed",
+      "reviewedAt": "2026-09-01",
+      "enabled": true
+    },
+    {
+      "id": "fact.english.words.extra.0cwcfqo",
+      "kind": "english.words.extra",
+      "fields": {
+        "en": "SNAKE",
+        "zh": "蛇",
+        "category": "动物"
+      },
+      "tags": [
+        "english",
+        "english-meaning",
+        "english-category",
+        "english-first-letter",
+        "english-length",
+        "english-missing-letter"
+      ],
+      "source": "internal-reviewed-catalog",
+      "reviewStatus": "reviewed",
+      "reviewedAt": "2026-09-01",
+      "enabled": true
+    },
+    {
       "id": "fact.english.antonyms.0gwdcjc",
       "kind": "english.antonyms",
       "fields": {
@@ -5199,12 +5433,12 @@
       "kind": "life.process",
       "fields": {
         "id": "process.handwash",
-        "prompt": "洗手顺序",
+        "prompt": "洗手",
         "parts": [
           "打湿双手",
           "涂洗手液",
           "揉搓双手",
-          "冲洗擦干"
+          "冲净擦干"
         ]
       },
       "tags": [
@@ -5221,7 +5455,7 @@
       "kind": "life.process",
       "fields": {
         "id": "process.toothbrush",
-        "prompt": "刷牙顺序",
+        "prompt": "刷牙",
         "parts": [
           "挤牙膏",
           "刷牙齿",
@@ -5243,12 +5477,12 @@
       "kind": "life.process",
       "fields": {
         "id": "process.cook-rice",
-        "prompt": "电饭锅煮饭顺序",
+        "prompt": "电饭锅煮饭",
         "parts": [
           "量取大米",
-          "淘洗加水",
-          "按下煮饭键",
-          "等待完成"
+          "淘米加水",
+          "按煮饭键",
+          "等待煮熟"
         ]
       },
       "tags": [
@@ -5265,7 +5499,7 @@
       "kind": "life.process",
       "fields": {
         "id": "process.mail",
-        "prompt": "寄快递顺序",
+        "prompt": "寄快递",
         "parts": [
           "包装物品",
           "填写信息",
@@ -5287,7 +5521,7 @@
       "kind": "life.process",
       "fields": {
         "id": "process.bus",
-        "prompt": "乘公交顺序",
+        "prompt": "乘公交",
         "parts": [
           "查看线路",
           "排队候车",
@@ -5309,7 +5543,7 @@
       "kind": "life.process",
       "fields": {
         "id": "process.library",
-        "prompt": "借书顺序",
+        "prompt": "借书",
         "parts": [
           "查找图书",
           "取下图书",
@@ -5331,7 +5565,7 @@
       "kind": "life.process",
       "fields": {
         "id": "process.laundry",
-        "prompt": "洗衣顺序",
+        "prompt": "洗衣",
         "parts": [
           "分类衣物",
           "放入洗衣机",
@@ -5353,9 +5587,9 @@
       "kind": "life.process",
       "fields": {
         "id": "process.recycle",
-        "prompt": "投放垃圾顺序",
+        "prompt": "扔垃圾",
         "parts": [
-          "确认垃圾种类",
+          "确认类别",
           "找到对应桶",
           "分类投放",
           "清洁双手"
@@ -8259,6 +8493,182 @@
       "enabled": true
     },
     {
+      "id": "fact.history.opening.extra.09t5rh6",
+      "kind": "history.opening.extra",
+      "fields": {
+        "id": "history.opening.extra.01",
+        "prompt": "《南京条约》签订于哪一年",
+        "answer": "1842年",
+        "wrong": [
+          "1856年",
+          "1860年",
+          "1840年"
+        ]
+      },
+      "tags": [
+        "history",
+        "history-modern-opening"
+      ],
+      "source": "internal-reviewed-catalog",
+      "reviewStatus": "reviewed",
+      "reviewedAt": "2026-09-01",
+      "enabled": true
+    },
+    {
+      "id": "fact.history.opening.extra.09j65s7",
+      "kind": "history.opening.extra",
+      "fields": {
+        "id": "history.opening.extra.02",
+        "prompt": "第二次鸦片战争开始于哪一年",
+        "answer": "1856年",
+        "wrong": [
+          "1842年",
+          "1860年",
+          "1840年"
+        ]
+      },
+      "tags": [
+        "history",
+        "history-modern-opening"
+      ],
+      "source": "internal-reviewed-catalog",
+      "reviewStatus": "reviewed",
+      "reviewedAt": "2026-09-01",
+      "enabled": true
+    },
+    {
+      "id": "fact.history.opening.extra.0996k38",
+      "kind": "history.opening.extra",
+      "fields": {
+        "id": "history.opening.extra.03",
+        "prompt": "火烧圆明园发生于哪一年",
+        "answer": "1860年",
+        "wrong": [
+          "1842年",
+          "1856年",
+          "1840年"
+        ]
+      },
+      "tags": [
+        "history",
+        "history-modern-opening"
+      ],
+      "source": "internal-reviewed-catalog",
+      "reviewStatus": "reviewed",
+      "reviewedAt": "2026-09-01",
+      "enabled": true
+    },
+    {
+      "id": "fact.history.opening.extra.08z6ye9",
+      "kind": "history.opening.extra",
+      "fields": {
+        "id": "history.opening.extra.04",
+        "prompt": "洋务运动前期主要口号",
+        "answer": "自强",
+        "wrong": [
+          "求富",
+          "民主",
+          "科学"
+        ]
+      },
+      "tags": [
+        "history",
+        "history-modern-opening"
+      ],
+      "source": "internal-reviewed-catalog",
+      "reviewStatus": "reviewed",
+      "reviewedAt": "2026-09-01",
+      "enabled": true
+    },
+    {
+      "id": "fact.history.opening.extra.08p7cpa",
+      "kind": "history.opening.extra",
+      "fields": {
+        "id": "history.opening.extra.05",
+        "prompt": "洋务运动后期主要口号",
+        "answer": "求富",
+        "wrong": [
+          "自强",
+          "民主",
+          "科学"
+        ]
+      },
+      "tags": [
+        "history",
+        "history-modern-opening"
+      ],
+      "source": "internal-reviewed-catalog",
+      "reviewStatus": "reviewed",
+      "reviewedAt": "2026-09-01",
+      "enabled": true
+    },
+    {
+      "id": "fact.history.opening.extra.08f7r0b",
+      "kind": "history.opening.extra",
+      "fields": {
+        "id": "history.opening.extra.06",
+        "prompt": "创办江南制造总局的人物",
+        "answer": "李鸿章",
+        "wrong": [
+          "左宗棠",
+          "魏源",
+          "林则徐"
+        ]
+      },
+      "tags": [
+        "history",
+        "history-modern-opening"
+      ],
+      "source": "internal-reviewed-catalog",
+      "reviewStatus": "reviewed",
+      "reviewedAt": "2026-09-01",
+      "enabled": true
+    },
+    {
+      "id": "fact.history.opening.extra.08585bc",
+      "kind": "history.opening.extra",
+      "fields": {
+        "id": "history.opening.extra.07",
+        "prompt": "创办福州船政局的人物",
+        "answer": "左宗棠",
+        "wrong": [
+          "李鸿章",
+          "魏源",
+          "林则徐"
+        ]
+      },
+      "tags": [
+        "history",
+        "history-modern-opening"
+      ],
+      "source": "internal-reviewed-catalog",
+      "reviewStatus": "reviewed",
+      "reviewedAt": "2026-09-01",
+      "enabled": true
+    },
+    {
+      "id": "fact.history.opening.extra.07v8jmd",
+      "kind": "history.opening.extra",
+      "fields": {
+        "id": "history.opening.extra.08",
+        "prompt": "北洋水师在哪场战争中覆没",
+        "answer": "甲午战争",
+        "wrong": [
+          "鸦片战争",
+          "抗日战争",
+          "北伐战争"
+        ]
+      },
+      "tags": [
+        "history",
+        "history-modern-opening"
+      ],
+      "source": "internal-reviewed-catalog",
+      "reviewStatus": "reviewed",
+      "reviewedAt": "2026-09-01",
+      "enabled": true
+    },
+    {
       "id": "fact.history.awakening.0le0yhj",
       "kind": "history.awakening",
       "fields": {
@@ -8415,6 +8825,182 @@
           "陕西延安",
           "贵州遵义",
           "河北西柏坡"
+        ]
+      },
+      "tags": [
+        "history",
+        "history-modern-awakening"
+      ],
+      "source": "internal-reviewed-catalog",
+      "reviewStatus": "reviewed",
+      "reviewedAt": "2026-09-01",
+      "enabled": true
+    },
+    {
+      "id": "fact.history.awakening.extra.1kt5t85",
+      "kind": "history.awakening.extra",
+      "fields": {
+        "id": "history.awakening.extra.01",
+        "prompt": "戊戌变法发生于哪一年",
+        "answer": "1898年",
+        "wrong": [
+          "1911年",
+          "1919年",
+          "1921年"
+        ]
+      },
+      "tags": [
+        "history",
+        "history-modern-awakening"
+      ],
+      "source": "internal-reviewed-catalog",
+      "reviewStatus": "reviewed",
+      "reviewedAt": "2026-09-01",
+      "enabled": true
+    },
+    {
+      "id": "fact.history.awakening.extra.1jz7058",
+      "kind": "history.awakening.extra",
+      "fields": {
+        "id": "history.awakening.extra.02",
+        "prompt": "戊戌变法又称",
+        "answer": "百日维新",
+        "wrong": [
+          "洋务运动",
+          "新文化运动",
+          "辛亥革命"
+        ]
+      },
+      "tags": [
+        "history",
+        "history-modern-awakening"
+      ],
+      "source": "internal-reviewed-catalog",
+      "reviewStatus": "reviewed",
+      "reviewedAt": "2026-09-01",
+      "enabled": true
+    },
+    {
+      "id": "fact.history.awakening.extra.1k96lu7",
+      "kind": "history.awakening.extra",
+      "fields": {
+        "id": "history.awakening.extra.03",
+        "prompt": "领导戊戌变法的重要人物",
+        "answer": "康有为",
+        "wrong": [
+          "毛泽东",
+          "鲁迅",
+          "林则徐"
+        ]
+      },
+      "tags": [
+        "history",
+        "history-modern-awakening"
+      ],
+      "source": "internal-reviewed-catalog",
+      "reviewStatus": "reviewed",
+      "reviewedAt": "2026-09-01",
+      "enabled": true
+    },
+    {
+      "id": "fact.history.awakening.extra.1jf7sra",
+      "kind": "history.awakening.extra",
+      "fields": {
+        "id": "history.awakening.extra.04",
+        "prompt": "辛亥革命爆发于哪一年",
+        "answer": "1911年",
+        "wrong": [
+          "1898年",
+          "1919年",
+          "1921年"
+        ]
+      },
+      "tags": [
+        "history",
+        "history-modern-awakening"
+      ],
+      "source": "internal-reviewed-catalog",
+      "reviewStatus": "reviewed",
+      "reviewedAt": "2026-09-01",
+      "enabled": true
+    },
+    {
+      "id": "fact.history.awakening.extra.1jp7eg9",
+      "kind": "history.awakening.extra",
+      "fields": {
+        "id": "history.awakening.extra.05",
+        "prompt": "辛亥革命首先爆发的城市",
+        "answer": "武昌",
+        "wrong": [
+          "南京",
+          "北京",
+          "南湖红船"
+        ]
+      },
+      "tags": [
+        "history",
+        "history-modern-awakening"
+      ],
+      "source": "internal-reviewed-catalog",
+      "reviewStatus": "reviewed",
+      "reviewedAt": "2026-09-01",
+      "enabled": true
+    },
+    {
+      "id": "fact.history.awakening.extra.1iv8ldc",
+      "kind": "history.awakening.extra",
+      "fields": {
+        "id": "history.awakening.extra.06",
+        "prompt": "中华民国临时政府成立地",
+        "answer": "南京",
+        "wrong": [
+          "武昌",
+          "北京",
+          "南湖红船"
+        ]
+      },
+      "tags": [
+        "history",
+        "history-modern-awakening"
+      ],
+      "source": "internal-reviewed-catalog",
+      "reviewStatus": "reviewed",
+      "reviewedAt": "2026-09-01",
+      "enabled": true
+    },
+    {
+      "id": "fact.history.awakening.extra.1j5872b",
+      "kind": "history.awakening.extra",
+      "fields": {
+        "id": "history.awakening.extra.07",
+        "prompt": "新文化运动兴起的主要阵地",
+        "answer": "《新青年》",
+        "wrong": [
+          "《民报》",
+          "《时务报》",
+          "《申报》"
+        ]
+      },
+      "tags": [
+        "history",
+        "history-modern-awakening"
+      ],
+      "source": "internal-reviewed-catalog",
+      "reviewStatus": "reviewed",
+      "reviewedAt": "2026-09-01",
+      "enabled": true
+    },
+    {
+      "id": "fact.history.awakening.extra.1mr312y",
+      "kind": "history.awakening.extra",
+      "fields": {
+        "id": "history.awakening.extra.08",
+        "prompt": "五四运动爆发于哪一年",
+        "answer": "1919年",
+        "wrong": [
+          "1898年",
+          "1911年",
+          "1921年"
         ]
       },
       "tags": [
@@ -8595,6 +9181,182 @@
       "enabled": true
     },
     {
+      "id": "fact.history.resistance.extra.0vxp1xz",
+      "kind": "history.resistance.extra",
+      "fields": {
+        "id": "history.resistance.extra.01",
+        "prompt": "九一八事变发生于哪一年",
+        "answer": "1931年",
+        "wrong": [
+          "1936年",
+          "1937年",
+          "1940年"
+        ]
+      },
+      "tags": [
+        "history",
+        "history-modern-resistance"
+      ],
+      "source": "internal-reviewed-catalog",
+      "reviewStatus": "reviewed",
+      "reviewedAt": "2026-09-01",
+      "enabled": true
+    },
+    {
+      "id": "fact.history.resistance.extra.0w7onmy",
+      "kind": "history.resistance.extra",
+      "fields": {
+        "id": "history.resistance.extra.02",
+        "prompt": "九一八事变发生地",
+        "answer": "沈阳",
+        "wrong": [
+          "卢沟桥",
+          "上海",
+          "重庆"
+        ]
+      },
+      "tags": [
+        "history",
+        "history-modern-resistance"
+      ],
+      "source": "internal-reviewed-catalog",
+      "reviewStatus": "reviewed",
+      "reviewedAt": "2026-09-01",
+      "enabled": true
+    },
+    {
+      "id": "fact.history.resistance.extra.0who9bx",
+      "kind": "history.resistance.extra",
+      "fields": {
+        "id": "history.resistance.extra.03",
+        "prompt": "西安事变发生于哪一年",
+        "answer": "1936年",
+        "wrong": [
+          "1931年",
+          "1937年",
+          "1940年"
+        ]
+      },
+      "tags": [
+        "history",
+        "history-modern-resistance"
+      ],
+      "source": "internal-reviewed-catalog",
+      "reviewStatus": "reviewed",
+      "reviewedAt": "2026-09-01",
+      "enabled": true
+    },
+    {
+      "id": "fact.history.resistance.extra.0ujr1h4",
+      "kind": "history.resistance.extra",
+      "fields": {
+        "id": "history.resistance.extra.04",
+        "prompt": "七七事变发生于哪一年",
+        "answer": "1937年",
+        "wrong": [
+          "1931年",
+          "1936年",
+          "1940年"
+        ]
+      },
+      "tags": [
+        "history",
+        "history-modern-resistance"
+      ],
+      "source": "internal-reviewed-catalog",
+      "reviewStatus": "reviewed",
+      "reviewedAt": "2026-09-01",
+      "enabled": true
+    },
+    {
+      "id": "fact.history.resistance.extra.0utqn63",
+      "kind": "history.resistance.extra",
+      "fields": {
+        "id": "history.resistance.extra.05",
+        "prompt": "七七事变发生地",
+        "answer": "卢沟桥",
+        "wrong": [
+          "沈阳",
+          "上海",
+          "重庆"
+        ]
+      },
+      "tags": [
+        "history",
+        "history-modern-resistance"
+      ],
+      "source": "internal-reviewed-catalog",
+      "reviewStatus": "reviewed",
+      "reviewedAt": "2026-09-01",
+      "enabled": true
+    },
+    {
+      "id": "fact.history.resistance.extra.0v3q8v2",
+      "kind": "history.resistance.extra",
+      "fields": {
+        "id": "history.resistance.extra.06",
+        "prompt": "淞沪会战主要发生在哪座城市",
+        "answer": "上海",
+        "wrong": [
+          "沈阳",
+          "卢沟桥",
+          "重庆"
+        ]
+      },
+      "tags": [
+        "history",
+        "history-modern-resistance"
+      ],
+      "source": "internal-reviewed-catalog",
+      "reviewStatus": "reviewed",
+      "reviewedAt": "2026-09-01",
+      "enabled": true
+    },
+    {
+      "id": "fact.history.resistance.extra.0vdpuk1",
+      "kind": "history.resistance.extra",
+      "fields": {
+        "id": "history.resistance.extra.07",
+        "prompt": "南京大屠杀发生于哪一年",
+        "answer": "1937年",
+        "wrong": [
+          "1931年",
+          "1936年",
+          "1940年"
+        ]
+      },
+      "tags": [
+        "history",
+        "history-modern-resistance"
+      ],
+      "source": "internal-reviewed-catalog",
+      "reviewStatus": "reviewed",
+      "reviewedAt": "2026-09-01",
+      "enabled": true
+    },
+    {
+      "id": "fact.history.resistance.extra.0tfsmp8",
+      "kind": "history.resistance.extra",
+      "fields": {
+        "id": "history.resistance.extra.08",
+        "prompt": "平型关大捷发生于哪一年",
+        "answer": "1937年",
+        "wrong": [
+          "1931年",
+          "1936年",
+          "1940年"
+        ]
+      },
+      "tags": [
+        "history",
+        "history-modern-resistance"
+      ],
+      "source": "internal-reviewed-catalog",
+      "reviewStatus": "reviewed",
+      "reviewedAt": "2026-09-01",
+      "enabled": true
+    },
+    {
       "id": "fact.history.ancient.169u3o9",
       "kind": "history.ancient",
       "fields": {
@@ -8763,6 +9525,182 @@
       "enabled": true
     },
     {
+      "id": "fact.history.ancient.extra.0zrzy5i",
+      "kind": "history.ancient.extra",
+      "fields": {
+        "id": "history.ancient.extra.01",
+        "prompt": "秦朝建立于哪一年",
+        "answer": "公元前221年",
+        "wrong": [
+          "隋朝",
+          "1840年",
+          "1842年"
+        ]
+      },
+      "tags": [
+        "history",
+        "history-ancient"
+      ],
+      "source": "internal-reviewed-catalog",
+      "reviewStatus": "reviewed",
+      "reviewedAt": "2026-09-01",
+      "enabled": true
+    },
+    {
+      "id": "fact.history.ancient.extra.0zi0cgj",
+      "kind": "history.ancient.extra",
+      "fields": {
+        "id": "history.ancient.extra.02",
+        "prompt": "汉朝开国皇帝",
+        "answer": "刘邦",
+        "wrong": [
+          "李渊",
+          "赵匡胤",
+          "忽必烈"
+        ]
+      },
+      "tags": [
+        "history",
+        "history-ancient"
+      ],
+      "source": "internal-reviewed-catalog",
+      "reviewStatus": "reviewed",
+      "reviewedAt": "2026-09-01",
+      "enabled": true
+    },
+    {
+      "id": "fact.history.ancient.extra.0z80qrk",
+      "kind": "history.ancient.extra",
+      "fields": {
+        "id": "history.ancient.extra.03",
+        "prompt": "唐朝开国皇帝",
+        "answer": "李渊",
+        "wrong": [
+          "刘邦",
+          "赵匡胤",
+          "忽必烈"
+        ]
+      },
+      "tags": [
+        "history",
+        "history-ancient"
+      ],
+      "source": "internal-reviewed-catalog",
+      "reviewStatus": "reviewed",
+      "reviewedAt": "2026-09-01",
+      "enabled": true
+    },
+    {
+      "id": "fact.history.ancient.extra.115xymd",
+      "kind": "history.ancient.extra",
+      "fields": {
+        "id": "history.ancient.extra.04",
+        "prompt": "宋朝开国皇帝",
+        "answer": "赵匡胤",
+        "wrong": [
+          "刘邦",
+          "李渊",
+          "忽必烈"
+        ]
+      },
+      "tags": [
+        "history",
+        "history-ancient"
+      ],
+      "source": "internal-reviewed-catalog",
+      "reviewStatus": "reviewed",
+      "reviewedAt": "2026-09-01",
+      "enabled": true
+    },
+    {
+      "id": "fact.history.ancient.extra.10vycxe",
+      "kind": "history.ancient.extra",
+      "fields": {
+        "id": "history.ancient.extra.05",
+        "prompt": "元朝建立者",
+        "answer": "忽必烈",
+        "wrong": [
+          "刘邦",
+          "李渊",
+          "赵匡胤"
+        ]
+      },
+      "tags": [
+        "history",
+        "history-ancient"
+      ],
+      "source": "internal-reviewed-catalog",
+      "reviewStatus": "reviewed",
+      "reviewedAt": "2026-09-01",
+      "enabled": true
+    },
+    {
+      "id": "fact.history.ancient.extra.10lyr8f",
+      "kind": "history.ancient.extra",
+      "fields": {
+        "id": "history.ancient.extra.06",
+        "prompt": "明朝建立者",
+        "answer": "朱元璋",
+        "wrong": [
+          "刘邦",
+          "李渊",
+          "赵匡胤"
+        ]
+      },
+      "tags": [
+        "history",
+        "history-ancient"
+      ],
+      "source": "internal-reviewed-catalog",
+      "reviewStatus": "reviewed",
+      "reviewedAt": "2026-09-01",
+      "enabled": true
+    },
+    {
+      "id": "fact.history.ancient.extra.10bz5jg",
+      "kind": "history.ancient.extra",
+      "fields": {
+        "id": "history.ancient.extra.07",
+        "prompt": "清朝入关后的首位皇帝",
+        "answer": "顺治帝",
+        "wrong": [
+          "刘邦",
+          "李渊",
+          "赵匡胤"
+        ]
+      },
+      "tags": [
+        "history",
+        "history-ancient"
+      ],
+      "source": "internal-reviewed-catalog",
+      "reviewStatus": "reviewed",
+      "reviewedAt": "2026-09-01",
+      "enabled": true
+    },
+    {
+      "id": "fact.history.ancient.extra.129wde9",
+      "kind": "history.ancient.extra",
+      "fields": {
+        "id": "history.ancient.extra.08",
+        "prompt": "科举制度正式形成于哪个朝代",
+        "answer": "隋朝",
+        "wrong": [
+          "公元前221年",
+          "1840年",
+          "1842年"
+        ]
+      },
+      "tags": [
+        "history",
+        "history-ancient"
+      ],
+      "source": "internal-reviewed-catalog",
+      "reviewStatus": "reviewed",
+      "reviewedAt": "2026-09-01",
+      "enabled": true
+    },
+    {
       "id": "fact.history.myth.1hgfdw3",
       "kind": "history.myth",
       "fields": {
@@ -8919,6 +9857,182 @@
           "伏羲",
           "祝融",
           "后稷"
+        ]
+      },
+      "tags": [
+        "history",
+        "history-myth"
+      ],
+      "source": "internal-reviewed-catalog",
+      "reviewStatus": "reviewed",
+      "reviewedAt": "2026-09-01",
+      "enabled": true
+    },
+    {
+      "id": "fact.history.myth.extra.1jnxrjq",
+      "kind": "history.myth.extra",
+      "fields": {
+        "id": "history.myth.extra.01",
+        "prompt": "开天辟地的神话人物",
+        "answer": "盘古",
+        "wrong": [
+          "女娲",
+          "夸父",
+          "精卫"
+        ]
+      },
+      "tags": [
+        "history",
+        "history-myth"
+      ],
+      "source": "internal-reviewed-catalog",
+      "reviewStatus": "reviewed",
+      "reviewedAt": "2026-09-01",
+      "enabled": true
+    },
+    {
+      "id": "fact.history.myth.extra.1jdy5ur",
+      "kind": "history.myth.extra",
+      "fields": {
+        "id": "history.myth.extra.02",
+        "prompt": "炼石补天的神话人物",
+        "answer": "女娲",
+        "wrong": [
+          "盘古",
+          "夸父",
+          "精卫"
+        ]
+      },
+      "tags": [
+        "history",
+        "history-myth"
+      ],
+      "source": "internal-reviewed-catalog",
+      "reviewStatus": "reviewed",
+      "reviewedAt": "2026-09-01",
+      "enabled": true
+    },
+    {
+      "id": "fact.history.myth.extra.1j3yk5s",
+      "kind": "history.myth.extra",
+      "fields": {
+        "id": "history.myth.extra.03",
+        "prompt": "追逐太阳的神话人物",
+        "answer": "夸父",
+        "wrong": [
+          "盘古",
+          "女娲",
+          "精卫"
+        ]
+      },
+      "tags": [
+        "history",
+        "history-myth"
+      ],
+      "source": "internal-reviewed-catalog",
+      "reviewStatus": "reviewed",
+      "reviewedAt": "2026-09-01",
+      "enabled": true
+    },
+    {
+      "id": "fact.history.myth.extra.1l1vs0l",
+      "kind": "history.myth.extra",
+      "fields": {
+        "id": "history.myth.extra.04",
+        "prompt": "填海的神鸟",
+        "answer": "精卫",
+        "wrong": [
+          "盘古",
+          "女娲",
+          "夸父"
+        ]
+      },
+      "tags": [
+        "history",
+        "history-myth"
+      ],
+      "source": "internal-reviewed-catalog",
+      "reviewStatus": "reviewed",
+      "reviewedAt": "2026-09-01",
+      "enabled": true
+    },
+    {
+      "id": "fact.history.myth.extra.1krw6bm",
+      "kind": "history.myth.extra",
+      "fields": {
+        "id": "history.myth.extra.05",
+        "prompt": "射下九个太阳的英雄",
+        "answer": "后羿",
+        "wrong": [
+          "盘古",
+          "女娲",
+          "夸父"
+        ]
+      },
+      "tags": [
+        "history",
+        "history-myth"
+      ],
+      "source": "internal-reviewed-catalog",
+      "reviewStatus": "reviewed",
+      "reviewedAt": "2026-09-01",
+      "enabled": true
+    },
+    {
+      "id": "fact.history.myth.extra.1khwkmn",
+      "kind": "history.myth.extra",
+      "fields": {
+        "id": "history.myth.extra.06",
+        "prompt": "奔月的神话人物",
+        "answer": "嫦娥",
+        "wrong": [
+          "盘古",
+          "女娲",
+          "夸父"
+        ]
+      },
+      "tags": [
+        "history",
+        "history-myth"
+      ],
+      "source": "internal-reviewed-catalog",
+      "reviewStatus": "reviewed",
+      "reviewedAt": "2026-09-01",
+      "enabled": true
+    },
+    {
+      "id": "fact.history.myth.extra.1k7wyxo",
+      "kind": "history.myth.extra",
+      "fields": {
+        "id": "history.myth.extra.07",
+        "prompt": "治理洪水三过家门不入的人物",
+        "answer": "大禹",
+        "wrong": [
+          "盘古",
+          "女娲",
+          "夸父"
+        ]
+      },
+      "tags": [
+        "history",
+        "history-myth"
+      ],
+      "source": "internal-reviewed-catalog",
+      "reviewStatus": "reviewed",
+      "reviewedAt": "2026-09-01",
+      "enabled": true
+    },
+    {
+      "id": "fact.history.myth.extra.1m5u6sh",
+      "kind": "history.myth.extra",
+      "fields": {
+        "id": "history.myth.extra.08",
+        "prompt": "钻木取火的传说人物",
+        "answer": "燧人氏",
+        "wrong": [
+          "盘古",
+          "女娲",
+          "夸父"
         ]
       },
       "tags": [

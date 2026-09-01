@@ -36,6 +36,7 @@ import type { GameEntryParams, QuestionInstance, RuleId, TargetSpec, ThemeId } f
 import { evaluateRules, rulesForReadableTargets } from './Rules';
 import { SeededRng } from './SeededRng';
 import { EXPANSION_ORDER_PACKS, EXPANSION_TRIVIA_PACKS, type OrderedFact } from './ThemeExpansionCatalog';
+import { ENGLISH_EXTRA_WORDS } from './EnglishVocabularyExpansion';
 
 type Stage = 0 | 1 | 2;
 export interface QuestionCompilerEngineOptions {
@@ -54,6 +55,7 @@ export function compilerOptionsForEntry(
 const COLOR_WORDS = ['红', '蓝', '绿', '黄'] as const;
 const ARROWS = ['←', '↑', '→', '↓'] as const;
 const OPPOSITE_ARROW: Readonly<Record<string, string>> = { '←': '→', '→': '←', '↑': '↓', '↓': '↑' };
+const ENGLISH_CONTENT_WORDS = [...ENGLISH_WORDS, ...ENGLISH_EXTRA_WORDS] as const;
 
 /** @internal Concrete template algorithms. Only QuestionCompiler may call this class. */
 export class QuestionCompilerEngine {
@@ -63,6 +65,8 @@ export class QuestionCompilerEngine {
     private readonly recentQuestionFacts: string[][] = [];
     private readonly recentSemanticSignatures: string[] = [];
     private readonly recentAnswerSignatures: string[] = [];
+    private propertyDivisorBag: number[] = [];
+    private pendingPropertyDivisor?: number;
     private readonly crossSessionFactIds = new Set<string>();
     private readonly crossSessionFactRanks = new Map<string, number>();
     private readonly crossSessionSemanticSignatures = new Set<string>();
@@ -93,6 +97,8 @@ export class QuestionCompilerEngine {
             this.activeFactIds = [];
             this.activeFactPoolExhausted = false;
             const question = this.generate(directive.template, directive.difficultyStage);
+            const recentFacts = new Set(this.recentQuestionFacts.flat());
+            if (this.activeFactIds.some((factId) => recentFacts.has(factId))) continue;
             question.activeRules = rulesForReadableTargets(question.activeRules, question.targets);
             if (validateQuestion(question, evaluateRules(question)).length) continue;
             const semanticSignature = this.semanticSignature(question);
@@ -106,6 +112,7 @@ export class QuestionCompilerEngine {
                 this.recordQuestionFacts(semanticSignature);
                 this.recordSignature(this.recentSemanticSignatures, semanticSignature, 60);
                 this.recordSignature(this.recentAnswerSignatures, answerSignature, 8);
+                if (question.templateId === 'math-property') this.pendingPropertyDivisor = undefined;
                 return question;
             }
         }
@@ -174,11 +181,11 @@ export class QuestionCompilerEngine {
             case 'knowledge-biology': return this.expansionTrivia(template, stage);
             case 'knowledge-physics': return this.expansionTrivia(template, stage);
             case 'knowledge-technology': return this.expansionTrivia(template, stage);
-            case 'history-modern-opening': return this.trivia(template, stage, 'history-modern-opening', HISTORY_MODERN_OPENING_FACTS);
-            case 'history-modern-awakening': return this.trivia(template, stage, 'history-modern-awakening', HISTORY_MODERN_AWAKENING_FACTS);
-            case 'history-modern-resistance': return this.trivia(template, stage, 'history-modern-resistance', HISTORY_MODERN_RESISTANCE_FACTS);
-            case 'history-ancient': return this.trivia(template, stage, 'history-ancient', HISTORY_ANCIENT_FACTS);
-            case 'history-myth': return this.trivia(template, stage, 'history-myth', HISTORY_MYTH_FACTS);
+            case 'history-modern-opening': return this.trivia(template, stage, 'history-modern-opening', [...HISTORY_MODERN_OPENING_FACTS, ...EXPANSION_TRIVIA_PACKS['history-modern-opening']!]);
+            case 'history-modern-awakening': return this.trivia(template, stage, 'history-modern-awakening', [...HISTORY_MODERN_AWAKENING_FACTS, ...EXPANSION_TRIVIA_PACKS['history-modern-awakening']!]);
+            case 'history-modern-resistance': return this.trivia(template, stage, 'history-modern-resistance', [...HISTORY_MODERN_RESISTANCE_FACTS, ...EXPANSION_TRIVIA_PACKS['history-modern-resistance']!]);
+            case 'history-ancient': return this.trivia(template, stage, 'history-ancient', [...HISTORY_ANCIENT_FACTS, ...EXPANSION_TRIVIA_PACKS['history-ancient']!]);
+            case 'history-myth': return this.trivia(template, stage, 'history-myth', [...HISTORY_MYTH_FACTS, ...EXPANSION_TRIVIA_PACKS['history-myth']!]);
             case 'history-chronology': return this.expansionOrder(template, stage);
             case 'history-person-event': return this.expansionTrivia(template, stage);
             default: throw new Error(`Unknown question template: ${String(template.id)}`);
@@ -246,9 +253,10 @@ export class QuestionCompilerEngine {
     }
 
     private mathAdd(template: QuestionTemplate, stage: Stage): QuestionInstance {
-        const ceiling = 12 + this.difficultyIndex * 8 + stage * 18;
-        const a = this.rng.int(2 + this.difficultyIndex, ceiling);
-        const b = this.rng.int(2, ceiling);
+        const ceiling = 20 + this.difficultyIndex * 15 + stage * 30;
+        const minimum = stage === 0 ? 2 + this.difficultyIndex : 8 + this.difficultyIndex * 2 + stage * 2;
+        const a = this.rng.int(minimum, ceiling);
+        const b = this.rng.int(minimum, ceiling);
         const c = this.difficultyIndex >= 3 && stage === 2 ? this.rng.int(2, 12) : 0;
         const answer = a + b + c;
         const prompt = c ? `${a}+${b}+${c}=?` : `${a}+${b}=?`;
@@ -256,15 +264,18 @@ export class QuestionCompilerEngine {
     }
 
     private mathSubtract(template: QuestionTemplate, stage: Stage): QuestionInstance {
-        const b = this.rng.int(2, 10 + this.difficultyIndex * 5 + stage * 8);
-        const answer = this.rng.int(2, 12 + this.difficultyIndex * 6 + stage * 10);
+        const minimum = stage === 0 ? 2 : 8 + this.difficultyIndex * 2;
+        const b = this.rng.int(minimum, 18 + this.difficultyIndex * 12 + stage * 24);
+        const answer = this.rng.int(minimum, 20 + this.difficultyIndex * 14 + stage * 28);
         const a = answer + b;
         return this.makeChoice(template, `${a}-${b}=?`, answer, [answer - 2, answer - 1, answer + 1, answer + 2, answer + 5], stage);
     }
 
     private mathMultiply(template: QuestionTemplate, stage: Stage): QuestionInstance {
-        const a = this.rng.int(2, Math.min(12, 5 + this.difficultyIndex + stage * 2));
-        const b = this.rng.int(2, Math.min(12, 6 + this.difficultyIndex + stage * 2));
+        const minimum = stage === 0 ? 2 : 4 + Math.floor(this.difficultyIndex / 2) + stage - 1;
+        const maximum = Math.min(20, 8 + this.difficultyIndex * 2 + stage * 3);
+        const a = this.rng.int(minimum, maximum);
+        const b = this.rng.int(minimum, maximum);
         const answer = a * b;
         if (this.difficultyIndex % 2 === 1 && stage > 0) {
             return this.makeChoice(template, `${answer}÷${a}=?`, b, [b - 2, b - 1, b + 1, b + 2, a], stage);
@@ -280,7 +291,12 @@ export class QuestionCompilerEngine {
         let prompt: string;
         if (this.difficultyIndex === 0) { predicate = (value) => value % 2 === 0; prompt = '偶数'; }
         else if (this.difficultyIndex === 1) { predicate = (value) => value % 2 !== 0; prompt = '奇数'; }
-        else if (this.difficultyIndex === 2) { predicate = (value) => value % 3 === 0; prompt = '3的倍数'; }
+        else if (this.difficultyIndex === 2) {
+            if (!this.propertyDivisorBag.length) this.propertyDivisorBag = this.rng.shuffle([2, 3, 5, 7]);
+            const divisor = this.pendingPropertyDivisor ?? (this.pendingPropertyDivisor = this.propertyDivisorBag.pop()!);
+            predicate = (value) => value % divisor === 0;
+            prompt = `${divisor}的倍数`;
+        }
         else {
             const threshold = Math.max(10, Math.round(max * 0.5 / 5) * 5);
             predicate = this.difficultyIndex === 3 ? (value) => value > threshold : (value) => value < threshold;
@@ -326,16 +342,38 @@ export class QuestionCompilerEngine {
 
     private mathSequence(template: QuestionTemplate, stage: Stage): QuestionInstance {
         if (this.directive.rules.includes('order')) {
-            const values = this.uniqueNumbers(this.nonBombTargetCount(), 1, 50 + stage * 50);
-            const targets: TargetSpec[] = this.rng.shuffle(values).map((value, index) => ({ id: `o${index}`, text: String(value), value }));
-            const ordered = [...targets].sort((a, b) => Number(a.value) - Number(b.value)).map((target) => target.id);
+            const descending = this.rng.next() < 0.5;
+            const expressions = this.rng.next() < 0.5;
+            // Expression labels stay at three glyphs so Order + Rotate remains
+            // a genuine compound rule instead of dropping rotation for legibility.
+            const values = this.uniqueNumbers(this.nonBombTargetCount(), 2, expressions ? 9 : 24 + stage * 18);
+            const source = values.map((value, sourceIndex) => ({
+                value,
+                text: expressions ? this.orderExpression(value, sourceIndex) : String(value),
+            }));
+            const targets: TargetSpec[] = this.rng.shuffle(source)
+                .map((item, index) => ({ id: `o${index}`, text: item.text, value: item.value }));
+            const direction = descending ? -1 : 1;
+            const ordered = [...targets].sort((a, b) => direction * (Number(a.value) - Number(b.value))).map((target) => target.id);
             this.appendBomb(targets);
-            return this.make(template, '从小到大', targets, ordered, ['order'], stage, ordered);
+            const prompt = expressions
+                ? `按结果${descending ? '降序' : '升序'}`
+                : `数字${descending ? '降序' : '升序'}`;
+            return this.make(template, prompt, targets, ordered, ['order'], stage, ordered);
         }
         const step = 1 + this.difficultyIndex + stage;
         const start = this.rng.int(1, 12 + stage * 8);
         const answer = start + step * 3;
         return this.makeChoice(template, `${start},${start + step},${start + step * 2},?`, answer, [answer - step, answer + step, answer + 1, answer - 1, answer + step * 2], stage);
+    }
+
+    private orderExpression(value: number, index: number): string {
+        if (index % 2 === 0 || value >= 9) {
+            const addend = this.rng.int(1, value - 1);
+            return `${value - addend}+${addend}`;
+        }
+        const offset = this.rng.int(1, 9 - value);
+        return `${value + offset}-${offset}`;
     }
 
     private mathMissing(template: QuestionTemplate, stage: Stage): QuestionInstance {
@@ -536,17 +574,19 @@ export class QuestionCompilerEngine {
     }
 
     private mathDivide(template: QuestionTemplate, stage: Stage): QuestionInstance {
-        const divisor = this.rng.int(2, Math.min(12, 5 + this.difficultyIndex + stage * 2));
-        const answer = this.rng.int(2, 8 + this.difficultyIndex * 2 + stage * 2);
+        const minimum = stage === 0 ? 2 : 4 + Math.floor(this.difficultyIndex / 2) + stage - 1;
+        const divisor = this.rng.int(minimum, Math.min(20, 8 + this.difficultyIndex * 2 + stage * 3));
+        const answer = this.rng.int(minimum, 12 + this.difficultyIndex * 2 + stage * 3);
         const dividend = divisor * answer;
         return this.makeChoice(template, `${dividend}÷${divisor}=?`, answer,
             [answer - 2, answer - 1, answer + 1, answer + 2, divisor], stage);
     }
 
     private mathMixed(template: QuestionTemplate, stage: Stage): QuestionInstance {
-        const multiplier = this.rng.int(2, Math.min(9, 4 + this.difficultyIndex + stage));
-        const factor = this.rng.int(2, Math.min(12, 6 + this.difficultyIndex + stage));
-        const offset = this.rng.int(1, 8 + this.difficultyIndex * 3);
+        const minimum = stage === 0 ? 2 : 4 + stage - 1;
+        const multiplier = this.rng.int(minimum, Math.min(18, 8 + this.difficultyIndex * 2 + stage * 2));
+        const factor = this.rng.int(minimum, Math.min(20, 9 + this.difficultyIndex * 2 + stage * 3));
+        const offset = this.rng.int(stage === 0 ? 1 : 5, 12 + this.difficultyIndex * 5 + stage * 6);
         const subtract = this.rng.next() < 0.5 && multiplier * factor > offset;
         const answer = subtract ? multiplier * factor - offset : multiplier * factor + offset;
         const operator = subtract ? '-' : '+';
@@ -591,8 +631,8 @@ export class QuestionCompilerEngine {
     }
 
     private englishMeaning(template: QuestionTemplate, stage: Stage): QuestionInstance {
-        const word = this.pickFact('english-words', ENGLISH_WORDS, reviewedFactIdForRecord);
-        const sameCategory = ENGLISH_WORDS.filter((candidate) => candidate.category === word.category && candidate.en !== word.en).map((candidate) => candidate.zh);
+        const word = this.pickFact('english-words', ENGLISH_CONTENT_WORDS, reviewedFactIdForRecord);
+        const sameCategory = ENGLISH_CONTENT_WORDS.filter((candidate) => candidate.category === word.category && candidate.en !== word.en).map((candidate) => candidate.zh);
         return this.makeChoice(template, `${word.en} 是？`, word.zh, sameCategory, stage);
     }
 
@@ -600,8 +640,8 @@ export class QuestionCompilerEngine {
         const categories = ['动物', '颜色', '食物', '动作', '物品'] as const;
         const category = categories[this.difficultyIndex];
         const count = this.nonBombTargetCount();
-        const matchingPool = ENGLISH_WORDS.filter((word) => word.category === category);
-        const others = this.rng.shuffle(ENGLISH_WORDS.filter((word) => word.category !== category));
+        const matchingPool = ENGLISH_CONTENT_WORDS.filter((word) => word.category === category);
+        const others = this.rng.shuffle(ENGLISH_CONTENT_WORDS.filter((word) => word.category !== category));
         const correctCount = this.isOrdinarySingleSelection()
             ? 1
             : this.directive.rules.includes('multi') || stage > 0 ? 2 : 1;
@@ -625,20 +665,20 @@ export class QuestionCompilerEngine {
     }
 
     private englishFirstLetter(template: QuestionTemplate, stage: Stage): QuestionInstance {
-        const word = this.pickFact('english-first-letter', ENGLISH_WORDS, reviewedFactIdForRecord);
+        const word = this.pickFact('english-first-letter', ENGLISH_CONTENT_WORDS, reviewedFactIdForRecord);
         const answer = word.en[0];
         const candidates = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ'.split('').filter((letter) => letter !== answer);
         return this.makeChoice(template, `${word.en}首字母`, answer, candidates, stage);
     }
 
     private englishLength(template: QuestionTemplate, stage: Stage): QuestionInstance {
-        const word = this.pickFact('english-length', ENGLISH_WORDS, reviewedFactIdForRecord);
+        const word = this.pickFact('english-length', ENGLISH_CONTENT_WORDS, reviewedFactIdForRecord);
         const answer = Array.from(word.en).length;
         return this.makeChoice(template, `${word.en}有几字母`, answer, [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12], stage);
     }
 
     private englishMissingLetter(template: QuestionTemplate, stage: Stage): QuestionInstance {
-        const word = this.pickFact('english-missing-letter', ENGLISH_WORDS, reviewedFactIdForRecord);
+        const word = this.pickFact('english-missing-letter', ENGLISH_CONTENT_WORDS, reviewedFactIdForRecord);
         const index = this.rng.int(0, word.en.length - 1);
         const answer = word.en[index];
         const prompt = `${word.en.slice(0, index)}_${word.en.slice(index + 1)} = ${word.zh}`;
