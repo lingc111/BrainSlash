@@ -8,7 +8,7 @@
     "algorithmicInstances": "represented by parameterized algorithmic templates",
     "semanticInstances": "represented by individually reviewed fact records",
     "runtimeLegacyLoader": "removed",
-    "legacyResourceFiles": "safe to remove after this audit"
+    "legacyResourceFiles": "removed after successful audit and explicit approval; recoverable from git history"
   },
   "countsByTemplate": {
     "english-meaning": 192,
