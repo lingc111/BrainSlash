@@ -1,0 +1,93 @@
+{
+  "migrationDate": "2026-09-01",
+  "sourceSchema": "question-bank-v1-generated-instances + extended-content-v2",
+  "destinationSchema": "question-content-v2 templates + reviewed facts",
+  "migratedV1Records": 8000,
+  "migratedExtendedRecords": 24,
+  "disposition": {
+    "algorithmicInstances": "represented by parameterized algorithmic templates",
+    "semanticInstances": "represented by individually reviewed fact records",
+    "runtimeLegacyLoader": "removed",
+    "legacyResourceFiles": "safe to remove after this audit"
+  },
+  "countsByTemplate": {
+    "english-meaning": 192,
+    "english-antonym": 80,
+    "english-category": 96,
+    "english-first-letter": 96,
+    "english-length": 96,
+    "geography-capital": 60,
+    "geography-country": 60,
+    "hanzi-fill": 200,
+    "hanzi-antonym": 200,
+    "hanzi-synonym": 200,
+    "history-modern-opening": 20,
+    "history-modern-awakening": 10,
+    "history-modern-resistance": 10,
+    "history-ancient": 22,
+    "history-myth": 12,
+    "knowledge-science": 116,
+    "knowledge-nature": 116,
+    "knowledge-culture": 116,
+    "knowledge-civic": 56,
+    "life-category": 60,
+    "math-add": 700,
+    "math-subtract": 650,
+    "math-multiply": 500,
+    "math-compare": 500,
+    "math-sequence": 650,
+    "math-missing": 600,
+    "math-equation": 582,
+    "vision-direction": 500,
+    "vision-count": 500,
+    "vision-pattern": 600,
+    "vision-match": 400
+  },
+  "files": [
+    {
+      "file": "english.json",
+      "records": 560,
+      "sha256": "3c2360f561515175f98828befac7a5df2b9d8498111bbcecd04d59457763f62a"
+    },
+    {
+      "file": "geography.json",
+      "records": 120,
+      "sha256": "c94fecd433e5a472186faf905b48549e10784f1d98444585ea3afa0dec9086bb"
+    },
+    {
+      "file": "hanzi.json",
+      "records": 600,
+      "sha256": "d0aa45bcb9a3ab9c5e1cadec29e63eba7215521f131562d8ff0bc24e988573aa"
+    },
+    {
+      "file": "history.json",
+      "records": 74,
+      "sha256": "3c27731aaa369bff6cfd4e560f3e982d4f3ddf1c35cd0cc442ecc7dab05fede4"
+    },
+    {
+      "file": "knowledge.json",
+      "records": 404,
+      "sha256": "35fadc9b6ae82c781c55493deb570d099c30f96582fd1c9c055aabb0d406a42a"
+    },
+    {
+      "file": "life.json",
+      "records": 60,
+      "sha256": "78d76421dbdccd547b989ec9445a28441e36a9287e0db456589ae845e3aa8e1c"
+    },
+    {
+      "file": "math.json",
+      "records": 4182,
+      "sha256": "c7d887ca372aab1dcbf96a1234668de6c6e114c928c12eb81b95d05902c6db26"
+    },
+    {
+      "file": "vision.json",
+      "records": 2000,
+      "sha256": "b80106c9cdd39e11e803b7901c2fd06b708cfcb359fa160ba176ff4cc36bd1ff"
+    },
+    {
+      "file": "extended-content.v2.json",
+      "records": 24,
+      "sha256": "208055e2118df7068f4c2ebe5046c2f69ecd127efef2ca79e9e867b3bd5a4fe9"
+    }
+  ]
+}

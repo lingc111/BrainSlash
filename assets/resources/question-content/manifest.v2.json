@@ -1,0 +1,21 @@
+{
+  "schemaVersion": 2,
+  "contentVersion": "2.0.0-unified-question-content",
+  "bundle": "question-content",
+  "bundles": [
+    {
+      "kind": "production",
+      "file": "question-content.v2.json",
+      "sha256": "dd27f6b3af7de781d60ecd9a674d1daf8afed1cfddc32897a48f996994502d23",
+      "templateCount": 37,
+      "factCount": 1028
+    },
+    {
+      "kind": "fallback",
+      "file": "question-content.fallback.v2.json",
+      "sha256": "fc08d77ed1950fd04215e7d87325a96643595b071b364aaf58688ab7409d084e",
+      "templateCount": 37,
+      "factCount": 168
+    }
+  ]
+}

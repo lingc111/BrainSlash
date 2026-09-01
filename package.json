@@ -6,7 +6,8 @@
   },
   "scripts": {
     "test": "node --import ./tools/ts-test-resolver.mjs --test --experimental-transform-types tests/*.test.ts",
-    "audit:questions": "node --import ./tools/ts-test-resolver.mjs --experimental-transform-types tools/audit-question-bank.mjs",
+    "build:questions": "node --import ./tools/ts-test-resolver.mjs --experimental-transform-types tools/build-question-content.mjs",
+    "audit:questions": "npm run build:questions && node --import ./tools/ts-test-resolver.mjs --experimental-transform-types tools/audit-question-bank.mjs",
     "stress:questions": "node --import ./tools/ts-test-resolver.mjs --experimental-transform-types tools/stress-question-system.mjs"
   }
 }

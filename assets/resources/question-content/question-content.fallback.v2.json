@@ -1,0 +1,5011 @@
+{
+  "schemaVersion": 2,
+  "contentVersion": "2.0.0-unified-question-content",
+  "bundleKind": "fallback",
+  "templates": [
+    {
+      "id": "math-add",
+      "theme": "math",
+      "engine": "single",
+      "capabilities": [
+        "single",
+        "numeric"
+      ],
+      "sourceKind": "algorithmic",
+      "tags": [
+        "arithmetic"
+      ],
+      "difficultyBands": [
+        1,
+        2,
+        3,
+        4,
+        5
+      ],
+      "supportedRuleSets": [
+        [
+          "standard"
+        ],
+        [
+          "reverse"
+        ],
+        [
+          "bomb"
+        ],
+        [
+          "bomb",
+          "reverse"
+        ]
+      ],
+      "targetCap": 4,
+      "directionSensitive": false,
+      "enabled": true
+    },
+    {
+      "id": "math-subtract",
+      "theme": "math",
+      "engine": "single",
+      "capabilities": [
+        "single",
+        "numeric"
+      ],
+      "sourceKind": "algorithmic",
+      "tags": [
+        "arithmetic"
+      ],
+      "difficultyBands": [
+        1,
+        2,
+        3,
+        4,
+        5
+      ],
+      "supportedRuleSets": [
+        [
+          "standard"
+        ],
+        [
+          "reverse"
+        ],
+        [
+          "bomb"
+        ],
+        [
+          "bomb",
+          "reverse"
+        ]
+      ],
+      "targetCap": 4,
+      "directionSensitive": false,
+      "enabled": true
+    },
+    {
+      "id": "math-multiply",
+      "theme": "math",
+      "engine": "single",
+      "capabilities": [
+        "single",
+        "numeric"
+      ],
+      "sourceKind": "algorithmic",
+      "tags": [
+        "arithmetic"
+      ],
+      "difficultyBands": [
+        1,
+        2,
+        3,
+        4,
+        5
+      ],
+      "supportedRuleSets": [
+        [
+          "standard"
+        ],
+        [
+          "reverse"
+        ],
+        [
+          "bomb"
+        ],
+        [
+          "bomb",
+          "reverse"
+        ]
+      ],
+      "targetCap": 4,
+      "directionSensitive": false,
+      "enabled": true
+    },
+    {
+      "id": "math-property",
+      "theme": "math",
+      "engine": "condition",
+      "capabilities": [
+        "single",
+        "multi",
+        "master-slash",
+        "numeric"
+      ],
+      "sourceKind": "algorithmic",
+      "tags": [
+        "property"
+      ],
+      "difficultyBands": [
+        1,
+        2,
+        3,
+        4,
+        5
+      ],
+      "supportedRuleSets": [
+        [
+          "standard"
+        ],
+        [
+          "multi"
+        ],
+        [
+          "reverse"
+        ],
+        [
+          "bomb",
+          "multi"
+        ],
+        [
+          "multi",
+          "reverse"
+        ]
+      ],
+      "targetCap": 5,
+      "directionSensitive": false,
+      "enabled": true
+    },
+    {
+      "id": "math-compare",
+      "theme": "math",
+      "engine": "compare",
+      "capabilities": [
+        "single",
+        "numeric"
+      ],
+      "sourceKind": "algorithmic",
+      "tags": [
+        "compare"
+      ],
+      "difficultyBands": [
+        1,
+        2,
+        3,
+        4,
+        5
+      ],
+      "supportedRuleSets": [
+        [
+          "standard"
+        ],
+        [
+          "reverse"
+        ],
+        [
+          "bomb"
+        ],
+        [
+          "bomb",
+          "reverse"
+        ]
+      ],
+      "targetCap": 4,
+      "directionSensitive": false,
+      "enabled": true
+    },
+    {
+      "id": "math-sequence",
+      "theme": "math",
+      "engine": "sequence",
+      "capabilities": [
+        "single",
+        "order",
+        "numeric"
+      ],
+      "sourceKind": "algorithmic",
+      "tags": [
+        "sequence"
+      ],
+      "difficultyBands": [
+        1,
+        2,
+        3,
+        4,
+        5
+      ],
+      "supportedRuleSets": [
+        [
+          "standard"
+        ],
+        [
+          "reverse"
+        ],
+        [
+          "bomb"
+        ],
+        [
+          "order"
+        ],
+        [
+          "bomb",
+          "order"
+        ]
+      ],
+      "targetCap": 4,
+      "directionSensitive": false,
+      "enabled": true
+    },
+    {
+      "id": "math-missing",
+      "theme": "math",
+      "engine": "fill",
+      "capabilities": [
+        "single",
+        "numeric"
+      ],
+      "sourceKind": "algorithmic",
+      "tags": [
+        "fill"
+      ],
+      "difficultyBands": [
+        1,
+        2,
+        3,
+        4,
+        5
+      ],
+      "supportedRuleSets": [
+        [
+          "standard"
+        ],
+        [
+          "reverse"
+        ],
+        [
+          "bomb"
+        ],
+        [
+          "bomb",
+          "reverse"
+        ]
+      ],
+      "targetCap": 4,
+      "directionSensitive": false,
+      "enabled": true
+    },
+    {
+      "id": "math-equation",
+      "theme": "math",
+      "engine": "single",
+      "capabilities": [
+        "single",
+        "numeric"
+      ],
+      "sourceKind": "algorithmic",
+      "tags": [
+        "equation"
+      ],
+      "difficultyBands": [
+        1,
+        2,
+        3,
+        4,
+        5
+      ],
+      "supportedRuleSets": [
+        [
+          "standard"
+        ],
+        [
+          "reverse"
+        ],
+        [
+          "bomb"
+        ],
+        [
+          "bomb",
+          "reverse"
+        ]
+      ],
+      "targetCap": 4,
+      "directionSensitive": false,
+      "enabled": true
+    },
+    {
+      "id": "vision-direction",
+      "theme": "vision",
+      "engine": "single",
+      "capabilities": [
+        "single"
+      ],
+      "sourceKind": "algorithmic",
+      "tags": [
+        "direction"
+      ],
+      "difficultyBands": [
+        1,
+        2,
+        3,
+        4,
+        5
+      ],
+      "supportedRuleSets": [
+        [
+          "standard"
+        ],
+        [
+          "reverse"
+        ],
+        [
+          "bomb"
+        ],
+        [
+          "bomb",
+          "reverse"
+        ]
+      ],
+      "targetCap": 6,
+      "directionSensitive": true,
+      "enabled": true
+    },
+    {
+      "id": "vision-odd",
+      "theme": "vision",
+      "engine": "odd-one-out",
+      "capabilities": [
+        "single"
+      ],
+      "sourceKind": "algorithmic",
+      "tags": [
+        "odd-one-out"
+      ],
+      "difficultyBands": [
+        1,
+        2,
+        3,
+        4,
+        5
+      ],
+      "supportedRuleSets": [
+        [
+          "standard"
+        ],
+        [
+          "reverse"
+        ],
+        [
+          "bomb"
+        ],
+        [
+          "bomb",
+          "reverse"
+        ]
+      ],
+      "targetCap": 6,
+      "directionSensitive": false,
+      "enabled": true
+    },
+    {
+      "id": "vision-count",
+      "theme": "vision",
+      "engine": "count",
+      "capabilities": [
+        "single",
+        "numeric"
+      ],
+      "sourceKind": "algorithmic",
+      "tags": [
+        "count"
+      ],
+      "difficultyBands": [
+        1,
+        2,
+        3,
+        4,
+        5
+      ],
+      "supportedRuleSets": [
+        [
+          "standard"
+        ],
+        [
+          "reverse"
+        ],
+        [
+          "bomb"
+        ],
+        [
+          "bomb",
+          "reverse"
+        ]
+      ],
+      "targetCap": 6,
+      "directionSensitive": false,
+      "enabled": true
+    },
+    {
+      "id": "vision-stroop",
+      "theme": "vision",
+      "engine": "single",
+      "capabilities": [
+        "single",
+        "stroop"
+      ],
+      "sourceKind": "algorithmic",
+      "tags": [
+        "stroop"
+      ],
+      "difficultyBands": [
+        1,
+        2,
+        3,
+        4,
+        5
+      ],
+      "supportedRuleSets": [
+        [
+          "standard"
+        ],
+        [
+          "bomb"
+        ]
+      ],
+      "targetCap": 6,
+      "directionSensitive": false,
+      "enabled": true
+    },
+    {
+      "id": "vision-pattern",
+      "theme": "vision",
+      "engine": "sequence",
+      "capabilities": [
+        "single"
+      ],
+      "sourceKind": "algorithmic",
+      "tags": [
+        "pattern"
+      ],
+      "difficultyBands": [
+        1,
+        2,
+        3,
+        4,
+        5
+      ],
+      "supportedRuleSets": [
+        [
+          "standard"
+        ],
+        [
+          "reverse"
+        ],
+        [
+          "bomb"
+        ],
+        [
+          "bomb",
+          "reverse"
+        ]
+      ],
+      "targetCap": 6,
+      "directionSensitive": true,
+      "enabled": true
+    },
+    {
+      "id": "vision-match",
+      "theme": "vision",
+      "engine": "same",
+      "capabilities": [
+        "single"
+      ],
+      "sourceKind": "algorithmic",
+      "tags": [
+        "match"
+      ],
+      "difficultyBands": [
+        1,
+        2,
+        3,
+        4,
+        5
+      ],
+      "supportedRuleSets": [
+        [
+          "standard"
+        ],
+        [
+          "reverse"
+        ],
+        [
+          "bomb"
+        ],
+        [
+          "bomb",
+          "reverse"
+        ]
+      ],
+      "targetCap": 6,
+      "directionSensitive": false,
+      "enabled": true
+    },
+    {
+      "id": "hanzi-fill",
+      "theme": "hanzi",
+      "engine": "fill",
+      "capabilities": [
+        "single",
+        "short-text"
+      ],
+      "sourceKind": "reviewed-facts",
+      "tags": [
+        "idiom",
+        "fill"
+      ],
+      "difficultyBands": [
+        1,
+        2,
+        3,
+        4,
+        5
+      ],
+      "supportedRuleSets": [
+        [
+          "standard"
+        ],
+        [
+          "reverse"
+        ],
+        [
+          "bomb"
+        ],
+        [
+          "bomb",
+          "reverse"
+        ]
+      ],
+      "targetCap": 4,
+      "directionSensitive": false,
+      "enabled": true
+    },
+    {
+      "id": "hanzi-order",
+      "theme": "hanzi",
+      "engine": "order",
+      "capabilities": [
+        "order",
+        "short-text"
+      ],
+      "sourceKind": "reviewed-facts",
+      "tags": [
+        "idiom",
+        "order"
+      ],
+      "difficultyBands": [
+        1,
+        2,
+        3,
+        4,
+        5
+      ],
+      "supportedRuleSets": [
+        [
+          "order"
+        ],
+        [
+          "bomb",
+          "order"
+        ]
+      ],
+      "targetCap": 5,
+      "directionSensitive": false,
+      "enabled": true
+    },
+    {
+      "id": "hanzi-antonym",
+      "theme": "hanzi",
+      "engine": "pair",
+      "capabilities": [
+        "single",
+        "short-text"
+      ],
+      "sourceKind": "reviewed-facts",
+      "tags": [
+        "antonym"
+      ],
+      "difficultyBands": [
+        1,
+        2,
+        3,
+        4,
+        5
+      ],
+      "supportedRuleSets": [
+        [
+          "standard"
+        ],
+        [
+          "reverse"
+        ],
+        [
+          "bomb"
+        ],
+        [
+          "bomb",
+          "reverse"
+        ]
+      ],
+      "targetCap": 4,
+      "directionSensitive": false,
+      "enabled": true
+    },
+    {
+      "id": "hanzi-synonym",
+      "theme": "hanzi",
+      "engine": "pair",
+      "capabilities": [
+        "single",
+        "short-text"
+      ],
+      "sourceKind": "reviewed-facts",
+      "tags": [
+        "synonym"
+      ],
+      "difficultyBands": [
+        1,
+        2,
+        3,
+        4,
+        5
+      ],
+      "supportedRuleSets": [
+        [
+          "standard"
+        ],
+        [
+          "reverse"
+        ],
+        [
+          "bomb"
+        ],
+        [
+          "bomb",
+          "reverse"
+        ]
+      ],
+      "targetCap": 4,
+      "directionSensitive": false,
+      "enabled": true
+    },
+    {
+      "id": "hanzi-pinyin",
+      "theme": "hanzi",
+      "engine": "pair",
+      "capabilities": [
+        "single",
+        "short-text"
+      ],
+      "sourceKind": "reviewed-facts",
+      "tags": [
+        "pinyin"
+      ],
+      "difficultyBands": [
+        1,
+        2,
+        3,
+        4,
+        5
+      ],
+      "supportedRuleSets": [
+        [
+          "standard"
+        ],
+        [
+          "reverse"
+        ],
+        [
+          "bomb"
+        ],
+        [
+          "bomb",
+          "reverse"
+        ]
+      ],
+      "targetCap": 4,
+      "directionSensitive": false,
+      "enabled": true
+    },
+    {
+      "id": "hanzi-poetry",
+      "theme": "hanzi",
+      "engine": "fill",
+      "capabilities": [
+        "single",
+        "short-text"
+      ],
+      "sourceKind": "reviewed-facts",
+      "tags": [
+        "poetry",
+        "fill"
+      ],
+      "difficultyBands": [
+        1,
+        2,
+        3,
+        4,
+        5
+      ],
+      "supportedRuleSets": [
+        [
+          "standard"
+        ],
+        [
+          "reverse"
+        ],
+        [
+          "bomb"
+        ],
+        [
+          "bomb",
+          "reverse"
+        ]
+      ],
+      "targetCap": 4,
+      "directionSensitive": false,
+      "enabled": true
+    },
+    {
+      "id": "english-meaning",
+      "theme": "english",
+      "engine": "pair",
+      "capabilities": [
+        "single",
+        "short-text"
+      ],
+      "sourceKind": "reviewed-facts",
+      "tags": [
+        "meaning"
+      ],
+      "difficultyBands": [
+        1,
+        2,
+        3,
+        4,
+        5
+      ],
+      "supportedRuleSets": [
+        [
+          "standard"
+        ],
+        [
+          "reverse"
+        ],
+        [
+          "bomb"
+        ],
+        [
+          "bomb",
+          "reverse"
+        ]
+      ],
+      "targetCap": 4,
+      "directionSensitive": false,
+      "enabled": true
+    },
+    {
+      "id": "english-category",
+      "theme": "english",
+      "engine": "condition",
+      "capabilities": [
+        "single",
+        "multi",
+        "master-slash",
+        "category",
+        "short-text"
+      ],
+      "sourceKind": "reviewed-facts",
+      "tags": [
+        "category"
+      ],
+      "difficultyBands": [
+        1,
+        2,
+        3,
+        4,
+        5
+      ],
+      "supportedRuleSets": [
+        [
+          "standard"
+        ],
+        [
+          "multi"
+        ],
+        [
+          "reverse"
+        ],
+        [
+          "bomb",
+          "multi"
+        ],
+        [
+          "multi",
+          "reverse"
+        ]
+      ],
+      "targetCap": 5,
+      "directionSensitive": false,
+      "enabled": true
+    },
+    {
+      "id": "english-antonym",
+      "theme": "english",
+      "engine": "pair",
+      "capabilities": [
+        "single",
+        "short-text"
+      ],
+      "sourceKind": "reviewed-facts",
+      "tags": [
+        "antonym"
+      ],
+      "difficultyBands": [
+        1,
+        2,
+        3,
+        4,
+        5
+      ],
+      "supportedRuleSets": [
+        [
+          "standard"
+        ],
+        [
+          "reverse"
+        ],
+        [
+          "bomb"
+        ],
+        [
+          "bomb",
+          "reverse"
+        ]
+      ],
+      "targetCap": 4,
+      "directionSensitive": false,
+      "enabled": true
+    },
+    {
+      "id": "english-first-letter",
+      "theme": "english",
+      "engine": "single",
+      "capabilities": [
+        "single",
+        "short-text"
+      ],
+      "sourceKind": "reviewed-facts",
+      "tags": [
+        "spelling",
+        "first-letter"
+      ],
+      "difficultyBands": [
+        1,
+        2,
+        3,
+        4,
+        5
+      ],
+      "supportedRuleSets": [
+        [
+          "standard"
+        ],
+        [
+          "reverse"
+        ],
+        [
+          "bomb"
+        ],
+        [
+          "bomb",
+          "reverse"
+        ]
+      ],
+      "targetCap": 4,
+      "directionSensitive": false,
+      "enabled": true
+    },
+    {
+      "id": "english-length",
+      "theme": "english",
+      "engine": "count",
+      "capabilities": [
+        "single",
+        "numeric"
+      ],
+      "sourceKind": "reviewed-facts",
+      "tags": [
+        "spelling",
+        "length"
+      ],
+      "difficultyBands": [
+        1,
+        2,
+        3,
+        4,
+        5
+      ],
+      "supportedRuleSets": [
+        [
+          "standard"
+        ],
+        [
+          "reverse"
+        ],
+        [
+          "bomb"
+        ],
+        [
+          "bomb",
+          "reverse"
+        ]
+      ],
+      "targetCap": 4,
+      "directionSensitive": false,
+      "enabled": true
+    },
+    {
+      "id": "life-category",
+      "theme": "life",
+      "engine": "condition",
+      "capabilities": [
+        "single",
+        "multi",
+        "master-slash",
+        "category",
+        "short-text"
+      ],
+      "sourceKind": "reviewed-facts",
+      "tags": [
+        "category"
+      ],
+      "difficultyBands": [
+        1,
+        2,
+        3,
+        4,
+        5
+      ],
+      "supportedRuleSets": [
+        [
+          "standard"
+        ],
+        [
+          "multi"
+        ],
+        [
+          "reverse"
+        ],
+        [
+          "bomb",
+          "multi"
+        ],
+        [
+          "multi",
+          "reverse"
+        ]
+      ],
+      "targetCap": 5,
+      "directionSensitive": false,
+      "enabled": true
+    },
+    {
+      "id": "geography-capital",
+      "theme": "geography",
+      "engine": "pair",
+      "capabilities": [
+        "single",
+        "short-text"
+      ],
+      "sourceKind": "reviewed-facts",
+      "tags": [
+        "capital"
+      ],
+      "difficultyBands": [
+        1,
+        2,
+        3,
+        4,
+        5
+      ],
+      "supportedRuleSets": [
+        [
+          "standard"
+        ],
+        [
+          "reverse"
+        ],
+        [
+          "bomb"
+        ],
+        [
+          "bomb",
+          "reverse"
+        ]
+      ],
+      "targetCap": 4,
+      "directionSensitive": false,
+      "enabled": true
+    },
+    {
+      "id": "geography-country",
+      "theme": "geography",
+      "engine": "pair",
+      "capabilities": [
+        "single",
+        "short-text"
+      ],
+      "sourceKind": "reviewed-facts",
+      "tags": [
+        "country"
+      ],
+      "difficultyBands": [
+        1,
+        2,
+        3,
+        4,
+        5
+      ],
+      "supportedRuleSets": [
+        [
+          "standard"
+        ],
+        [
+          "reverse"
+        ],
+        [
+          "bomb"
+        ],
+        [
+          "bomb",
+          "reverse"
+        ]
+      ],
+      "targetCap": 4,
+      "directionSensitive": false,
+      "enabled": true
+    },
+    {
+      "id": "knowledge-science",
+      "theme": "knowledge",
+      "engine": "single",
+      "capabilities": [
+        "single",
+        "short-text"
+      ],
+      "sourceKind": "reviewed-facts",
+      "tags": [
+        "science"
+      ],
+      "difficultyBands": [
+        1,
+        2,
+        3,
+        4,
+        5
+      ],
+      "supportedRuleSets": [
+        [
+          "standard"
+        ],
+        [
+          "reverse"
+        ],
+        [
+          "bomb"
+        ],
+        [
+          "bomb",
+          "reverse"
+        ]
+      ],
+      "targetCap": 4,
+      "directionSensitive": false,
+      "enabled": true
+    },
+    {
+      "id": "knowledge-nature",
+      "theme": "knowledge",
+      "engine": "single",
+      "capabilities": [
+        "single",
+        "short-text"
+      ],
+      "sourceKind": "reviewed-facts",
+      "tags": [
+        "nature"
+      ],
+      "difficultyBands": [
+        1,
+        2,
+        3,
+        4,
+        5
+      ],
+      "supportedRuleSets": [
+        [
+          "standard"
+        ],
+        [
+          "reverse"
+        ],
+        [
+          "bomb"
+        ],
+        [
+          "bomb",
+          "reverse"
+        ]
+      ],
+      "targetCap": 4,
+      "directionSensitive": false,
+      "enabled": true
+    },
+    {
+      "id": "knowledge-culture",
+      "theme": "knowledge",
+      "engine": "single",
+      "capabilities": [
+        "single",
+        "short-text"
+      ],
+      "sourceKind": "reviewed-facts",
+      "tags": [
+        "culture"
+      ],
+      "difficultyBands": [
+        1,
+        2,
+        3,
+        4,
+        5
+      ],
+      "supportedRuleSets": [
+        [
+          "standard"
+        ],
+        [
+          "reverse"
+        ],
+        [
+          "bomb"
+        ],
+        [
+          "bomb",
+          "reverse"
+        ]
+      ],
+      "targetCap": 4,
+      "directionSensitive": false,
+      "enabled": true
+    },
+    {
+      "id": "knowledge-civic",
+      "theme": "knowledge",
+      "engine": "single",
+      "capabilities": [
+        "single",
+        "short-text"
+      ],
+      "sourceKind": "reviewed-facts",
+      "tags": [
+        "civic"
+      ],
+      "difficultyBands": [
+        1,
+        2,
+        3,
+        4,
+        5
+      ],
+      "supportedRuleSets": [
+        [
+          "standard"
+        ],
+        [
+          "reverse"
+        ],
+        [
+          "bomb"
+        ],
+        [
+          "bomb",
+          "reverse"
+        ]
+      ],
+      "targetCap": 4,
+      "directionSensitive": false,
+      "enabled": true
+    },
+    {
+      "id": "history-modern-opening",
+      "theme": "history",
+      "engine": "single",
+      "capabilities": [
+        "single",
+        "short-text"
+      ],
+      "sourceKind": "reviewed-facts",
+      "tags": [
+        "modern-opening"
+      ],
+      "difficultyBands": [
+        1,
+        2,
+        3,
+        4,
+        5
+      ],
+      "supportedRuleSets": [
+        [
+          "standard"
+        ],
+        [
+          "reverse"
+        ],
+        [
+          "bomb"
+        ],
+        [
+          "bomb",
+          "reverse"
+        ]
+      ],
+      "targetCap": 4,
+      "directionSensitive": false,
+      "enabled": true
+    },
+    {
+      "id": "history-modern-awakening",
+      "theme": "history",
+      "engine": "single",
+      "capabilities": [
+        "single",
+        "short-text"
+      ],
+      "sourceKind": "reviewed-facts",
+      "tags": [
+        "modern-awakening"
+      ],
+      "difficultyBands": [
+        1,
+        2,
+        3,
+        4,
+        5
+      ],
+      "supportedRuleSets": [
+        [
+          "standard"
+        ],
+        [
+          "reverse"
+        ],
+        [
+          "bomb"
+        ],
+        [
+          "bomb",
+          "reverse"
+        ]
+      ],
+      "targetCap": 4,
+      "directionSensitive": false,
+      "enabled": true
+    },
+    {
+      "id": "history-modern-resistance",
+      "theme": "history",
+      "engine": "single",
+      "capabilities": [
+        "single",
+        "short-text"
+      ],
+      "sourceKind": "reviewed-facts",
+      "tags": [
+        "modern-resistance"
+      ],
+      "difficultyBands": [
+        1,
+        2,
+        3,
+        4,
+        5
+      ],
+      "supportedRuleSets": [
+        [
+          "standard"
+        ],
+        [
+          "reverse"
+        ],
+        [
+          "bomb"
+        ],
+        [
+          "bomb",
+          "reverse"
+        ]
+      ],
+      "targetCap": 4,
+      "directionSensitive": false,
+      "enabled": true
+    },
+    {
+      "id": "history-ancient",
+      "theme": "history",
+      "engine": "single",
+      "capabilities": [
+        "single",
+        "short-text"
+      ],
+      "sourceKind": "reviewed-facts",
+      "tags": [
+        "ancient"
+      ],
+      "difficultyBands": [
+        1,
+        2,
+        3,
+        4,
+        5
+      ],
+      "supportedRuleSets": [
+        [
+          "standard"
+        ],
+        [
+          "reverse"
+        ],
+        [
+          "bomb"
+        ],
+        [
+          "bomb",
+          "reverse"
+        ]
+      ],
+      "targetCap": 4,
+      "directionSensitive": false,
+      "enabled": true
+    },
+    {
+      "id": "history-myth",
+      "theme": "history",
+      "engine": "single",
+      "capabilities": [
+        "single",
+        "short-text"
+      ],
+      "sourceKind": "reviewed-facts",
+      "tags": [
+        "myth"
+      ],
+      "difficultyBands": [
+        1,
+        2,
+        3,
+        4,
+        5
+      ],
+      "supportedRuleSets": [
+        [
+          "standard"
+        ],
+        [
+          "reverse"
+        ],
+        [
+          "bomb"
+        ],
+        [
+          "bomb",
+          "reverse"
+        ]
+      ],
+      "targetCap": 4,
+      "directionSensitive": false,
+      "enabled": true
+    }
+  ],
+  "facts": [
+    {
+      "id": "fact.hanzi.idioms.0p7kl6c",
+      "kind": "hanzi.idioms",
+      "fields": {
+        "text": "画龙点睛",
+        "missingIndex": 3,
+        "wrong": [
+          "晴",
+          "情",
+          "精",
+          "晶"
+        ]
+      },
+      "tags": [
+        "hanzi",
+        "hanzi-fill",
+        "hanzi-order"
+      ],
+      "source": "internal-reviewed-catalog",
+      "reviewStatus": "reviewed",
+      "reviewedAt": "2026-09-01",
+      "enabled": true
+    },
+    {
+      "id": "fact.hanzi.idioms.05b5yts",
+      "kind": "hanzi.idioms",
+      "fields": {
+        "text": "一心一意",
+        "missingIndex": 3,
+        "wrong": [
+          "亿",
+          "忆",
+          "议",
+          "义"
+        ]
+      },
+      "tags": [
+        "hanzi",
+        "hanzi-fill",
+        "hanzi-order"
+      ],
+      "source": "internal-reviewed-catalog",
+      "reviewStatus": "reviewed",
+      "reviewedAt": "2026-09-01",
+      "enabled": true
+    },
+    {
+      "id": "fact.hanzi.idioms.198brqx",
+      "kind": "hanzi.idioms",
+      "fields": {
+        "text": "四面八方",
+        "missingIndex": 3,
+        "wrong": [
+          "芳",
+          "房",
+          "放",
+          "坊"
+        ]
+      },
+      "tags": [
+        "hanzi",
+        "hanzi-fill",
+        "hanzi-order"
+      ],
+      "source": "internal-reviewed-catalog",
+      "reviewStatus": "reviewed",
+      "reviewedAt": "2026-09-01",
+      "enabled": true
+    },
+    {
+      "id": "fact.hanzi.idioms.052ynlf",
+      "kind": "hanzi.idioms",
+      "fields": {
+        "text": "守株待兔",
+        "missingIndex": 1,
+        "wrong": [
+          "珠",
+          "朱",
+          "蛛",
+          "诸"
+        ]
+      },
+      "tags": [
+        "hanzi",
+        "hanzi-fill",
+        "hanzi-order"
+      ],
+      "source": "internal-reviewed-catalog",
+      "reviewStatus": "reviewed",
+      "reviewedAt": "2026-09-01",
+      "enabled": true
+    },
+    {
+      "id": "fact.hanzi.idioms.0tr6ifg",
+      "kind": "hanzi.idioms",
+      "fields": {
+        "text": "亡羊补牢",
+        "missingIndex": 3,
+        "wrong": [
+          "劳",
+          "捞",
+          "唠",
+          "涝"
+        ]
+      },
+      "tags": [
+        "hanzi",
+        "hanzi-fill",
+        "hanzi-order"
+      ],
+      "source": "internal-reviewed-catalog",
+      "reviewStatus": "reviewed",
+      "reviewedAt": "2026-09-01",
+      "enabled": true
+    },
+    {
+      "id": "fact.hanzi.idioms.0t3gu2n",
+      "kind": "hanzi.idioms",
+      "fields": {
+        "text": "刻舟求剑",
+        "missingIndex": 2,
+        "wrong": [
+          "球",
+          "囚",
+          "秋",
+          "丘"
+        ]
+      },
+      "tags": [
+        "hanzi",
+        "hanzi-fill",
+        "hanzi-order"
+      ],
+      "source": "internal-reviewed-catalog",
+      "reviewStatus": "reviewed",
+      "reviewedAt": "2026-09-01",
+      "enabled": true
+    },
+    {
+      "id": "fact.hanzi.idioms.0znxzi6",
+      "kind": "hanzi.idioms",
+      "fields": {
+        "text": "掩耳盗铃",
+        "missingIndex": 3,
+        "wrong": [
+          "玲",
+          "零",
+          "龄",
+          "灵"
+        ]
+      },
+      "tags": [
+        "hanzi",
+        "hanzi-fill",
+        "hanzi-order"
+      ],
+      "source": "internal-reviewed-catalog",
+      "reviewStatus": "reviewed",
+      "reviewedAt": "2026-09-01",
+      "enabled": true
+    },
+    {
+      "id": "fact.hanzi.idioms.1nghem6",
+      "kind": "hanzi.idioms",
+      "fields": {
+        "text": "井底之蛙",
+        "missingIndex": 3,
+        "wrong": [
+          "洼",
+          "娃",
+          "哇",
+          "挖"
+        ]
+      },
+      "tags": [
+        "hanzi",
+        "hanzi-fill",
+        "hanzi-order"
+      ],
+      "source": "internal-reviewed-catalog",
+      "reviewStatus": "reviewed",
+      "reviewedAt": "2026-09-01",
+      "enabled": true
+    },
+    {
+      "id": "fact.hanzi.antonyms.1k9ve5c",
+      "kind": "hanzi.antonyms",
+      "fields": {
+        "id": "hanzi.antonym.001",
+        "kind": "antonym",
+        "left": "大",
+        "right": "小",
+        "leftDistractors": [
+          "多",
+          "上",
+          "左",
+          "前"
+        ],
+        "rightDistractors": [
+          "少",
+          "下",
+          "右",
+          "后"
+        ]
+      },
+      "tags": [
+        "hanzi",
+        "hanzi-antonym"
+      ],
+      "source": "internal-reviewed-catalog",
+      "reviewStatus": "reviewed",
+      "reviewedAt": "2026-09-01",
+      "enabled": true
+    },
+    {
+      "id": "fact.hanzi.antonyms.1l3u789",
+      "kind": "hanzi.antonyms",
+      "fields": {
+        "id": "hanzi.antonym.002",
+        "kind": "antonym",
+        "left": "多",
+        "right": "少",
+        "leftDistractors": [
+          "大",
+          "上",
+          "左",
+          "前"
+        ],
+        "rightDistractors": [
+          "小",
+          "下",
+          "右",
+          "后"
+        ]
+      },
+      "tags": [
+        "hanzi",
+        "hanzi-antonym"
+      ],
+      "source": "internal-reviewed-catalog",
+      "reviewStatus": "reviewed",
+      "reviewedAt": "2026-09-01",
+      "enabled": true
+    },
+    {
+      "id": "fact.hanzi.antonyms.1ktulja",
+      "kind": "hanzi.antonyms",
+      "fields": {
+        "id": "hanzi.antonym.003",
+        "kind": "antonym",
+        "left": "上",
+        "right": "下",
+        "leftDistractors": [
+          "大",
+          "多",
+          "左",
+          "前"
+        ],
+        "rightDistractors": [
+          "小",
+          "少",
+          "右",
+          "后"
+        ]
+      },
+      "tags": [
+        "hanzi",
+        "hanzi-antonym"
+      ],
+      "source": "internal-reviewed-catalog",
+      "reviewStatus": "reviewed",
+      "reviewedAt": "2026-09-01",
+      "enabled": true
+    },
+    {
+      "id": "fact.hanzi.antonyms.1lntem7",
+      "kind": "hanzi.antonyms",
+      "fields": {
+        "id": "hanzi.antonym.004",
+        "kind": "antonym",
+        "left": "左",
+        "right": "右",
+        "leftDistractors": [
+          "大",
+          "多",
+          "上",
+          "前"
+        ],
+        "rightDistractors": [
+          "小",
+          "少",
+          "下",
+          "后"
+        ]
+      },
+      "tags": [
+        "hanzi",
+        "hanzi-antonym"
+      ],
+      "source": "internal-reviewed-catalog",
+      "reviewStatus": "reviewed",
+      "reviewedAt": "2026-09-01",
+      "enabled": true
+    },
+    {
+      "id": "fact.hanzi.antonyms.1ldtsx8",
+      "kind": "hanzi.antonyms",
+      "fields": {
+        "id": "hanzi.antonym.005",
+        "kind": "antonym",
+        "left": "前",
+        "right": "后",
+        "leftDistractors": [
+          "大",
+          "多",
+          "上",
+          "左"
+        ],
+        "rightDistractors": [
+          "小",
+          "少",
+          "下",
+          "右"
+        ]
+      },
+      "tags": [
+        "hanzi",
+        "hanzi-antonym"
+      ],
+      "source": "internal-reviewed-catalog",
+      "reviewStatus": "reviewed",
+      "reviewedAt": "2026-09-01",
+      "enabled": true
+    },
+    {
+      "id": "fact.hanzi.antonyms.1m7sm05",
+      "kind": "hanzi.antonyms",
+      "fields": {
+        "id": "hanzi.antonym.006",
+        "kind": "antonym",
+        "left": "内",
+        "right": "外",
+        "leftDistractors": [
+          "东",
+          "南",
+          "高",
+          "长"
+        ],
+        "rightDistractors": [
+          "西",
+          "北",
+          "低",
+          "短"
+        ]
+      },
+      "tags": [
+        "hanzi",
+        "hanzi-antonym"
+      ],
+      "source": "internal-reviewed-catalog",
+      "reviewStatus": "reviewed",
+      "reviewedAt": "2026-09-01",
+      "enabled": true
+    },
+    {
+      "id": "fact.hanzi.antonyms.1lxt0b6",
+      "kind": "hanzi.antonyms",
+      "fields": {
+        "id": "hanzi.antonym.007",
+        "kind": "antonym",
+        "left": "东",
+        "right": "西",
+        "leftDistractors": [
+          "内",
+          "南",
+          "高",
+          "长"
+        ],
+        "rightDistractors": [
+          "外",
+          "北",
+          "低",
+          "短"
+        ]
+      },
+      "tags": [
+        "hanzi",
+        "hanzi-antonym"
+      ],
+      "source": "internal-reviewed-catalog",
+      "reviewStatus": "reviewed",
+      "reviewedAt": "2026-09-01",
+      "enabled": true
+    },
+    {
+      "id": "fact.hanzi.antonyms.1mrrte3",
+      "kind": "hanzi.antonyms",
+      "fields": {
+        "id": "hanzi.antonym.008",
+        "kind": "antonym",
+        "left": "南",
+        "right": "北",
+        "leftDistractors": [
+          "内",
+          "东",
+          "高",
+          "长"
+        ],
+        "rightDistractors": [
+          "外",
+          "西",
+          "低",
+          "短"
+        ]
+      },
+      "tags": [
+        "hanzi",
+        "hanzi-antonym"
+      ],
+      "source": "internal-reviewed-catalog",
+      "reviewStatus": "reviewed",
+      "reviewedAt": "2026-09-01",
+      "enabled": true
+    },
+    {
+      "id": "fact.hanzi.synonyms.0sw3don",
+      "kind": "hanzi.synonyms",
+      "fields": {
+        "id": "hanzi.synonym.001",
+        "kind": "synonym",
+        "left": "美丽",
+        "right": "漂亮",
+        "leftDistractors": [
+          "高兴",
+          "难过",
+          "迅速",
+          "缓慢"
+        ],
+        "rightDistractors": [
+          "开心",
+          "伤心",
+          "飞快",
+          "迟缓"
+        ]
+      },
+      "tags": [
+        "hanzi",
+        "hanzi-synonym"
+      ],
+      "source": "internal-reviewed-catalog",
+      "reviewStatus": "reviewed",
+      "reviewedAt": "2026-09-01",
+      "enabled": true
+    },
+    {
+      "id": "fact.hanzi.synonyms.0t62zdm",
+      "kind": "hanzi.synonyms",
+      "fields": {
+        "id": "hanzi.synonym.002",
+        "kind": "synonym",
+        "left": "高兴",
+        "right": "开心",
+        "leftDistractors": [
+          "美丽",
+          "难过",
+          "迅速",
+          "缓慢"
+        ],
+        "rightDistractors": [
+          "漂亮",
+          "伤心",
+          "飞快",
+          "迟缓"
+        ]
+      },
+      "tags": [
+        "hanzi",
+        "hanzi-synonym"
+      ],
+      "source": "internal-reviewed-catalog",
+      "reviewStatus": "reviewed",
+      "reviewedAt": "2026-09-01",
+      "enabled": true
+    },
+    {
+      "id": "fact.hanzi.synonyms.0tg2l2l",
+      "kind": "hanzi.synonyms",
+      "fields": {
+        "id": "hanzi.synonym.003",
+        "kind": "synonym",
+        "left": "难过",
+        "right": "伤心",
+        "leftDistractors": [
+          "美丽",
+          "高兴",
+          "迅速",
+          "缓慢"
+        ],
+        "rightDistractors": [
+          "漂亮",
+          "开心",
+          "飞快",
+          "迟缓"
+        ]
+      },
+      "tags": [
+        "hanzi",
+        "hanzi-synonym"
+      ],
+      "source": "internal-reviewed-catalog",
+      "reviewStatus": "reviewed",
+      "reviewedAt": "2026-09-01",
+      "enabled": true
+    },
+    {
+      "id": "fact.hanzi.synonyms.0ri5d7s",
+      "kind": "hanzi.synonyms",
+      "fields": {
+        "id": "hanzi.synonym.004",
+        "kind": "synonym",
+        "left": "迅速",
+        "right": "飞快",
+        "leftDistractors": [
+          "美丽",
+          "高兴",
+          "难过",
+          "缓慢"
+        ],
+        "rightDistractors": [
+          "漂亮",
+          "开心",
+          "伤心",
+          "迟缓"
+        ]
+      },
+      "tags": [
+        "hanzi",
+        "hanzi-synonym"
+      ],
+      "source": "internal-reviewed-catalog",
+      "reviewStatus": "reviewed",
+      "reviewedAt": "2026-09-01",
+      "enabled": true
+    },
+    {
+      "id": "fact.hanzi.synonyms.0rs4ywr",
+      "kind": "hanzi.synonyms",
+      "fields": {
+        "id": "hanzi.synonym.005",
+        "kind": "synonym",
+        "left": "缓慢",
+        "right": "迟缓",
+        "leftDistractors": [
+          "美丽",
+          "高兴",
+          "难过",
+          "迅速"
+        ],
+        "rightDistractors": [
+          "漂亮",
+          "开心",
+          "伤心",
+          "飞快"
+        ]
+      },
+      "tags": [
+        "hanzi",
+        "hanzi-synonym"
+      ],
+      "source": "internal-reviewed-catalog",
+      "reviewStatus": "reviewed",
+      "reviewedAt": "2026-09-01",
+      "enabled": true
+    },
+    {
+      "id": "fact.hanzi.synonyms.0s24klq",
+      "kind": "hanzi.synonyms",
+      "fields": {
+        "id": "hanzi.synonym.006",
+        "kind": "synonym",
+        "left": "寒冷",
+        "right": "冰冷",
+        "leftDistractors": [
+          "炎热",
+          "明亮",
+          "黑暗",
+          "安静"
+        ],
+        "rightDistractors": [
+          "酷热",
+          "光亮",
+          "昏暗",
+          "宁静"
+        ]
+      },
+      "tags": [
+        "hanzi",
+        "hanzi-synonym"
+      ],
+      "source": "internal-reviewed-catalog",
+      "reviewStatus": "reviewed",
+      "reviewedAt": "2026-09-01",
+      "enabled": true
+    },
+    {
+      "id": "fact.hanzi.synonyms.0sc46ap",
+      "kind": "hanzi.synonyms",
+      "fields": {
+        "id": "hanzi.synonym.007",
+        "kind": "synonym",
+        "left": "炎热",
+        "right": "酷热",
+        "leftDistractors": [
+          "寒冷",
+          "明亮",
+          "黑暗",
+          "安静"
+        ],
+        "rightDistractors": [
+          "冰冷",
+          "光亮",
+          "昏暗",
+          "宁静"
+        ]
+      },
+      "tags": [
+        "hanzi",
+        "hanzi-synonym"
+      ],
+      "source": "internal-reviewed-catalog",
+      "reviewStatus": "reviewed",
+      "reviewedAt": "2026-09-01",
+      "enabled": true
+    },
+    {
+      "id": "fact.hanzi.synonyms.0qe6yfw",
+      "kind": "hanzi.synonyms",
+      "fields": {
+        "id": "hanzi.synonym.008",
+        "kind": "synonym",
+        "left": "明亮",
+        "right": "光亮",
+        "leftDistractors": [
+          "寒冷",
+          "炎热",
+          "黑暗",
+          "安静"
+        ],
+        "rightDistractors": [
+          "冰冷",
+          "酷热",
+          "昏暗",
+          "宁静"
+        ]
+      },
+      "tags": [
+        "hanzi",
+        "hanzi-synonym"
+      ],
+      "source": "internal-reviewed-catalog",
+      "reviewStatus": "reviewed",
+      "reviewedAt": "2026-09-01",
+      "enabled": true
+    },
+    {
+      "id": "fact.hanzi.pinyin.06ebbsm",
+      "kind": "hanzi.pinyin",
+      "fields": {
+        "id": "pinyin.shan",
+        "character": "山",
+        "pinyin": "shān",
+        "homophone": "扇",
+        "tone": "一声"
+      },
+      "tags": [
+        "hanzi",
+        "hanzi-pinyin"
+      ],
+      "source": "internal-reviewed-catalog",
+      "reviewStatus": "reviewed",
+      "reviewedAt": "2026-09-01",
+      "enabled": true
+    },
+    {
+      "id": "fact.hanzi.pinyin.1v3weaz",
+      "kind": "hanzi.pinyin",
+      "fields": {
+        "id": "pinyin.shui",
+        "character": "水",
+        "pinyin": "shuǐ",
+        "homophone": "睡",
+        "tone": "三声"
+      },
+      "tags": [
+        "hanzi",
+        "hanzi-pinyin"
+      ],
+      "source": "internal-reviewed-catalog",
+      "reviewStatus": "reviewed",
+      "reviewedAt": "2026-09-01",
+      "enabled": true
+    },
+    {
+      "id": "fact.hanzi.pinyin.0d5fs38",
+      "kind": "hanzi.pinyin",
+      "fields": {
+        "id": "pinyin.hua",
+        "character": "花",
+        "pinyin": "huā",
+        "homophone": "画",
+        "tone": "一声"
+      },
+      "tags": [
+        "hanzi",
+        "hanzi-pinyin"
+      ],
+      "source": "internal-reviewed-catalog",
+      "reviewStatus": "reviewed",
+      "reviewedAt": "2026-09-01",
+      "enabled": true
+    },
+    {
+      "id": "fact.hanzi.pinyin.0neuyij",
+      "kind": "hanzi.pinyin",
+      "fields": {
+        "id": "pinyin.niao",
+        "character": "鸟",
+        "pinyin": "niǎo",
+        "homophone": "尿",
+        "tone": "三声"
+      },
+      "tags": [
+        "hanzi",
+        "hanzi-pinyin"
+      ],
+      "source": "internal-reviewed-catalog",
+      "reviewStatus": "reviewed",
+      "reviewedAt": "2026-09-01",
+      "enabled": true
+    },
+    {
+      "id": "fact.hanzi.pinyin.1k5rap3",
+      "kind": "hanzi.pinyin",
+      "fields": {
+        "id": "pinyin.yue",
+        "character": "月",
+        "pinyin": "yuè",
+        "homophone": "越",
+        "tone": "四声"
+      },
+      "tags": [
+        "hanzi",
+        "hanzi-pinyin"
+      ],
+      "source": "internal-reviewed-catalog",
+      "reviewStatus": "reviewed",
+      "reviewedAt": "2026-09-01",
+      "enabled": true
+    },
+    {
+      "id": "fact.hanzi.pinyin.1lpg9h8",
+      "kind": "hanzi.pinyin",
+      "fields": {
+        "id": "pinyin.feng",
+        "character": "风",
+        "pinyin": "fēng",
+        "homophone": "丰",
+        "tone": "一声"
+      },
+      "tags": [
+        "hanzi",
+        "hanzi-pinyin"
+      ],
+      "source": "internal-reviewed-catalog",
+      "reviewStatus": "reviewed",
+      "reviewedAt": "2026-09-01",
+      "enabled": true
+    },
+    {
+      "id": "fact.hanzi.pinyin.0y6i8c8",
+      "kind": "hanzi.pinyin",
+      "fields": {
+        "id": "pinyin.yu",
+        "character": "雨",
+        "pinyin": "yǔ",
+        "homophone": "语",
+        "tone": "三声"
+      },
+      "tags": [
+        "hanzi",
+        "hanzi-pinyin"
+      ],
+      "source": "internal-reviewed-catalog",
+      "reviewStatus": "reviewed",
+      "reviewedAt": "2026-09-01",
+      "enabled": true
+    },
+    {
+      "id": "fact.hanzi.pinyin.1i7u2ua",
+      "kind": "hanzi.pinyin",
+      "fields": {
+        "id": "pinyin.yun",
+        "character": "云",
+        "pinyin": "yún",
+        "homophone": "匀",
+        "tone": "二声"
+      },
+      "tags": [
+        "hanzi",
+        "hanzi-pinyin"
+      ],
+      "source": "internal-reviewed-catalog",
+      "reviewStatus": "reviewed",
+      "reviewedAt": "2026-09-01",
+      "enabled": true
+    },
+    {
+      "id": "fact.hanzi.poetry.1w2ckbx",
+      "kind": "hanzi.poetry",
+      "fields": {
+        "id": "poetry.01",
+        "prompt": "床前明月( )，疑是地上霜",
+        "answer": "光",
+        "wrong": [
+          "风",
+          "花",
+          "雪"
+        ]
+      },
+      "tags": [
+        "hanzi",
+        "hanzi-poetry"
+      ],
+      "source": "internal-reviewed-catalog",
+      "reviewStatus": "reviewed",
+      "reviewedAt": "2026-09-01",
+      "enabled": true
+    },
+    {
+      "id": "fact.hanzi.poetry.1v8dr90",
+      "kind": "hanzi.poetry",
+      "fields": {
+        "id": "poetry.02",
+        "prompt": "举头望明月，低头思( )",
+        "answer": "故乡",
+        "wrong": [
+          "远方",
+          "长安",
+          "家园"
+        ]
+      },
+      "tags": [
+        "hanzi",
+        "hanzi-poetry"
+      ],
+      "source": "internal-reviewed-catalog",
+      "reviewStatus": "reviewed",
+      "reviewedAt": "2026-09-01",
+      "enabled": true
+    },
+    {
+      "id": "fact.hanzi.poetry.1vidcxz",
+      "kind": "hanzi.poetry",
+      "fields": {
+        "id": "poetry.03",
+        "prompt": "白日依山尽，黄河入( )",
+        "answer": "海流",
+        "wrong": [
+          "江流",
+          "湖中",
+          "云间"
+        ]
+      },
+      "tags": [
+        "hanzi",
+        "hanzi-poetry"
+      ],
+      "source": "internal-reviewed-catalog",
+      "reviewStatus": "reviewed",
+      "reviewedAt": "2026-09-01",
+      "enabled": true
+    },
+    {
+      "id": "fact.hanzi.poetry.1uoejv2",
+      "kind": "hanzi.poetry",
+      "fields": {
+        "id": "poetry.04",
+        "prompt": "春眠不觉晓，处处闻啼( )",
+        "answer": "鸟",
+        "wrong": [
+          "花",
+          "雨",
+          "风"
+        ]
+      },
+      "tags": [
+        "hanzi",
+        "hanzi-poetry"
+      ],
+      "source": "internal-reviewed-catalog",
+      "reviewStatus": "reviewed",
+      "reviewedAt": "2026-09-01",
+      "enabled": true
+    },
+    {
+      "id": "fact.hanzi.poetry.1uye5k1",
+      "kind": "hanzi.poetry",
+      "fields": {
+        "id": "poetry.05",
+        "prompt": "锄禾日当午，汗滴禾下( )",
+        "answer": "土",
+        "wrong": [
+          "田",
+          "苗",
+          "谷"
+        ]
+      },
+      "tags": [
+        "hanzi",
+        "hanzi-poetry"
+      ],
+      "source": "internal-reviewed-catalog",
+      "reviewStatus": "reviewed",
+      "reviewedAt": "2026-09-01",
+      "enabled": true
+    },
+    {
+      "id": "fact.hanzi.poetry.1u4fch4",
+      "kind": "hanzi.poetry",
+      "fields": {
+        "id": "poetry.06",
+        "prompt": "谁知盘中餐，粒粒皆辛( )",
+        "answer": "苦",
+        "wrong": [
+          "勤",
+          "劳",
+          "甜"
+        ]
+      },
+      "tags": [
+        "hanzi",
+        "hanzi-poetry"
+      ],
+      "source": "internal-reviewed-catalog",
+      "reviewStatus": "reviewed",
+      "reviewedAt": "2026-09-01",
+      "enabled": true
+    },
+    {
+      "id": "fact.hanzi.poetry.1ueey63",
+      "kind": "hanzi.poetry",
+      "fields": {
+        "id": "poetry.07",
+        "prompt": "两个黄鹂鸣翠柳，一行白鹭上( )",
+        "answer": "青天",
+        "wrong": [
+          "蓝天",
+          "云端",
+          "高山"
+        ]
+      },
+      "tags": [
+        "hanzi",
+        "hanzi-poetry"
+      ],
+      "source": "internal-reviewed-catalog",
+      "reviewStatus": "reviewed",
+      "reviewedAt": "2026-09-01",
+      "enabled": true
+    },
+    {
+      "id": "fact.hanzi.poetry.1tkg536",
+      "kind": "hanzi.poetry",
+      "fields": {
+        "id": "poetry.08",
+        "prompt": "欲穷千里目，更上一层( )",
+        "answer": "楼",
+        "wrong": [
+          "山",
+          "台",
+          "桥"
+        ]
+      },
+      "tags": [
+        "hanzi",
+        "hanzi-poetry"
+      ],
+      "source": "internal-reviewed-catalog",
+      "reviewStatus": "reviewed",
+      "reviewedAt": "2026-09-01",
+      "enabled": true
+    },
+    {
+      "id": "fact.english.words.0mh9c78",
+      "kind": "english.words",
+      "fields": {
+        "en": "CAT",
+        "zh": "猫",
+        "category": "动物"
+      },
+      "tags": [
+        "english",
+        "english-meaning",
+        "english-category",
+        "english-first-letter",
+        "english-length"
+      ],
+      "source": "internal-reviewed-catalog",
+      "reviewStatus": "reviewed",
+      "reviewedAt": "2026-09-01",
+      "enabled": true
+    },
+    {
+      "id": "fact.english.words.0vb53uy",
+      "kind": "english.words",
+      "fields": {
+        "en": "DOG",
+        "zh": "狗",
+        "category": "动物"
+      },
+      "tags": [
+        "english",
+        "english-meaning",
+        "english-category",
+        "english-first-letter",
+        "english-length"
+      ],
+      "source": "internal-reviewed-catalog",
+      "reviewStatus": "reviewed",
+      "reviewedAt": "2026-09-01",
+      "enabled": true
+    },
+    {
+      "id": "fact.english.words.0rhzgmj",
+      "kind": "english.words",
+      "fields": {
+        "en": "BIRD",
+        "zh": "鸟",
+        "category": "动物"
+      },
+      "tags": [
+        "english",
+        "english-meaning",
+        "english-category",
+        "english-first-letter",
+        "english-length"
+      ],
+      "source": "internal-reviewed-catalog",
+      "reviewStatus": "reviewed",
+      "reviewedAt": "2026-09-01",
+      "enabled": true
+    },
+    {
+      "id": "fact.english.words.0iwt27k",
+      "kind": "english.words",
+      "fields": {
+        "en": "ZEBRA",
+        "zh": "斑马",
+        "category": "动物"
+      },
+      "tags": [
+        "english",
+        "english-meaning",
+        "english-category",
+        "english-first-letter",
+        "english-length"
+      ],
+      "source": "internal-reviewed-catalog",
+      "reviewStatus": "reviewed",
+      "reviewedAt": "2026-09-01",
+      "enabled": true
+    },
+    {
+      "id": "fact.english.words.137n8si",
+      "kind": "english.words",
+      "fields": {
+        "en": "LION",
+        "zh": "狮子",
+        "category": "动物"
+      },
+      "tags": [
+        "english",
+        "english-meaning",
+        "english-category",
+        "english-first-letter",
+        "english-length"
+      ],
+      "source": "internal-reviewed-catalog",
+      "reviewStatus": "reviewed",
+      "reviewedAt": "2026-09-01",
+      "enabled": true
+    },
+    {
+      "id": "fact.english.words.0v3nkzj",
+      "kind": "english.words",
+      "fields": {
+        "en": "TIGER",
+        "zh": "老虎",
+        "category": "动物"
+      },
+      "tags": [
+        "english",
+        "english-meaning",
+        "english-category",
+        "english-first-letter",
+        "english-length"
+      ],
+      "source": "internal-reviewed-catalog",
+      "reviewStatus": "reviewed",
+      "reviewedAt": "2026-09-01",
+      "enabled": true
+    },
+    {
+      "id": "fact.english.words.1a3yp9x",
+      "kind": "english.words",
+      "fields": {
+        "en": "HORSE",
+        "zh": "马",
+        "category": "动物"
+      },
+      "tags": [
+        "english",
+        "english-meaning",
+        "english-category",
+        "english-first-letter",
+        "english-length"
+      ],
+      "source": "internal-reviewed-catalog",
+      "reviewStatus": "reviewed",
+      "reviewedAt": "2026-09-01",
+      "enabled": true
+    },
+    {
+      "id": "fact.english.words.1ajfczs",
+      "kind": "english.words",
+      "fields": {
+        "en": "PANDA",
+        "zh": "熊猫",
+        "category": "动物"
+      },
+      "tags": [
+        "english",
+        "english-meaning",
+        "english-category",
+        "english-first-letter",
+        "english-length"
+      ],
+      "source": "internal-reviewed-catalog",
+      "reviewStatus": "reviewed",
+      "reviewedAt": "2026-09-01",
+      "enabled": true
+    },
+    {
+      "id": "fact.english.antonyms.0gwdcjc",
+      "kind": "english.antonyms",
+      "fields": {
+        "values": [
+          "BIG",
+          "SMALL"
+        ]
+      },
+      "tags": [
+        "english",
+        "english-antonym"
+      ],
+      "source": "internal-reviewed-catalog",
+      "reviewStatus": "reviewed",
+      "reviewedAt": "2026-09-01",
+      "enabled": true
+    },
+    {
+      "id": "fact.english.antonyms.1ulhzha",
+      "kind": "english.antonyms",
+      "fields": {
+        "values": [
+          "HOT",
+          "COLD"
+        ]
+      },
+      "tags": [
+        "english",
+        "english-antonym"
+      ],
+      "source": "internal-reviewed-catalog",
+      "reviewStatus": "reviewed",
+      "reviewedAt": "2026-09-01",
+      "enabled": true
+    },
+    {
+      "id": "fact.english.antonyms.0xpob3i",
+      "kind": "english.antonyms",
+      "fields": {
+        "values": [
+          "FAST",
+          "SLOW"
+        ]
+      },
+      "tags": [
+        "english",
+        "english-antonym"
+      ],
+      "source": "internal-reviewed-catalog",
+      "reviewStatus": "reviewed",
+      "reviewedAt": "2026-09-01",
+      "enabled": true
+    },
+    {
+      "id": "fact.english.antonyms.0nxpgom",
+      "kind": "english.antonyms",
+      "fields": {
+        "values": [
+          "UP",
+          "DOWN"
+        ]
+      },
+      "tags": [
+        "english",
+        "english-antonym"
+      ],
+      "source": "internal-reviewed-catalog",
+      "reviewStatus": "reviewed",
+      "reviewedAt": "2026-09-01",
+      "enabled": true
+    },
+    {
+      "id": "fact.english.antonyms.1cju27m",
+      "kind": "english.antonyms",
+      "fields": {
+        "values": [
+          "LEFT",
+          "RIGHT"
+        ]
+      },
+      "tags": [
+        "english",
+        "english-antonym"
+      ],
+      "source": "internal-reviewed-catalog",
+      "reviewStatus": "reviewed",
+      "reviewedAt": "2026-09-01",
+      "enabled": true
+    },
+    {
+      "id": "fact.english.antonyms.1pnh3u1",
+      "kind": "english.antonyms",
+      "fields": {
+        "values": [
+          "OPEN",
+          "CLOSE"
+        ]
+      },
+      "tags": [
+        "english",
+        "english-antonym"
+      ],
+      "source": "internal-reviewed-catalog",
+      "reviewStatus": "reviewed",
+      "reviewedAt": "2026-09-01",
+      "enabled": true
+    },
+    {
+      "id": "fact.english.antonyms.01c28jz",
+      "kind": "english.antonyms",
+      "fields": {
+        "values": [
+          "HAPPY",
+          "SAD"
+        ]
+      },
+      "tags": [
+        "english",
+        "english-antonym"
+      ],
+      "source": "internal-reviewed-catalog",
+      "reviewStatus": "reviewed",
+      "reviewedAt": "2026-09-01",
+      "enabled": true
+    },
+    {
+      "id": "fact.english.antonyms.1ab2obo",
+      "kind": "english.antonyms",
+      "fields": {
+        "values": [
+          "OLD",
+          "YOUNG"
+        ]
+      },
+      "tags": [
+        "english",
+        "english-antonym"
+      ],
+      "source": "internal-reviewed-catalog",
+      "reviewStatus": "reviewed",
+      "reviewedAt": "2026-09-01",
+      "enabled": true
+    },
+    {
+      "id": "fact.life.categories.0268fit",
+      "kind": "life.categories",
+      "fields": {
+        "item": "扫帚",
+        "use": "清扫地面",
+        "category": "清洁工具"
+      },
+      "tags": [
+        "life",
+        "life-category"
+      ],
+      "source": "internal-reviewed-catalog",
+      "reviewStatus": "reviewed",
+      "reviewedAt": "2026-09-01",
+      "enabled": true
+    },
+    {
+      "id": "fact.life.categories.0wy55c4",
+      "kind": "life.categories",
+      "fields": {
+        "item": "拖把",
+        "use": "拖洗地面",
+        "category": "清洁工具"
+      },
+      "tags": [
+        "life",
+        "life-category"
+      ],
+      "source": "internal-reviewed-catalog",
+      "reviewStatus": "reviewed",
+      "reviewedAt": "2026-09-01",
+      "enabled": true
+    },
+    {
+      "id": "fact.life.categories.1gmvn04",
+      "kind": "life.categories",
+      "fields": {
+        "item": "吸尘器",
+        "use": "吸走灰尘",
+        "category": "清洁工具"
+      },
+      "tags": [
+        "life",
+        "life-category"
+      ],
+      "source": "internal-reviewed-catalog",
+      "reviewStatus": "reviewed",
+      "reviewedAt": "2026-09-01",
+      "enabled": true
+    },
+    {
+      "id": "fact.life.categories.10gw6df",
+      "kind": "life.categories",
+      "fields": {
+        "item": "簸箕",
+        "use": "收拢尘土",
+        "category": "清洁工具"
+      },
+      "tags": [
+        "life",
+        "life-category"
+      ],
+      "source": "internal-reviewed-catalog",
+      "reviewStatus": "reviewed",
+      "reviewedAt": "2026-09-01",
+      "enabled": true
+    },
+    {
+      "id": "fact.life.categories.0g0bgm4",
+      "kind": "life.categories",
+      "fields": {
+        "item": "玻璃刮",
+        "use": "刮净玻璃",
+        "category": "清洁工具"
+      },
+      "tags": [
+        "life",
+        "life-category"
+      ],
+      "source": "internal-reviewed-catalog",
+      "reviewStatus": "reviewed",
+      "reviewedAt": "2026-09-01",
+      "enabled": true
+    },
+    {
+      "id": "fact.life.categories.1g5wd2s",
+      "kind": "life.categories",
+      "fields": {
+        "item": "鸡毛掸子",
+        "use": "掸除浮尘",
+        "category": "清洁工具"
+      },
+      "tags": [
+        "life",
+        "life-category"
+      ],
+      "source": "internal-reviewed-catalog",
+      "reviewStatus": "reviewed",
+      "reviewedAt": "2026-09-01",
+      "enabled": true
+    },
+    {
+      "id": "fact.life.categories.0ggvllh",
+      "kind": "life.categories",
+      "fields": {
+        "item": "炒锅",
+        "use": "炒制食物",
+        "category": "厨房用品"
+      },
+      "tags": [
+        "life",
+        "life-category"
+      ],
+      "source": "internal-reviewed-catalog",
+      "reviewStatus": "reviewed",
+      "reviewedAt": "2026-09-01",
+      "enabled": true
+    },
+    {
+      "id": "fact.life.categories.0hc3f1n",
+      "kind": "life.categories",
+      "fields": {
+        "item": "筷子",
+        "use": "夹取食物",
+        "category": "厨房用品"
+      },
+      "tags": [
+        "life",
+        "life-category"
+      ],
+      "source": "internal-reviewed-catalog",
+      "reviewStatus": "reviewed",
+      "reviewedAt": "2026-09-01",
+      "enabled": true
+    },
+    {
+      "id": "fact.geography.world.11lv11n",
+      "kind": "geography.world",
+      "fields": {
+        "country": "中国",
+        "capital": "北京"
+      },
+      "tags": [
+        "geography",
+        "geography-capital",
+        "geography-country"
+      ],
+      "source": "internal-reviewed-catalog",
+      "reviewStatus": "reviewed",
+      "reviewedAt": "2026-09-01",
+      "enabled": true
+    },
+    {
+      "id": "fact.geography.world.13b6f3k",
+      "kind": "geography.world",
+      "fields": {
+        "country": "日本",
+        "capital": "东京"
+      },
+      "tags": [
+        "geography",
+        "geography-capital",
+        "geography-country"
+      ],
+      "source": "internal-reviewed-catalog",
+      "reviewStatus": "reviewed",
+      "reviewedAt": "2026-09-01",
+      "enabled": true
+    },
+    {
+      "id": "fact.geography.world.1h1kk1b",
+      "kind": "geography.world",
+      "fields": {
+        "country": "韩国",
+        "capital": "首尔"
+      },
+      "tags": [
+        "geography",
+        "geography-capital",
+        "geography-country"
+      ],
+      "source": "internal-reviewed-catalog",
+      "reviewStatus": "reviewed",
+      "reviewedAt": "2026-09-01",
+      "enabled": true
+    },
+    {
+      "id": "fact.geography.world.1mr808a",
+      "kind": "geography.world",
+      "fields": {
+        "country": "泰国",
+        "capital": "曼谷"
+      },
+      "tags": [
+        "geography",
+        "geography-capital",
+        "geography-country"
+      ],
+      "source": "internal-reviewed-catalog",
+      "reviewStatus": "reviewed",
+      "reviewedAt": "2026-09-01",
+      "enabled": true
+    },
+    {
+      "id": "fact.geography.world.0icqiiq",
+      "kind": "geography.world",
+      "fields": {
+        "country": "越南",
+        "capital": "河内"
+      },
+      "tags": [
+        "geography",
+        "geography-capital",
+        "geography-country"
+      ],
+      "source": "internal-reviewed-catalog",
+      "reviewStatus": "reviewed",
+      "reviewedAt": "2026-09-01",
+      "enabled": true
+    },
+    {
+      "id": "fact.geography.world.0pu3zzj",
+      "kind": "geography.world",
+      "fields": {
+        "country": "印度",
+        "capital": "新德里"
+      },
+      "tags": [
+        "geography",
+        "geography-capital",
+        "geography-country"
+      ],
+      "source": "internal-reviewed-catalog",
+      "reviewStatus": "reviewed",
+      "reviewedAt": "2026-09-01",
+      "enabled": true
+    },
+    {
+      "id": "fact.geography.world.0pn0oxk",
+      "kind": "geography.world",
+      "fields": {
+        "country": "新加坡",
+        "capital": "新加坡"
+      },
+      "tags": [
+        "geography",
+        "geography-capital",
+        "geography-country"
+      ],
+      "source": "internal-reviewed-catalog",
+      "reviewStatus": "reviewed",
+      "reviewedAt": "2026-09-01",
+      "enabled": true
+    },
+    {
+      "id": "fact.geography.world.1loo8lf",
+      "kind": "geography.world",
+      "fields": {
+        "country": "法国",
+        "capital": "巴黎"
+      },
+      "tags": [
+        "geography",
+        "geography-capital",
+        "geography-country"
+      ],
+      "source": "internal-reviewed-catalog",
+      "reviewStatus": "reviewed",
+      "reviewedAt": "2026-09-01",
+      "enabled": true
+    },
+    {
+      "id": "fact.knowledge.science.core.14vbgm5",
+      "kind": "knowledge.science.core",
+      "fields": {
+        "prompt": "人体最大的器官",
+        "answer": "皮肤",
+        "wrong": [
+          "心脏",
+          "肝脏",
+          "肺"
+        ]
+      },
+      "tags": [
+        "knowledge",
+        "knowledge-science"
+      ],
+      "source": "internal-reviewed-catalog",
+      "reviewStatus": "reviewed",
+      "reviewedAt": "2026-09-01",
+      "enabled": true
+    },
+    {
+      "id": "fact.knowledge.science.core.19mo2dz",
+      "kind": "knowledge.science.core",
+      "fields": {
+        "prompt": "血液呈红色主要因为",
+        "answer": "血红蛋白",
+        "wrong": [
+          "血小板",
+          "胆红素",
+          "葡萄糖"
+        ]
+      },
+      "tags": [
+        "knowledge",
+        "knowledge-science"
+      ],
+      "source": "internal-reviewed-catalog",
+      "reviewStatus": "reviewed",
+      "reviewedAt": "2026-09-01",
+      "enabled": true
+    },
+    {
+      "id": "fact.knowledge.science.core.138j0h5",
+      "kind": "knowledge.science.core",
+      "fields": {
+        "prompt": "运输氧气的血细胞",
+        "answer": "红细胞",
+        "wrong": [
+          "白细胞",
+          "血小板",
+          "干细胞"
+        ]
+      },
+      "tags": [
+        "knowledge",
+        "knowledge-science"
+      ],
+      "source": "internal-reviewed-catalog",
+      "reviewStatus": "reviewed",
+      "reviewedAt": "2026-09-01",
+      "enabled": true
+    },
+    {
+      "id": "fact.knowledge.science.core.1ol667w",
+      "kind": "knowledge.science.core",
+      "fields": {
+        "prompt": "参与凝血的血细胞",
+        "answer": "血小板",
+        "wrong": [
+          "红细胞",
+          "白细胞",
+          "干细胞"
+        ]
+      },
+      "tags": [
+        "knowledge",
+        "knowledge-science"
+      ],
+      "source": "internal-reviewed-catalog",
+      "reviewStatus": "reviewed",
+      "reviewedAt": "2026-09-01",
+      "enabled": true
+    },
+    {
+      "id": "fact.knowledge.science.core.1bnyuwr",
+      "kind": "knowledge.science.core",
+      "fields": {
+        "prompt": "抵御病菌的血细胞",
+        "answer": "白细胞",
+        "wrong": [
+          "红细胞",
+          "血小板",
+          "干细胞"
+        ]
+      },
+      "tags": [
+        "knowledge",
+        "knowledge-science"
+      ],
+      "source": "internal-reviewed-catalog",
+      "reviewStatus": "reviewed",
+      "reviewedAt": "2026-09-01",
+      "enabled": true
+    },
+    {
+      "id": "fact.knowledge.science.core.007nhfz",
+      "kind": "knowledge.science.core",
+      "fields": {
+        "prompt": "人体气体交换器官",
+        "answer": "肺",
+        "wrong": [
+          "肝",
+          "肾",
+          "胃"
+        ]
+      },
+      "tags": [
+        "knowledge",
+        "knowledge-science"
+      ],
+      "source": "internal-reviewed-catalog",
+      "reviewStatus": "reviewed",
+      "reviewedAt": "2026-09-01",
+      "enabled": true
+    },
+    {
+      "id": "fact.knowledge.science.core.13jtxr2",
+      "kind": "knowledge.science.core",
+      "fields": {
+        "prompt": "分泌胰岛素的器官",
+        "answer": "胰腺",
+        "wrong": [
+          "肝脏",
+          "脾脏",
+          "肾脏"
+        ]
+      },
+      "tags": [
+        "knowledge",
+        "knowledge-science"
+      ],
+      "source": "internal-reviewed-catalog",
+      "reviewStatus": "reviewed",
+      "reviewedAt": "2026-09-01",
+      "enabled": true
+    },
+    {
+      "id": "fact.knowledge.science.core.0ofyixy",
+      "kind": "knowledge.science.core",
+      "fields": {
+        "prompt": "成年人通常有几颗牙",
+        "answer": "32颗",
+        "wrong": [
+          "20颗",
+          "24颗",
+          "40颗"
+        ]
+      },
+      "tags": [
+        "knowledge",
+        "knowledge-science"
+      ],
+      "source": "internal-reviewed-catalog",
+      "reviewStatus": "reviewed",
+      "reviewedAt": "2026-09-01",
+      "enabled": true
+    },
+    {
+      "id": "fact.knowledge.science.extra.1vj70pg",
+      "kind": "knowledge.science.extra",
+      "fields": {
+        "prompt": "推动血液循环",
+        "answer": "心脏",
+        "wrong": [
+          "肺",
+          "胃",
+          "肾脏"
+        ]
+      },
+      "tags": [
+        "knowledge",
+        "knowledge-science"
+      ],
+      "source": "internal-reviewed-catalog",
+      "reviewStatus": "reviewed",
+      "reviewedAt": "2026-09-01",
+      "enabled": true
+    },
+    {
+      "id": "fact.knowledge.science.extra.1xauwxy",
+      "kind": "knowledge.science.extra",
+      "fields": {
+        "prompt": "完成气体交换",
+        "answer": "肺",
+        "wrong": [
+          "心脏",
+          "胃",
+          "肾脏"
+        ]
+      },
+      "tags": [
+        "knowledge",
+        "knowledge-science"
+      ],
+      "source": "internal-reviewed-catalog",
+      "reviewStatus": "reviewed",
+      "reviewedAt": "2026-09-01",
+      "enabled": true
+    },
+    {
+      "id": "fact.knowledge.science.extra.1cxsmx6",
+      "kind": "knowledge.science.extra",
+      "fields": {
+        "prompt": "主要消化食物",
+        "answer": "胃",
+        "wrong": [
+          "心脏",
+          "肺",
+          "肾脏"
+        ]
+      },
+      "tags": [
+        "knowledge",
+        "knowledge-science"
+      ],
+      "source": "internal-reviewed-catalog",
+      "reviewStatus": "reviewed",
+      "reviewedAt": "2026-09-01",
+      "enabled": true
+    },
+    {
+      "id": "fact.knowledge.science.extra.0er435f",
+      "kind": "knowledge.science.extra",
+      "fields": {
+        "prompt": "形成尿液",
+        "answer": "肾脏",
+        "wrong": [
+          "心脏",
+          "肺",
+          "胃"
+        ]
+      },
+      "tags": [
+        "knowledge",
+        "knowledge-science"
+      ],
+      "source": "internal-reviewed-catalog",
+      "reviewStatus": "reviewed",
+      "reviewedAt": "2026-09-01",
+      "enabled": true
+    },
+    {
+      "id": "fact.knowledge.science.extra.0c2awiw",
+      "kind": "knowledge.science.extra",
+      "fields": {
+        "prompt": "感受光线",
+        "answer": "眼睛",
+        "wrong": [
+          "耳朵",
+          "鼻子",
+          "舌头"
+        ]
+      },
+      "tags": [
+        "knowledge",
+        "knowledge-science"
+      ],
+      "source": "internal-reviewed-catalog",
+      "reviewStatus": "reviewed",
+      "reviewedAt": "2026-09-01",
+      "enabled": true
+    },
+    {
+      "id": "fact.knowledge.science.extra.0skmerc",
+      "kind": "knowledge.science.extra",
+      "fields": {
+        "prompt": "感受声音",
+        "answer": "耳朵",
+        "wrong": [
+          "眼睛",
+          "鼻子",
+          "舌头"
+        ]
+      },
+      "tags": [
+        "knowledge",
+        "knowledge-science"
+      ],
+      "source": "internal-reviewed-catalog",
+      "reviewStatus": "reviewed",
+      "reviewedAt": "2026-09-01",
+      "enabled": true
+    },
+    {
+      "id": "fact.knowledge.science.extra.1bpet77",
+      "kind": "knowledge.science.extra",
+      "fields": {
+        "prompt": "感受气味",
+        "answer": "鼻子",
+        "wrong": [
+          "眼睛",
+          "耳朵",
+          "舌头"
+        ]
+      },
+      "tags": [
+        "knowledge",
+        "knowledge-science"
+      ],
+      "source": "internal-reviewed-catalog",
+      "reviewStatus": "reviewed",
+      "reviewedAt": "2026-09-01",
+      "enabled": true
+    },
+    {
+      "id": "fact.knowledge.science.extra.1mtkoar",
+      "kind": "knowledge.science.extra",
+      "fields": {
+        "prompt": "感受味道",
+        "answer": "舌头",
+        "wrong": [
+          "眼睛",
+          "耳朵",
+          "鼻子"
+        ]
+      },
+      "tags": [
+        "knowledge",
+        "knowledge-science"
+      ],
+      "source": "internal-reviewed-catalog",
+      "reviewStatus": "reviewed",
+      "reviewedAt": "2026-09-01",
+      "enabled": true
+    },
+    {
+      "id": "fact.knowledge.nature.core.08cgfzf",
+      "kind": "knowledge.nature.core",
+      "fields": {
+        "prompt": "鲸鱼其实属于",
+        "answer": "哺乳动物",
+        "wrong": [
+          "鱼类",
+          "两栖类",
+          "软体类"
+        ]
+      },
+      "tags": [
+        "knowledge",
+        "knowledge-nature"
+      ],
+      "source": "internal-reviewed-catalog",
+      "reviewStatus": "reviewed",
+      "reviewedAt": "2026-09-01",
+      "enabled": true
+    },
+    {
+      "id": "fact.knowledge.nature.core.017f1dm",
+      "kind": "knowledge.nature.core",
+      "fields": {
+        "prompt": "真正会飞的哺乳动物",
+        "answer": "蝙蝠",
+        "wrong": [
+          "鼯鼠",
+          "企鹅",
+          "鸵鸟"
+        ]
+      },
+      "tags": [
+        "knowledge",
+        "knowledge-nature"
+      ],
+      "source": "internal-reviewed-catalog",
+      "reviewStatus": "reviewed",
+      "reviewedAt": "2026-09-01",
+      "enabled": true
+    },
+    {
+      "id": "fact.knowledge.nature.core.1ri5qvq",
+      "kind": "knowledge.nature.core",
+      "fields": {
+        "prompt": "大熊猫的第六指",
+        "answer": "腕骨突起",
+        "wrong": [
+          "真正拇指",
+          "尾骨",
+          "爪鞘"
+        ]
+      },
+      "tags": [
+        "knowledge",
+        "knowledge-nature"
+      ],
+      "source": "internal-reviewed-catalog",
+      "reviewStatus": "reviewed",
+      "reviewedAt": "2026-09-01",
+      "enabled": true
+    },
+    {
+      "id": "fact.knowledge.nature.core.1inb5hz",
+      "kind": "knowledge.nature.core",
+      "fields": {
+        "prompt": "章鱼有几颗心脏",
+        "answer": "3颗",
+        "wrong": [
+          "1颗",
+          "2颗",
+          "8颗"
+        ]
+      },
+      "tags": [
+        "knowledge",
+        "knowledge-nature"
+      ],
+      "source": "internal-reviewed-catalog",
+      "reviewStatus": "reviewed",
+      "reviewedAt": "2026-09-01",
+      "enabled": true
+    },
+    {
+      "id": "fact.knowledge.nature.core.0av45xl",
+      "kind": "knowledge.nature.core",
+      "fields": {
+        "prompt": "骆驼驼峰主要储存",
+        "answer": "脂肪",
+        "wrong": [
+          "清水",
+          "空气",
+          "血液"
+        ]
+      },
+      "tags": [
+        "knowledge",
+        "knowledge-nature"
+      ],
+      "source": "internal-reviewed-catalog",
+      "reviewStatus": "reviewed",
+      "reviewedAt": "2026-09-01",
+      "enabled": true
+    },
+    {
+      "id": "fact.knowledge.nature.core.141kauh",
+      "kind": "knowledge.nature.core",
+      "fields": {
+        "prompt": "野生企鹅主要分布",
+        "answer": "南半球",
+        "wrong": [
+          "北极圈",
+          "赤道",
+          "北半球"
+        ]
+      },
+      "tags": [
+        "knowledge",
+        "knowledge-nature"
+      ],
+      "source": "internal-reviewed-catalog",
+      "reviewStatus": "reviewed",
+      "reviewedAt": "2026-09-01",
+      "enabled": true
+    },
+    {
+      "id": "fact.knowledge.nature.core.17c9w18",
+      "kind": "knowledge.nature.core",
+      "fields": {
+        "prompt": "考拉主要吃",
+        "answer": "桉树叶",
+        "wrong": [
+          "竹叶",
+          "松果",
+          "仙人掌"
+        ]
+      },
+      "tags": [
+        "knowledge",
+        "knowledge-nature"
+      ],
+      "source": "internal-reviewed-catalog",
+      "reviewStatus": "reviewed",
+      "reviewedAt": "2026-09-01",
+      "enabled": true
+    },
+    {
+      "id": "fact.knowledge.nature.core.0ogk4po",
+      "kind": "knowledge.nature.core",
+      "fields": {
+        "prompt": "能倒着飞的鸟",
+        "answer": "蜂鸟",
+        "wrong": [
+          "麻雀",
+          "海鸥",
+          "孔雀"
+        ]
+      },
+      "tags": [
+        "knowledge",
+        "knowledge-nature"
+      ],
+      "source": "internal-reviewed-catalog",
+      "reviewStatus": "reviewed",
+      "reviewedAt": "2026-09-01",
+      "enabled": true
+    },
+    {
+      "id": "fact.knowledge.nature.extra.0upfbp0",
+      "kind": "knowledge.nature.extra",
+      "fields": {
+        "prompt": "离太阳最近行星",
+        "answer": "水星",
+        "wrong": [
+          "木星",
+          "土星",
+          "地球"
+        ]
+      },
+      "tags": [
+        "knowledge",
+        "knowledge-nature"
+      ],
+      "source": "internal-reviewed-catalog",
+      "reviewStatus": "reviewed",
+      "reviewedAt": "2026-09-01",
+      "enabled": true
+    },
+    {
+      "id": "fact.knowledge.nature.extra.1h71sws",
+      "kind": "knowledge.nature.extra",
+      "fields": {
+        "prompt": "体积最大行星",
+        "answer": "木星",
+        "wrong": [
+          "水星",
+          "土星",
+          "地球"
+        ]
+      },
+      "tags": [
+        "knowledge",
+        "knowledge-nature"
+      ],
+      "source": "internal-reviewed-catalog",
+      "reviewStatus": "reviewed",
+      "reviewedAt": "2026-09-01",
+      "enabled": true
+    },
+    {
+      "id": "fact.knowledge.nature.extra.08qxpi9",
+      "kind": "knowledge.nature.extra",
+      "fields": {
+        "prompt": "有明显光环行星",
+        "answer": "土星",
+        "wrong": [
+          "水星",
+          "木星",
+          "地球"
+        ]
+      },
+      "tags": [
+        "knowledge",
+        "knowledge-nature"
+      ],
+      "source": "internal-reviewed-catalog",
+      "reviewStatus": "reviewed",
+      "reviewedAt": "2026-09-01",
+      "enabled": true
+    },
+    {
+      "id": "fact.knowledge.nature.extra.14hlisg",
+      "kind": "knowledge.nature.extra",
+      "fields": {
+        "prompt": "人类居住行星",
+        "answer": "地球",
+        "wrong": [
+          "水星",
+          "木星",
+          "土星"
+        ]
+      },
+      "tags": [
+        "knowledge",
+        "knowledge-nature"
+      ],
+      "source": "internal-reviewed-catalog",
+      "reviewStatus": "reviewed",
+      "reviewedAt": "2026-09-01",
+      "enabled": true
+    },
+    {
+      "id": "fact.knowledge.nature.extra.0jug2xk",
+      "kind": "knowledge.nature.extra",
+      "fields": {
+        "prompt": "红色行星",
+        "answer": "火星",
+        "wrong": [
+          "金星",
+          "天王星",
+          "海王星"
+        ]
+      },
+      "tags": [
+        "knowledge",
+        "knowledge-nature"
+      ],
+      "source": "internal-reviewed-catalog",
+      "reviewStatus": "reviewed",
+      "reviewedAt": "2026-09-01",
+      "enabled": true
+    },
+    {
+      "id": "fact.knowledge.nature.extra.0gqmrjl",
+      "kind": "knowledge.nature.extra",
+      "fields": {
+        "prompt": "最热行星",
+        "answer": "金星",
+        "wrong": [
+          "火星",
+          "天王星",
+          "海王星"
+        ]
+      },
+      "tags": [
+        "knowledge",
+        "knowledge-nature"
+      ],
+      "source": "internal-reviewed-catalog",
+      "reviewStatus": "reviewed",
+      "reviewedAt": "2026-09-01",
+      "enabled": true
+    },
+    {
+      "id": "fact.knowledge.nature.extra.03lluba",
+      "kind": "knowledge.nature.extra",
+      "fields": {
+        "prompt": "自转侧躺行星",
+        "answer": "天王星",
+        "wrong": [
+          "火星",
+          "金星",
+          "海王星"
+        ]
+      },
+      "tags": [
+        "knowledge",
+        "knowledge-nature"
+      ],
+      "source": "internal-reviewed-catalog",
+      "reviewStatus": "reviewed",
+      "reviewedAt": "2026-09-01",
+      "enabled": true
+    },
+    {
+      "id": "fact.knowledge.nature.extra.0h6d9mt",
+      "kind": "knowledge.nature.extra",
+      "fields": {
+        "prompt": "离太阳最远行星",
+        "answer": "海王星",
+        "wrong": [
+          "火星",
+          "金星",
+          "天王星"
+        ]
+      },
+      "tags": [
+        "knowledge",
+        "knowledge-nature"
+      ],
+      "source": "internal-reviewed-catalog",
+      "reviewStatus": "reviewed",
+      "reviewedAt": "2026-09-01",
+      "enabled": true
+    },
+    {
+      "id": "fact.knowledge.culture.core.1t979c7",
+      "kind": "knowledge.culture.core",
+      "fields": {
+        "prompt": "被称为诗仙",
+        "answer": "李白",
+        "wrong": [
+          "杜甫",
+          "白居易",
+          "王维"
+        ]
+      },
+      "tags": [
+        "knowledge",
+        "knowledge-culture"
+      ],
+      "source": "internal-reviewed-catalog",
+      "reviewStatus": "reviewed",
+      "reviewedAt": "2026-09-01",
+      "enabled": true
+    },
+    {
+      "id": "fact.knowledge.culture.core.0c2rmzd",
+      "kind": "knowledge.culture.core",
+      "fields": {
+        "prompt": "被称为诗圣",
+        "answer": "杜甫",
+        "wrong": [
+          "李白",
+          "李商隐",
+          "孟浩然"
+        ]
+      },
+      "tags": [
+        "knowledge",
+        "knowledge-culture"
+      ],
+      "source": "internal-reviewed-catalog",
+      "reviewStatus": "reviewed",
+      "reviewedAt": "2026-09-01",
+      "enabled": true
+    },
+    {
+      "id": "fact.knowledge.culture.core.1dyfjfp",
+      "kind": "knowledge.culture.core",
+      "fields": {
+        "prompt": "被称为书圣",
+        "answer": "王羲之",
+        "wrong": [
+          "颜真卿",
+          "柳公权",
+          "欧阳询"
+        ]
+      },
+      "tags": [
+        "knowledge",
+        "knowledge-culture"
+      ],
+      "source": "internal-reviewed-catalog",
+      "reviewStatus": "reviewed",
+      "reviewedAt": "2026-09-01",
+      "enabled": true
+    },
+    {
+      "id": "fact.knowledge.culture.core.1770wbr",
+      "kind": "knowledge.culture.core",
+      "fields": {
+        "prompt": "被称为画圣",
+        "answer": "吴道子",
+        "wrong": [
+          "顾恺之",
+          "阎立本",
+          "张择端"
+        ]
+      },
+      "tags": [
+        "knowledge",
+        "knowledge-culture"
+      ],
+      "source": "internal-reviewed-catalog",
+      "reviewStatus": "reviewed",
+      "reviewedAt": "2026-09-01",
+      "enabled": true
+    },
+    {
+      "id": "fact.knowledge.culture.core.0v4cugw",
+      "kind": "knowledge.culture.core",
+      "fields": {
+        "prompt": "被称为茶圣",
+        "answer": "陆羽",
+        "wrong": [
+          "杜康",
+          "李时珍",
+          "沈括"
+        ]
+      },
+      "tags": [
+        "knowledge",
+        "knowledge-culture"
+      ],
+      "source": "internal-reviewed-catalog",
+      "reviewStatus": "reviewed",
+      "reviewedAt": "2026-09-01",
+      "enabled": true
+    },
+    {
+      "id": "fact.knowledge.culture.core.0ph1er6",
+      "kind": "knowledge.culture.core",
+      "fields": {
+        "prompt": "被称为药王",
+        "answer": "孙思邈",
+        "wrong": [
+          "张仲景",
+          "华佗",
+          "扁鹊"
+        ]
+      },
+      "tags": [
+        "knowledge",
+        "knowledge-culture"
+      ],
+      "source": "internal-reviewed-catalog",
+      "reviewStatus": "reviewed",
+      "reviewedAt": "2026-09-01",
+      "enabled": true
+    },
+    {
+      "id": "fact.knowledge.culture.core.1om3sfx",
+      "kind": "knowledge.culture.core",
+      "fields": {
+        "prompt": "《资治通鉴》作者",
+        "answer": "司马光",
+        "wrong": [
+          "司马迁",
+          "班固",
+          "沈括"
+        ]
+      },
+      "tags": [
+        "knowledge",
+        "knowledge-culture"
+      ],
+      "source": "internal-reviewed-catalog",
+      "reviewStatus": "reviewed",
+      "reviewedAt": "2026-09-01",
+      "enabled": true
+    },
+    {
+      "id": "fact.knowledge.culture.core.000xrvl",
+      "kind": "knowledge.culture.core",
+      "fields": {
+        "prompt": "《本草纲目》作者",
+        "answer": "李时珍",
+        "wrong": [
+          "张仲景",
+          "华佗",
+          "孙思邈"
+        ]
+      },
+      "tags": [
+        "knowledge",
+        "knowledge-culture"
+      ],
+      "source": "internal-reviewed-catalog",
+      "reviewStatus": "reviewed",
+      "reviewedAt": "2026-09-01",
+      "enabled": true
+    },
+    {
+      "id": "fact.knowledge.culture.extra.000a9os",
+      "kind": "knowledge.culture.extra",
+      "fields": {
+        "prompt": "书写用的文房用品",
+        "answer": "毛笔",
+        "wrong": [
+          "砚台",
+          "宣纸",
+          "墨"
+        ]
+      },
+      "tags": [
+        "knowledge",
+        "knowledge-culture"
+      ],
+      "source": "internal-reviewed-catalog",
+      "reviewStatus": "reviewed",
+      "reviewedAt": "2026-09-01",
+      "enabled": true
+    },
+    {
+      "id": "fact.knowledge.culture.extra.00xk5s4",
+      "kind": "knowledge.culture.extra",
+      "fields": {
+        "prompt": "研墨用的文房用品",
+        "answer": "砚台",
+        "wrong": [
+          "毛笔",
+          "宣纸",
+          "墨"
+        ]
+      },
+      "tags": [
+        "knowledge",
+        "knowledge-culture"
+      ],
+      "source": "internal-reviewed-catalog",
+      "reviewStatus": "reviewed",
+      "reviewedAt": "2026-09-01",
+      "enabled": true
+    },
+    {
+      "id": "fact.knowledge.culture.extra.05z9ils",
+      "kind": "knowledge.culture.extra",
+      "fields": {
+        "prompt": "书画承载材料",
+        "answer": "宣纸",
+        "wrong": [
+          "毛笔",
+          "砚台",
+          "墨"
+        ]
+      },
+      "tags": [
+        "knowledge",
+        "knowledge-culture"
+      ],
+      "source": "internal-reviewed-catalog",
+      "reviewStatus": "reviewed",
+      "reviewedAt": "2026-09-01",
+      "enabled": true
+    },
+    {
+      "id": "fact.knowledge.culture.extra.1ydsqwm",
+      "kind": "knowledge.culture.extra",
+      "fields": {
+        "prompt": "书写黑色颜料",
+        "answer": "墨",
+        "wrong": [
+          "毛笔",
+          "砚台",
+          "宣纸"
+        ]
+      },
+      "tags": [
+        "knowledge",
+        "knowledge-culture"
+      ],
+      "source": "internal-reviewed-catalog",
+      "reviewStatus": "reviewed",
+      "reviewedAt": "2026-09-01",
+      "enabled": true
+    },
+    {
+      "id": "fact.knowledge.culture.extra.1xwj0w5",
+      "kind": "knowledge.culture.extra",
+      "fields": {
+        "prompt": "两根弦的乐器",
+        "answer": "二胡",
+        "wrong": [
+          "笛子",
+          "古筝",
+          "唢呐"
+        ]
+      },
+      "tags": [
+        "knowledge",
+        "knowledge-culture"
+      ],
+      "source": "internal-reviewed-catalog",
+      "reviewStatus": "reviewed",
+      "reviewedAt": "2026-09-01",
+      "enabled": true
+    },
+    {
+      "id": "fact.knowledge.culture.extra.1souc2y",
+      "kind": "knowledge.culture.extra",
+      "fields": {
+        "prompt": "横吹竹制乐器",
+        "answer": "笛子",
+        "wrong": [
+          "二胡",
+          "古筝",
+          "唢呐"
+        ]
+      },
+      "tags": [
+        "knowledge",
+        "knowledge-culture"
+      ],
+      "source": "internal-reviewed-catalog",
+      "reviewStatus": "reviewed",
+      "reviewedAt": "2026-09-01",
+      "enabled": true
+    },
+    {
+      "id": "fact.knowledge.culture.extra.1jfnom1",
+      "kind": "knowledge.culture.extra",
+      "fields": {
+        "prompt": "多弦弹拨乐器",
+        "answer": "古筝",
+        "wrong": [
+          "二胡",
+          "笛子",
+          "唢呐"
+        ]
+      },
+      "tags": [
+        "knowledge",
+        "knowledge-culture"
+      ],
+      "source": "internal-reviewed-catalog",
+      "reviewStatus": "reviewed",
+      "reviewedAt": "2026-09-01",
+      "enabled": true
+    },
+    {
+      "id": "fact.knowledge.culture.extra.12emqr5",
+      "kind": "knowledge.culture.extra",
+      "fields": {
+        "prompt": "吹奏簧管乐器",
+        "answer": "唢呐",
+        "wrong": [
+          "二胡",
+          "笛子",
+          "古筝"
+        ]
+      },
+      "tags": [
+        "knowledge",
+        "knowledge-culture"
+      ],
+      "source": "internal-reviewed-catalog",
+      "reviewStatus": "reviewed",
+      "reviewedAt": "2026-09-01",
+      "enabled": true
+    },
+    {
+      "id": "fact.knowledge.civic.19quj6v",
+      "kind": "knowledge.civic",
+      "fields": {
+        "prompt": "我国首都",
+        "answer": "北京",
+        "wrong": [
+          "红色",
+          "天安门",
+          "聂耳"
+        ]
+      },
+      "tags": [
+        "knowledge",
+        "knowledge-civic"
+      ],
+      "source": "internal-reviewed-catalog",
+      "reviewStatus": "reviewed",
+      "reviewedAt": "2026-09-01",
+      "enabled": true
+    },
+    {
+      "id": "fact.knowledge.civic.0j46qpy",
+      "kind": "knowledge.civic",
+      "fields": {
+        "prompt": "我国国旗底色",
+        "answer": "红色",
+        "wrong": [
+          "北京",
+          "天安门",
+          "聂耳"
+        ]
+      },
+      "tags": [
+        "knowledge",
+        "knowledge-civic"
+      ],
+      "source": "internal-reviewed-catalog",
+      "reviewStatus": "reviewed",
+      "reviewedAt": "2026-09-01",
+      "enabled": true
+    },
+    {
+      "id": "fact.knowledge.civic.1xz9fuu",
+      "kind": "knowledge.civic",
+      "fields": {
+        "prompt": "国徽中心建筑",
+        "answer": "天安门",
+        "wrong": [
+          "北京",
+          "红色",
+          "聂耳"
+        ]
+      },
+      "tags": [
+        "knowledge",
+        "knowledge-civic"
+      ],
+      "source": "internal-reviewed-catalog",
+      "reviewStatus": "reviewed",
+      "reviewedAt": "2026-09-01",
+      "enabled": true
+    },
+    {
+      "id": "fact.knowledge.civic.0yjd41g",
+      "kind": "knowledge.civic",
+      "fields": {
+        "prompt": "国歌曲作者",
+        "answer": "聂耳",
+        "wrong": [
+          "北京",
+          "红色",
+          "天安门"
+        ]
+      },
+      "tags": [
+        "knowledge",
+        "knowledge-civic"
+      ],
+      "source": "internal-reviewed-catalog",
+      "reviewStatus": "reviewed",
+      "reviewedAt": "2026-09-01",
+      "enabled": true
+    },
+    {
+      "id": "fact.knowledge.civic.0622gap",
+      "kind": "knowledge.civic",
+      "fields": {
+        "prompt": "国家根本法",
+        "answer": "宪法",
+        "wrong": [
+          "全国人大",
+          "国务院",
+          "人民"
+        ]
+      },
+      "tags": [
+        "knowledge",
+        "knowledge-civic"
+      ],
+      "source": "internal-reviewed-catalog",
+      "reviewStatus": "reviewed",
+      "reviewedAt": "2026-09-01",
+      "enabled": true
+    },
+    {
+      "id": "fact.knowledge.civic.1p6yx8e",
+      "kind": "knowledge.civic",
+      "fields": {
+        "prompt": "最高权力机关",
+        "answer": "全国人大",
+        "wrong": [
+          "宪法",
+          "国务院",
+          "人民"
+        ]
+      },
+      "tags": [
+        "knowledge",
+        "knowledge-civic"
+      ],
+      "source": "internal-reviewed-catalog",
+      "reviewStatus": "reviewed",
+      "reviewedAt": "2026-09-01",
+      "enabled": true
+    },
+    {
+      "id": "fact.knowledge.civic.063xdjv",
+      "kind": "knowledge.civic",
+      "fields": {
+        "prompt": "最高行政机关",
+        "answer": "国务院",
+        "wrong": [
+          "宪法",
+          "全国人大",
+          "人民"
+        ]
+      },
+      "tags": [
+        "knowledge",
+        "knowledge-civic"
+      ],
+      "source": "internal-reviewed-catalog",
+      "reviewStatus": "reviewed",
+      "reviewedAt": "2026-09-01",
+      "enabled": true
+    },
+    {
+      "id": "fact.knowledge.civic.0irif7z",
+      "kind": "knowledge.civic",
+      "fields": {
+        "prompt": "国家权力属于",
+        "answer": "人民",
+        "wrong": [
+          "宪法",
+          "全国人大",
+          "国务院"
+        ]
+      },
+      "tags": [
+        "knowledge",
+        "knowledge-civic"
+      ],
+      "source": "internal-reviewed-catalog",
+      "reviewStatus": "reviewed",
+      "reviewedAt": "2026-09-01",
+      "enabled": true
+    },
+    {
+      "id": "fact.history.opening.1nid5b3",
+      "kind": "history.opening",
+      "fields": {
+        "prompt": "虎门销烟的主角",
+        "answer": "林则徐",
+        "wrong": [
+          "魏源",
+          "曾国藩",
+          "左宗棠"
+        ]
+      },
+      "tags": [
+        "history",
+        "history-modern-opening"
+      ],
+      "source": "internal-reviewed-catalog",
+      "reviewStatus": "reviewed",
+      "reviewedAt": "2026-09-01",
+      "enabled": true
+    },
+    {
+      "id": "fact.history.opening.1pv3e6t",
+      "kind": "history.opening",
+      "fields": {
+        "prompt": "鸦片战争爆发于",
+        "answer": "1840",
+        "wrong": [
+          "1839",
+          "1860",
+          "1894"
+        ]
+      },
+      "tags": [
+        "history",
+        "history-modern-opening"
+      ],
+      "source": "internal-reviewed-catalog",
+      "reviewStatus": "reviewed",
+      "reviewedAt": "2026-09-01",
+      "enabled": true
+    },
+    {
+      "id": "fact.history.opening.0qhzy19",
+      "kind": "history.opening",
+      "fields": {
+        "prompt": "近代首个不平等条约",
+        "answer": "南京条约",
+        "wrong": [
+          "北京条约",
+          "马关条约",
+          "辛丑条约"
+        ]
+      },
+      "tags": [
+        "history",
+        "history-modern-opening"
+      ],
+      "source": "internal-reviewed-catalog",
+      "reviewStatus": "reviewed",
+      "reviewedAt": "2026-09-01",
+      "enabled": true
+    },
+    {
+      "id": "fact.history.opening.13tiuvp",
+      "kind": "history.opening",
+      "fields": {
+        "prompt": "洋务运动的口号",
+        "answer": "自强求富",
+        "wrong": [
+          "师夷长技",
+          "实业救国",
+          "民主科学"
+        ]
+      },
+      "tags": [
+        "history",
+        "history-modern-opening"
+      ],
+      "source": "internal-reviewed-catalog",
+      "reviewStatus": "reviewed",
+      "reviewedAt": "2026-09-01",
+      "enabled": true
+    },
+    {
+      "id": "fact.history.opening.1x9gy9j",
+      "kind": "history.opening",
+      "fields": {
+        "prompt": "北洋水师最终覆没于",
+        "answer": "威海卫",
+        "wrong": [
+          "旅顺",
+          "天津",
+          "厦门"
+        ]
+      },
+      "tags": [
+        "history",
+        "history-modern-opening"
+      ],
+      "source": "internal-reviewed-catalog",
+      "reviewStatus": "reviewed",
+      "reviewedAt": "2026-09-01",
+      "enabled": true
+    },
+    {
+      "id": "fact.history.opening.0dtztnb",
+      "kind": "history.opening",
+      "fields": {
+        "prompt": "“公车上书”领衔者",
+        "answer": "康有为",
+        "wrong": [
+          "孙中山",
+          "陈独秀",
+          "李大钊"
+        ]
+      },
+      "tags": [
+        "history",
+        "history-modern-opening"
+      ],
+      "source": "internal-reviewed-catalog",
+      "reviewStatus": "reviewed",
+      "reviewedAt": "2026-09-01",
+      "enabled": true
+    },
+    {
+      "id": "fact.history.opening.1ocyf1a",
+      "kind": "history.opening",
+      "fields": {
+        "prompt": "百日维新时的皇帝",
+        "answer": "光绪帝",
+        "wrong": [
+          "同治帝",
+          "宣统帝",
+          "道光帝"
+        ]
+      },
+      "tags": [
+        "history",
+        "history-modern-opening"
+      ],
+      "source": "internal-reviewed-catalog",
+      "reviewStatus": "reviewed",
+      "reviewedAt": "2026-09-01",
+      "enabled": true
+    },
+    {
+      "id": "fact.history.opening.0bah453",
+      "kind": "history.opening",
+      "fields": {
+        "prompt": "辛亥革命首义之城",
+        "answer": "武昌",
+        "wrong": [
+          "广州",
+          "南京",
+          "长沙"
+        ]
+      },
+      "tags": [
+        "history",
+        "history-modern-opening"
+      ],
+      "source": "internal-reviewed-catalog",
+      "reviewStatus": "reviewed",
+      "reviewedAt": "2026-09-01",
+      "enabled": true
+    },
+    {
+      "id": "fact.history.awakening.0le0yhj",
+      "kind": "history.awakening",
+      "fields": {
+        "prompt": "《新青年》创办人",
+        "answer": "陈独秀",
+        "wrong": [
+          "鲁迅",
+          "胡适",
+          "蔡元培"
+        ]
+      },
+      "tags": [
+        "history",
+        "history-modern-awakening"
+      ],
+      "source": "internal-reviewed-catalog",
+      "reviewStatus": "reviewed",
+      "reviewedAt": "2026-09-01",
+      "enabled": true
+    },
+    {
+      "id": "fact.history.awakening.0zfdvhe",
+      "kind": "history.awakening",
+      "fields": {
+        "prompt": "《狂人日记》作者",
+        "answer": "鲁迅",
+        "wrong": [
+          "郭沫若",
+          "老舍",
+          "巴金"
+        ]
+      },
+      "tags": [
+        "history",
+        "history-modern-awakening"
+      ],
+      "source": "internal-reviewed-catalog",
+      "reviewStatus": "reviewed",
+      "reviewedAt": "2026-09-01",
+      "enabled": true
+    },
+    {
+      "id": "fact.history.awakening.13al2bk",
+      "kind": "history.awakening",
+      "fields": {
+        "prompt": "五四运动首先爆发在",
+        "answer": "北京",
+        "wrong": [
+          "上海",
+          "广州",
+          "天津"
+        ]
+      },
+      "tags": [
+        "history",
+        "history-modern-awakening"
+      ],
+      "source": "internal-reviewed-catalog",
+      "reviewStatus": "reviewed",
+      "reviewedAt": "2026-09-01",
+      "enabled": true
+    },
+    {
+      "id": "fact.history.awakening.0escgub",
+      "kind": "history.awakening",
+      "fields": {
+        "prompt": "五四运动导火索",
+        "answer": "巴黎和会",
+        "wrong": [
+          "武昌起义",
+          "九一八事变",
+          "北伐开始"
+        ]
+      },
+      "tags": [
+        "history",
+        "history-modern-awakening"
+      ],
+      "source": "internal-reviewed-catalog",
+      "reviewStatus": "reviewed",
+      "reviewedAt": "2026-09-01",
+      "enabled": true
+    },
+    {
+      "id": "fact.history.awakening.1vak6t2",
+      "kind": "history.awakening",
+      "fields": {
+        "prompt": "中共一大最初开会城市",
+        "answer": "上海",
+        "wrong": [
+          "北京",
+          "广州",
+          "武汉"
+        ]
+      },
+      "tags": [
+        "history",
+        "history-modern-awakening"
+      ],
+      "source": "internal-reviewed-catalog",
+      "reviewStatus": "reviewed",
+      "reviewedAt": "2026-09-01",
+      "enabled": true
+    },
+    {
+      "id": "fact.history.awakening.0yv45du",
+      "kind": "history.awakening",
+      "fields": {
+        "prompt": "南湖红船所在城市",
+        "answer": "嘉兴",
+        "wrong": [
+          "杭州",
+          "绍兴",
+          "苏州"
+        ]
+      },
+      "tags": [
+        "history",
+        "history-modern-awakening"
+      ],
+      "source": "internal-reviewed-catalog",
+      "reviewStatus": "reviewed",
+      "reviewedAt": "2026-09-01",
+      "enabled": true
+    },
+    {
+      "id": "fact.history.awakening.04ll20t",
+      "kind": "history.awakening",
+      "fields": {
+        "prompt": "首个农村革命根据地",
+        "answer": "井冈山",
+        "wrong": [
+          "延安",
+          "西柏坡",
+          "大别山"
+        ]
+      },
+      "tags": [
+        "history",
+        "history-modern-awakening"
+      ],
+      "source": "internal-reviewed-catalog",
+      "reviewStatus": "reviewed",
+      "reviewedAt": "2026-09-01",
+      "enabled": true
+    },
+    {
+      "id": "fact.history.awakening.0nkdyww",
+      "kind": "history.awakening",
+      "fields": {
+        "prompt": "中央红军长征集结出发地",
+        "answer": "江西于都",
+        "wrong": [
+          "陕西延安",
+          "贵州遵义",
+          "河北西柏坡"
+        ]
+      },
+      "tags": [
+        "history",
+        "history-modern-awakening"
+      ],
+      "source": "internal-reviewed-catalog",
+      "reviewStatus": "reviewed",
+      "reviewedAt": "2026-09-01",
+      "enabled": true
+    },
+    {
+      "id": "fact.history.resistance.1978mjh",
+      "kind": "history.resistance",
+      "fields": {
+        "prompt": "九一八事变发生地",
+        "answer": "沈阳",
+        "wrong": [
+          "北平",
+          "南京",
+          "武汉"
+        ]
+      },
+      "tags": [
+        "history",
+        "history-modern-resistance"
+      ],
+      "source": "internal-reviewed-catalog",
+      "reviewStatus": "reviewed",
+      "reviewedAt": "2026-09-01",
+      "enabled": true
+    },
+    {
+      "id": "fact.history.resistance.13x9e6b",
+      "kind": "history.resistance",
+      "fields": {
+        "prompt": "卢沟桥事变发生在",
+        "answer": "北京",
+        "wrong": [
+          "天津",
+          "上海",
+          "西安"
+        ]
+      },
+      "tags": [
+        "history",
+        "history-modern-resistance"
+      ],
+      "source": "internal-reviewed-catalog",
+      "reviewStatus": "reviewed",
+      "reviewedAt": "2026-09-01",
+      "enabled": true
+    },
+    {
+      "id": "fact.history.resistance.09ufsd9",
+      "kind": "history.resistance",
+      "fields": {
+        "prompt": "平型关大捷主力",
+        "answer": "八路军",
+        "wrong": [
+          "新四军",
+          "东北军",
+          "北洋军"
+        ]
+      },
+      "tags": [
+        "history",
+        "history-modern-resistance"
+      ],
+      "source": "internal-reviewed-catalog",
+      "reviewStatus": "reviewed",
+      "reviewedAt": "2026-09-01",
+      "enabled": true
+    },
+    {
+      "id": "fact.history.resistance.04c2ym3",
+      "kind": "history.resistance",
+      "fields": {
+        "prompt": "台儿庄大捷指挥者",
+        "answer": "李宗仁",
+        "wrong": [
+          "张自忠",
+          "佟麟阁",
+          "谢晋元"
+        ]
+      },
+      "tags": [
+        "history",
+        "history-modern-resistance"
+      ],
+      "source": "internal-reviewed-catalog",
+      "reviewStatus": "reviewed",
+      "reviewedAt": "2026-09-01",
+      "enabled": true
+    },
+    {
+      "id": "fact.history.resistance.0xusz35",
+      "kind": "history.resistance",
+      "fields": {
+        "prompt": "南京大屠杀发生于",
+        "answer": "1937",
+        "wrong": [
+          "1931",
+          "1935",
+          "1941"
+        ]
+      },
+      "tags": [
+        "history",
+        "history-modern-resistance"
+      ],
+      "source": "internal-reviewed-catalog",
+      "reviewStatus": "reviewed",
+      "reviewedAt": "2026-09-01",
+      "enabled": true
+    },
+    {
+      "id": "fact.history.resistance.183rzr5",
+      "kind": "history.resistance",
+      "fields": {
+        "prompt": "地道战故事多发生在",
+        "answer": "冀中平原",
+        "wrong": [
+          "河西走廊",
+          "江南水乡",
+          "云贵高原"
+        ]
+      },
+      "tags": [
+        "history",
+        "history-modern-resistance"
+      ],
+      "source": "internal-reviewed-catalog",
+      "reviewStatus": "reviewed",
+      "reviewedAt": "2026-09-01",
+      "enabled": true
+    },
+    {
+      "id": "fact.history.resistance.04aew7p",
+      "kind": "history.resistance",
+      "fields": {
+        "prompt": "百团大战主要指挥者",
+        "answer": "彭德怀",
+        "wrong": [
+          "叶挺",
+          "左权",
+          "聂荣臻"
+        ]
+      },
+      "tags": [
+        "history",
+        "history-modern-resistance"
+      ],
+      "source": "internal-reviewed-catalog",
+      "reviewStatus": "reviewed",
+      "reviewedAt": "2026-09-01",
+      "enabled": true
+    },
+    {
+      "id": "fact.history.resistance.1vocnlj",
+      "kind": "history.resistance",
+      "fields": {
+        "prompt": "“飞虎队”创建者",
+        "answer": "陈纳德",
+        "wrong": [
+          "白求恩",
+          "史迪威",
+          "柯棣华"
+        ]
+      },
+      "tags": [
+        "history",
+        "history-modern-resistance"
+      ],
+      "source": "internal-reviewed-catalog",
+      "reviewStatus": "reviewed",
+      "reviewedAt": "2026-09-01",
+      "enabled": true
+    },
+    {
+      "id": "fact.history.ancient.169u3o9",
+      "kind": "history.ancient",
+      "fields": {
+        "prompt": "秦统一后推行的文字",
+        "answer": "小篆",
+        "wrong": [
+          "甲骨文",
+          "楷书",
+          "行书"
+        ]
+      },
+      "tags": [
+        "history",
+        "history-ancient"
+      ],
+      "source": "internal-reviewed-catalog",
+      "reviewStatus": "reviewed",
+      "reviewedAt": "2026-09-01",
+      "enabled": true
+    },
+    {
+      "id": "fact.history.ancient.0du6q5t",
+      "kind": "history.ancient",
+      "fields": {
+        "prompt": "“凿空西域”的使者",
+        "answer": "张骞",
+        "wrong": [
+          "班超",
+          "苏武",
+          "甘英"
+        ]
+      },
+      "tags": [
+        "history",
+        "history-ancient"
+      ],
+      "source": "internal-reviewed-catalog",
+      "reviewStatus": "reviewed",
+      "reviewedAt": "2026-09-01",
+      "enabled": true
+    },
+    {
+      "id": "fact.history.ancient.02d3kw4",
+      "kind": "history.ancient",
+      "fields": {
+        "prompt": "《史记》的作者",
+        "answer": "司马迁",
+        "wrong": [
+          "班固",
+          "司马光",
+          "陈寿"
+        ]
+      },
+      "tags": [
+        "history",
+        "history-ancient"
+      ],
+      "source": "internal-reviewed-catalog",
+      "reviewStatus": "reviewed",
+      "reviewedAt": "2026-09-01",
+      "enabled": true
+    },
+    {
+      "id": "fact.history.ancient.0wzc1h2",
+      "kind": "history.ancient",
+      "fields": {
+        "prompt": "“投笔从戎”的主角",
+        "answer": "班超",
+        "wrong": [
+          "霍去病",
+          "卫青",
+          "祖逖"
+        ]
+      },
+      "tags": [
+        "history",
+        "history-ancient"
+      ],
+      "source": "internal-reviewed-catalog",
+      "reviewStatus": "reviewed",
+      "reviewedAt": "2026-09-01",
+      "enabled": true
+    },
+    {
+      "id": "fact.history.ancient.0um6vid",
+      "kind": "history.ancient",
+      "fields": {
+        "prompt": "《三国演义》草船借箭者",
+        "answer": "诸葛亮",
+        "wrong": [
+          "周瑜",
+          "鲁肃",
+          "司马懿"
+        ]
+      },
+      "tags": [
+        "history",
+        "history-ancient"
+      ],
+      "source": "internal-reviewed-catalog",
+      "reviewStatus": "reviewed",
+      "reviewedAt": "2026-09-01",
+      "enabled": true
+    },
+    {
+      "id": "fact.history.ancient.0ymszhs",
+      "kind": "history.ancient",
+      "fields": {
+        "prompt": "被称为“诗仙”",
+        "answer": "李白",
+        "wrong": [
+          "杜甫",
+          "白居易",
+          "王维"
+        ]
+      },
+      "tags": [
+        "history",
+        "history-ancient"
+      ],
+      "source": "internal-reviewed-catalog",
+      "reviewStatus": "reviewed",
+      "reviewedAt": "2026-09-01",
+      "enabled": true
+    },
+    {
+      "id": "fact.history.ancient.0udi0gi",
+      "kind": "history.ancient",
+      "fields": {
+        "prompt": "玄奘取经前往古称",
+        "answer": "天竺",
+        "wrong": [
+          "大秦",
+          "安息",
+          "扶桑"
+        ]
+      },
+      "tags": [
+        "history",
+        "history-ancient"
+      ],
+      "source": "internal-reviewed-catalog",
+      "reviewStatus": "reviewed",
+      "reviewedAt": "2026-09-01",
+      "enabled": true
+    },
+    {
+      "id": "fact.history.ancient.13sb7hd",
+      "kind": "history.ancient",
+      "fields": {
+        "prompt": "活字印刷术发明者",
+        "answer": "毕昇",
+        "wrong": [
+          "蔡伦",
+          "沈括",
+          "祖冲之"
+        ]
+      },
+      "tags": [
+        "history",
+        "history-ancient"
+      ],
+      "source": "internal-reviewed-catalog",
+      "reviewStatus": "reviewed",
+      "reviewedAt": "2026-09-01",
+      "enabled": true
+    },
+    {
+      "id": "fact.history.myth.1hgfdw3",
+      "kind": "history.myth",
+      "fields": {
+        "prompt": "开天辟地的巨人",
+        "answer": "盘古",
+        "wrong": [
+          "夸父",
+          "刑天",
+          "共工"
+        ]
+      },
+      "tags": [
+        "history",
+        "history-myth"
+      ],
+      "source": "internal-reviewed-catalog",
+      "reviewStatus": "reviewed",
+      "reviewedAt": "2026-09-01",
+      "enabled": true
+    },
+    {
+      "id": "fact.history.myth.1pf16z6",
+      "kind": "history.myth",
+      "fields": {
+        "prompt": "女娲补天使用",
+        "answer": "五色石",
+        "wrong": [
+          "定海针",
+          "息壤",
+          "昆仑玉"
+        ]
+      },
+      "tags": [
+        "history",
+        "history-myth"
+      ],
+      "source": "internal-reviewed-catalog",
+      "reviewStatus": "reviewed",
+      "reviewedAt": "2026-09-01",
+      "enabled": true
+    },
+    {
+      "id": "fact.history.myth.17weexe",
+      "kind": "history.myth",
+      "fields": {
+        "prompt": "后羿一共射落几个太阳",
+        "answer": "9个",
+        "wrong": [
+          "7个",
+          "8个",
+          "10个"
+        ]
+      },
+      "tags": [
+        "history",
+        "history-myth"
+      ],
+      "source": "internal-reviewed-catalog",
+      "reviewStatus": "reviewed",
+      "reviewedAt": "2026-09-01",
+      "enabled": true
+    },
+    {
+      "id": "fact.history.myth.024sfca",
+      "kind": "history.myth",
+      "fields": {
+        "prompt": "嫦娥奔月住进",
+        "answer": "广寒宫",
+        "wrong": [
+          "兜率宫",
+          "水晶宫",
+          "碧游宫"
+        ]
+      },
+      "tags": [
+        "history",
+        "history-myth"
+      ],
+      "source": "internal-reviewed-catalog",
+      "reviewStatus": "reviewed",
+      "reviewedAt": "2026-09-01",
+      "enabled": true
+    },
+    {
+      "id": "fact.history.myth.13kifb2",
+      "kind": "history.myth",
+      "fields": {
+        "prompt": "追着太阳奔跑的巨人",
+        "answer": "夸父",
+        "wrong": [
+          "盘古",
+          "刑天",
+          "愚公"
+        ]
+      },
+      "tags": [
+        "history",
+        "history-myth"
+      ],
+      "source": "internal-reviewed-catalog",
+      "reviewStatus": "reviewed",
+      "reviewedAt": "2026-09-01",
+      "enabled": true
+    },
+    {
+      "id": "fact.history.myth.07biyeb",
+      "kind": "history.myth",
+      "fields": {
+        "prompt": "精卫衔石要填平",
+        "answer": "东海",
+        "wrong": [
+          "南海",
+          "西湖",
+          "黄河"
+        ]
+      },
+      "tags": [
+        "history",
+        "history-myth"
+      ],
+      "source": "internal-reviewed-catalog",
+      "reviewStatus": "reviewed",
+      "reviewedAt": "2026-09-01",
+      "enabled": true
+    },
+    {
+      "id": "fact.history.myth.15u4oex",
+      "kind": "history.myth",
+      "fields": {
+        "prompt": "大禹治水几过家门不入",
+        "answer": "3次",
+        "wrong": [
+          "1次",
+          "5次",
+          "9次"
+        ]
+      },
+      "tags": [
+        "history",
+        "history-myth"
+      ],
+      "source": "internal-reviewed-catalog",
+      "reviewStatus": "reviewed",
+      "reviewedAt": "2026-09-01",
+      "enabled": true
+    },
+    {
+      "id": "fact.history.myth.12cm0ny",
+      "kind": "history.myth",
+      "fields": {
+        "prompt": "尝百草的始祖",
+        "answer": "神农",
+        "wrong": [
+          "伏羲",
+          "祝融",
+          "后稷"
+        ]
+      },
+      "tags": [
+        "history",
+        "history-myth"
+      ],
+      "source": "internal-reviewed-catalog",
+      "reviewStatus": "reviewed",
+      "reviewedAt": "2026-09-01",
+      "enabled": true
+    }
+  ]
+}

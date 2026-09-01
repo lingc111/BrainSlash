@@ -4,8 +4,8 @@ export type QuestionTemplateId =
     | 'math-add' | 'math-subtract' | 'math-multiply' | 'math-property'
     | 'math-compare' | 'math-sequence' | 'math-missing' | 'math-equation'
     | 'vision-direction' | 'vision-odd' | 'vision-count' | 'vision-stroop' | 'vision-pattern' | 'vision-match'
-    | 'hanzi-fill' | 'hanzi-order' | 'hanzi-antonym' | 'hanzi-synonym'
-    | 'english-meaning' | 'english-category' | 'english-antonym'
+    | 'hanzi-fill' | 'hanzi-order' | 'hanzi-antonym' | 'hanzi-synonym' | 'hanzi-pinyin' | 'hanzi-poetry'
+    | 'english-meaning' | 'english-category' | 'english-antonym' | 'english-first-letter' | 'english-length'
     | 'life-category' | 'geography-capital' | 'geography-country'
     | 'knowledge-science' | 'knowledge-nature' | 'knowledge-culture' | 'knowledge-civic'
     | 'history-modern-opening' | 'history-modern-awakening' | 'history-modern-resistance'
@@ -72,9 +72,13 @@ export const QUESTION_TEMPLATES: readonly QuestionTemplate[] = [
     define('hanzi-order', 'hanzi', 'order', ['order', 'short-text'], 'reviewed-facts', ['idiom', 'order'], ORDER_RULES, 5),
     define('hanzi-antonym', 'hanzi', 'pair', ['single', 'short-text'], 'reviewed-facts', ['antonym']),
     define('hanzi-synonym', 'hanzi', 'pair', ['single', 'short-text'], 'reviewed-facts', ['synonym']),
+    define('hanzi-pinyin', 'hanzi', 'pair', ['single', 'short-text'], 'reviewed-facts', ['pinyin']),
+    define('hanzi-poetry', 'hanzi', 'fill', ['single', 'short-text'], 'reviewed-facts', ['poetry', 'fill']),
     define('english-meaning', 'english', 'pair', ['single', 'short-text'], 'reviewed-facts', ['meaning']),
     define('english-category', 'english', 'condition', ['single', 'multi', 'master-slash', 'category', 'short-text'], 'reviewed-facts', ['category'], MULTI_RULES, 5),
     define('english-antonym', 'english', 'pair', ['single', 'short-text'], 'reviewed-facts', ['antonym']),
+    define('english-first-letter', 'english', 'single', ['single', 'short-text'], 'reviewed-facts', ['spelling', 'first-letter']),
+    define('english-length', 'english', 'count', ['single', 'numeric'], 'reviewed-facts', ['spelling', 'length']),
     define('life-category', 'life', 'condition', ['single', 'multi', 'master-slash', 'category', 'short-text'], 'reviewed-facts', ['category'], MULTI_RULES, 5),
     define('geography-capital', 'geography', 'pair', ['single', 'short-text'], 'reviewed-facts', ['capital']),
     define('geography-country', 'geography', 'pair', ['single', 'short-text'], 'reviewed-facts', ['country']),

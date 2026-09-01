@@ -23,6 +23,7 @@ import {
     type HanziRelationFact,
     type HanziRelationKind,
 } from './HanziRelationCatalog';
+import { PINYIN_FACTS, POETRY_FACTS } from './HanziExpansionCatalog';
 import {
     KNOWLEDGE_CIVIC_FACTS,
     KNOWLEDGE_CULTURE_EXPANSION,
@@ -30,6 +31,7 @@ import {
     KNOWLEDGE_SCIENCE_EXPANSION,
 } from './KnowledgeExpansionCatalog';
 import { validateQuestion } from './FairnessValidator';
+import { reviewedFactIdForRecord } from './QuestionBankRegistry';
 import type { GameEntryParams, QuestionInstance, RuleId, TargetSpec, ThemeId } from './Models';
 import { evaluateRules, rulesForReadableTargets } from './Rules';
 import { SeededRng } from './SeededRng';
@@ -130,9 +132,13 @@ export class QuestionCompilerEngine {
             case 'hanzi-order': return this.hanziOrder(template, stage);
             case 'hanzi-antonym': return this.hanziRelation(template, stage, 'antonym');
             case 'hanzi-synonym': return this.hanziRelation(template, stage, 'synonym');
+            case 'hanzi-pinyin': return this.hanziPinyin(template, stage);
+            case 'hanzi-poetry': return this.hanziPoetry(template, stage);
             case 'english-meaning': return this.englishMeaning(template, stage);
             case 'english-category': return this.englishCategory(template, stage);
             case 'english-antonym': return this.englishAntonym(template, stage);
+            case 'english-first-letter': return this.englishFirstLetter(template, stage);
+            case 'english-length': return this.englishLength(template, stage);
             case 'life-category': return this.lifeCategory(template, stage);
             case 'geography-capital': return this.geographyCapital(template, stage);
             case 'geography-country': return this.geographyCountry(template, stage);
@@ -450,15 +456,16 @@ export class QuestionCompilerEngine {
     }
 
     private hanziFill(template: QuestionTemplate, stage: Stage): QuestionInstance {
-        const entry = this.pickFact('idioms', IDIOMS, (item) => `idiom:${item.text}`);
-        const answer = entry.text[entry.missingIndex];
-        const prompt = `${entry.text.slice(0, entry.missingIndex)}( )${entry.text.slice(entry.missingIndex + 1)}`;
-        return this.makeChoice(template, prompt, answer, entry.wrong, stage);
+        const entry = this.pickFact('idioms', IDIOMS, reviewedFactIdForRecord);
+        const missingIndex = this.rng.next() < 0.5 ? entry.missingIndex : (entry.missingIndex + 1) % entry.text.length;
+        const answer = entry.text[missingIndex];
+        const prompt = `${entry.text.slice(0, missingIndex)}( )${entry.text.slice(missingIndex + 1)}`;
+        return this.makeChoice(template, prompt, answer, [...entry.wrong, ...Array.from(entry.text)], stage);
     }
 
     private hanziOrder(template: QuestionTemplate, stage: Stage): QuestionInstance {
         const orderable = IDIOMS.filter((entry) => new Set(entry.text).size === 4);
-        const entry = this.pickFact('idioms-orderable', orderable, (item) => `idiom:${item.text}`);
+        const entry = this.pickFact('idioms-orderable', orderable, reviewedFactIdForRecord);
         const source = Array.from(entry.text).map((text, originalIndex) => ({ text, originalIndex }));
         const targets: TargetSpec[] = this.rng.shuffle(source).map((item, index) => ({ id: `h${index}`, text: item.text, value: item.originalIndex }));
         const ordered = [...targets].sort((a, b) => Number(a.value) - Number(b.value)).map((target) => target.id);
@@ -466,8 +473,19 @@ export class QuestionCompilerEngine {
         return this.make(template, '排成语', targets, ordered, ['order'], stage, ordered);
     }
 
+    private hanziPinyin(template: QuestionTemplate, stage: Stage): QuestionInstance {
+        const fact = this.pickFact('hanzi-pinyin', PINYIN_FACTS, reviewedFactIdForRecord);
+        const candidates = PINYIN_FACTS.filter((item) => item.id !== fact.id).map((item) => item.pinyin);
+        return this.makeChoice(template, `${fact.character}的拼音`, fact.pinyin, candidates, stage);
+    }
+
+    private hanziPoetry(template: QuestionTemplate, stage: Stage): QuestionInstance {
+        const fact = this.pickFact('hanzi-poetry', POETRY_FACTS, reviewedFactIdForRecord);
+        return this.makeChoice(template, fact.prompt, fact.answer, fact.wrong, stage);
+    }
+
     private englishMeaning(template: QuestionTemplate, stage: Stage): QuestionInstance {
-        const word = this.pickFact('english-words', ENGLISH_WORDS, (item) => `english:${item.en}`);
+        const word = this.pickFact('english-words', ENGLISH_WORDS, reviewedFactIdForRecord);
         const sameCategory = ENGLISH_WORDS.filter((candidate) => candidate.category === word.category && candidate.en !== word.en).map((candidate) => candidate.zh);
         return this.makeChoice(template, `${word.en} 是？`, word.zh, sameCategory, stage);
     }
@@ -481,7 +499,7 @@ export class QuestionCompilerEngine {
         const correctCount = this.isOrdinarySingleSelection()
             ? 1
             : this.directive.rules.includes('multi') || stage > 0 ? 2 : 1;
-        const matching = this.pickFacts(`english-category:${category}`, matchingPool, correctCount, (word) => `english:${word.en}`);
+        const matching = this.pickFacts(`english-category:${category}`, matchingPool, correctCount, reviewedFactIdForRecord);
         const words = this.rng.shuffle([...matching, ...others.slice(0, count - correctCount)]);
         const targets: TargetSpec[] = words.map((word, index) => ({ id: `e${index}`, text: word.en, value: word.category }));
         const correct = targets.filter((target) => target.value === category).map((target) => target.id);
@@ -490,7 +508,7 @@ export class QuestionCompilerEngine {
     }
 
     private englishAntonym(template: QuestionTemplate, stage: Stage): QuestionInstance {
-        const pair = this.pickFact('english-antonyms', ENGLISH_ANTONYMS, (item) => `antonym:${item[0]}:${item[1]}`);
+        const pair = this.pickFact('english-antonyms', ENGLISH_ANTONYMS, reviewedFactIdForRecord);
         const reversePair = this.rng.next() < 0.5;
         const promptWord = pair[reversePair ? 1 : 0];
         const answer = pair[reversePair ? 0 : 1];
@@ -498,6 +516,19 @@ export class QuestionCompilerEngine {
         for (const item of ENGLISH_ANTONYMS) antonymWords.push(item[0], item[1]);
         const candidates = this.rng.shuffle(antonymWords).filter((word) => word !== promptWord);
         return this.makeChoice(template, `${promptWord} 的反义词`, answer, candidates, stage);
+    }
+
+    private englishFirstLetter(template: QuestionTemplate, stage: Stage): QuestionInstance {
+        const word = this.pickFact('english-first-letter', ENGLISH_WORDS, reviewedFactIdForRecord);
+        const answer = word.en[0];
+        const candidates = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ'.split('').filter((letter) => letter !== answer);
+        return this.makeChoice(template, `${word.en}首字母`, answer, candidates, stage);
+    }
+
+    private englishLength(template: QuestionTemplate, stage: Stage): QuestionInstance {
+        const word = this.pickFact('english-length', ENGLISH_WORDS, reviewedFactIdForRecord);
+        const answer = Array.from(word.en).length;
+        return this.makeChoice(template, `${word.en}有几字母`, answer, [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12], stage);
     }
 
     private lifeCategory(template: QuestionTemplate, stage: Stage): QuestionInstance {
@@ -509,7 +540,7 @@ export class QuestionCompilerEngine {
         const correctCount = this.isOrdinarySingleSelection()
             ? 1
             : this.directive.rules.includes('multi') || stage > 0 ? 2 : 1;
-        const matching = this.pickFacts(`life-category:${category}`, matchingPool, correctCount, (fact) => `life:${fact.item}`);
+        const matching = this.pickFacts(`life-category:${category}`, matchingPool, correctCount, reviewedFactIdForRecord);
         const facts = this.rng.shuffle([...matching, ...others.slice(0, count - correctCount)]);
         const targets: TargetSpec[] = facts.map((fact, index) => ({ id: `l${index}`, text: fact.item, value: fact.category }));
         const correct = targets.filter((target) => target.value === category).map((target) => target.id);
@@ -518,13 +549,13 @@ export class QuestionCompilerEngine {
     }
 
     private geographyCapital(template: QuestionTemplate, stage: Stage): QuestionInstance {
-        const fact = this.pickFact('geography-facts', GEOGRAPHY_FACTS, (item) => `geography:${item.country}`);
+        const fact = this.pickFact('geography-facts', GEOGRAPHY_FACTS, reviewedFactIdForRecord);
         const candidates = GEOGRAPHY_FACTS.filter((candidate) => candidate.capital !== fact.capital).map((candidate) => candidate.capital);
         return this.makeChoice(template, `${fact.country}首都`, fact.capital, candidates, stage);
     }
 
     private geographyCountry(template: QuestionTemplate, stage: Stage): QuestionInstance {
-        const fact = this.pickFact('geography-facts', GEOGRAPHY_FACTS, (item) => `geography:${item.country}`);
+        const fact = this.pickFact('geography-facts', GEOGRAPHY_FACTS, reviewedFactIdForRecord);
         const candidates = GEOGRAPHY_FACTS.filter((candidate) => candidate.country !== fact.country).map((candidate) => candidate.country);
         return this.makeChoice(template, `${fact.capital}在哪国`, fact.country, candidates, stage);
     }
@@ -537,7 +568,7 @@ export class QuestionCompilerEngine {
         const pool: readonly HanziRelationFact[] = kind === 'antonym'
             ? HANZI_ANTONYM_FACTS
             : HANZI_SYNONYM_FACTS;
-        const fact = this.pickFact(`hanzi-${kind}`, pool, (item) => item.id);
+        const fact = this.pickFact(`hanzi-${kind}`, pool, reviewedFactIdForRecord);
         const reversePair = this.rng.next() < 0.5;
         const promptWord = reversePair ? fact.right : fact.left;
         const answer = reversePair ? fact.left : fact.right;
@@ -552,7 +583,7 @@ export class QuestionCompilerEngine {
     }
 
     private trivia(template: QuestionTemplate, stage: Stage, poolId: string, facts: readonly TriviaFact[]): QuestionInstance {
-        const fact = this.pickFact(poolId, facts, (item) => `${poolId}:${item.prompt}`);
+        const fact = this.pickFact(poolId, facts, reviewedFactIdForRecord);
         return this.makeChoice(template, fact.prompt, fact.answer, fact.wrong, stage);
     }
 

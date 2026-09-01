@@ -881,19 +881,19 @@ test('daily challenge starts without tutorial state and reuses the same-day reco
 });
 
 test('unified template catalog contains one stable entry per cognitive template', () => {
-    assert.equal(QUESTION_TEMPLATES.length, 33);
+    assert.equal(QUESTION_TEMPLATES.length, 37);
     assert.equal(new Set(QUESTION_TEMPLATES.map((template) => template.id)).size, QUESTION_TEMPLATES.length);
     assert.ok(QUESTION_TEMPLATES.every((template) => template.enabled && template.difficultyBands.length === 5));
 });
 
 test('question-bank registry reports audited base records instead of generated combinations', () => {
     const stats = getQuestionBankStats();
-    assert.equal(stats.baseRecordCount, 1004);
-    assert.equal(stats.packCount, 19);
+    assert.equal(stats.baseRecordCount, 1028);
+    assert.equal(stats.packCount, 21);
     assert.deepEqual(stats.byTheme, {
         math: 0,
         vision: 0,
-        hanzi: 300,
+        hanzi: 324,
         english: 136,
         life: 30,
         geography: 60,
@@ -1633,6 +1633,25 @@ test('save v6 resets only tower progress and trial statistics', () => {
     assert.equal(migrated.leaderboard.trialCorrectCount, 0);
     assert.equal(migrated.leaderboard.brawlBest.rankScore, base.leaderboard.brawlBest.rankScore);
     assert.deepEqual(migrated.player, base.player);
+});
+
+test('migrated V1 templates compile from reviewed facts', () => {
+    const migratedTemplates = [
+        ['hanzi-pinyin', /^fact\.hanzi\.pinyin\./],
+        ['hanzi-poetry', /^fact\.hanzi\.poetry\./],
+        ['english-first-letter', /^fact\.english\.words\./],
+        ['english-length', /^fact\.english\.words\./],
+    ] as const;
+    for (const [id, factIdPattern] of migratedTemplates) {
+        const template = QUESTION_TEMPLATES.find((item) => item.id === id)!;
+        const generator = new DirectiveCompilerFixture(new SeededRng(`migrated-${id}`), GAMEPLAY_CONFIG);
+        const question = generator.next({ phase: 'action', difficultyStage: 1, targetCount: 4,
+            questionTimeMs: 2_600, speed: 1, template, rules: ['standard'] });
+        assert.equal(question.templateId, id);
+        assert.equal(question.factIds.length, 1);
+        assert.match(question.factIds[0], factIdPattern);
+        assert.deepEqual(validateQuestion(question, evaluateRules(question)), []);
+    }
 });
 
 test('save v7 starts a clean final-score brawl season without resetting other progress', () => {
