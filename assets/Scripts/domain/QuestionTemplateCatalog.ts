@@ -3,7 +3,7 @@ import type { GameplayEngineId, RuleId, ThemeId } from './Models';
 export type QuestionTemplateId =
     | 'math-add' | 'math-subtract' | 'math-multiply' | 'math-property'
     | 'math-compare' | 'math-sequence' | 'math-missing' | 'math-equation'
-    | 'math-divide' | 'math-mixed' | 'math-rounding' | 'math-fraction-compare'
+    | 'math-divide' | 'math-mixed' | 'math-operator' | 'math-digit-reverse' | 'math-remainder' | 'math-fraction-compare'
     | 'vision-direction' | 'vision-odd' | 'vision-count' | 'vision-stroop' | 'vision-pattern' | 'vision-match'
     | 'vision-mirror' | 'vision-symmetry' | 'vision-grid-position' | 'vision-rotation'
     | 'hanzi-fill' | 'hanzi-order' | 'hanzi-antonym' | 'hanzi-synonym' | 'hanzi-pinyin' | 'hanzi-poetry'
@@ -47,8 +47,7 @@ const SEQUENCE_RULES: readonly (readonly RuleId[])[] = [['standard'], ['reverse'
 const ORDER_RULES: readonly (readonly RuleId[])[] = [['order'], ['bomb', 'order']];
 const STROOP_RULES: readonly (readonly RuleId[])[] = [['standard'], ['bomb']];
 const ROTATION_SAFE_TEMPLATE_IDS = new Set<QuestionTemplateId>([
-    'math-add', 'math-subtract', 'math-multiply', 'math-property', 'math-compare',
-    'math-sequence', 'math-missing', 'math-divide', 'math-mixed',
+    'math-property', 'math-compare', 'math-sequence',
     'vision-odd', 'vision-match', 'vision-symmetry',
     'hanzi-fill', 'hanzi-order', 'hanzi-radical', 'hanzi-homophone', 'hanzi-compose',
     'english-first-letter', 'english-length', 'english-missing-letter',
@@ -80,7 +79,9 @@ export const QUESTION_TEMPLATES: readonly QuestionTemplate[] = [
     define('math-equation', 'math', 'single', ['single', 'numeric'], 'algorithmic', ['equation']),
     define('math-divide', 'math', 'single', ['single', 'numeric'], 'algorithmic', ['arithmetic', 'division']),
     define('math-mixed', 'math', 'single', ['single', 'numeric'], 'algorithmic', ['arithmetic', 'mixed-operation']),
-    define('math-rounding', 'math', 'single', ['single', 'numeric'], 'algorithmic', ['arithmetic', 'rounding']),
+    define('math-operator', 'math', 'fill', ['single', 'short-text'], 'algorithmic', ['arithmetic', 'operator']),
+    define('math-digit-reverse', 'math', 'single', ['single', 'numeric'], 'algorithmic', ['digit-reverse']),
+    define('math-remainder', 'math', 'single', ['single', 'numeric'], 'algorithmic', ['arithmetic', 'remainder']),
     define('math-fraction-compare', 'math', 'compare', ['single', 'numeric'], 'algorithmic', ['fraction', 'compare']),
     define('vision-direction', 'vision', 'single', ['single'], 'algorithmic', ['direction'], CHOICE_RULES, 6, true),
     define('vision-odd', 'vision', 'odd-one-out', ['single'], 'algorithmic', ['odd-one-out'], CHOICE_RULES, 6),

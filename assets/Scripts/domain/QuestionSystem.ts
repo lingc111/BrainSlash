@@ -40,6 +40,7 @@ export class QuestionCompiler {
     private readonly bags = new Map<string, QuestionTemplate[]>();
     private readonly recentTemplateIds: string[] = [];
     private arithmeticQuestionsSinceDivision = 0;
+    private arithmeticQuestionsSinceMixed = 0;
 
     public constructor(private readonly rng: SeededRng, config: GameplayConfig, entry: GameEntryParams, options: QuestionCompilerEngineOptions = {}) {
         this.engine = new QuestionCompilerEngine(rng.fork('instances'), config, compilerOptionsForEntry(entry, options));
@@ -49,18 +50,28 @@ export class QuestionCompiler {
         const candidates = templatesForRequest(request);
         if (!candidates.length) throw new Error(`No template satisfies ${JSON.stringify(request)}`);
         const key = candidates.map((item) => item.id).sort().join('|');
+        const weightedCandidates = candidates.flatMap((item) => item.id === 'math-mixed' ? [item, item, item] : [item]);
         let bag = this.bags.get(key);
-        if (!bag?.some((item) => candidates.includes(item))) { bag = this.rng.shuffle(candidates); this.bags.set(key, bag); }
+        if (!bag?.some((item) => candidates.includes(item))) { bag = this.rng.shuffle(weightedCandidates); this.bags.set(key, bag); }
         const division = candidates.find((template) => template.id === 'math-divide');
+        const mixed = candidates.find((template) => template.id === 'math-mixed');
         let index = -1;
         // A short run should still expose division. Do not rely on a six-item
         // arithmetic shuffle finishing before the player leaves the run.
-        if (division && this.arithmeticQuestionsSinceDivision >= 2) {
+        if (division && this.arithmeticQuestionsSinceDivision >= 4) {
             index = bag.findIndex((template) => template.id === division.id);
             if (index < 0) {
-                bag = this.rng.shuffle(candidates);
+                bag = this.rng.shuffle(weightedCandidates);
                 this.bags.set(key, bag);
                 index = bag.findIndex((template) => template.id === division.id);
+            }
+        }
+        if (index < 0 && mixed && this.arithmeticQuestionsSinceMixed >= 2) {
+            index = bag.findIndex((template) => template.id === mixed.id);
+            if (index < 0) {
+                bag = this.rng.shuffle(weightedCandidates);
+                this.bags.set(key, bag);
+                index = bag.findIndex((template) => template.id === mixed.id);
             }
         }
         if (index < 0) {
@@ -71,6 +82,8 @@ export class QuestionCompiler {
         if (!bag.length) this.bags.delete(key);
         if (template.id === 'math-divide') this.arithmeticQuestionsSinceDivision = 0;
         else if (template.tags.includes('arithmetic')) this.arithmeticQuestionsSinceDivision += 1;
+        if (template.id === 'math-mixed') this.arithmeticQuestionsSinceMixed = 0;
+        else if (template.tags.includes('arithmetic')) this.arithmeticQuestionsSinceMixed += 1;
         this.recentTemplateIds.push(template.id);
         if (this.recentTemplateIds.length > Math.min(8, Math.max(2, candidates.length - 1))) this.recentTemplateIds.shift();
         const directive: QuestionCompileDirective = {

@@ -1,6 +1,6 @@
 {
   "schemaVersion": 2,
-  "contentVersion": "2.2.0-content-density",
+  "contentVersion": "2.3.2-math-variety",
   "bundleKind": "fallback",
   "templates": [
     {
@@ -39,7 +39,7 @@
       ],
       "targetCap": 4,
       "directionSensitive": false,
-      "rotationSafe": true,
+      "rotationSafe": false,
       "enabled": true
     },
     {
@@ -78,7 +78,7 @@
       ],
       "targetCap": 4,
       "directionSensitive": false,
-      "rotationSafe": true,
+      "rotationSafe": false,
       "enabled": true
     },
     {
@@ -117,7 +117,7 @@
       ],
       "targetCap": 4,
       "directionSensitive": false,
-      "rotationSafe": true,
+      "rotationSafe": false,
       "enabled": true
     },
     {
@@ -283,7 +283,7 @@
       ],
       "targetCap": 4,
       "directionSensitive": false,
-      "rotationSafe": true,
+      "rotationSafe": false,
       "enabled": true
     },
     {
@@ -362,7 +362,7 @@
       ],
       "targetCap": 4,
       "directionSensitive": false,
-      "rotationSafe": true,
+      "rotationSafe": false,
       "enabled": true
     },
     {
@@ -402,11 +402,90 @@
       ],
       "targetCap": 4,
       "directionSensitive": false,
-      "rotationSafe": true,
+      "rotationSafe": false,
       "enabled": true
     },
     {
-      "id": "math-rounding",
+      "id": "math-operator",
+      "theme": "math",
+      "engine": "fill",
+      "capabilities": [
+        "single",
+        "short-text"
+      ],
+      "sourceKind": "algorithmic",
+      "tags": [
+        "arithmetic",
+        "operator"
+      ],
+      "difficultyBands": [
+        1,
+        2,
+        3,
+        4,
+        5
+      ],
+      "supportedRuleSets": [
+        [
+          "standard"
+        ],
+        [
+          "reverse"
+        ],
+        [
+          "bomb"
+        ],
+        [
+          "bomb",
+          "reverse"
+        ]
+      ],
+      "targetCap": 4,
+      "directionSensitive": false,
+      "rotationSafe": false,
+      "enabled": true
+    },
+    {
+      "id": "math-digit-reverse",
+      "theme": "math",
+      "engine": "single",
+      "capabilities": [
+        "single",
+        "numeric"
+      ],
+      "sourceKind": "algorithmic",
+      "tags": [
+        "digit-reverse"
+      ],
+      "difficultyBands": [
+        1,
+        2,
+        3,
+        4,
+        5
+      ],
+      "supportedRuleSets": [
+        [
+          "standard"
+        ],
+        [
+          "reverse"
+        ],
+        [
+          "bomb"
+        ],
+        [
+          "bomb",
+          "reverse"
+        ]
+      ],
+      "targetCap": 4,
+      "directionSensitive": false,
+      "rotationSafe": false,
+      "enabled": true
+    },
+    {
+      "id": "math-remainder",
       "theme": "math",
       "engine": "single",
       "capabilities": [
@@ -416,7 +495,7 @@
       "sourceKind": "algorithmic",
       "tags": [
         "arithmetic",
-        "rounding"
+        "remainder"
       ],
       "difficultyBands": [
         1,
@@ -10395,6 +10474,8494 @@
       "reviewStatus": "reviewed",
       "reviewedAt": "2026-09-01",
       "enabled": true
+    }
+  ],
+  "questions": [
+    {
+      "id": "mvp.math.0001",
+      "theme": "math",
+      "templateId": "math-add",
+      "difficulty": 1,
+      "prompt": "100+120=?",
+      "answer": 220,
+      "wrong": [
+        210,
+        219,
+        221,
+        230
+      ],
+      "verified": true
+    },
+    {
+      "id": "mvp.math.0002",
+      "theme": "math",
+      "templateId": "math-add",
+      "difficulty": 1,
+      "prompt": "100+126=?",
+      "answer": 226,
+      "wrong": [
+        216,
+        225,
+        227,
+        236
+      ],
+      "verified": true
+    },
+    {
+      "id": "mvp.math.0003",
+      "theme": "math",
+      "templateId": "math-add",
+      "difficulty": 1,
+      "prompt": "100+133=?",
+      "answer": 233,
+      "wrong": [
+        223,
+        232,
+        234,
+        243
+      ],
+      "verified": true
+    },
+    {
+      "id": "mvp.math.0004",
+      "theme": "math",
+      "templateId": "math-add",
+      "difficulty": 1,
+      "prompt": "101+120=?",
+      "answer": 221,
+      "wrong": [
+        211,
+        220,
+        222,
+        231
+      ],
+      "verified": true
+    },
+    {
+      "id": "mvp.math.0005",
+      "theme": "math",
+      "templateId": "math-add",
+      "difficulty": 1,
+      "prompt": "101+126=?",
+      "answer": 227,
+      "wrong": [
+        217,
+        226,
+        228,
+        237
+      ],
+      "verified": true
+    },
+    {
+      "id": "mvp.math.0006",
+      "theme": "math",
+      "templateId": "math-add",
+      "difficulty": 1,
+      "prompt": "101+133=?",
+      "answer": 234,
+      "wrong": [
+        224,
+        233,
+        235,
+        244
+      ],
+      "verified": true
+    },
+    {
+      "id": "mvp.math.0007",
+      "theme": "math",
+      "templateId": "math-add",
+      "difficulty": 1,
+      "prompt": "102+120=?",
+      "answer": 222,
+      "wrong": [
+        212,
+        221,
+        223,
+        232
+      ],
+      "verified": true
+    },
+    {
+      "id": "mvp.math.0008",
+      "theme": "math",
+      "templateId": "math-add",
+      "difficulty": 1,
+      "prompt": "102+126=?",
+      "answer": 228,
+      "wrong": [
+        218,
+        227,
+        229,
+        238
+      ],
+      "verified": true
+    },
+    {
+      "id": "mvp.math.0009",
+      "theme": "math",
+      "templateId": "math-add",
+      "difficulty": 1,
+      "prompt": "102+133=?",
+      "answer": 235,
+      "wrong": [
+        225,
+        234,
+        236,
+        245
+      ],
+      "verified": true
+    },
+    {
+      "id": "mvp.math.0010",
+      "theme": "math",
+      "templateId": "math-add",
+      "difficulty": 1,
+      "prompt": "103+120=?",
+      "answer": 223,
+      "wrong": [
+        213,
+        222,
+        224,
+        233
+      ],
+      "verified": true
+    },
+    {
+      "id": "mvp.math.0011",
+      "theme": "math",
+      "templateId": "math-add",
+      "difficulty": 1,
+      "prompt": "103+126=?",
+      "answer": 229,
+      "wrong": [
+        219,
+        228,
+        230,
+        239
+      ],
+      "verified": true
+    },
+    {
+      "id": "mvp.math.0012",
+      "theme": "math",
+      "templateId": "math-add",
+      "difficulty": 1,
+      "prompt": "103+133=?",
+      "answer": 236,
+      "wrong": [
+        226,
+        235,
+        237,
+        246
+      ],
+      "verified": true
+    },
+    {
+      "id": "mvp.math.0061",
+      "theme": "math",
+      "templateId": "math-subtract",
+      "difficulty": 1,
+      "prompt": "320-118=?",
+      "answer": 202,
+      "wrong": [
+        192,
+        201,
+        203,
+        212
+      ],
+      "verified": true
+    },
+    {
+      "id": "mvp.math.0062",
+      "theme": "math",
+      "templateId": "math-subtract",
+      "difficulty": 1,
+      "prompt": "320-124=?",
+      "answer": 196,
+      "wrong": [
+        186,
+        195,
+        197,
+        206
+      ],
+      "verified": true
+    },
+    {
+      "id": "mvp.math.0063",
+      "theme": "math",
+      "templateId": "math-subtract",
+      "difficulty": 1,
+      "prompt": "320-131=?",
+      "answer": 189,
+      "wrong": [
+        179,
+        188,
+        190,
+        199
+      ],
+      "verified": true
+    },
+    {
+      "id": "mvp.math.0064",
+      "theme": "math",
+      "templateId": "math-subtract",
+      "difficulty": 1,
+      "prompt": "321-118=?",
+      "answer": 203,
+      "wrong": [
+        193,
+        202,
+        204,
+        213
+      ],
+      "verified": true
+    },
+    {
+      "id": "mvp.math.0065",
+      "theme": "math",
+      "templateId": "math-subtract",
+      "difficulty": 1,
+      "prompt": "321-124=?",
+      "answer": 197,
+      "wrong": [
+        187,
+        196,
+        198,
+        207
+      ],
+      "verified": true
+    },
+    {
+      "id": "mvp.math.0066",
+      "theme": "math",
+      "templateId": "math-subtract",
+      "difficulty": 1,
+      "prompt": "321-131=?",
+      "answer": 190,
+      "wrong": [
+        180,
+        189,
+        191,
+        200
+      ],
+      "verified": true
+    },
+    {
+      "id": "mvp.math.0067",
+      "theme": "math",
+      "templateId": "math-subtract",
+      "difficulty": 1,
+      "prompt": "322-118=?",
+      "answer": 204,
+      "wrong": [
+        194,
+        203,
+        205,
+        214
+      ],
+      "verified": true
+    },
+    {
+      "id": "mvp.math.0068",
+      "theme": "math",
+      "templateId": "math-subtract",
+      "difficulty": 1,
+      "prompt": "322-124=?",
+      "answer": 198,
+      "wrong": [
+        188,
+        197,
+        199,
+        208
+      ],
+      "verified": true
+    },
+    {
+      "id": "mvp.math.0069",
+      "theme": "math",
+      "templateId": "math-subtract",
+      "difficulty": 1,
+      "prompt": "322-131=?",
+      "answer": 191,
+      "wrong": [
+        181,
+        190,
+        192,
+        201
+      ],
+      "verified": true
+    },
+    {
+      "id": "mvp.math.0070",
+      "theme": "math",
+      "templateId": "math-subtract",
+      "difficulty": 1,
+      "prompt": "323-118=?",
+      "answer": 205,
+      "wrong": [
+        195,
+        204,
+        206,
+        215
+      ],
+      "verified": true
+    },
+    {
+      "id": "mvp.math.0071",
+      "theme": "math",
+      "templateId": "math-subtract",
+      "difficulty": 1,
+      "prompt": "323-124=?",
+      "answer": 199,
+      "wrong": [
+        189,
+        198,
+        200,
+        209
+      ],
+      "verified": true
+    },
+    {
+      "id": "mvp.math.0072",
+      "theme": "math",
+      "templateId": "math-subtract",
+      "difficulty": 1,
+      "prompt": "323-131=?",
+      "answer": 192,
+      "wrong": [
+        182,
+        191,
+        193,
+        202
+      ],
+      "verified": true
+    },
+    {
+      "id": "mvp.math.0121",
+      "theme": "math",
+      "templateId": "math-multiply",
+      "difficulty": 1,
+      "prompt": "10×10=?",
+      "answer": 100,
+      "wrong": [
+        90,
+        99,
+        101,
+        110
+      ],
+      "verified": true
+    },
+    {
+      "id": "mvp.math.0122",
+      "theme": "math",
+      "templateId": "math-multiply",
+      "difficulty": 1,
+      "prompt": "10×13=?",
+      "answer": 130,
+      "wrong": [
+        120,
+        129,
+        131,
+        140
+      ],
+      "verified": true
+    },
+    {
+      "id": "mvp.math.0123",
+      "theme": "math",
+      "templateId": "math-multiply",
+      "difficulty": 1,
+      "prompt": "10×16=?",
+      "answer": 160,
+      "wrong": [
+        150,
+        159,
+        161,
+        170
+      ],
+      "verified": true
+    },
+    {
+      "id": "mvp.math.0124",
+      "theme": "math",
+      "templateId": "math-multiply",
+      "difficulty": 1,
+      "prompt": "10×19=?",
+      "answer": 190,
+      "wrong": [
+        180,
+        189,
+        191,
+        200
+      ],
+      "verified": true
+    },
+    {
+      "id": "mvp.math.0125",
+      "theme": "math",
+      "templateId": "math-multiply",
+      "difficulty": 1,
+      "prompt": "10×23=?",
+      "answer": 230,
+      "wrong": [
+        220,
+        229,
+        231,
+        240
+      ],
+      "verified": true
+    },
+    {
+      "id": "mvp.math.0126",
+      "theme": "math",
+      "templateId": "math-multiply",
+      "difficulty": 1,
+      "prompt": "11×12=?",
+      "answer": 132,
+      "wrong": [
+        121,
+        131,
+        133,
+        143,
+        142
+      ],
+      "verified": true
+    },
+    {
+      "id": "mvp.math.0127",
+      "theme": "math",
+      "templateId": "math-multiply",
+      "difficulty": 1,
+      "prompt": "11×15=?",
+      "answer": 165,
+      "wrong": [
+        154,
+        164,
+        166,
+        176,
+        175
+      ],
+      "verified": true
+    },
+    {
+      "id": "mvp.math.0128",
+      "theme": "math",
+      "templateId": "math-multiply",
+      "difficulty": 1,
+      "prompt": "11×18=?",
+      "answer": 198,
+      "wrong": [
+        187,
+        197,
+        199,
+        209,
+        208
+      ],
+      "verified": true
+    },
+    {
+      "id": "mvp.math.0129",
+      "theme": "math",
+      "templateId": "math-multiply",
+      "difficulty": 1,
+      "prompt": "11×22=?",
+      "answer": 242,
+      "wrong": [
+        231,
+        241,
+        243,
+        253,
+        252
+      ],
+      "verified": true
+    },
+    {
+      "id": "mvp.math.0130",
+      "theme": "math",
+      "templateId": "math-multiply",
+      "difficulty": 1,
+      "prompt": "12×11=?",
+      "answer": 132,
+      "wrong": [
+        120,
+        131,
+        133,
+        144,
+        142
+      ],
+      "verified": true
+    },
+    {
+      "id": "mvp.math.0131",
+      "theme": "math",
+      "templateId": "math-multiply",
+      "difficulty": 1,
+      "prompt": "12×14=?",
+      "answer": 168,
+      "wrong": [
+        156,
+        167,
+        169,
+        180,
+        178
+      ],
+      "verified": true
+    },
+    {
+      "id": "mvp.math.0132",
+      "theme": "math",
+      "templateId": "math-multiply",
+      "difficulty": 1,
+      "prompt": "12×17=?",
+      "answer": 204,
+      "wrong": [
+        192,
+        203,
+        205,
+        216,
+        214
+      ],
+      "verified": true
+    },
+    {
+      "id": "mvp.math.0181",
+      "theme": "math",
+      "templateId": "math-divide",
+      "difficulty": 1,
+      "prompt": "100÷10=?",
+      "answer": 10,
+      "wrong": [
+        8,
+        9,
+        11,
+        12,
+        20
+      ],
+      "verified": true
+    },
+    {
+      "id": "mvp.math.0182",
+      "theme": "math",
+      "templateId": "math-divide",
+      "difficulty": 1,
+      "prompt": "130÷10=?",
+      "answer": 13,
+      "wrong": [
+        11,
+        12,
+        14,
+        15,
+        23
+      ],
+      "verified": true
+    },
+    {
+      "id": "mvp.math.0183",
+      "theme": "math",
+      "templateId": "math-divide",
+      "difficulty": 1,
+      "prompt": "160÷10=?",
+      "answer": 16,
+      "wrong": [
+        14,
+        15,
+        17,
+        18,
+        26
+      ],
+      "verified": true
+    },
+    {
+      "id": "mvp.math.0184",
+      "theme": "math",
+      "templateId": "math-divide",
+      "difficulty": 1,
+      "prompt": "190÷10=?",
+      "answer": 19,
+      "wrong": [
+        17,
+        18,
+        20,
+        21,
+        29
+      ],
+      "verified": true
+    },
+    {
+      "id": "mvp.math.0185",
+      "theme": "math",
+      "templateId": "math-divide",
+      "difficulty": 1,
+      "prompt": "230÷10=?",
+      "answer": 23,
+      "wrong": [
+        21,
+        22,
+        24,
+        25,
+        33
+      ],
+      "verified": true
+    },
+    {
+      "id": "mvp.math.0186",
+      "theme": "math",
+      "templateId": "math-divide",
+      "difficulty": 1,
+      "prompt": "132÷11=?",
+      "answer": 12,
+      "wrong": [
+        10,
+        11,
+        13,
+        14,
+        22
+      ],
+      "verified": true
+    },
+    {
+      "id": "mvp.math.0187",
+      "theme": "math",
+      "templateId": "math-divide",
+      "difficulty": 1,
+      "prompt": "165÷11=?",
+      "answer": 15,
+      "wrong": [
+        13,
+        14,
+        16,
+        17,
+        25
+      ],
+      "verified": true
+    },
+    {
+      "id": "mvp.math.0188",
+      "theme": "math",
+      "templateId": "math-divide",
+      "difficulty": 1,
+      "prompt": "198÷11=?",
+      "answer": 18,
+      "wrong": [
+        16,
+        17,
+        19,
+        20,
+        28
+      ],
+      "verified": true
+    },
+    {
+      "id": "mvp.math.0189",
+      "theme": "math",
+      "templateId": "math-divide",
+      "difficulty": 1,
+      "prompt": "242÷11=?",
+      "answer": 22,
+      "wrong": [
+        20,
+        21,
+        23,
+        24,
+        32
+      ],
+      "verified": true
+    },
+    {
+      "id": "mvp.math.0190",
+      "theme": "math",
+      "templateId": "math-divide",
+      "difficulty": 1,
+      "prompt": "132÷12=?",
+      "answer": 11,
+      "wrong": [
+        9,
+        10,
+        12,
+        13,
+        21
+      ],
+      "verified": true
+    },
+    {
+      "id": "mvp.math.0191",
+      "theme": "math",
+      "templateId": "math-divide",
+      "difficulty": 1,
+      "prompt": "168÷12=?",
+      "answer": 14,
+      "wrong": [
+        12,
+        13,
+        15,
+        16,
+        24
+      ],
+      "verified": true
+    },
+    {
+      "id": "mvp.math.0192",
+      "theme": "math",
+      "templateId": "math-divide",
+      "difficulty": 1,
+      "prompt": "204÷12=?",
+      "answer": 17,
+      "wrong": [
+        15,
+        16,
+        18,
+        19,
+        27
+      ],
+      "verified": true
+    },
+    {
+      "id": "mvp.math.0241",
+      "theme": "math",
+      "templateId": "math-mixed",
+      "difficulty": 1,
+      "prompt": "10×10-30=?",
+      "answer": 70,
+      "wrong": [
+        60,
+        69,
+        71,
+        80
+      ],
+      "verified": true
+    },
+    {
+      "id": "mvp.math.0242",
+      "theme": "math",
+      "templateId": "math-mixed",
+      "difficulty": 1,
+      "prompt": "10×11+34=?",
+      "answer": 144,
+      "wrong": [
+        134,
+        143,
+        145,
+        154
+      ],
+      "verified": true
+    },
+    {
+      "id": "mvp.math.0243",
+      "theme": "math",
+      "templateId": "math-mixed",
+      "difficulty": 1,
+      "prompt": "10×12-38=?",
+      "answer": 82,
+      "wrong": [
+        72,
+        81,
+        83,
+        92
+      ],
+      "verified": true
+    },
+    {
+      "id": "mvp.math.0244",
+      "theme": "math",
+      "templateId": "math-mixed",
+      "difficulty": 1,
+      "prompt": "10×14-32=?",
+      "answer": 108,
+      "wrong": [
+        98,
+        107,
+        109,
+        118
+      ],
+      "verified": true
+    },
+    {
+      "id": "mvp.math.0245",
+      "theme": "math",
+      "templateId": "math-mixed",
+      "difficulty": 1,
+      "prompt": "10×15+36=?",
+      "answer": 186,
+      "wrong": [
+        176,
+        185,
+        187,
+        196
+      ],
+      "verified": true
+    },
+    {
+      "id": "mvp.math.0246",
+      "theme": "math",
+      "templateId": "math-mixed",
+      "difficulty": 1,
+      "prompt": "10×17+30=?",
+      "answer": 200,
+      "wrong": [
+        190,
+        199,
+        201,
+        210
+      ],
+      "verified": true
+    },
+    {
+      "id": "mvp.math.0247",
+      "theme": "math",
+      "templateId": "math-mixed",
+      "difficulty": 1,
+      "prompt": "10×18-34=?",
+      "answer": 146,
+      "wrong": [
+        136,
+        145,
+        147,
+        156
+      ],
+      "verified": true
+    },
+    {
+      "id": "mvp.math.0248",
+      "theme": "math",
+      "templateId": "math-mixed",
+      "difficulty": 1,
+      "prompt": "10×19+38=?",
+      "answer": 228,
+      "wrong": [
+        218,
+        227,
+        229,
+        238
+      ],
+      "verified": true
+    },
+    {
+      "id": "mvp.math.0249",
+      "theme": "math",
+      "templateId": "math-mixed",
+      "difficulty": 1,
+      "prompt": "10×21+32=?",
+      "answer": 242,
+      "wrong": [
+        232,
+        241,
+        243,
+        252
+      ],
+      "verified": true
+    },
+    {
+      "id": "mvp.math.0250",
+      "theme": "math",
+      "templateId": "math-mixed",
+      "difficulty": 1,
+      "prompt": "10×22-36=?",
+      "answer": 184,
+      "wrong": [
+        174,
+        183,
+        185,
+        194
+      ],
+      "verified": true
+    },
+    {
+      "id": "mvp.math.0251",
+      "theme": "math",
+      "templateId": "math-mixed",
+      "difficulty": 1,
+      "prompt": "11×10+30=?",
+      "answer": 140,
+      "wrong": [
+        129,
+        139,
+        141,
+        151,
+        150
+      ],
+      "verified": true
+    },
+    {
+      "id": "mvp.math.0252",
+      "theme": "math",
+      "templateId": "math-mixed",
+      "difficulty": 1,
+      "prompt": "11×11-34=?",
+      "answer": 87,
+      "wrong": [
+        76,
+        86,
+        88,
+        98,
+        97
+      ],
+      "verified": true
+    },
+    {
+      "id": "mvp.math.0381",
+      "theme": "math",
+      "templateId": "math-operator",
+      "difficulty": 1,
+      "prompt": "100( )100=200",
+      "answer": "+",
+      "wrong": [
+        "-",
+        "×",
+        "÷"
+      ],
+      "verified": true
+    },
+    {
+      "id": "mvp.math.0382",
+      "theme": "math",
+      "templateId": "math-operator",
+      "difficulty": 1,
+      "prompt": "202( )101=101",
+      "answer": "-",
+      "wrong": [
+        "+",
+        "×",
+        "÷"
+      ],
+      "verified": true
+    },
+    {
+      "id": "mvp.math.0383",
+      "theme": "math",
+      "templateId": "math-operator",
+      "difficulty": 1,
+      "prompt": "102( )12=1224",
+      "answer": "×",
+      "wrong": [
+        "+",
+        "-",
+        "÷"
+      ],
+      "verified": true
+    },
+    {
+      "id": "mvp.math.0384",
+      "theme": "math",
+      "templateId": "math-operator",
+      "difficulty": 1,
+      "prompt": "1339( )13=103",
+      "answer": "÷",
+      "wrong": [
+        "+",
+        "-",
+        "×"
+      ],
+      "verified": true
+    },
+    {
+      "id": "mvp.math.0385",
+      "theme": "math",
+      "templateId": "math-operator",
+      "difficulty": 1,
+      "prompt": "104( )104=208",
+      "answer": "+",
+      "wrong": [
+        "-",
+        "×",
+        "÷"
+      ],
+      "verified": true
+    },
+    {
+      "id": "mvp.math.0386",
+      "theme": "math",
+      "templateId": "math-operator",
+      "difficulty": 1,
+      "prompt": "210( )105=105",
+      "answer": "-",
+      "wrong": [
+        "+",
+        "×",
+        "÷"
+      ],
+      "verified": true
+    },
+    {
+      "id": "mvp.math.0387",
+      "theme": "math",
+      "templateId": "math-operator",
+      "difficulty": 1,
+      "prompt": "106( )16=1696",
+      "answer": "×",
+      "wrong": [
+        "+",
+        "-",
+        "÷"
+      ],
+      "verified": true
+    },
+    {
+      "id": "mvp.math.0388",
+      "theme": "math",
+      "templateId": "math-operator",
+      "difficulty": 1,
+      "prompt": "1819( )17=107",
+      "answer": "÷",
+      "wrong": [
+        "+",
+        "-",
+        "×"
+      ],
+      "verified": true
+    },
+    {
+      "id": "mvp.math.0389",
+      "theme": "math",
+      "templateId": "math-operator",
+      "difficulty": 1,
+      "prompt": "108( )108=216",
+      "answer": "+",
+      "wrong": [
+        "-",
+        "×",
+        "÷"
+      ],
+      "verified": true
+    },
+    {
+      "id": "mvp.math.0390",
+      "theme": "math",
+      "templateId": "math-operator",
+      "difficulty": 1,
+      "prompt": "218( )109=109",
+      "answer": "-",
+      "wrong": [
+        "+",
+        "×",
+        "÷"
+      ],
+      "verified": true
+    },
+    {
+      "id": "mvp.math.0391",
+      "theme": "math",
+      "templateId": "math-operator",
+      "difficulty": 1,
+      "prompt": "110( )20=2200",
+      "answer": "×",
+      "wrong": [
+        "+",
+        "-",
+        "÷"
+      ],
+      "verified": true
+    },
+    {
+      "id": "mvp.math.0392",
+      "theme": "math",
+      "templateId": "math-operator",
+      "difficulty": 1,
+      "prompt": "2331( )21=111",
+      "answer": "÷",
+      "wrong": [
+        "+",
+        "-",
+        "×"
+      ],
+      "verified": true
+    },
+    {
+      "id": "mvp.math.0441",
+      "theme": "math",
+      "templateId": "math-digit-reverse",
+      "difficulty": 1,
+      "prompt": "12345反转后",
+      "answer": "54321",
+      "wrong": [
+        "45321",
+        "53421",
+        "54231",
+        "54312"
+      ],
+      "verified": true
+    },
+    {
+      "id": "mvp.math.0442",
+      "theme": "math",
+      "templateId": "math-digit-reverse",
+      "difficulty": 1,
+      "prompt": "12346反转后",
+      "answer": "64321",
+      "wrong": [
+        "46321",
+        "63421",
+        "64231",
+        "64312"
+      ],
+      "verified": true
+    },
+    {
+      "id": "mvp.math.0443",
+      "theme": "math",
+      "templateId": "math-digit-reverse",
+      "difficulty": 1,
+      "prompt": "12347反转后",
+      "answer": "74321",
+      "wrong": [
+        "47321",
+        "73421",
+        "74231",
+        "74312"
+      ],
+      "verified": true
+    },
+    {
+      "id": "mvp.math.0444",
+      "theme": "math",
+      "templateId": "math-digit-reverse",
+      "difficulty": 1,
+      "prompt": "12348反转后",
+      "answer": "84321",
+      "wrong": [
+        "48321",
+        "83421",
+        "84231",
+        "84312"
+      ],
+      "verified": true
+    },
+    {
+      "id": "mvp.math.0445",
+      "theme": "math",
+      "templateId": "math-digit-reverse",
+      "difficulty": 1,
+      "prompt": "12349反转后",
+      "answer": "94321",
+      "wrong": [
+        "49321",
+        "93421",
+        "94231",
+        "94312"
+      ],
+      "verified": true
+    },
+    {
+      "id": "mvp.math.0446",
+      "theme": "math",
+      "templateId": "math-digit-reverse",
+      "difficulty": 1,
+      "prompt": "12354反转后",
+      "answer": "45321",
+      "wrong": [
+        "54321",
+        "43521",
+        "45231",
+        "45312"
+      ],
+      "verified": true
+    },
+    {
+      "id": "mvp.math.0447",
+      "theme": "math",
+      "templateId": "math-digit-reverse",
+      "difficulty": 1,
+      "prompt": "12356反转后",
+      "answer": "65321",
+      "wrong": [
+        "56321",
+        "63521",
+        "65231",
+        "65312"
+      ],
+      "verified": true
+    },
+    {
+      "id": "mvp.math.0448",
+      "theme": "math",
+      "templateId": "math-digit-reverse",
+      "difficulty": 1,
+      "prompt": "12357反转后",
+      "answer": "75321",
+      "wrong": [
+        "57321",
+        "73521",
+        "75231",
+        "75312"
+      ],
+      "verified": true
+    },
+    {
+      "id": "mvp.math.0449",
+      "theme": "math",
+      "templateId": "math-digit-reverse",
+      "difficulty": 1,
+      "prompt": "12358反转后",
+      "answer": "85321",
+      "wrong": [
+        "58321",
+        "83521",
+        "85231",
+        "85312"
+      ],
+      "verified": true
+    },
+    {
+      "id": "mvp.math.0450",
+      "theme": "math",
+      "templateId": "math-digit-reverse",
+      "difficulty": 1,
+      "prompt": "12359反转后",
+      "answer": "95321",
+      "wrong": [
+        "59321",
+        "93521",
+        "95231",
+        "95312"
+      ],
+      "verified": true
+    },
+    {
+      "id": "mvp.math.0451",
+      "theme": "math",
+      "templateId": "math-digit-reverse",
+      "difficulty": 1,
+      "prompt": "12364反转后",
+      "answer": "46321",
+      "wrong": [
+        "64321",
+        "43621",
+        "46231",
+        "46312"
+      ],
+      "verified": true
+    },
+    {
+      "id": "mvp.math.0452",
+      "theme": "math",
+      "templateId": "math-digit-reverse",
+      "difficulty": 1,
+      "prompt": "12365反转后",
+      "answer": "56321",
+      "wrong": [
+        "65321",
+        "53621",
+        "56231",
+        "56312"
+      ],
+      "verified": true
+    },
+    {
+      "id": "mvp.math.0501",
+      "theme": "math",
+      "templateId": "math-remainder",
+      "difficulty": 1,
+      "prompt": "101÷10的余数",
+      "answer": 1,
+      "wrong": [
+        0,
+        2,
+        9
+      ],
+      "verified": true
+    },
+    {
+      "id": "mvp.math.0502",
+      "theme": "math",
+      "templateId": "math-remainder",
+      "difficulty": 1,
+      "prompt": "127÷11的余数",
+      "answer": 6,
+      "wrong": [
+        0,
+        5,
+        7,
+        10
+      ],
+      "verified": true
+    },
+    {
+      "id": "mvp.math.0503",
+      "theme": "math",
+      "templateId": "math-remainder",
+      "difficulty": 1,
+      "prompt": "155÷12的余数",
+      "answer": 11,
+      "wrong": [
+        0,
+        10,
+        12,
+        1
+      ],
+      "verified": true
+    },
+    {
+      "id": "mvp.math.0504",
+      "theme": "math",
+      "templateId": "math-remainder",
+      "difficulty": 1,
+      "prompt": "173÷13的余数",
+      "answer": 4,
+      "wrong": [
+        0,
+        3,
+        5,
+        9,
+        12
+      ],
+      "verified": true
+    },
+    {
+      "id": "mvp.math.0505",
+      "theme": "math",
+      "templateId": "math-remainder",
+      "difficulty": 1,
+      "prompt": "204÷14的余数",
+      "answer": 8,
+      "wrong": [
+        0,
+        7,
+        9,
+        6,
+        13
+      ],
+      "verified": true
+    },
+    {
+      "id": "mvp.math.0506",
+      "theme": "math",
+      "templateId": "math-remainder",
+      "difficulty": 1,
+      "prompt": "237÷15的余数",
+      "answer": 12,
+      "wrong": [
+        0,
+        11,
+        13,
+        3,
+        14
+      ],
+      "verified": true
+    },
+    {
+      "id": "mvp.math.0507",
+      "theme": "math",
+      "templateId": "math-remainder",
+      "difficulty": 1,
+      "prompt": "257÷16的余数",
+      "answer": 1,
+      "wrong": [
+        0,
+        2,
+        15
+      ],
+      "verified": true
+    },
+    {
+      "id": "mvp.math.0508",
+      "theme": "math",
+      "templateId": "math-remainder",
+      "difficulty": 1,
+      "prompt": "293÷17的余数",
+      "answer": 4,
+      "wrong": [
+        0,
+        3,
+        5,
+        13,
+        16
+      ],
+      "verified": true
+    },
+    {
+      "id": "mvp.math.0509",
+      "theme": "math",
+      "templateId": "math-remainder",
+      "difficulty": 1,
+      "prompt": "331÷18的余数",
+      "answer": 7,
+      "wrong": [
+        0,
+        6,
+        8,
+        11,
+        17
+      ],
+      "verified": true
+    },
+    {
+      "id": "mvp.math.0510",
+      "theme": "math",
+      "templateId": "math-remainder",
+      "difficulty": 1,
+      "prompt": "371÷19的余数",
+      "answer": 10,
+      "wrong": [
+        0,
+        9,
+        11,
+        18
+      ],
+      "verified": true
+    },
+    {
+      "id": "mvp.math.0511",
+      "theme": "math",
+      "templateId": "math-remainder",
+      "difficulty": 1,
+      "prompt": "413÷20的余数",
+      "answer": 13,
+      "wrong": [
+        0,
+        12,
+        14,
+        7,
+        19
+      ],
+      "verified": true
+    },
+    {
+      "id": "mvp.math.0512",
+      "theme": "math",
+      "templateId": "math-remainder",
+      "difficulty": 1,
+      "prompt": "457÷21的余数",
+      "answer": 16,
+      "wrong": [
+        0,
+        15,
+        17,
+        5,
+        20
+      ],
+      "verified": true
+    },
+    {
+      "id": "mvp.vision.0001",
+      "theme": "vision",
+      "templateId": "vision-pattern",
+      "prompt": "○△○△?",
+      "answer": "○",
+      "wrong": [
+        "△",
+        "□",
+        "◇",
+        "☆",
+        "●"
+      ],
+      "verified": true
+    },
+    {
+      "id": "mvp.vision.0002",
+      "theme": "vision",
+      "templateId": "vision-pattern",
+      "prompt": "○△△○△△?",
+      "answer": "○",
+      "wrong": [
+        "△",
+        "□",
+        "◇",
+        "☆",
+        "●"
+      ],
+      "verified": true
+    },
+    {
+      "id": "mvp.vision.0003",
+      "theme": "vision",
+      "templateId": "vision-pattern",
+      "prompt": "○△△△○△△△?",
+      "answer": "○",
+      "wrong": [
+        "△",
+        "□",
+        "◇",
+        "☆",
+        "●"
+      ],
+      "verified": true
+    },
+    {
+      "id": "mvp.vision.0004",
+      "theme": "vision",
+      "templateId": "vision-pattern",
+      "prompt": "○△△△△○△△△△?",
+      "answer": "○",
+      "wrong": [
+        "△",
+        "□",
+        "◇",
+        "☆",
+        "●"
+      ],
+      "verified": true
+    },
+    {
+      "id": "mvp.vision.0005",
+      "theme": "vision",
+      "templateId": "vision-pattern",
+      "prompt": "○△△△△△○△△△△△?",
+      "answer": "○",
+      "wrong": [
+        "△",
+        "□",
+        "◇",
+        "☆",
+        "●"
+      ],
+      "verified": true
+    },
+    {
+      "id": "mvp.vision.0006",
+      "theme": "vision",
+      "templateId": "vision-pattern",
+      "prompt": "○△△△△△△○△△△△△△?",
+      "answer": "○",
+      "wrong": [
+        "△",
+        "□",
+        "◇",
+        "☆",
+        "●"
+      ],
+      "verified": true
+    },
+    {
+      "id": "mvp.vision.0007",
+      "theme": "vision",
+      "templateId": "vision-pattern",
+      "prompt": "○△△△△△△△○△△△△△△△?",
+      "answer": "○",
+      "wrong": [
+        "△",
+        "□",
+        "◇",
+        "☆",
+        "●"
+      ],
+      "verified": true
+    },
+    {
+      "id": "mvp.vision.0008",
+      "theme": "vision",
+      "templateId": "vision-pattern",
+      "prompt": "○□○□?",
+      "answer": "○",
+      "wrong": [
+        "△",
+        "□",
+        "◇",
+        "☆",
+        "●"
+      ],
+      "verified": true
+    },
+    {
+      "id": "mvp.vision.0009",
+      "theme": "vision",
+      "templateId": "vision-pattern",
+      "prompt": "○□□○□□?",
+      "answer": "○",
+      "wrong": [
+        "△",
+        "□",
+        "◇",
+        "☆",
+        "●"
+      ],
+      "verified": true
+    },
+    {
+      "id": "mvp.vision.0010",
+      "theme": "vision",
+      "templateId": "vision-pattern",
+      "prompt": "○□□□○□□□?",
+      "answer": "○",
+      "wrong": [
+        "△",
+        "□",
+        "◇",
+        "☆",
+        "●"
+      ],
+      "verified": true
+    },
+    {
+      "id": "mvp.vision.0011",
+      "theme": "vision",
+      "templateId": "vision-pattern",
+      "prompt": "○□□□□○□□□□?",
+      "answer": "○",
+      "wrong": [
+        "△",
+        "□",
+        "◇",
+        "☆",
+        "●"
+      ],
+      "verified": true
+    },
+    {
+      "id": "mvp.vision.0012",
+      "theme": "vision",
+      "templateId": "vision-pattern",
+      "prompt": "○□□□□□○□□□□□?",
+      "answer": "○",
+      "wrong": [
+        "△",
+        "□",
+        "◇",
+        "☆",
+        "●"
+      ],
+      "verified": true
+    },
+    {
+      "theme": "hanzi",
+      "templateId": "hanzi-fill",
+      "prompt": "( )龙点睛",
+      "answer": "画",
+      "wrong": [
+        "晴",
+        "情",
+        "精",
+        "晶",
+        "龙"
+      ],
+      "sourceFactId": "fact.hanzi.idioms.0p7kl6c",
+      "id": "mvp.hanzi.0001",
+      "verified": true
+    },
+    {
+      "theme": "hanzi",
+      "templateId": "hanzi-fill",
+      "prompt": "画( )点睛",
+      "answer": "龙",
+      "wrong": [
+        "晴",
+        "情",
+        "精",
+        "晶",
+        "画"
+      ],
+      "sourceFactId": "fact.hanzi.idioms.0p7kl6c",
+      "id": "mvp.hanzi.0002",
+      "verified": true
+    },
+    {
+      "theme": "hanzi",
+      "templateId": "hanzi-fill",
+      "prompt": "画龙( )睛",
+      "answer": "点",
+      "wrong": [
+        "晴",
+        "情",
+        "精",
+        "晶",
+        "画"
+      ],
+      "sourceFactId": "fact.hanzi.idioms.0p7kl6c",
+      "id": "mvp.hanzi.0003",
+      "verified": true
+    },
+    {
+      "theme": "hanzi",
+      "templateId": "hanzi-fill",
+      "prompt": "画龙点( )",
+      "answer": "睛",
+      "wrong": [
+        "晴",
+        "情",
+        "精",
+        "晶",
+        "画"
+      ],
+      "sourceFactId": "fact.hanzi.idioms.0p7kl6c",
+      "id": "mvp.hanzi.0004",
+      "verified": true
+    },
+    {
+      "theme": "hanzi",
+      "templateId": "hanzi-fill",
+      "prompt": "( )心一意",
+      "answer": "一",
+      "wrong": [
+        "亿",
+        "忆",
+        "议",
+        "义",
+        "心"
+      ],
+      "sourceFactId": "fact.hanzi.idioms.05b5yts",
+      "id": "mvp.hanzi.0005",
+      "verified": true
+    },
+    {
+      "theme": "hanzi",
+      "templateId": "hanzi-fill",
+      "prompt": "一( )一意",
+      "answer": "心",
+      "wrong": [
+        "亿",
+        "忆",
+        "议",
+        "义",
+        "一"
+      ],
+      "sourceFactId": "fact.hanzi.idioms.05b5yts",
+      "id": "mvp.hanzi.0006",
+      "verified": true
+    },
+    {
+      "theme": "hanzi",
+      "templateId": "hanzi-fill",
+      "prompt": "一心( )意",
+      "answer": "一",
+      "wrong": [
+        "亿",
+        "忆",
+        "议",
+        "义",
+        "心"
+      ],
+      "sourceFactId": "fact.hanzi.idioms.05b5yts",
+      "id": "mvp.hanzi.0007",
+      "verified": true
+    },
+    {
+      "theme": "hanzi",
+      "templateId": "hanzi-fill",
+      "prompt": "一心一( )",
+      "answer": "意",
+      "wrong": [
+        "亿",
+        "忆",
+        "议",
+        "义",
+        "一"
+      ],
+      "sourceFactId": "fact.hanzi.idioms.05b5yts",
+      "id": "mvp.hanzi.0008",
+      "verified": true
+    },
+    {
+      "theme": "hanzi",
+      "templateId": "hanzi-fill",
+      "prompt": "( )面八方",
+      "answer": "四",
+      "wrong": [
+        "芳",
+        "房",
+        "放",
+        "坊",
+        "面"
+      ],
+      "sourceFactId": "fact.hanzi.idioms.198brqx",
+      "id": "mvp.hanzi.0009",
+      "verified": true
+    },
+    {
+      "theme": "hanzi",
+      "templateId": "hanzi-fill",
+      "prompt": "四( )八方",
+      "answer": "面",
+      "wrong": [
+        "芳",
+        "房",
+        "放",
+        "坊",
+        "四"
+      ],
+      "sourceFactId": "fact.hanzi.idioms.198brqx",
+      "id": "mvp.hanzi.0010",
+      "verified": true
+    },
+    {
+      "theme": "hanzi",
+      "templateId": "hanzi-fill",
+      "prompt": "四面( )方",
+      "answer": "八",
+      "wrong": [
+        "芳",
+        "房",
+        "放",
+        "坊",
+        "四"
+      ],
+      "sourceFactId": "fact.hanzi.idioms.198brqx",
+      "id": "mvp.hanzi.0011",
+      "verified": true
+    },
+    {
+      "theme": "hanzi",
+      "templateId": "hanzi-fill",
+      "prompt": "四面八( )",
+      "answer": "方",
+      "wrong": [
+        "芳",
+        "房",
+        "放",
+        "坊",
+        "四"
+      ],
+      "sourceFactId": "fact.hanzi.idioms.198brqx",
+      "id": "mvp.hanzi.0012",
+      "verified": true
+    },
+    {
+      "theme": "hanzi",
+      "templateId": "hanzi-antonym",
+      "prompt": "大的反义词",
+      "answer": "小",
+      "wrong": [
+        "少",
+        "下",
+        "右",
+        "后"
+      ],
+      "sourceFactId": "fact.hanzi.antonyms.1k9ve5c",
+      "id": "mvp.hanzi.0401",
+      "verified": true
+    },
+    {
+      "theme": "hanzi",
+      "templateId": "hanzi-antonym",
+      "prompt": "小的反义词",
+      "answer": "大",
+      "wrong": [
+        "多",
+        "上",
+        "左",
+        "前"
+      ],
+      "sourceFactId": "fact.hanzi.antonyms.1k9ve5c",
+      "id": "mvp.hanzi.0402",
+      "verified": true
+    },
+    {
+      "theme": "hanzi",
+      "templateId": "hanzi-antonym",
+      "prompt": "多的反义词",
+      "answer": "少",
+      "wrong": [
+        "小",
+        "下",
+        "右",
+        "后"
+      ],
+      "sourceFactId": "fact.hanzi.antonyms.1l3u789",
+      "id": "mvp.hanzi.0403",
+      "verified": true
+    },
+    {
+      "theme": "hanzi",
+      "templateId": "hanzi-antonym",
+      "prompt": "少的反义词",
+      "answer": "多",
+      "wrong": [
+        "大",
+        "上",
+        "左",
+        "前"
+      ],
+      "sourceFactId": "fact.hanzi.antonyms.1l3u789",
+      "id": "mvp.hanzi.0404",
+      "verified": true
+    },
+    {
+      "theme": "hanzi",
+      "templateId": "hanzi-antonym",
+      "prompt": "上的反义词",
+      "answer": "下",
+      "wrong": [
+        "小",
+        "少",
+        "右",
+        "后"
+      ],
+      "sourceFactId": "fact.hanzi.antonyms.1ktulja",
+      "id": "mvp.hanzi.0405",
+      "verified": true
+    },
+    {
+      "theme": "hanzi",
+      "templateId": "hanzi-antonym",
+      "prompt": "下的反义词",
+      "answer": "上",
+      "wrong": [
+        "大",
+        "多",
+        "左",
+        "前"
+      ],
+      "sourceFactId": "fact.hanzi.antonyms.1ktulja",
+      "id": "mvp.hanzi.0406",
+      "verified": true
+    },
+    {
+      "theme": "hanzi",
+      "templateId": "hanzi-antonym",
+      "prompt": "左的反义词",
+      "answer": "右",
+      "wrong": [
+        "小",
+        "少",
+        "下",
+        "后"
+      ],
+      "sourceFactId": "fact.hanzi.antonyms.1lntem7",
+      "id": "mvp.hanzi.0407",
+      "verified": true
+    },
+    {
+      "theme": "hanzi",
+      "templateId": "hanzi-antonym",
+      "prompt": "右的反义词",
+      "answer": "左",
+      "wrong": [
+        "大",
+        "多",
+        "上",
+        "前"
+      ],
+      "sourceFactId": "fact.hanzi.antonyms.1lntem7",
+      "id": "mvp.hanzi.0408",
+      "verified": true
+    },
+    {
+      "theme": "hanzi",
+      "templateId": "hanzi-antonym",
+      "prompt": "前的反义词",
+      "answer": "后",
+      "wrong": [
+        "小",
+        "少",
+        "下",
+        "右"
+      ],
+      "sourceFactId": "fact.hanzi.antonyms.1ldtsx8",
+      "id": "mvp.hanzi.0409",
+      "verified": true
+    },
+    {
+      "theme": "hanzi",
+      "templateId": "hanzi-antonym",
+      "prompt": "后的反义词",
+      "answer": "前",
+      "wrong": [
+        "大",
+        "多",
+        "上",
+        "左"
+      ],
+      "sourceFactId": "fact.hanzi.antonyms.1ldtsx8",
+      "id": "mvp.hanzi.0410",
+      "verified": true
+    },
+    {
+      "theme": "hanzi",
+      "templateId": "hanzi-antonym",
+      "prompt": "内的反义词",
+      "answer": "外",
+      "wrong": [
+        "西",
+        "北",
+        "低",
+        "短"
+      ],
+      "sourceFactId": "fact.hanzi.antonyms.1m7sm05",
+      "id": "mvp.hanzi.0411",
+      "verified": true
+    },
+    {
+      "theme": "hanzi",
+      "templateId": "hanzi-antonym",
+      "prompt": "外的反义词",
+      "answer": "内",
+      "wrong": [
+        "东",
+        "南",
+        "高",
+        "长"
+      ],
+      "sourceFactId": "fact.hanzi.antonyms.1m7sm05",
+      "id": "mvp.hanzi.0412",
+      "verified": true
+    },
+    {
+      "theme": "hanzi",
+      "templateId": "hanzi-synonym",
+      "prompt": "美丽的近义词",
+      "answer": "漂亮",
+      "wrong": [
+        "开心",
+        "伤心",
+        "飞快",
+        "迟缓"
+      ],
+      "sourceFactId": "fact.hanzi.synonyms.0sw3don",
+      "id": "mvp.hanzi.0601",
+      "verified": true
+    },
+    {
+      "theme": "hanzi",
+      "templateId": "hanzi-synonym",
+      "prompt": "漂亮的近义词",
+      "answer": "美丽",
+      "wrong": [
+        "高兴",
+        "难过",
+        "迅速",
+        "缓慢"
+      ],
+      "sourceFactId": "fact.hanzi.synonyms.0sw3don",
+      "id": "mvp.hanzi.0602",
+      "verified": true
+    },
+    {
+      "theme": "hanzi",
+      "templateId": "hanzi-synonym",
+      "prompt": "高兴的近义词",
+      "answer": "开心",
+      "wrong": [
+        "漂亮",
+        "伤心",
+        "飞快",
+        "迟缓"
+      ],
+      "sourceFactId": "fact.hanzi.synonyms.0t62zdm",
+      "id": "mvp.hanzi.0603",
+      "verified": true
+    },
+    {
+      "theme": "hanzi",
+      "templateId": "hanzi-synonym",
+      "prompt": "开心的近义词",
+      "answer": "高兴",
+      "wrong": [
+        "美丽",
+        "难过",
+        "迅速",
+        "缓慢"
+      ],
+      "sourceFactId": "fact.hanzi.synonyms.0t62zdm",
+      "id": "mvp.hanzi.0604",
+      "verified": true
+    },
+    {
+      "theme": "hanzi",
+      "templateId": "hanzi-synonym",
+      "prompt": "难过的近义词",
+      "answer": "伤心",
+      "wrong": [
+        "漂亮",
+        "开心",
+        "飞快",
+        "迟缓"
+      ],
+      "sourceFactId": "fact.hanzi.synonyms.0tg2l2l",
+      "id": "mvp.hanzi.0605",
+      "verified": true
+    },
+    {
+      "theme": "hanzi",
+      "templateId": "hanzi-synonym",
+      "prompt": "伤心的近义词",
+      "answer": "难过",
+      "wrong": [
+        "美丽",
+        "高兴",
+        "迅速",
+        "缓慢"
+      ],
+      "sourceFactId": "fact.hanzi.synonyms.0tg2l2l",
+      "id": "mvp.hanzi.0606",
+      "verified": true
+    },
+    {
+      "theme": "hanzi",
+      "templateId": "hanzi-synonym",
+      "prompt": "迅速的近义词",
+      "answer": "飞快",
+      "wrong": [
+        "漂亮",
+        "开心",
+        "伤心",
+        "迟缓"
+      ],
+      "sourceFactId": "fact.hanzi.synonyms.0ri5d7s",
+      "id": "mvp.hanzi.0607",
+      "verified": true
+    },
+    {
+      "theme": "hanzi",
+      "templateId": "hanzi-synonym",
+      "prompt": "飞快的近义词",
+      "answer": "迅速",
+      "wrong": [
+        "美丽",
+        "高兴",
+        "难过",
+        "缓慢"
+      ],
+      "sourceFactId": "fact.hanzi.synonyms.0ri5d7s",
+      "id": "mvp.hanzi.0608",
+      "verified": true
+    },
+    {
+      "theme": "hanzi",
+      "templateId": "hanzi-synonym",
+      "prompt": "缓慢的近义词",
+      "answer": "迟缓",
+      "wrong": [
+        "漂亮",
+        "开心",
+        "伤心",
+        "飞快"
+      ],
+      "sourceFactId": "fact.hanzi.synonyms.0rs4ywr",
+      "id": "mvp.hanzi.0609",
+      "verified": true
+    },
+    {
+      "theme": "hanzi",
+      "templateId": "hanzi-synonym",
+      "prompt": "迟缓的近义词",
+      "answer": "缓慢",
+      "wrong": [
+        "美丽",
+        "高兴",
+        "难过",
+        "迅速"
+      ],
+      "sourceFactId": "fact.hanzi.synonyms.0rs4ywr",
+      "id": "mvp.hanzi.0610",
+      "verified": true
+    },
+    {
+      "theme": "hanzi",
+      "templateId": "hanzi-synonym",
+      "prompt": "寒冷的近义词",
+      "answer": "冰冷",
+      "wrong": [
+        "酷热",
+        "光亮",
+        "昏暗",
+        "宁静"
+      ],
+      "sourceFactId": "fact.hanzi.synonyms.0s24klq",
+      "id": "mvp.hanzi.0611",
+      "verified": true
+    },
+    {
+      "theme": "hanzi",
+      "templateId": "hanzi-synonym",
+      "prompt": "冰冷的近义词",
+      "answer": "寒冷",
+      "wrong": [
+        "炎热",
+        "明亮",
+        "黑暗",
+        "安静"
+      ],
+      "sourceFactId": "fact.hanzi.synonyms.0s24klq",
+      "id": "mvp.hanzi.0612",
+      "verified": true
+    },
+    {
+      "theme": "hanzi",
+      "templateId": "hanzi-pinyin",
+      "prompt": "山的拼音",
+      "answer": "shān",
+      "wrong": [
+        "shuǐ",
+        "huā",
+        "niǎo",
+        "yuè",
+        "fēng"
+      ],
+      "sourceFactId": "fact.hanzi.pinyin.06ebbsm",
+      "id": "mvp.hanzi.0801",
+      "verified": true
+    },
+    {
+      "theme": "hanzi",
+      "templateId": "hanzi-homophone",
+      "prompt": "山的同音字",
+      "answer": "扇",
+      "wrong": [
+        "睡",
+        "画",
+        "尿",
+        "越",
+        "丰"
+      ],
+      "sourceFactId": "fact.hanzi.pinyin.06ebbsm",
+      "id": "mvp.hanzi.0802",
+      "verified": true
+    },
+    {
+      "theme": "hanzi",
+      "templateId": "hanzi-pinyin",
+      "prompt": "shān对应的字",
+      "answer": "山",
+      "wrong": [
+        "水",
+        "花",
+        "鸟",
+        "月",
+        "风"
+      ],
+      "sourceFactId": "fact.hanzi.pinyin.06ebbsm",
+      "id": "mvp.hanzi.0803",
+      "verified": true
+    },
+    {
+      "theme": "hanzi",
+      "templateId": "hanzi-pinyin",
+      "prompt": "水的拼音",
+      "answer": "shuǐ",
+      "wrong": [
+        "shān",
+        "huā",
+        "niǎo",
+        "yuè",
+        "fēng"
+      ],
+      "sourceFactId": "fact.hanzi.pinyin.1v3weaz",
+      "id": "mvp.hanzi.0804",
+      "verified": true
+    },
+    {
+      "theme": "hanzi",
+      "templateId": "hanzi-homophone",
+      "prompt": "水的同音字",
+      "answer": "睡",
+      "wrong": [
+        "扇",
+        "画",
+        "尿",
+        "越",
+        "丰"
+      ],
+      "sourceFactId": "fact.hanzi.pinyin.1v3weaz",
+      "id": "mvp.hanzi.0805",
+      "verified": true
+    },
+    {
+      "theme": "hanzi",
+      "templateId": "hanzi-pinyin",
+      "prompt": "shuǐ对应的字",
+      "answer": "水",
+      "wrong": [
+        "山",
+        "花",
+        "鸟",
+        "月",
+        "风"
+      ],
+      "sourceFactId": "fact.hanzi.pinyin.1v3weaz",
+      "id": "mvp.hanzi.0806",
+      "verified": true
+    },
+    {
+      "theme": "hanzi",
+      "templateId": "hanzi-pinyin",
+      "prompt": "花的拼音",
+      "answer": "huā",
+      "wrong": [
+        "shān",
+        "shuǐ",
+        "niǎo",
+        "yuè",
+        "fēng"
+      ],
+      "sourceFactId": "fact.hanzi.pinyin.0d5fs38",
+      "id": "mvp.hanzi.0807",
+      "verified": true
+    },
+    {
+      "theme": "hanzi",
+      "templateId": "hanzi-homophone",
+      "prompt": "花的同音字",
+      "answer": "画",
+      "wrong": [
+        "扇",
+        "睡",
+        "尿",
+        "越",
+        "丰"
+      ],
+      "sourceFactId": "fact.hanzi.pinyin.0d5fs38",
+      "id": "mvp.hanzi.0808",
+      "verified": true
+    },
+    {
+      "theme": "hanzi",
+      "templateId": "hanzi-pinyin",
+      "prompt": "huā对应的字",
+      "answer": "花",
+      "wrong": [
+        "山",
+        "水",
+        "鸟",
+        "月",
+        "风"
+      ],
+      "sourceFactId": "fact.hanzi.pinyin.0d5fs38",
+      "id": "mvp.hanzi.0809",
+      "verified": true
+    },
+    {
+      "theme": "hanzi",
+      "templateId": "hanzi-pinyin",
+      "prompt": "鸟的拼音",
+      "answer": "niǎo",
+      "wrong": [
+        "shān",
+        "shuǐ",
+        "huā",
+        "yuè",
+        "fēng"
+      ],
+      "sourceFactId": "fact.hanzi.pinyin.0neuyij",
+      "id": "mvp.hanzi.0810",
+      "verified": true
+    },
+    {
+      "theme": "hanzi",
+      "templateId": "hanzi-homophone",
+      "prompt": "鸟的同音字",
+      "answer": "尿",
+      "wrong": [
+        "扇",
+        "睡",
+        "画",
+        "越",
+        "丰"
+      ],
+      "sourceFactId": "fact.hanzi.pinyin.0neuyij",
+      "id": "mvp.hanzi.0811",
+      "verified": true
+    },
+    {
+      "theme": "hanzi",
+      "templateId": "hanzi-pinyin",
+      "prompt": "niǎo对应的字",
+      "answer": "鸟",
+      "wrong": [
+        "山",
+        "水",
+        "花",
+        "月",
+        "风"
+      ],
+      "sourceFactId": "fact.hanzi.pinyin.0neuyij",
+      "id": "mvp.hanzi.0812",
+      "verified": true
+    },
+    {
+      "theme": "hanzi",
+      "templateId": "hanzi-pinyin",
+      "prompt": "月的拼音",
+      "answer": "yuè",
+      "wrong": [
+        "shān",
+        "shuǐ",
+        "huā",
+        "niǎo",
+        "fēng"
+      ],
+      "sourceFactId": "fact.hanzi.pinyin.1k5rap3",
+      "id": "mvp.hanzi.0813",
+      "verified": true
+    },
+    {
+      "theme": "hanzi",
+      "templateId": "hanzi-homophone",
+      "prompt": "月的同音字",
+      "answer": "越",
+      "wrong": [
+        "扇",
+        "睡",
+        "画",
+        "尿",
+        "丰"
+      ],
+      "sourceFactId": "fact.hanzi.pinyin.1k5rap3",
+      "id": "mvp.hanzi.0814",
+      "verified": true
+    },
+    {
+      "theme": "hanzi",
+      "templateId": "hanzi-pinyin",
+      "prompt": "yuè对应的字",
+      "answer": "月",
+      "wrong": [
+        "山",
+        "水",
+        "花",
+        "鸟",
+        "风"
+      ],
+      "sourceFactId": "fact.hanzi.pinyin.1k5rap3",
+      "id": "mvp.hanzi.0815",
+      "verified": true
+    },
+    {
+      "theme": "hanzi",
+      "templateId": "hanzi-pinyin",
+      "prompt": "风的拼音",
+      "answer": "fēng",
+      "wrong": [
+        "shān",
+        "shuǐ",
+        "huā",
+        "niǎo",
+        "yuè"
+      ],
+      "sourceFactId": "fact.hanzi.pinyin.1lpg9h8",
+      "id": "mvp.hanzi.0816",
+      "verified": true
+    },
+    {
+      "theme": "hanzi",
+      "templateId": "hanzi-homophone",
+      "prompt": "风的同音字",
+      "answer": "丰",
+      "wrong": [
+        "扇",
+        "睡",
+        "画",
+        "尿",
+        "越"
+      ],
+      "sourceFactId": "fact.hanzi.pinyin.1lpg9h8",
+      "id": "mvp.hanzi.0817",
+      "verified": true
+    },
+    {
+      "theme": "hanzi",
+      "templateId": "hanzi-pinyin",
+      "prompt": "fēng对应的字",
+      "answer": "风",
+      "wrong": [
+        "山",
+        "水",
+        "花",
+        "鸟",
+        "月"
+      ],
+      "sourceFactId": "fact.hanzi.pinyin.1lpg9h8",
+      "id": "mvp.hanzi.0818",
+      "verified": true
+    },
+    {
+      "theme": "hanzi",
+      "templateId": "hanzi-homophone",
+      "prompt": "雨的同音字",
+      "answer": "语",
+      "wrong": [
+        "扇",
+        "睡",
+        "画",
+        "尿",
+        "越"
+      ],
+      "sourceFactId": "fact.hanzi.pinyin.0y6i8c8",
+      "id": "mvp.hanzi.0820",
+      "verified": true
+    },
+    {
+      "theme": "hanzi",
+      "templateId": "hanzi-homophone",
+      "prompt": "云的同音字",
+      "answer": "匀",
+      "wrong": [
+        "扇",
+        "睡",
+        "画",
+        "尿",
+        "越"
+      ],
+      "sourceFactId": "fact.hanzi.pinyin.1i7u2ua",
+      "id": "mvp.hanzi.0823",
+      "verified": true
+    },
+    {
+      "theme": "hanzi",
+      "templateId": "hanzi-homophone",
+      "prompt": "马的同音字",
+      "answer": "码",
+      "wrong": [
+        "扇",
+        "睡",
+        "画",
+        "尿",
+        "越"
+      ],
+      "sourceFactId": "fact.hanzi.pinyin.0o82skg",
+      "id": "mvp.hanzi.0826",
+      "verified": true
+    },
+    {
+      "theme": "hanzi",
+      "templateId": "hanzi-homophone",
+      "prompt": "鱼的同音字",
+      "answer": "余",
+      "wrong": [
+        "扇",
+        "睡",
+        "画",
+        "尿",
+        "越"
+      ],
+      "sourceFactId": "fact.hanzi.pinyin.1149r74",
+      "id": "mvp.hanzi.0829",
+      "verified": true
+    },
+    {
+      "theme": "hanzi",
+      "templateId": "hanzi-homophone",
+      "prompt": "书的同音字",
+      "answer": "叔",
+      "wrong": [
+        "扇",
+        "睡",
+        "画",
+        "尿",
+        "越"
+      ],
+      "sourceFactId": "fact.hanzi.pinyin.0ncys7v",
+      "id": "mvp.hanzi.0832",
+      "verified": true
+    },
+    {
+      "theme": "hanzi",
+      "templateId": "hanzi-homophone",
+      "prompt": "火的同音字",
+      "answer": "伙",
+      "wrong": [
+        "扇",
+        "睡",
+        "画",
+        "尿",
+        "越"
+      ],
+      "sourceFactId": "fact.hanzi.pinyin.0wyivai",
+      "id": "mvp.hanzi.0835",
+      "verified": true
+    },
+    {
+      "theme": "hanzi",
+      "templateId": "hanzi-poetry",
+      "prompt": "床前明月( )，疑是地上霜",
+      "answer": "光",
+      "wrong": [
+        "风",
+        "花",
+        "雪"
+      ],
+      "sourceFactId": "fact.hanzi.poetry.1w2ckbx",
+      "id": "mvp.hanzi.0891",
+      "verified": true
+    },
+    {
+      "theme": "hanzi",
+      "templateId": "hanzi-poetry",
+      "prompt": "举头望明月，低头思( )",
+      "answer": "故乡",
+      "wrong": [
+        "远方",
+        "长安",
+        "家园"
+      ],
+      "sourceFactId": "fact.hanzi.poetry.1v8dr90",
+      "id": "mvp.hanzi.0892",
+      "verified": true
+    },
+    {
+      "theme": "hanzi",
+      "templateId": "hanzi-poetry",
+      "prompt": "白日依山尽，黄河入( )",
+      "answer": "海流",
+      "wrong": [
+        "江流",
+        "湖中",
+        "云间"
+      ],
+      "sourceFactId": "fact.hanzi.poetry.1vidcxz",
+      "id": "mvp.hanzi.0893",
+      "verified": true
+    },
+    {
+      "theme": "hanzi",
+      "templateId": "hanzi-poetry",
+      "prompt": "春眠不觉晓，处处闻啼( )",
+      "answer": "鸟",
+      "wrong": [
+        "花",
+        "雨",
+        "风"
+      ],
+      "sourceFactId": "fact.hanzi.poetry.1uoejv2",
+      "id": "mvp.hanzi.0894",
+      "verified": true
+    },
+    {
+      "theme": "hanzi",
+      "templateId": "hanzi-poetry",
+      "prompt": "锄禾日当午，汗滴禾下( )",
+      "answer": "土",
+      "wrong": [
+        "田",
+        "苗",
+        "谷"
+      ],
+      "sourceFactId": "fact.hanzi.poetry.1uye5k1",
+      "id": "mvp.hanzi.0895",
+      "verified": true
+    },
+    {
+      "theme": "hanzi",
+      "templateId": "hanzi-poetry",
+      "prompt": "谁知盘中餐，粒粒皆辛( )",
+      "answer": "苦",
+      "wrong": [
+        "勤",
+        "劳",
+        "甜"
+      ],
+      "sourceFactId": "fact.hanzi.poetry.1u4fch4",
+      "id": "mvp.hanzi.0896",
+      "verified": true
+    },
+    {
+      "theme": "hanzi",
+      "templateId": "hanzi-poetry",
+      "prompt": "两个黄鹂鸣翠柳，一行白鹭上( )",
+      "answer": "青天",
+      "wrong": [
+        "蓝天",
+        "云端",
+        "高山"
+      ],
+      "sourceFactId": "fact.hanzi.poetry.1ueey63",
+      "id": "mvp.hanzi.0897",
+      "verified": true
+    },
+    {
+      "theme": "hanzi",
+      "templateId": "hanzi-poetry",
+      "prompt": "欲穷千里目，更上一层( )",
+      "answer": "楼",
+      "wrong": [
+        "山",
+        "台",
+        "桥"
+      ],
+      "sourceFactId": "fact.hanzi.poetry.1tkg536",
+      "id": "mvp.hanzi.0898",
+      "verified": true
+    },
+    {
+      "theme": "hanzi",
+      "templateId": "hanzi-poetry",
+      "prompt": "野火烧不尽，春风吹又( )",
+      "answer": "生",
+      "wrong": [
+        "绿",
+        "来",
+        "起"
+      ],
+      "sourceFactId": "fact.hanzi.poetry.1tufqs5",
+      "id": "mvp.hanzi.0899",
+      "verified": true
+    },
+    {
+      "theme": "hanzi",
+      "templateId": "hanzi-poetry",
+      "prompt": "小荷才露尖尖角，早有蜻蜓立( )",
+      "answer": "上头",
+      "wrong": [
+        "水边",
+        "叶间",
+        "花中"
+      ],
+      "sourceFactId": "fact.hanzi.poetry.1okqg3n",
+      "id": "mvp.hanzi.0900",
+      "verified": true
+    },
+    {
+      "theme": "hanzi",
+      "templateId": "hanzi-poetry",
+      "prompt": "桃花潭水深千尺，不及汪伦送我( )",
+      "answer": "情",
+      "wrong": [
+        "行",
+        "舟",
+        "心"
+      ],
+      "sourceFactId": "fact.hanzi.poetry.1oaqueo",
+      "id": "mvp.hanzi.0901",
+      "verified": true
+    },
+    {
+      "theme": "hanzi",
+      "templateId": "hanzi-poetry",
+      "prompt": "飞流直下三千尺，疑是银河落( )",
+      "answer": "九天",
+      "wrong": [
+        "云端",
+        "人间",
+        "高山"
+      ],
+      "sourceFactId": "fact.hanzi.poetry.1p4pnhl",
+      "id": "mvp.hanzi.0902",
+      "verified": true
+    },
+    {
+      "theme": "hanzi",
+      "templateId": "hanzi-radical",
+      "prompt": "“休”的部首",
+      "answer": "亻",
+      "wrong": [
+        "木",
+        "人",
+        "十"
+      ],
+      "sourceFactId": "fact.hanzi.radical.1ygtetk",
+      "id": "mvp.hanzi.0921",
+      "verified": true
+    },
+    {
+      "theme": "hanzi",
+      "templateId": "hanzi-radical",
+      "prompt": "“江”的部首",
+      "answer": "氵",
+      "wrong": [
+        "工",
+        "水",
+        "冫"
+      ],
+      "sourceFactId": "fact.hanzi.radical.0gosuea",
+      "id": "mvp.hanzi.0922",
+      "verified": true
+    },
+    {
+      "theme": "hanzi",
+      "templateId": "hanzi-radical",
+      "prompt": "“草”的部首",
+      "answer": "艹",
+      "wrong": [
+        "早",
+        "日",
+        "十"
+      ],
+      "sourceFactId": "fact.hanzi.radical.0avsk00",
+      "id": "mvp.hanzi.0923",
+      "verified": true
+    },
+    {
+      "theme": "hanzi",
+      "templateId": "hanzi-radical",
+      "prompt": "“晴”的部首",
+      "answer": "日",
+      "wrong": [
+        "青",
+        "月",
+        "目"
+      ],
+      "sourceFactId": "fact.hanzi.radical.0rizghz",
+      "id": "mvp.hanzi.0924",
+      "verified": true
+    },
+    {
+      "theme": "hanzi",
+      "templateId": "hanzi-radical",
+      "prompt": "“跑”的部首",
+      "answer": "足",
+      "wrong": [
+        "包",
+        "走",
+        "止"
+      ],
+      "sourceFactId": "fact.hanzi.radical.1h16zd4",
+      "id": "mvp.hanzi.0925",
+      "verified": true
+    },
+    {
+      "theme": "hanzi",
+      "templateId": "hanzi-radical",
+      "prompt": "“妈”的部首",
+      "answer": "女",
+      "wrong": [
+        "马",
+        "母",
+        "人"
+      ],
+      "sourceFactId": "fact.hanzi.radical.0sjmglv",
+      "id": "mvp.hanzi.0926",
+      "verified": true
+    },
+    {
+      "theme": "hanzi",
+      "templateId": "hanzi-radical",
+      "prompt": "“桥”的部首",
+      "answer": "木",
+      "wrong": [
+        "乔",
+        "禾",
+        "朩"
+      ],
+      "sourceFactId": "fact.hanzi.radical.0mssy2s",
+      "id": "mvp.hanzi.0927",
+      "verified": true
+    },
+    {
+      "theme": "hanzi",
+      "templateId": "hanzi-radical",
+      "prompt": "“海”的部首",
+      "answer": "氵",
+      "wrong": [
+        "每",
+        "水",
+        "母"
+      ],
+      "sourceFactId": "fact.hanzi.radical.0rsf5qy",
+      "id": "mvp.hanzi.0928",
+      "verified": true
+    },
+    {
+      "theme": "hanzi",
+      "templateId": "hanzi-radical",
+      "prompt": "“河”的部首",
+      "answer": "氵",
+      "wrong": [
+        "木",
+        "艹",
+        "目"
+      ],
+      "sourceFactId": "fact.hanzi.radical.0u28m1i",
+      "id": "mvp.hanzi.0929",
+      "verified": true
+    },
+    {
+      "theme": "hanzi",
+      "templateId": "hanzi-radical",
+      "prompt": "“湖”的部首",
+      "answer": "氵",
+      "wrong": [
+        "木",
+        "艹",
+        "目"
+      ],
+      "sourceFactId": "fact.hanzi.radical.0ts90cj",
+      "id": "mvp.hanzi.0930",
+      "verified": true
+    },
+    {
+      "theme": "hanzi",
+      "templateId": "hanzi-radical",
+      "prompt": "“松”的部首",
+      "answer": "木",
+      "wrong": [
+        "氵",
+        "艹",
+        "目"
+      ],
+      "sourceFactId": "fact.hanzi.radical.0ti9enk",
+      "id": "mvp.hanzi.0931",
+      "verified": true
+    },
+    {
+      "theme": "hanzi",
+      "templateId": "hanzi-radical",
+      "prompt": "“树”的部首",
+      "answer": "木",
+      "wrong": [
+        "氵",
+        "艹",
+        "目"
+      ],
+      "sourceFactId": "fact.hanzi.radical.0vg6mid",
+      "id": "mvp.hanzi.0932",
+      "verified": true
+    },
+    {
+      "theme": "hanzi",
+      "templateId": "hanzi-compose",
+      "prompt": "木＋木组成",
+      "answer": "林",
+      "wrong": [
+        "森",
+        "休",
+        "本"
+      ],
+      "sourceFactId": "fact.hanzi.compose.1npw30w",
+      "id": "mvp.hanzi.0951",
+      "verified": true
+    },
+    {
+      "theme": "hanzi",
+      "templateId": "hanzi-compose",
+      "prompt": "日＋月组成",
+      "answer": "明",
+      "wrong": [
+        "朋",
+        "晴",
+        "阳"
+      ],
+      "sourceFactId": "fact.hanzi.compose.0m9i5l7",
+      "id": "mvp.hanzi.0952",
+      "verified": true
+    },
+    {
+      "theme": "hanzi",
+      "templateId": "hanzi-compose",
+      "prompt": "亻＋木组成",
+      "answer": "休",
+      "wrong": [
+        "体",
+        "林",
+        "保"
+      ],
+      "sourceFactId": "fact.hanzi.compose.0pttphe",
+      "id": "mvp.hanzi.0953",
+      "verified": true
+    },
+    {
+      "theme": "hanzi",
+      "templateId": "hanzi-compose",
+      "prompt": "女＋子组成",
+      "answer": "好",
+      "wrong": [
+        "妈",
+        "字",
+        "仔"
+      ],
+      "sourceFactId": "fact.hanzi.compose.00bp84u",
+      "id": "mvp.hanzi.0954",
+      "verified": true
+    },
+    {
+      "theme": "hanzi",
+      "templateId": "hanzi-compose",
+      "prompt": "田＋力组成",
+      "answer": "男",
+      "wrong": [
+        "苗",
+        "勇",
+        "累"
+      ],
+      "sourceFactId": "fact.hanzi.compose.0fctoj4",
+      "id": "mvp.hanzi.0955",
+      "verified": true
+    },
+    {
+      "theme": "hanzi",
+      "templateId": "hanzi-compose",
+      "prompt": "小＋大组成",
+      "answer": "尖",
+      "wrong": [
+        "尘",
+        "太",
+        "少"
+      ],
+      "sourceFactId": "fact.hanzi.compose.0oh1pib",
+      "id": "mvp.hanzi.0956",
+      "verified": true
+    },
+    {
+      "theme": "hanzi",
+      "templateId": "hanzi-compose",
+      "prompt": "山＋石组成",
+      "answer": "岩",
+      "wrong": [
+        "岸",
+        "矿",
+        "磊"
+      ],
+      "sourceFactId": "fact.hanzi.compose.1e9yjey",
+      "id": "mvp.hanzi.0957",
+      "verified": true
+    },
+    {
+      "theme": "hanzi",
+      "templateId": "hanzi-compose",
+      "prompt": "小＋土组成",
+      "answer": "尘",
+      "wrong": [
+        "尖",
+        "灰",
+        "沙"
+      ],
+      "sourceFactId": "fact.hanzi.compose.0scw57x",
+      "id": "mvp.hanzi.0958",
+      "verified": true
+    },
+    {
+      "theme": "hanzi",
+      "templateId": "hanzi-compose",
+      "prompt": "木＋目组成",
+      "answer": "相",
+      "wrong": [
+        "李",
+        "村",
+        "松"
+      ],
+      "sourceFactId": "fact.hanzi.compose.04qkyn8",
+      "id": "mvp.hanzi.0959",
+      "verified": true
+    },
+    {
+      "theme": "hanzi",
+      "templateId": "hanzi-compose",
+      "prompt": "木＋子组成",
+      "answer": "李",
+      "wrong": [
+        "相",
+        "村",
+        "松"
+      ],
+      "sourceFactId": "fact.hanzi.compose.05kjrq5",
+      "id": "mvp.hanzi.0960",
+      "verified": true
+    },
+    {
+      "theme": "hanzi",
+      "templateId": "hanzi-compose",
+      "prompt": "木＋寸组成",
+      "answer": "村",
+      "wrong": [
+        "相",
+        "李",
+        "松"
+      ],
+      "sourceFactId": "fact.hanzi.compose.05ak616",
+      "id": "mvp.hanzi.0961",
+      "verified": true
+    },
+    {
+      "theme": "hanzi",
+      "templateId": "hanzi-compose",
+      "prompt": "木＋公组成",
+      "answer": "松",
+      "wrong": [
+        "相",
+        "李",
+        "村"
+      ],
+      "sourceFactId": "fact.hanzi.compose.03wm5kb",
+      "id": "mvp.hanzi.0962",
+      "verified": true
+    },
+    {
+      "theme": "english",
+      "templateId": "english-meaning",
+      "prompt": "CAT的中文",
+      "answer": "猫",
+      "wrong": [
+        "狗",
+        "鸟",
+        "斑马",
+        "狮子",
+        "老虎"
+      ],
+      "sourceFactId": "fact.english.words.0mh9c78",
+      "id": "mvp.english.0001",
+      "verified": true
+    },
+    {
+      "theme": "english",
+      "templateId": "english-category",
+      "prompt": "CAT所属类别",
+      "answer": "动物",
+      "wrong": [
+        "颜色",
+        "食物",
+        "动作",
+        "物品",
+        "自然"
+      ],
+      "sourceFactId": "fact.english.words.0mh9c78",
+      "id": "mvp.english.0002",
+      "verified": true
+    },
+    {
+      "theme": "english",
+      "templateId": "english-first-letter",
+      "prompt": "CAT的首字母",
+      "answer": "C",
+      "wrong": [
+        "A",
+        "B",
+        "D",
+        "E",
+        "F"
+      ],
+      "sourceFactId": "fact.english.words.0mh9c78",
+      "id": "mvp.english.0003",
+      "verified": true
+    },
+    {
+      "theme": "english",
+      "templateId": "english-length",
+      "prompt": "CAT有几个字母",
+      "answer": 3,
+      "wrong": [
+        1,
+        2,
+        4,
+        5
+      ],
+      "sourceFactId": "fact.english.words.0mh9c78",
+      "id": "mvp.english.0004",
+      "verified": true
+    },
+    {
+      "theme": "english",
+      "templateId": "english-missing-letter",
+      "prompt": "C_T",
+      "answer": "A",
+      "wrong": [
+        "C",
+        "D",
+        "B",
+        "Z",
+        "L"
+      ],
+      "sourceFactId": "fact.english.words.0mh9c78",
+      "id": "mvp.english.0005",
+      "verified": true
+    },
+    {
+      "theme": "english",
+      "templateId": "english-meaning",
+      "prompt": "DOG的中文",
+      "answer": "狗",
+      "wrong": [
+        "猫",
+        "鸟",
+        "斑马",
+        "狮子",
+        "老虎"
+      ],
+      "sourceFactId": "fact.english.words.0vb53uy",
+      "id": "mvp.english.0006",
+      "verified": true
+    },
+    {
+      "theme": "english",
+      "templateId": "english-category",
+      "prompt": "DOG所属类别",
+      "answer": "动物",
+      "wrong": [
+        "颜色",
+        "食物",
+        "动作",
+        "物品",
+        "自然"
+      ],
+      "sourceFactId": "fact.english.words.0vb53uy",
+      "id": "mvp.english.0007",
+      "verified": true
+    },
+    {
+      "theme": "english",
+      "templateId": "english-first-letter",
+      "prompt": "DOG的首字母",
+      "answer": "D",
+      "wrong": [
+        "A",
+        "B",
+        "C",
+        "E",
+        "F"
+      ],
+      "sourceFactId": "fact.english.words.0vb53uy",
+      "id": "mvp.english.0008",
+      "verified": true
+    },
+    {
+      "theme": "english",
+      "templateId": "english-length",
+      "prompt": "DOG有几个字母",
+      "answer": 3,
+      "wrong": [
+        1,
+        2,
+        4,
+        5
+      ],
+      "sourceFactId": "fact.english.words.0vb53uy",
+      "id": "mvp.english.0009",
+      "verified": true
+    },
+    {
+      "theme": "english",
+      "templateId": "english-missing-letter",
+      "prompt": "D_G",
+      "answer": "O",
+      "wrong": [
+        "C",
+        "D",
+        "B",
+        "Z",
+        "L"
+      ],
+      "sourceFactId": "fact.english.words.0vb53uy",
+      "id": "mvp.english.0010",
+      "verified": true
+    },
+    {
+      "theme": "english",
+      "templateId": "english-meaning",
+      "prompt": "BIRD的中文",
+      "answer": "鸟",
+      "wrong": [
+        "猫",
+        "狗",
+        "斑马",
+        "狮子",
+        "老虎"
+      ],
+      "sourceFactId": "fact.english.words.0rhzgmj",
+      "id": "mvp.english.0011",
+      "verified": true
+    },
+    {
+      "theme": "english",
+      "templateId": "english-category",
+      "prompt": "BIRD所属类别",
+      "answer": "动物",
+      "wrong": [
+        "颜色",
+        "食物",
+        "动作",
+        "物品",
+        "自然"
+      ],
+      "sourceFactId": "fact.english.words.0rhzgmj",
+      "id": "mvp.english.0012",
+      "verified": true
+    },
+    {
+      "theme": "english",
+      "templateId": "english-first-letter",
+      "prompt": "BIRD的首字母",
+      "answer": "B",
+      "wrong": [
+        "A",
+        "C",
+        "D",
+        "E",
+        "F"
+      ],
+      "sourceFactId": "fact.english.words.0rhzgmj",
+      "id": "mvp.english.0013",
+      "verified": true
+    },
+    {
+      "theme": "english",
+      "templateId": "english-length",
+      "prompt": "BIRD有几个字母",
+      "answer": 4,
+      "wrong": [
+        2,
+        3,
+        5,
+        6
+      ],
+      "sourceFactId": "fact.english.words.0rhzgmj",
+      "id": "mvp.english.0014",
+      "verified": true
+    },
+    {
+      "theme": "english",
+      "templateId": "english-missing-letter",
+      "prompt": "BI_D",
+      "answer": "R",
+      "wrong": [
+        "C",
+        "D",
+        "B",
+        "Z",
+        "L"
+      ],
+      "sourceFactId": "fact.english.words.0rhzgmj",
+      "id": "mvp.english.0015",
+      "verified": true
+    },
+    {
+      "theme": "english",
+      "templateId": "english-meaning",
+      "prompt": "ZEBRA的中文",
+      "answer": "斑马",
+      "wrong": [
+        "猫",
+        "狗",
+        "鸟",
+        "狮子",
+        "老虎"
+      ],
+      "sourceFactId": "fact.english.words.0iwt27k",
+      "id": "mvp.english.0016",
+      "verified": true
+    },
+    {
+      "theme": "english",
+      "templateId": "english-category",
+      "prompt": "ZEBRA所属类别",
+      "answer": "动物",
+      "wrong": [
+        "颜色",
+        "食物",
+        "动作",
+        "物品",
+        "自然"
+      ],
+      "sourceFactId": "fact.english.words.0iwt27k",
+      "id": "mvp.english.0017",
+      "verified": true
+    },
+    {
+      "theme": "english",
+      "templateId": "english-first-letter",
+      "prompt": "ZEBRA的首字母",
+      "answer": "Z",
+      "wrong": [
+        "A",
+        "B",
+        "C",
+        "D",
+        "E"
+      ],
+      "sourceFactId": "fact.english.words.0iwt27k",
+      "id": "mvp.english.0018",
+      "verified": true
+    },
+    {
+      "theme": "english",
+      "templateId": "english-length",
+      "prompt": "ZEBRA有几个字母",
+      "answer": 5,
+      "wrong": [
+        3,
+        4,
+        6,
+        7
+      ],
+      "sourceFactId": "fact.english.words.0iwt27k",
+      "id": "mvp.english.0019",
+      "verified": true
+    },
+    {
+      "theme": "english",
+      "templateId": "english-missing-letter",
+      "prompt": "ZE_RA",
+      "answer": "B",
+      "wrong": [
+        "C",
+        "D",
+        "Z",
+        "L",
+        "T"
+      ],
+      "sourceFactId": "fact.english.words.0iwt27k",
+      "id": "mvp.english.0020",
+      "verified": true
+    },
+    {
+      "theme": "english",
+      "templateId": "english-meaning",
+      "prompt": "LION的中文",
+      "answer": "狮子",
+      "wrong": [
+        "猫",
+        "狗",
+        "鸟",
+        "斑马",
+        "老虎"
+      ],
+      "sourceFactId": "fact.english.words.137n8si",
+      "id": "mvp.english.0021",
+      "verified": true
+    },
+    {
+      "theme": "english",
+      "templateId": "english-category",
+      "prompt": "LION所属类别",
+      "answer": "动物",
+      "wrong": [
+        "颜色",
+        "食物",
+        "动作",
+        "物品",
+        "自然"
+      ],
+      "sourceFactId": "fact.english.words.137n8si",
+      "id": "mvp.english.0022",
+      "verified": true
+    },
+    {
+      "theme": "english",
+      "templateId": "english-first-letter",
+      "prompt": "LION的首字母",
+      "answer": "L",
+      "wrong": [
+        "A",
+        "B",
+        "C",
+        "D",
+        "E"
+      ],
+      "sourceFactId": "fact.english.words.137n8si",
+      "id": "mvp.english.0023",
+      "verified": true
+    },
+    {
+      "theme": "english",
+      "templateId": "english-length",
+      "prompt": "LION有几个字母",
+      "answer": 4,
+      "wrong": [
+        2,
+        3,
+        5,
+        6
+      ],
+      "sourceFactId": "fact.english.words.137n8si",
+      "id": "mvp.english.0024",
+      "verified": true
+    },
+    {
+      "theme": "english",
+      "templateId": "english-missing-letter",
+      "prompt": "LI_N",
+      "answer": "O",
+      "wrong": [
+        "C",
+        "D",
+        "B",
+        "Z",
+        "L"
+      ],
+      "sourceFactId": "fact.english.words.137n8si",
+      "id": "mvp.english.0025",
+      "verified": true
+    },
+    {
+      "theme": "english",
+      "templateId": "english-meaning",
+      "prompt": "TIGER的中文",
+      "answer": "老虎",
+      "wrong": [
+        "猫",
+        "狗",
+        "鸟",
+        "斑马",
+        "狮子"
+      ],
+      "sourceFactId": "fact.english.words.0v3nkzj",
+      "id": "mvp.english.0026",
+      "verified": true
+    },
+    {
+      "theme": "english",
+      "templateId": "english-category",
+      "prompt": "TIGER所属类别",
+      "answer": "动物",
+      "wrong": [
+        "颜色",
+        "食物",
+        "动作",
+        "物品",
+        "自然"
+      ],
+      "sourceFactId": "fact.english.words.0v3nkzj",
+      "id": "mvp.english.0027",
+      "verified": true
+    },
+    {
+      "theme": "english",
+      "templateId": "english-first-letter",
+      "prompt": "TIGER的首字母",
+      "answer": "T",
+      "wrong": [
+        "A",
+        "B",
+        "C",
+        "D",
+        "E"
+      ],
+      "sourceFactId": "fact.english.words.0v3nkzj",
+      "id": "mvp.english.0028",
+      "verified": true
+    },
+    {
+      "theme": "english",
+      "templateId": "english-length",
+      "prompt": "TIGER有几个字母",
+      "answer": 5,
+      "wrong": [
+        3,
+        4,
+        6,
+        7
+      ],
+      "sourceFactId": "fact.english.words.0v3nkzj",
+      "id": "mvp.english.0029",
+      "verified": true
+    },
+    {
+      "theme": "english",
+      "templateId": "english-missing-letter",
+      "prompt": "TI_ER",
+      "answer": "G",
+      "wrong": [
+        "C",
+        "D",
+        "B",
+        "Z",
+        "L"
+      ],
+      "sourceFactId": "fact.english.words.0v3nkzj",
+      "id": "mvp.english.0030",
+      "verified": true
+    },
+    {
+      "theme": "english",
+      "templateId": "english-meaning",
+      "prompt": "HORSE的中文",
+      "answer": "马",
+      "wrong": [
+        "猫",
+        "狗",
+        "鸟",
+        "斑马",
+        "狮子"
+      ],
+      "sourceFactId": "fact.english.words.1a3yp9x",
+      "id": "mvp.english.0031",
+      "verified": true
+    },
+    {
+      "theme": "english",
+      "templateId": "english-category",
+      "prompt": "HORSE所属类别",
+      "answer": "动物",
+      "wrong": [
+        "颜色",
+        "食物",
+        "动作",
+        "物品",
+        "自然"
+      ],
+      "sourceFactId": "fact.english.words.1a3yp9x",
+      "id": "mvp.english.0032",
+      "verified": true
+    },
+    {
+      "theme": "english",
+      "templateId": "english-first-letter",
+      "prompt": "HORSE的首字母",
+      "answer": "H",
+      "wrong": [
+        "A",
+        "B",
+        "C",
+        "D",
+        "E"
+      ],
+      "sourceFactId": "fact.english.words.1a3yp9x",
+      "id": "mvp.english.0033",
+      "verified": true
+    },
+    {
+      "theme": "english",
+      "templateId": "english-length",
+      "prompt": "HORSE有几个字母",
+      "answer": 5,
+      "wrong": [
+        3,
+        4,
+        6,
+        7
+      ],
+      "sourceFactId": "fact.english.words.1a3yp9x",
+      "id": "mvp.english.0034",
+      "verified": true
+    },
+    {
+      "theme": "english",
+      "templateId": "english-missing-letter",
+      "prompt": "HO_SE",
+      "answer": "R",
+      "wrong": [
+        "C",
+        "D",
+        "B",
+        "Z",
+        "L"
+      ],
+      "sourceFactId": "fact.english.words.1a3yp9x",
+      "id": "mvp.english.0035",
+      "verified": true
+    },
+    {
+      "theme": "english",
+      "templateId": "english-meaning",
+      "prompt": "PANDA的中文",
+      "answer": "熊猫",
+      "wrong": [
+        "猫",
+        "狗",
+        "鸟",
+        "斑马",
+        "狮子"
+      ],
+      "sourceFactId": "fact.english.words.1ajfczs",
+      "id": "mvp.english.0036",
+      "verified": true
+    },
+    {
+      "theme": "english",
+      "templateId": "english-category",
+      "prompt": "PANDA所属类别",
+      "answer": "动物",
+      "wrong": [
+        "颜色",
+        "食物",
+        "动作",
+        "物品",
+        "自然"
+      ],
+      "sourceFactId": "fact.english.words.1ajfczs",
+      "id": "mvp.english.0037",
+      "verified": true
+    },
+    {
+      "theme": "english",
+      "templateId": "english-first-letter",
+      "prompt": "PANDA的首字母",
+      "answer": "P",
+      "wrong": [
+        "A",
+        "B",
+        "C",
+        "D",
+        "E"
+      ],
+      "sourceFactId": "fact.english.words.1ajfczs",
+      "id": "mvp.english.0038",
+      "verified": true
+    },
+    {
+      "theme": "english",
+      "templateId": "english-length",
+      "prompt": "PANDA有几个字母",
+      "answer": 5,
+      "wrong": [
+        3,
+        4,
+        6,
+        7
+      ],
+      "sourceFactId": "fact.english.words.1ajfczs",
+      "id": "mvp.english.0039",
+      "verified": true
+    },
+    {
+      "theme": "english",
+      "templateId": "english-missing-letter",
+      "prompt": "PA_DA",
+      "answer": "N",
+      "wrong": [
+        "C",
+        "D",
+        "B",
+        "Z",
+        "L"
+      ],
+      "sourceFactId": "fact.english.words.1ajfczs",
+      "id": "mvp.english.0040",
+      "verified": true
+    },
+    {
+      "theme": "english",
+      "templateId": "english-meaning",
+      "prompt": "RED的中文",
+      "answer": "红色",
+      "wrong": [
+        "猫",
+        "狗",
+        "鸟",
+        "斑马",
+        "狮子"
+      ],
+      "sourceFactId": "fact.english.words.1rxsl47",
+      "id": "mvp.english.0041",
+      "verified": true
+    },
+    {
+      "theme": "english",
+      "templateId": "english-category",
+      "prompt": "RED所属类别",
+      "answer": "颜色",
+      "wrong": [
+        "动物",
+        "食物",
+        "动作",
+        "物品",
+        "自然"
+      ],
+      "sourceFactId": "fact.english.words.1rxsl47",
+      "id": "mvp.english.0042",
+      "verified": true
+    },
+    {
+      "theme": "english",
+      "templateId": "english-first-letter",
+      "prompt": "RED的首字母",
+      "answer": "R",
+      "wrong": [
+        "A",
+        "B",
+        "C",
+        "D",
+        "E"
+      ],
+      "sourceFactId": "fact.english.words.1rxsl47",
+      "id": "mvp.english.0043",
+      "verified": true
+    },
+    {
+      "theme": "english",
+      "templateId": "english-length",
+      "prompt": "RED有几个字母",
+      "answer": 3,
+      "wrong": [
+        1,
+        2,
+        4,
+        5
+      ],
+      "sourceFactId": "fact.english.words.1rxsl47",
+      "id": "mvp.english.0044",
+      "verified": true
+    },
+    {
+      "theme": "english",
+      "templateId": "english-missing-letter",
+      "prompt": "R_D",
+      "answer": "E",
+      "wrong": [
+        "C",
+        "D",
+        "B",
+        "Z",
+        "L"
+      ],
+      "sourceFactId": "fact.english.words.1rxsl47",
+      "id": "mvp.english.0045",
+      "verified": true
+    },
+    {
+      "theme": "english",
+      "templateId": "english-meaning",
+      "prompt": "BLUE的中文",
+      "answer": "蓝色",
+      "wrong": [
+        "猫",
+        "狗",
+        "鸟",
+        "斑马",
+        "狮子"
+      ],
+      "sourceFactId": "fact.english.words.0via4bw",
+      "id": "mvp.english.0046",
+      "verified": true
+    },
+    {
+      "theme": "english",
+      "templateId": "english-category",
+      "prompt": "BLUE所属类别",
+      "answer": "颜色",
+      "wrong": [
+        "动物",
+        "食物",
+        "动作",
+        "物品",
+        "自然"
+      ],
+      "sourceFactId": "fact.english.words.0via4bw",
+      "id": "mvp.english.0047",
+      "verified": true
+    },
+    {
+      "theme": "english",
+      "templateId": "english-first-letter",
+      "prompt": "BLUE的首字母",
+      "answer": "B",
+      "wrong": [
+        "A",
+        "C",
+        "D",
+        "E",
+        "F"
+      ],
+      "sourceFactId": "fact.english.words.0via4bw",
+      "id": "mvp.english.0048",
+      "verified": true
+    },
+    {
+      "theme": "english",
+      "templateId": "english-length",
+      "prompt": "BLUE有几个字母",
+      "answer": 4,
+      "wrong": [
+        2,
+        3,
+        5,
+        6
+      ],
+      "sourceFactId": "fact.english.words.0via4bw",
+      "id": "mvp.english.0049",
+      "verified": true
+    },
+    {
+      "theme": "english",
+      "templateId": "english-missing-letter",
+      "prompt": "BL_E",
+      "answer": "U",
+      "wrong": [
+        "C",
+        "D",
+        "B",
+        "Z",
+        "L"
+      ],
+      "sourceFactId": "fact.english.words.0via4bw",
+      "id": "mvp.english.0050",
+      "verified": true
+    },
+    {
+      "theme": "english",
+      "templateId": "english-meaning",
+      "prompt": "GREEN的中文",
+      "answer": "绿色",
+      "wrong": [
+        "猫",
+        "狗",
+        "鸟",
+        "斑马",
+        "狮子"
+      ],
+      "sourceFactId": "fact.english.words.0wak7kz",
+      "id": "mvp.english.0051",
+      "verified": true
+    },
+    {
+      "theme": "english",
+      "templateId": "english-category",
+      "prompt": "GREEN所属类别",
+      "answer": "颜色",
+      "wrong": [
+        "动物",
+        "食物",
+        "动作",
+        "物品",
+        "自然"
+      ],
+      "sourceFactId": "fact.english.words.0wak7kz",
+      "id": "mvp.english.0052",
+      "verified": true
+    },
+    {
+      "theme": "english",
+      "templateId": "english-first-letter",
+      "prompt": "GREEN的首字母",
+      "answer": "G",
+      "wrong": [
+        "A",
+        "B",
+        "C",
+        "D",
+        "E"
+      ],
+      "sourceFactId": "fact.english.words.0wak7kz",
+      "id": "mvp.english.0053",
+      "verified": true
+    },
+    {
+      "theme": "english",
+      "templateId": "english-length",
+      "prompt": "GREEN有几个字母",
+      "answer": 5,
+      "wrong": [
+        3,
+        4,
+        6,
+        7
+      ],
+      "sourceFactId": "fact.english.words.0wak7kz",
+      "id": "mvp.english.0054",
+      "verified": true
+    },
+    {
+      "theme": "english",
+      "templateId": "english-missing-letter",
+      "prompt": "GR_EN",
+      "answer": "E",
+      "wrong": [
+        "C",
+        "D",
+        "B",
+        "Z",
+        "L"
+      ],
+      "sourceFactId": "fact.english.words.0wak7kz",
+      "id": "mvp.english.0055",
+      "verified": true
+    },
+    {
+      "theme": "english",
+      "templateId": "english-meaning",
+      "prompt": "BLACK的中文",
+      "answer": "黑色",
+      "wrong": [
+        "猫",
+        "狗",
+        "鸟",
+        "斑马",
+        "狮子"
+      ],
+      "sourceFactId": "fact.english.words.1af7c8z",
+      "id": "mvp.english.0056",
+      "verified": true
+    },
+    {
+      "theme": "english",
+      "templateId": "english-category",
+      "prompt": "BLACK所属类别",
+      "answer": "颜色",
+      "wrong": [
+        "动物",
+        "食物",
+        "动作",
+        "物品",
+        "自然"
+      ],
+      "sourceFactId": "fact.english.words.1af7c8z",
+      "id": "mvp.english.0057",
+      "verified": true
+    },
+    {
+      "theme": "english",
+      "templateId": "english-first-letter",
+      "prompt": "BLACK的首字母",
+      "answer": "B",
+      "wrong": [
+        "A",
+        "C",
+        "D",
+        "E",
+        "F"
+      ],
+      "sourceFactId": "fact.english.words.1af7c8z",
+      "id": "mvp.english.0058",
+      "verified": true
+    },
+    {
+      "theme": "english",
+      "templateId": "english-length",
+      "prompt": "BLACK有几个字母",
+      "answer": 5,
+      "wrong": [
+        3,
+        4,
+        6,
+        7
+      ],
+      "sourceFactId": "fact.english.words.1af7c8z",
+      "id": "mvp.english.0059",
+      "verified": true
+    },
+    {
+      "theme": "english",
+      "templateId": "english-missing-letter",
+      "prompt": "BL_CK",
+      "answer": "A",
+      "wrong": [
+        "C",
+        "D",
+        "B",
+        "Z",
+        "L"
+      ],
+      "sourceFactId": "fact.english.words.1af7c8z",
+      "id": "mvp.english.0060",
+      "verified": true
+    },
+    {
+      "theme": "english",
+      "templateId": "english-synonym",
+      "prompt": "QUICK的近义词",
+      "answer": "FAST",
+      "wrong": [
+        "SLOW",
+        "LATE",
+        "QUIET"
+      ],
+      "sourceFactId": "fact.english.synonyms.0beuttf",
+      "id": "mvp.english.1501",
+      "verified": true
+    },
+    {
+      "theme": "english",
+      "templateId": "english-synonym",
+      "prompt": "LARGE的近义词",
+      "answer": "BIG",
+      "wrong": [
+        "SMALL",
+        "THIN",
+        "SHORT"
+      ],
+      "sourceFactId": "fact.english.synonyms.1g76yd7",
+      "id": "mvp.english.1502",
+      "verified": true
+    },
+    {
+      "theme": "english",
+      "templateId": "english-synonym",
+      "prompt": "SMALL的近义词",
+      "answer": "LITTLE",
+      "wrong": [
+        "LARGE",
+        "LONG",
+        "WIDE"
+      ],
+      "sourceFactId": "fact.english.synonyms.0wazetv",
+      "id": "mvp.english.1503",
+      "verified": true
+    },
+    {
+      "theme": "english",
+      "templateId": "english-synonym",
+      "prompt": "BEGIN的近义词",
+      "answer": "START",
+      "wrong": [
+        "STOP",
+        "END",
+        "WAIT"
+      ],
+      "sourceFactId": "fact.english.synonyms.1qazt9t",
+      "id": "mvp.english.1504",
+      "verified": true
+    },
+    {
+      "theme": "english",
+      "templateId": "english-synonym",
+      "prompt": "SMART的近义词",
+      "answer": "CLEVER",
+      "wrong": [
+        "SLOW",
+        "WEAK",
+        "LOUD"
+      ],
+      "sourceFactId": "fact.english.synonyms.0zjx05h",
+      "id": "mvp.english.1505",
+      "verified": true
+    },
+    {
+      "theme": "english",
+      "templateId": "english-synonym",
+      "prompt": "HAPPY的近义词",
+      "answer": "GLAD",
+      "wrong": [
+        "SAD",
+        "ANGRY",
+        "TIRED"
+      ],
+      "sourceFactId": "fact.english.synonyms.1otpsea",
+      "id": "mvp.english.1506",
+      "verified": true
+    },
+    {
+      "theme": "english",
+      "templateId": "english-synonym",
+      "prompt": "QUIET的近义词",
+      "answer": "SILENT",
+      "wrong": [
+        "LOUD",
+        "FAST",
+        "BRIGHT"
+      ],
+      "sourceFactId": "fact.english.synonyms.0ibzrk4",
+      "id": "mvp.english.1507",
+      "verified": true
+    },
+    {
+      "theme": "english",
+      "templateId": "english-synonym",
+      "prompt": "FINISH的近义词",
+      "answer": "END",
+      "wrong": [
+        "BEGIN",
+        "OPEN",
+        "ENTER"
+      ],
+      "sourceFactId": "fact.english.synonyms.0bubk1n",
+      "id": "mvp.english.1508",
+      "verified": true
+    },
+    {
+      "theme": "english",
+      "templateId": "english-synonym",
+      "prompt": "BEAUTIFUL的近义词",
+      "answer": "PRETTY",
+      "wrong": [
+        "MAD",
+        "RIGHT",
+        "HARD"
+      ],
+      "sourceFactId": "fact.english.synonyms.1imgeqn",
+      "id": "mvp.english.1509",
+      "verified": true
+    },
+    {
+      "theme": "english",
+      "templateId": "english-synonym",
+      "prompt": "ANGRY的近义词",
+      "answer": "MAD",
+      "wrong": [
+        "PRETTY",
+        "RIGHT",
+        "HARD"
+      ],
+      "sourceFactId": "fact.english.synonyms.1iwg0fm",
+      "id": "mvp.english.1510",
+      "verified": true
+    },
+    {
+      "theme": "english",
+      "templateId": "english-synonym",
+      "prompt": "CORRECT的近义词",
+      "answer": "RIGHT",
+      "wrong": [
+        "PRETTY",
+        "MAD",
+        "HARD"
+      ],
+      "sourceFactId": "fact.english.synonyms.1j6fm4l",
+      "id": "mvp.english.1511",
+      "verified": true
+    },
+    {
+      "theme": "english",
+      "templateId": "english-synonym",
+      "prompt": "DIFFICULT的近义词",
+      "answer": "HARD",
+      "wrong": [
+        "PRETTY",
+        "MAD",
+        "RIGHT"
+      ],
+      "sourceFactId": "fact.english.synonyms.1h8ie9s",
+      "id": "mvp.english.1512",
+      "verified": true
+    },
+    {
+      "theme": "life",
+      "templateId": "life-use",
+      "prompt": "扫帚主要用于",
+      "answer": "清扫地面",
+      "wrong": [
+        "拖洗地面",
+        "吸走灰尘",
+        "收拢尘土",
+        "刮净玻璃",
+        "掸除浮尘"
+      ],
+      "sourceFactId": "fact.life.categories.0268fit",
+      "id": "mvp.life.0001",
+      "verified": true
+    },
+    {
+      "theme": "life",
+      "templateId": "life-category",
+      "prompt": "扫帚属于",
+      "answer": "清洁工具",
+      "wrong": [
+        "动物",
+        "颜色",
+        "食物",
+        "动作",
+        "物品"
+      ],
+      "sourceFactId": "fact.life.categories.0268fit",
+      "id": "mvp.life.0002",
+      "verified": true
+    },
+    {
+      "theme": "life",
+      "templateId": "life-use",
+      "prompt": "清扫地面会用到",
+      "answer": "扫帚",
+      "wrong": [
+        "拖把",
+        "吸尘器",
+        "簸箕",
+        "玻璃刮",
+        "鸡毛掸子"
+      ],
+      "sourceFactId": "fact.life.categories.0268fit",
+      "id": "mvp.life.0003",
+      "verified": true
+    },
+    {
+      "theme": "life",
+      "templateId": "life-use",
+      "prompt": "拖把主要用于",
+      "answer": "拖洗地面",
+      "wrong": [
+        "清扫地面",
+        "吸走灰尘",
+        "收拢尘土",
+        "刮净玻璃",
+        "掸除浮尘"
+      ],
+      "sourceFactId": "fact.life.categories.0wy55c4",
+      "id": "mvp.life.0004",
+      "verified": true
+    },
+    {
+      "theme": "life",
+      "templateId": "life-category",
+      "prompt": "拖把属于",
+      "answer": "清洁工具",
+      "wrong": [
+        "动物",
+        "颜色",
+        "食物",
+        "动作",
+        "物品"
+      ],
+      "sourceFactId": "fact.life.categories.0wy55c4",
+      "id": "mvp.life.0005",
+      "verified": true
+    },
+    {
+      "theme": "life",
+      "templateId": "life-use",
+      "prompt": "拖洗地面会用到",
+      "answer": "拖把",
+      "wrong": [
+        "扫帚",
+        "吸尘器",
+        "簸箕",
+        "玻璃刮",
+        "鸡毛掸子"
+      ],
+      "sourceFactId": "fact.life.categories.0wy55c4",
+      "id": "mvp.life.0006",
+      "verified": true
+    },
+    {
+      "theme": "life",
+      "templateId": "life-use",
+      "prompt": "吸尘器主要用于",
+      "answer": "吸走灰尘",
+      "wrong": [
+        "清扫地面",
+        "拖洗地面",
+        "收拢尘土",
+        "刮净玻璃",
+        "掸除浮尘"
+      ],
+      "sourceFactId": "fact.life.categories.1gmvn04",
+      "id": "mvp.life.0007",
+      "verified": true
+    },
+    {
+      "theme": "life",
+      "templateId": "life-category",
+      "prompt": "吸尘器属于",
+      "answer": "清洁工具",
+      "wrong": [
+        "动物",
+        "颜色",
+        "食物",
+        "动作",
+        "物品"
+      ],
+      "sourceFactId": "fact.life.categories.1gmvn04",
+      "id": "mvp.life.0008",
+      "verified": true
+    },
+    {
+      "theme": "life",
+      "templateId": "life-use",
+      "prompt": "吸走灰尘会用到",
+      "answer": "吸尘器",
+      "wrong": [
+        "扫帚",
+        "拖把",
+        "簸箕",
+        "玻璃刮",
+        "鸡毛掸子"
+      ],
+      "sourceFactId": "fact.life.categories.1gmvn04",
+      "id": "mvp.life.0009",
+      "verified": true
+    },
+    {
+      "theme": "life",
+      "templateId": "life-use",
+      "prompt": "簸箕主要用于",
+      "answer": "收拢尘土",
+      "wrong": [
+        "清扫地面",
+        "拖洗地面",
+        "吸走灰尘",
+        "刮净玻璃",
+        "掸除浮尘"
+      ],
+      "sourceFactId": "fact.life.categories.10gw6df",
+      "id": "mvp.life.0010",
+      "verified": true
+    },
+    {
+      "theme": "life",
+      "templateId": "life-category",
+      "prompt": "簸箕属于",
+      "answer": "清洁工具",
+      "wrong": [
+        "动物",
+        "颜色",
+        "食物",
+        "动作",
+        "物品"
+      ],
+      "sourceFactId": "fact.life.categories.10gw6df",
+      "id": "mvp.life.0011",
+      "verified": true
+    },
+    {
+      "theme": "life",
+      "templateId": "life-use",
+      "prompt": "收拢尘土会用到",
+      "answer": "簸箕",
+      "wrong": [
+        "扫帚",
+        "拖把",
+        "吸尘器",
+        "玻璃刮",
+        "鸡毛掸子"
+      ],
+      "sourceFactId": "fact.life.categories.10gw6df",
+      "id": "mvp.life.0012",
+      "verified": true
+    },
+    {
+      "theme": "life",
+      "templateId": "life-use",
+      "prompt": "玻璃刮主要用于",
+      "answer": "刮净玻璃",
+      "wrong": [
+        "清扫地面",
+        "拖洗地面",
+        "吸走灰尘",
+        "收拢尘土",
+        "掸除浮尘"
+      ],
+      "sourceFactId": "fact.life.categories.0g0bgm4",
+      "id": "mvp.life.0013",
+      "verified": true
+    },
+    {
+      "theme": "life",
+      "templateId": "life-category",
+      "prompt": "玻璃刮属于",
+      "answer": "清洁工具",
+      "wrong": [
+        "动物",
+        "颜色",
+        "食物",
+        "动作",
+        "物品"
+      ],
+      "sourceFactId": "fact.life.categories.0g0bgm4",
+      "id": "mvp.life.0014",
+      "verified": true
+    },
+    {
+      "theme": "life",
+      "templateId": "life-use",
+      "prompt": "刮净玻璃会用到",
+      "answer": "玻璃刮",
+      "wrong": [
+        "扫帚",
+        "拖把",
+        "吸尘器",
+        "簸箕",
+        "鸡毛掸子"
+      ],
+      "sourceFactId": "fact.life.categories.0g0bgm4",
+      "id": "mvp.life.0015",
+      "verified": true
+    },
+    {
+      "theme": "life",
+      "templateId": "life-use",
+      "prompt": "鸡毛掸子主要用于",
+      "answer": "掸除浮尘",
+      "wrong": [
+        "清扫地面",
+        "拖洗地面",
+        "吸走灰尘",
+        "收拢尘土",
+        "刮净玻璃"
+      ],
+      "sourceFactId": "fact.life.categories.1g5wd2s",
+      "id": "mvp.life.0016",
+      "verified": true
+    },
+    {
+      "theme": "life",
+      "templateId": "life-category",
+      "prompt": "鸡毛掸子属于",
+      "answer": "清洁工具",
+      "wrong": [
+        "动物",
+        "颜色",
+        "食物",
+        "动作",
+        "物品"
+      ],
+      "sourceFactId": "fact.life.categories.1g5wd2s",
+      "id": "mvp.life.0017",
+      "verified": true
+    },
+    {
+      "theme": "life",
+      "templateId": "life-use",
+      "prompt": "掸除浮尘会用到",
+      "answer": "鸡毛掸子",
+      "wrong": [
+        "扫帚",
+        "拖把",
+        "吸尘器",
+        "簸箕",
+        "玻璃刮"
+      ],
+      "sourceFactId": "fact.life.categories.1g5wd2s",
+      "id": "mvp.life.0018",
+      "verified": true
+    },
+    {
+      "theme": "life",
+      "templateId": "life-category",
+      "prompt": "炒锅属于",
+      "answer": "厨房用品",
+      "wrong": [
+        "动物",
+        "颜色",
+        "食物",
+        "动作",
+        "物品"
+      ],
+      "sourceFactId": "fact.life.categories.0ggvllh",
+      "id": "mvp.life.0020",
+      "verified": true
+    },
+    {
+      "theme": "life",
+      "templateId": "life-category",
+      "prompt": "筷子属于",
+      "answer": "厨房用品",
+      "wrong": [
+        "动物",
+        "颜色",
+        "食物",
+        "动作",
+        "物品"
+      ],
+      "sourceFactId": "fact.life.categories.0hc3f1n",
+      "id": "mvp.life.0023",
+      "verified": true
+    },
+    {
+      "theme": "life",
+      "templateId": "life-category",
+      "prompt": "漏勺属于",
+      "answer": "厨房用品",
+      "wrong": [
+        "动物",
+        "颜色",
+        "食物",
+        "动作",
+        "物品"
+      ],
+      "sourceFactId": "fact.life.categories.1fzarmp",
+      "id": "mvp.life.0026",
+      "verified": true
+    },
+    {
+      "theme": "life",
+      "templateId": "life-category",
+      "prompt": "砧板属于",
+      "answer": "厨房用品",
+      "wrong": [
+        "动物",
+        "颜色",
+        "食物",
+        "动作",
+        "物品"
+      ],
+      "sourceFactId": "fact.life.categories.0rfaw8y",
+      "id": "mvp.life.0029",
+      "verified": true
+    },
+    {
+      "theme": "life",
+      "templateId": "life-category",
+      "prompt": "擀面杖属于",
+      "answer": "厨房用品",
+      "wrong": [
+        "动物",
+        "颜色",
+        "食物",
+        "动作",
+        "物品"
+      ],
+      "sourceFactId": "fact.life.categories.1nidqpw",
+      "id": "mvp.life.0032",
+      "verified": true
+    },
+    {
+      "theme": "life",
+      "templateId": "life-category",
+      "prompt": "蒸笼属于",
+      "answer": "厨房用品",
+      "wrong": [
+        "动物",
+        "颜色",
+        "食物",
+        "动作",
+        "物品"
+      ],
+      "sourceFactId": "fact.life.categories.0rj93u0",
+      "id": "mvp.life.0035",
+      "verified": true
+    },
+    {
+      "theme": "life",
+      "templateId": "life-place",
+      "prompt": "借阅图书通常去哪里",
+      "answer": "图书馆",
+      "wrong": [
+        "体育馆",
+        "菜市场",
+        "车站"
+      ],
+      "sourceFactId": "fact.life.places.1y54fln",
+      "id": "mvp.life.0376",
+      "verified": true
+    },
+    {
+      "theme": "life",
+      "templateId": "life-place",
+      "prompt": "寄送包裹通常去哪里",
+      "answer": "邮局",
+      "wrong": [
+        "药店",
+        "公园",
+        "影院"
+      ],
+      "sourceFactId": "fact.life.places.0axqmg5",
+      "id": "mvp.life.0377",
+      "verified": true
+    },
+    {
+      "theme": "life",
+      "templateId": "life-place",
+      "prompt": "购买常用药通常去哪里",
+      "answer": "药店",
+      "wrong": [
+        "书店",
+        "银行",
+        "车站"
+      ],
+      "sourceFactId": "fact.life.places.09y3mmm",
+      "id": "mvp.life.0378",
+      "verified": true
+    },
+    {
+      "theme": "life",
+      "templateId": "life-place",
+      "prompt": "乘坐火车通常去哪里",
+      "answer": "火车站",
+      "wrong": [
+        "码头",
+        "超市",
+        "医院"
+      ],
+      "sourceFactId": "fact.life.places.1f91szw",
+      "id": "mvp.life.0379",
+      "verified": true
+    },
+    {
+      "theme": "life",
+      "templateId": "life-place",
+      "prompt": "学习游泳通常去哪里",
+      "answer": "游泳馆",
+      "wrong": [
+        "图书馆",
+        "博物馆",
+        "音乐厅"
+      ],
+      "sourceFactId": "fact.life.places.0ok78ju",
+      "id": "mvp.life.0380",
+      "verified": true
+    },
+    {
+      "theme": "life",
+      "templateId": "life-place",
+      "prompt": "参观历史文物通常去哪里",
+      "answer": "博物馆",
+      "wrong": [
+        "体育馆",
+        "邮局",
+        "餐厅"
+      ],
+      "sourceFactId": "fact.life.places.0v0p7ir",
+      "id": "mvp.life.0381",
+      "verified": true
+    },
+    {
+      "theme": "life",
+      "templateId": "life-place",
+      "prompt": "办理存款通常去哪里",
+      "answer": "银行",
+      "wrong": [
+        "学校",
+        "剧院",
+        "公园"
+      ],
+      "sourceFactId": "fact.life.places.1hio8m0",
+      "id": "mvp.life.0382",
+      "verified": true
+    },
+    {
+      "theme": "life",
+      "templateId": "life-place",
+      "prompt": "身体不适需要就诊去哪里",
+      "answer": "医院",
+      "wrong": [
+        "商场",
+        "车站",
+        "书店"
+      ],
+      "sourceFactId": "fact.life.places.0guanop",
+      "id": "mvp.life.0383",
+      "verified": true
+    },
+    {
+      "theme": "life",
+      "templateId": "life-place",
+      "prompt": "购买日常食品通常去哪里",
+      "answer": "超市",
+      "wrong": [
+        "电影院",
+        "机场",
+        "码头"
+      ],
+      "sourceFactId": "fact.life.places.1kwik4p",
+      "id": "mvp.life.0384",
+      "verified": true
+    },
+    {
+      "theme": "life",
+      "templateId": "life-place",
+      "prompt": "观看电影通常去哪里",
+      "answer": "电影院",
+      "wrong": [
+        "超市",
+        "机场",
+        "码头"
+      ],
+      "sourceFactId": "fact.life.places.1k2jr1s",
+      "id": "mvp.life.0385",
+      "verified": true
+    },
+    {
+      "theme": "life",
+      "templateId": "life-place",
+      "prompt": "乘坐飞机通常去哪里",
+      "answer": "机场",
+      "wrong": [
+        "超市",
+        "电影院",
+        "码头"
+      ],
+      "sourceFactId": "fact.life.places.1kcjcqr",
+      "id": "mvp.life.0386",
+      "verified": true
+    },
+    {
+      "theme": "life",
+      "templateId": "life-place",
+      "prompt": "乘坐轮船通常去哪里",
+      "answer": "码头",
+      "wrong": [
+        "超市",
+        "电影院",
+        "机场"
+      ],
+      "sourceFactId": "fact.life.places.1lqhd7m",
+      "id": "mvp.life.0387",
+      "verified": true
+    },
+    {
+      "theme": "life",
+      "templateId": "life-public-sign",
+      "prompt": "“安全出口”标志指向",
+      "answer": "疏散出口",
+      "wrong": [
+        "收银台",
+        "停车位",
+        "卫生间"
+      ],
+      "sourceFactId": "fact.life.signs.15g0c7a",
+      "id": "mvp.life.0406",
+      "verified": true
+    },
+    {
+      "theme": "life",
+      "templateId": "life-public-sign",
+      "prompt": "划掉香烟的标志表示",
+      "answer": "禁止吸烟",
+      "wrong": [
+        "允许点火",
+        "出售香烟",
+        "注意通风"
+      ],
+      "sourceFactId": "fact.life.signs.08kl062",
+      "id": "mvp.life.0407",
+      "verified": true
+    },
+    {
+      "theme": "life",
+      "templateId": "life-public-sign",
+      "prompt": "斑马线标志提示",
+      "answer": "人行横道",
+      "wrong": [
+        "高速入口",
+        "禁止行人",
+        "停车区域"
+      ],
+      "sourceFactId": "fact.life.signs.0uhgjiv",
+      "id": "mvp.life.0408",
+      "verified": true
+    },
+    {
+      "theme": "life",
+      "templateId": "life-public-sign",
+      "prompt": "绿色十字标志通常表示",
+      "answer": "急救点",
+      "wrong": [
+        "餐饮区",
+        "售票处",
+        "行李处"
+      ],
+      "sourceFactId": "fact.life.signs.0lq9d97",
+      "id": "mvp.life.0409",
+      "verified": true
+    },
+    {
+      "theme": "life",
+      "templateId": "life-public-sign",
+      "prompt": "循环箭头标志通常表示",
+      "answer": "可回收",
+      "wrong": [
+        "有毒",
+        "易燃",
+        "不可触摸"
+      ],
+      "sourceFactId": "fact.life.signs.0vak89n",
+      "id": "mvp.life.0410",
+      "verified": true
+    },
+    {
+      "theme": "life",
+      "templateId": "life-public-sign",
+      "prompt": "“小心地滑”标志提醒",
+      "answer": "地面湿滑",
+      "wrong": [
+        "台阶损坏",
+        "高温区域",
+        "车辆经过"
+      ],
+      "sourceFactId": "fact.life.signs.0190m99",
+      "id": "mvp.life.0411",
+      "verified": true
+    },
+    {
+      "theme": "life",
+      "templateId": "life-public-sign",
+      "prompt": "红圈白横杠标志表示",
+      "answer": "禁止驶入",
+      "wrong": [
+        "直行",
+        "停车",
+        "减速"
+      ],
+      "sourceFactId": "fact.life.signs.08sjd9w",
+      "id": "mvp.life.0412",
+      "verified": true
+    },
+    {
+      "theme": "life",
+      "templateId": "life-public-sign",
+      "prompt": "轮椅图案标志表示",
+      "answer": "无障碍设施",
+      "wrong": [
+        "儿童区域",
+        "行李寄存",
+        "自行车道"
+      ],
+      "sourceFactId": "fact.life.signs.0ornk48",
+      "id": "mvp.life.0413",
+      "verified": true
+    },
+    {
+      "theme": "life",
+      "templateId": "life-public-sign",
+      "prompt": "红圈内写数字的交通标志表示",
+      "answer": "最高限速",
+      "wrong": [
+        "停车场",
+        "禁止鸣笛",
+        "禁止行人"
+      ],
+      "sourceFactId": "fact.life.signs.19w5shd",
+      "id": "mvp.life.0414",
+      "verified": true
+    },
+    {
+      "theme": "life",
+      "templateId": "life-public-sign",
+      "prompt": "蓝底白色P标志表示",
+      "answer": "停车场",
+      "wrong": [
+        "最高限速",
+        "禁止鸣笛",
+        "禁止行人"
+      ],
+      "sourceFactId": "fact.life.signs.1926zeg",
+      "id": "mvp.life.0415",
+      "verified": true
+    },
+    {
+      "theme": "life",
+      "templateId": "life-public-sign",
+      "prompt": "喇叭图案被斜线划掉表示",
+      "answer": "禁止鸣笛",
+      "wrong": [
+        "最高限速",
+        "停车场",
+        "禁止行人"
+      ],
+      "sourceFactId": "fact.life.signs.19c6l3f",
+      "id": "mvp.life.0416",
+      "verified": true
+    },
+    {
+      "theme": "life",
+      "templateId": "life-public-sign",
+      "prompt": "行人图案被红圈划掉表示",
+      "answer": "禁止行人",
+      "wrong": [
+        "最高限速",
+        "停车场",
+        "禁止鸣笛"
+      ],
+      "sourceFactId": "fact.life.signs.1aq4lka",
+      "id": "mvp.life.0417",
+      "verified": true
+    },
+    {
+      "theme": "life",
+      "templateId": "life-safe-behavior",
+      "prompt": "发现初起火灾应优先",
+      "answer": "报警并撤离",
+      "wrong": [
+        "乘电梯下楼",
+        "躲进衣柜",
+        "返回取物"
+      ],
+      "sourceFactId": "fact.life.safety.0y0x3ee",
+      "id": "mvp.life.0436",
+      "verified": true
+    },
+    {
+      "theme": "life",
+      "templateId": "life-safe-behavior",
+      "prompt": "过马路的正确做法",
+      "answer": "走人行横道",
+      "wrong": [
+        "低头看手机",
+        "翻越护栏",
+        "追逐车辆"
+      ],
+      "sourceFactId": "fact.life.safety.19d7ytc",
+      "id": "mvp.life.0437",
+      "verified": true
+    },
+    {
+      "theme": "life",
+      "templateId": "life-safe-behavior",
+      "prompt": "发现电线破损应当",
+      "answer": "远离并求助",
+      "wrong": [
+        "徒手触摸",
+        "用水冲洗",
+        "继续使用"
+      ],
+      "sourceFactId": "fact.life.safety.125v2vx",
+      "id": "mvp.life.0438",
+      "verified": true
+    },
+    {
+      "theme": "life",
+      "templateId": "life-safe-behavior",
+      "prompt": "闻到燃气味应当",
+      "answer": "关阀并通风",
+      "wrong": [
+        "打开电灯",
+        "点火检查",
+        "使用打火机"
+      ],
+      "sourceFactId": "fact.life.safety.0fr5rfv",
+      "id": "mvp.life.0439",
+      "verified": true
+    },
+    {
+      "theme": "life",
+      "templateId": "life-safe-behavior",
+      "prompt": "雷雨时较安全的做法",
+      "answer": "进入建筑物内",
+      "wrong": [
+        "躲在孤树下",
+        "站在高处",
+        "触摸金属杆"
+      ],
+      "sourceFactId": "fact.life.safety.1g7nlkr",
+      "id": "mvp.life.0440",
+      "verified": true
+    },
+    {
+      "theme": "life",
+      "templateId": "life-safe-behavior",
+      "prompt": "陌生人索要验证码时",
+      "answer": "拒绝并核实",
+      "wrong": [
+        "立即告知",
+        "转发给朋友",
+        "公开在群里"
+      ],
+      "sourceFactId": "fact.life.safety.0qjpzkg",
+      "id": "mvp.life.0441",
+      "verified": true
+    },
+    {
+      "theme": "life",
+      "templateId": "life-safe-behavior",
+      "prompt": "不会游泳者落水时同伴应",
+      "answer": "呼救找工具",
+      "wrong": [
+        "直接跳水",
+        "独自下水",
+        "转身离开"
+      ],
+      "sourceFactId": "fact.life.safety.00b46bx",
+      "id": "mvp.life.0442",
+      "verified": true
+    },
+    {
+      "theme": "life",
+      "templateId": "life-safe-behavior",
+      "prompt": "发现食品过期应当",
+      "answer": "停止食用",
+      "wrong": [
+        "加热后食用",
+        "继续保存",
+        "掩盖日期"
+      ],
+      "sourceFactId": "fact.life.safety.0yzpj1u",
+      "id": "mvp.life.0443",
+      "verified": true
+    },
+    {
+      "theme": "life",
+      "templateId": "life-safe-behavior",
+      "prompt": "乘车时正确的做法",
+      "answer": "系好安全带",
+      "wrong": [
+        "佩戴头盔",
+        "靠右慢行",
+        "刀尖朝下传递"
+      ],
+      "sourceFactId": "fact.life.safety.1hgayp9",
+      "id": "mvp.life.0444",
+      "verified": true
+    },
+    {
+      "theme": "life",
+      "templateId": "life-safe-behavior",
+      "prompt": "骑自行车时正确的做法",
+      "answer": "佩戴头盔",
+      "wrong": [
+        "系好安全带",
+        "靠右慢行",
+        "刀尖朝下传递"
+      ],
+      "sourceFactId": "fact.life.safety.1gmc5mc",
+      "id": "mvp.life.0445",
+      "verified": true
+    },
+    {
+      "theme": "life",
+      "templateId": "life-safe-behavior",
+      "prompt": "上下楼梯时正确的做法",
+      "answer": "靠右慢行",
+      "wrong": [
+        "系好安全带",
+        "佩戴头盔",
+        "刀尖朝下传递"
+      ],
+      "sourceFactId": "fact.life.safety.1gwbrbb",
+      "id": "mvp.life.0446",
+      "verified": true
+    },
+    {
+      "theme": "life",
+      "templateId": "life-safe-behavior",
+      "prompt": "使用剪刀时应当",
+      "answer": "刀尖朝下传递",
+      "wrong": [
+        "系好安全带",
+        "佩戴头盔",
+        "靠右慢行"
+      ],
+      "sourceFactId": "fact.life.safety.1g2cy8e",
+      "id": "mvp.life.0447",
+      "verified": true
+    },
+    {
+      "theme": "geography",
+      "templateId": "geography-capital",
+      "prompt": "中国首都",
+      "answer": "北京",
+      "wrong": [
+        "东京",
+        "首尔",
+        "曼谷",
+        "河内",
+        "新德里"
+      ],
+      "sourceFactId": "fact.geography.world.11lv11n",
+      "id": "mvp.geography.0001",
+      "verified": true
+    },
+    {
+      "theme": "geography",
+      "templateId": "geography-country",
+      "prompt": "北京在哪国",
+      "answer": "中国",
+      "wrong": [
+        "日本",
+        "韩国",
+        "泰国",
+        "越南",
+        "印度"
+      ],
+      "sourceFactId": "fact.geography.world.11lv11n",
+      "id": "mvp.geography.0002",
+      "verified": true
+    },
+    {
+      "theme": "geography",
+      "templateId": "geography-capital",
+      "prompt": "日本首都",
+      "answer": "东京",
+      "wrong": [
+        "北京",
+        "首尔",
+        "曼谷",
+        "河内",
+        "新德里"
+      ],
+      "sourceFactId": "fact.geography.world.13b6f3k",
+      "id": "mvp.geography.0003",
+      "verified": true
+    },
+    {
+      "theme": "geography",
+      "templateId": "geography-country",
+      "prompt": "东京在哪国",
+      "answer": "日本",
+      "wrong": [
+        "中国",
+        "韩国",
+        "泰国",
+        "越南",
+        "印度"
+      ],
+      "sourceFactId": "fact.geography.world.13b6f3k",
+      "id": "mvp.geography.0004",
+      "verified": true
+    },
+    {
+      "theme": "geography",
+      "templateId": "geography-capital",
+      "prompt": "韩国首都",
+      "answer": "首尔",
+      "wrong": [
+        "北京",
+        "东京",
+        "曼谷",
+        "河内",
+        "新德里"
+      ],
+      "sourceFactId": "fact.geography.world.1h1kk1b",
+      "id": "mvp.geography.0005",
+      "verified": true
+    },
+    {
+      "theme": "geography",
+      "templateId": "geography-country",
+      "prompt": "首尔在哪国",
+      "answer": "韩国",
+      "wrong": [
+        "中国",
+        "日本",
+        "泰国",
+        "越南",
+        "印度"
+      ],
+      "sourceFactId": "fact.geography.world.1h1kk1b",
+      "id": "mvp.geography.0006",
+      "verified": true
+    },
+    {
+      "theme": "geography",
+      "templateId": "geography-capital",
+      "prompt": "泰国首都",
+      "answer": "曼谷",
+      "wrong": [
+        "北京",
+        "东京",
+        "首尔",
+        "河内",
+        "新德里"
+      ],
+      "sourceFactId": "fact.geography.world.1mr808a",
+      "id": "mvp.geography.0007",
+      "verified": true
+    },
+    {
+      "theme": "geography",
+      "templateId": "geography-country",
+      "prompt": "曼谷在哪国",
+      "answer": "泰国",
+      "wrong": [
+        "中国",
+        "日本",
+        "韩国",
+        "越南",
+        "印度"
+      ],
+      "sourceFactId": "fact.geography.world.1mr808a",
+      "id": "mvp.geography.0008",
+      "verified": true
+    },
+    {
+      "theme": "geography",
+      "templateId": "geography-capital",
+      "prompt": "越南首都",
+      "answer": "河内",
+      "wrong": [
+        "北京",
+        "东京",
+        "首尔",
+        "曼谷",
+        "新德里"
+      ],
+      "sourceFactId": "fact.geography.world.0icqiiq",
+      "id": "mvp.geography.0009",
+      "verified": true
+    },
+    {
+      "theme": "geography",
+      "templateId": "geography-country",
+      "prompt": "河内在哪国",
+      "answer": "越南",
+      "wrong": [
+        "中国",
+        "日本",
+        "韩国",
+        "泰国",
+        "印度"
+      ],
+      "sourceFactId": "fact.geography.world.0icqiiq",
+      "id": "mvp.geography.0010",
+      "verified": true
+    },
+    {
+      "theme": "geography",
+      "templateId": "geography-capital",
+      "prompt": "印度首都",
+      "answer": "新德里",
+      "wrong": [
+        "北京",
+        "东京",
+        "首尔",
+        "曼谷",
+        "河内"
+      ],
+      "sourceFactId": "fact.geography.world.0pu3zzj",
+      "id": "mvp.geography.0011",
+      "verified": true
+    },
+    {
+      "theme": "geography",
+      "templateId": "geography-country",
+      "prompt": "新德里在哪国",
+      "answer": "印度",
+      "wrong": [
+        "中国",
+        "日本",
+        "韩国",
+        "泰国",
+        "越南"
+      ],
+      "sourceFactId": "fact.geography.world.0pu3zzj",
+      "id": "mvp.geography.0012",
+      "verified": true
+    },
+    {
+      "theme": "geography",
+      "templateId": "geography-capital",
+      "prompt": "新加坡首都",
+      "answer": "新加坡",
+      "wrong": [
+        "北京",
+        "东京",
+        "首尔",
+        "曼谷",
+        "河内"
+      ],
+      "sourceFactId": "fact.geography.world.0pn0oxk",
+      "id": "mvp.geography.0013",
+      "verified": true
+    },
+    {
+      "theme": "geography",
+      "templateId": "geography-country",
+      "prompt": "新加坡在哪国",
+      "answer": "新加坡",
+      "wrong": [
+        "中国",
+        "日本",
+        "韩国",
+        "泰国",
+        "越南"
+      ],
+      "sourceFactId": "fact.geography.world.0pn0oxk",
+      "id": "mvp.geography.0014",
+      "verified": true
+    },
+    {
+      "theme": "geography",
+      "templateId": "geography-capital",
+      "prompt": "法国首都",
+      "answer": "巴黎",
+      "wrong": [
+        "北京",
+        "东京",
+        "首尔",
+        "曼谷",
+        "河内"
+      ],
+      "sourceFactId": "fact.geography.world.1loo8lf",
+      "id": "mvp.geography.0015",
+      "verified": true
+    },
+    {
+      "theme": "geography",
+      "templateId": "geography-country",
+      "prompt": "巴黎在哪国",
+      "answer": "法国",
+      "wrong": [
+        "中国",
+        "日本",
+        "韩国",
+        "泰国",
+        "越南"
+      ],
+      "sourceFactId": "fact.geography.world.1loo8lf",
+      "id": "mvp.geography.0016",
+      "verified": true
+    },
+    {
+      "theme": "geography",
+      "templateId": "geography-capital",
+      "prompt": "英国首都",
+      "answer": "伦敦",
+      "wrong": [
+        "北京",
+        "东京",
+        "首尔",
+        "曼谷",
+        "河内"
+      ],
+      "sourceFactId": "fact.geography.world.12sus7b",
+      "id": "mvp.geography.0017",
+      "verified": true
+    },
+    {
+      "theme": "geography",
+      "templateId": "geography-country",
+      "prompt": "伦敦在哪国",
+      "answer": "英国",
+      "wrong": [
+        "中国",
+        "日本",
+        "韩国",
+        "泰国",
+        "越南"
+      ],
+      "sourceFactId": "fact.geography.world.12sus7b",
+      "id": "mvp.geography.0018",
+      "verified": true
+    },
+    {
+      "theme": "geography",
+      "templateId": "geography-capital",
+      "prompt": "德国首都",
+      "answer": "柏林",
+      "wrong": [
+        "北京",
+        "东京",
+        "首尔",
+        "曼谷",
+        "河内"
+      ],
+      "sourceFactId": "fact.geography.world.1dqk6ot",
+      "id": "mvp.geography.0019",
+      "verified": true
+    },
+    {
+      "theme": "geography",
+      "templateId": "geography-country",
+      "prompt": "柏林在哪国",
+      "answer": "德国",
+      "wrong": [
+        "中国",
+        "日本",
+        "韩国",
+        "泰国",
+        "越南"
+      ],
+      "sourceFactId": "fact.geography.world.1dqk6ot",
+      "id": "mvp.geography.0020",
+      "verified": true
+    },
+    {
+      "theme": "geography",
+      "templateId": "geography-capital",
+      "prompt": "意大利首都",
+      "answer": "罗马",
+      "wrong": [
+        "北京",
+        "东京",
+        "首尔",
+        "曼谷",
+        "河内"
+      ],
+      "sourceFactId": "fact.geography.world.0yh05d6",
+      "id": "mvp.geography.0021",
+      "verified": true
+    },
+    {
+      "theme": "geography",
+      "templateId": "geography-country",
+      "prompt": "罗马在哪国",
+      "answer": "意大利",
+      "wrong": [
+        "中国",
+        "日本",
+        "韩国",
+        "泰国",
+        "越南"
+      ],
+      "sourceFactId": "fact.geography.world.0yh05d6",
+      "id": "mvp.geography.0022",
+      "verified": true
+    },
+    {
+      "theme": "geography",
+      "templateId": "geography-capital",
+      "prompt": "西班牙首都",
+      "answer": "马德里",
+      "wrong": [
+        "北京",
+        "东京",
+        "首尔",
+        "曼谷",
+        "河内"
+      ],
+      "sourceFactId": "fact.geography.world.13pf5tg",
+      "id": "mvp.geography.0023",
+      "verified": true
+    },
+    {
+      "theme": "geography",
+      "templateId": "geography-country",
+      "prompt": "马德里在哪国",
+      "answer": "西班牙",
+      "wrong": [
+        "中国",
+        "日本",
+        "韩国",
+        "泰国",
+        "越南"
+      ],
+      "sourceFactId": "fact.geography.world.13pf5tg",
+      "id": "mvp.geography.0024",
+      "verified": true
+    },
+    {
+      "theme": "geography",
+      "templateId": "geography-continent",
+      "prompt": "中国位于哪个洲",
+      "answer": "亚洲",
+      "wrong": [
+        "欧洲",
+        "非洲",
+        "南美洲"
+      ],
+      "sourceFactId": "fact.geography.continent.0u35r8m",
+      "id": "mvp.geography.0121",
+      "verified": true
+    },
+    {
+      "theme": "geography",
+      "templateId": "geography-continent",
+      "prompt": "法国位于哪个洲",
+      "answer": "欧洲",
+      "wrong": [
+        "亚洲",
+        "非洲",
+        "北美洲"
+      ],
+      "sourceFactId": "fact.geography.continent.1hm2nrw",
+      "id": "mvp.geography.0122",
+      "verified": true
+    },
+    {
+      "theme": "geography",
+      "templateId": "geography-continent",
+      "prompt": "埃及主要位于哪个洲",
+      "answer": "非洲",
+      "wrong": [
+        "欧洲",
+        "亚洲",
+        "南美洲"
+      ],
+      "sourceFactId": "fact.geography.continent.1tjioai",
+      "id": "mvp.geography.0123",
+      "verified": true
+    },
+    {
+      "theme": "geography",
+      "templateId": "geography-continent",
+      "prompt": "巴西位于哪个洲",
+      "answer": "南美洲",
+      "wrong": [
+        "北美洲",
+        "非洲",
+        "欧洲"
+      ],
+      "sourceFactId": "fact.geography.continent.0kr4h2l",
+      "id": "mvp.geography.0124",
+      "verified": true
+    },
+    {
+      "theme": "geography",
+      "templateId": "geography-continent",
+      "prompt": "加拿大位于哪个洲",
+      "answer": "北美洲",
+      "wrong": [
+        "南美洲",
+        "欧洲",
+        "大洋洲"
+      ],
+      "sourceFactId": "fact.geography.continent.1iqc2bx",
+      "id": "mvp.geography.0125",
+      "verified": true
+    },
+    {
+      "theme": "geography",
+      "templateId": "geography-continent",
+      "prompt": "澳大利亚位于哪个洲",
+      "answer": "大洋洲",
+      "wrong": [
+        "亚洲",
+        "欧洲",
+        "非洲"
+      ],
+      "sourceFactId": "fact.geography.continent.1n1y5qf",
+      "id": "mvp.geography.0126",
+      "verified": true
+    },
+    {
+      "theme": "geography",
+      "templateId": "geography-continent",
+      "prompt": "印度位于哪个洲",
+      "answer": "亚洲",
+      "wrong": [
+        "欧洲",
+        "非洲",
+        "大洋洲"
+      ],
+      "sourceFactId": "fact.geography.continent.0frzgkm",
+      "id": "mvp.geography.0127",
+      "verified": true
+    },
+    {
+      "theme": "geography",
+      "templateId": "geography-continent",
+      "prompt": "阿根廷位于哪个洲",
+      "answer": "南美洲",
+      "wrong": [
+        "北美洲",
+        "亚洲",
+        "欧洲"
+      ],
+      "sourceFactId": "fact.geography.continent.08mgucs",
+      "id": "mvp.geography.0128",
+      "verified": true
+    },
+    {
+      "theme": "geography",
+      "templateId": "geography-continent",
+      "prompt": "韩国位于哪个洲",
+      "answer": "亚洲",
+      "wrong": [
+        "欧洲",
+        "非洲",
+        "北美洲"
+      ],
+      "sourceFactId": "fact.geography.continent.0jvc0h0",
+      "id": "mvp.geography.0129",
+      "verified": true
+    },
+    {
+      "theme": "geography",
+      "templateId": "geography-continent",
+      "prompt": "泰国位于哪个洲",
+      "answer": "亚洲",
+      "wrong": [
+        "欧洲",
+        "非洲",
+        "北美洲"
+      ],
+      "sourceFactId": "fact.geography.continent.0kpatjx",
+      "id": "mvp.geography.0130",
+      "verified": true
+    },
+    {
+      "theme": "geography",
+      "templateId": "geography-continent",
+      "prompt": "德国位于哪个洲",
+      "answer": "欧洲",
+      "wrong": [
+        "亚洲",
+        "非洲",
+        "北美洲"
+      ],
+      "sourceFactId": "fact.geography.continent.0kfb7uy",
+      "id": "mvp.geography.0131",
+      "verified": true
+    },
+    {
+      "theme": "geography",
+      "templateId": "geography-continent",
+      "prompt": "西班牙位于哪个洲",
+      "answer": "欧洲",
+      "wrong": [
+        "亚洲",
+        "非洲",
+        "北美洲"
+      ],
+      "sourceFactId": "fact.geography.continent.0j1d7e3",
+      "id": "mvp.geography.0132",
+      "verified": true
+    },
+    {
+      "theme": "geography",
+      "templateId": "geography-landmark",
+      "prompt": "长城位于哪个国家",
+      "answer": "中国",
+      "wrong": [
+        "日本",
+        "印度",
+        "埃及"
+      ],
+      "sourceFactId": "fact.geography.landmark.02zbkut",
+      "id": "mvp.geography.0151",
+      "verified": true
+    },
+    {
+      "theme": "geography",
+      "templateId": "geography-landmark",
+      "prompt": "埃菲尔铁塔位于哪个国家",
+      "answer": "法国",
+      "wrong": [
+        "英国",
+        "德国",
+        "意大利"
+      ],
+      "sourceFactId": "fact.geography.landmark.0gbbcce",
+      "id": "mvp.geography.0152",
+      "verified": true
+    },
+    {
+      "theme": "geography",
+      "templateId": "geography-landmark",
+      "prompt": "吉萨金字塔位于哪个国家",
+      "answer": "埃及",
+      "wrong": [
+        "希腊",
+        "土耳其",
+        "印度"
+      ],
+      "sourceFactId": "fact.geography.landmark.1ldn0hn",
+      "id": "mvp.geography.0153",
+      "verified": true
+    },
+    {
+      "theme": "geography",
+      "templateId": "geography-landmark",
+      "prompt": "自由女神像位于哪个国家",
+      "answer": "美国",
+      "wrong": [
+        "加拿大",
+        "法国",
+        "巴西"
+      ],
+      "sourceFactId": "fact.geography.landmark.1jtm34o",
+      "id": "mvp.geography.0154",
+      "verified": true
+    },
+    {
+      "theme": "geography",
+      "templateId": "geography-landmark",
+      "prompt": "悉尼歌剧院位于哪个国家",
+      "answer": "澳大利亚",
+      "wrong": [
+        "新西兰",
+        "英国",
+        "美国"
+      ],
+      "sourceFactId": "fact.geography.landmark.0vrsg6g",
+      "id": "mvp.geography.0155",
+      "verified": true
+    },
+    {
+      "theme": "geography",
+      "templateId": "geography-landmark",
+      "prompt": "斗兽场位于哪个国家",
+      "answer": "意大利",
+      "wrong": [
+        "西班牙",
+        "希腊",
+        "法国"
+      ],
+      "sourceFactId": "fact.geography.landmark.1i01kk5",
+      "id": "mvp.geography.0156",
+      "verified": true
+    },
+    {
+      "theme": "geography",
+      "templateId": "geography-landmark",
+      "prompt": "富士山位于哪个国家",
+      "answer": "日本",
+      "wrong": [
+        "韩国",
+        "中国",
+        "尼泊尔"
+      ],
+      "sourceFactId": "fact.geography.landmark.0jqmrid",
+      "id": "mvp.geography.0157",
+      "verified": true
+    },
+    {
+      "theme": "geography",
+      "templateId": "geography-landmark",
+      "prompt": "泰姬陵位于哪个国家",
+      "answer": "印度",
+      "wrong": [
+        "泰国",
+        "巴基斯坦",
+        "伊朗"
+      ],
+      "sourceFactId": "fact.geography.landmark.0if84gw",
+      "id": "mvp.geography.0158",
+      "verified": true
+    },
+    {
+      "theme": "geography",
+      "templateId": "geography-landmark",
+      "prompt": "大本钟位于哪个国家",
+      "answer": "英国",
+      "wrong": [
+        "德国",
+        "西班牙",
+        "希腊"
+      ],
+      "sourceFactId": "fact.geography.landmark.15k5bji",
+      "id": "mvp.geography.0159",
+      "verified": true
+    },
+    {
+      "theme": "geography",
+      "templateId": "geography-landmark",
+      "prompt": "勃兰登堡门位于哪个国家",
+      "answer": "德国",
+      "wrong": [
+        "英国",
+        "西班牙",
+        "希腊"
+      ],
+      "sourceFactId": "fact.geography.landmark.15a5puj",
+      "id": "mvp.geography.0160",
+      "verified": true
+    },
+    {
+      "theme": "geography",
+      "templateId": "geography-landmark",
+      "prompt": "圣家堂位于哪个国家",
+      "answer": "西班牙",
+      "wrong": [
+        "英国",
+        "德国",
+        "希腊"
+      ],
+      "sourceFactId": "fact.geography.landmark.150645k",
+      "id": "mvp.geography.0161",
+      "verified": true
+    },
+    {
+      "theme": "geography",
+      "templateId": "geography-landmark",
+      "prompt": "雅典卫城位于哪个国家",
+      "answer": "希腊",
+      "wrong": [
+        "英国",
+        "德国",
+        "西班牙"
+      ],
+      "sourceFactId": "fact.geography.landmark.16y3c0d",
+      "id": "mvp.geography.0162",
+      "verified": true
+    },
+    {
+      "theme": "geography",
+      "templateId": "geography-province-capital",
+      "prompt": "广东省省会",
+      "answer": "广州",
+      "wrong": [
+        "深圳",
+        "珠海",
+        "佛山"
+      ],
+      "sourceFactId": "fact.geography.province.0sd0nbp",
+      "id": "mvp.geography.0181",
+      "verified": true
+    },
+    {
+      "theme": "geography",
+      "templateId": "geography-province-capital",
+      "prompt": "四川省省会",
+      "answer": "成都",
+      "wrong": [
+        "重庆",
+        "绵阳",
+        "乐山"
+      ],
+      "sourceFactId": "fact.geography.province.0v39a1e",
+      "id": "mvp.geography.0182",
+      "verified": true
+    },
+    {
+      "theme": "geography",
+      "templateId": "geography-province-capital",
+      "prompt": "浙江省省会",
+      "answer": "杭州",
+      "wrong": [
+        "宁波",
+        "温州",
+        "绍兴"
+      ],
+      "sourceFactId": "fact.geography.province.1to75qd",
+      "id": "mvp.geography.0183",
+      "verified": true
+    },
+    {
+      "theme": "geography",
+      "templateId": "geography-province-capital",
+      "prompt": "江苏省省会",
+      "answer": "南京",
+      "wrong": [
+        "苏州",
+        "无锡",
+        "徐州"
+      ],
+      "sourceFactId": "fact.geography.province.1ivs7f0",
+      "id": "mvp.geography.0184",
+      "verified": true
+    },
+    {
+      "theme": "geography",
+      "templateId": "geography-province-capital",
+      "prompt": "湖北省省会",
+      "answer": "武汉",
+      "wrong": [
+        "宜昌",
+        "襄阳",
+        "荆州"
+      ],
+      "sourceFactId": "fact.geography.province.12rt10q",
+      "id": "mvp.geography.0185",
+      "verified": true
+    },
+    {
+      "theme": "geography",
+      "templateId": "geography-province-capital",
+      "prompt": "湖南省省会",
+      "answer": "长沙",
+      "wrong": [
+        "株洲",
+        "衡阳",
+        "岳阳"
+      ],
+      "sourceFactId": "fact.geography.province.1v3ttmj",
+      "id": "mvp.geography.0186",
+      "verified": true
+    },
+    {
+      "theme": "geography",
+      "templateId": "geography-province-capital",
+      "prompt": "山东省省会",
+      "answer": "济南",
+      "wrong": [
+        "青岛",
+        "烟台",
+        "潍坊"
+      ],
+      "sourceFactId": "fact.geography.province.0f1r5sj",
+      "id": "mvp.geography.0187",
+      "verified": true
+    },
+    {
+      "theme": "geography",
+      "templateId": "geography-province-capital",
+      "prompt": "福建省省会",
+      "answer": "福州",
+      "wrong": [
+        "厦门",
+        "泉州",
+        "漳州"
+      ],
+      "sourceFactId": "fact.geography.province.0qtnx6e",
+      "id": "mvp.geography.0188",
+      "verified": true
+    },
+    {
+      "theme": "geography",
+      "templateId": "geography-province-capital",
+      "prompt": "河北省省会",
+      "answer": "石家庄",
+      "wrong": [
+        "郑州",
+        "太原",
+        "西安"
+      ],
+      "sourceFactId": "fact.geography.province.15wydoe",
+      "id": "mvp.geography.0189",
+      "verified": true
+    },
+    {
+      "theme": "geography",
+      "templateId": "geography-province-capital",
+      "prompt": "河南省省会",
+      "answer": "郑州",
+      "wrong": [
+        "石家庄",
+        "太原",
+        "西安"
+      ],
+      "sourceFactId": "fact.geography.province.15myrzf",
+      "id": "mvp.geography.0190",
+      "verified": true
+    },
+    {
+      "theme": "geography",
+      "templateId": "geography-province-capital",
+      "prompt": "山西省省会",
+      "answer": "太原",
+      "wrong": [
+        "石家庄",
+        "郑州",
+        "西安"
+      ],
+      "sourceFactId": "fact.geography.province.15cz6ag",
+      "id": "mvp.geography.0191",
+      "verified": true
+    },
+    {
+      "theme": "geography",
+      "templateId": "geography-province-capital",
+      "prompt": "陕西省省会",
+      "answer": "西安",
+      "wrong": [
+        "石家庄",
+        "郑州",
+        "太原"
+      ],
+      "sourceFactId": "fact.geography.province.17awe59",
+      "id": "mvp.geography.0192",
+      "verified": true
+    },
+    {
+      "theme": "geography",
+      "templateId": "geography-relative-position",
+      "prompt": "日本位于中国的大致方向",
+      "answer": "东面",
+      "wrong": [
+        "西面",
+        "南面",
+        "北面"
+      ],
+      "sourceFactId": "fact.geography.position.1sqwsv4",
+      "id": "mvp.geography.0211",
+      "verified": true
+    },
+    {
+      "theme": "geography",
+      "templateId": "geography-relative-position",
+      "prompt": "蒙古位于中国的大致方向",
+      "answer": "北面",
+      "wrong": [
+        "南面",
+        "东面",
+        "西面"
+      ],
+      "sourceFactId": "fact.geography.position.0xptvem",
+      "id": "mvp.geography.0212",
+      "verified": true
+    },
+    {
+      "theme": "geography",
+      "templateId": "geography-relative-position",
+      "prompt": "印度位于中国的大致方向",
+      "answer": "西南",
+      "wrong": [
+        "东北",
+        "正东",
+        "东南"
+      ],
+      "sourceFactId": "fact.geography.position.1mufxbz",
+      "id": "mvp.geography.0213",
+      "verified": true
+    },
+    {
+      "theme": "geography",
+      "templateId": "geography-relative-position",
+      "prompt": "俄罗斯位于中国的大致方向",
+      "answer": "北面",
+      "wrong": [
+        "南面",
+        "东南",
+        "西南"
+      ],
+      "sourceFactId": "fact.geography.position.0stf16d",
+      "id": "mvp.geography.0214",
+      "verified": true
+    },
+    {
+      "theme": "geography",
+      "templateId": "geography-relative-position",
+      "prompt": "韩国位于中国的大致方向",
+      "answer": "东面",
+      "wrong": [
+        "西面",
+        "南面",
+        "西北"
+      ],
+      "sourceFactId": "fact.geography.position.0jbqhee",
+      "id": "mvp.geography.0215",
+      "verified": true
+    },
+    {
+      "theme": "geography",
+      "templateId": "geography-relative-position",
+      "prompt": "越南位于中国的大致方向",
+      "answer": "南面",
+      "wrong": [
+        "北面",
+        "东面",
+        "西北"
+      ],
+      "sourceFactId": "fact.geography.position.1qa2j1k",
+      "id": "mvp.geography.0216",
+      "verified": true
+    },
+    {
+      "theme": "geography",
+      "templateId": "geography-relative-position",
+      "prompt": "尼泊尔位于中国的大致方向",
+      "answer": "西南",
+      "wrong": [
+        "东北",
+        "东南",
+        "正东"
+      ],
+      "sourceFactId": "fact.geography.position.1ott76e",
+      "id": "mvp.geography.0217",
+      "verified": true
+    },
+    {
+      "theme": "geography",
+      "templateId": "geography-relative-position",
+      "prompt": "菲律宾位于中国的大致方向",
+      "answer": "东南",
+      "wrong": [
+        "西北",
+        "东北",
+        "正西"
+      ],
+      "sourceFactId": "fact.geography.position.1fkmwhb",
+      "id": "mvp.geography.0218",
+      "verified": true
+    },
+    {
+      "theme": "geography",
+      "templateId": "geography-relative-position",
+      "prompt": "北京位于广州的大致方向",
+      "answer": "北面",
+      "wrong": [
+        "南面",
+        "东面",
+        "西面"
+      ],
+      "sourceFactId": "fact.geography.position.14fto9r",
+      "id": "mvp.geography.0219",
+      "verified": true
+    },
+    {
+      "theme": "geography",
+      "templateId": "geography-relative-position",
+      "prompt": "广州位于北京的大致方向",
+      "answer": "南面",
+      "wrong": [
+        "北面",
+        "东面",
+        "西面"
+      ],
+      "sourceFactId": "fact.geography.position.14pt9yq",
+      "id": "mvp.geography.0220",
+      "verified": true
+    },
+    {
+      "theme": "geography",
+      "templateId": "geography-relative-position",
+      "prompt": "上海位于成都的大致方向",
+      "answer": "东面",
+      "wrong": [
+        "北面",
+        "南面",
+        "西面"
+      ],
+      "sourceFactId": "fact.geography.position.14zsvnp",
+      "id": "mvp.geography.0221",
+      "verified": true
+    },
+    {
+      "theme": "geography",
+      "templateId": "geography-relative-position",
+      "prompt": "成都位于上海的大致方向",
+      "answer": "西面",
+      "wrong": [
+        "北面",
+        "南面",
+        "东面"
+      ],
+      "sourceFactId": "fact.geography.position.131vnsw",
+      "id": "mvp.geography.0222",
+      "verified": true
+    },
+    {
+      "theme": "knowledge",
+      "templateId": "knowledge-science",
+      "prompt": "人体最大的器官",
+      "answer": "皮肤",
+      "wrong": [
+        "心脏",
+        "肝脏",
+        "肺"
+      ],
+      "sourceFactId": "fact.knowledge.science.core.14vbgm5",
+      "id": "mvp.knowledge.0001",
+      "verified": true
+    },
+    {
+      "theme": "knowledge",
+      "templateId": "knowledge-science",
+      "prompt": "血液呈红色主要因为",
+      "answer": "血红蛋白",
+      "wrong": [
+        "血小板",
+        "胆红素",
+        "葡萄糖"
+      ],
+      "sourceFactId": "fact.knowledge.science.core.19mo2dz",
+      "id": "mvp.knowledge.0002",
+      "verified": true
+    },
+    {
+      "theme": "knowledge",
+      "templateId": "knowledge-science",
+      "prompt": "运输氧气的血细胞",
+      "answer": "红细胞",
+      "wrong": [
+        "白细胞",
+        "血小板",
+        "干细胞"
+      ],
+      "sourceFactId": "fact.knowledge.science.core.138j0h5",
+      "id": "mvp.knowledge.0003",
+      "verified": true
+    },
+    {
+      "theme": "knowledge",
+      "templateId": "knowledge-science",
+      "prompt": "参与凝血的血细胞",
+      "answer": "血小板",
+      "wrong": [
+        "红细胞",
+        "白细胞",
+        "干细胞"
+      ],
+      "sourceFactId": "fact.knowledge.science.core.1ol667w",
+      "id": "mvp.knowledge.0004",
+      "verified": true
+    },
+    {
+      "theme": "knowledge",
+      "templateId": "knowledge-science",
+      "prompt": "抵御病菌的血细胞",
+      "answer": "白细胞",
+      "wrong": [
+        "红细胞",
+        "血小板",
+        "干细胞"
+      ],
+      "sourceFactId": "fact.knowledge.science.core.1bnyuwr",
+      "id": "mvp.knowledge.0005",
+      "verified": true
+    },
+    {
+      "theme": "knowledge",
+      "templateId": "knowledge-science",
+      "prompt": "人体气体交换器官",
+      "answer": "肺",
+      "wrong": [
+        "肝",
+        "肾",
+        "胃"
+      ],
+      "sourceFactId": "fact.knowledge.science.core.007nhfz",
+      "id": "mvp.knowledge.0006",
+      "verified": true
+    },
+    {
+      "theme": "knowledge",
+      "templateId": "knowledge-science",
+      "prompt": "分泌胰岛素的器官",
+      "answer": "胰腺",
+      "wrong": [
+        "肝脏",
+        "脾脏",
+        "肾脏"
+      ],
+      "sourceFactId": "fact.knowledge.science.core.13jtxr2",
+      "id": "mvp.knowledge.0007",
+      "verified": true
+    },
+    {
+      "theme": "knowledge",
+      "templateId": "knowledge-science",
+      "prompt": "成年人通常有几颗牙",
+      "answer": "32颗",
+      "wrong": [
+        "20颗",
+        "24颗",
+        "40颗"
+      ],
+      "sourceFactId": "fact.knowledge.science.core.0ofyixy",
+      "id": "mvp.knowledge.0008",
+      "verified": true
+    },
+    {
+      "theme": "knowledge",
+      "templateId": "knowledge-science",
+      "prompt": "声音无法传播的地方",
+      "answer": "真空",
+      "wrong": [
+        "水中",
+        "钢中",
+        "空气"
+      ],
+      "sourceFactId": "fact.knowledge.science.core.1sp243s",
+      "id": "mvp.knowledge.0009",
+      "verified": true
+    },
+    {
+      "theme": "knowledge",
+      "templateId": "knowledge-science",
+      "prompt": "标准气压下水的沸点",
+      "answer": "100℃",
+      "wrong": [
+        "0℃",
+        "50℃",
+        "120℃"
+      ],
+      "sourceFactId": "fact.knowledge.science.core.0kgt1af",
+      "id": "mvp.knowledge.0010",
+      "verified": true
+    },
+    {
+      "theme": "knowledge",
+      "templateId": "knowledge-science",
+      "prompt": "水的冰点",
+      "answer": "0℃",
+      "wrong": [
+        "10℃",
+        "50℃",
+        "100℃"
+      ],
+      "sourceFactId": "fact.knowledge.science.core.0d54999",
+      "id": "mvp.knowledge.0011",
+      "verified": true
+    },
+    {
+      "theme": "knowledge",
+      "templateId": "knowledge-science",
+      "prompt": "闪电先于雷声看到",
+      "answer": "光更快",
+      "wrong": [
+        "声更快",
+        "光更慢",
+        "声先发"
+      ],
+      "sourceFactId": "fact.knowledge.science.core.1fpredu",
+      "id": "mvp.knowledge.0012",
+      "verified": true
+    },
+    {
+      "theme": "knowledge",
+      "templateId": "knowledge-nature",
+      "prompt": "鲸鱼其实属于",
+      "answer": "哺乳动物",
+      "wrong": [
+        "鱼类",
+        "两栖类",
+        "软体类"
+      ],
+      "sourceFactId": "fact.knowledge.nature.core.08cgfzf",
+      "id": "mvp.knowledge.0117",
+      "verified": true
+    },
+    {
+      "theme": "knowledge",
+      "templateId": "knowledge-nature",
+      "prompt": "真正会飞的哺乳动物",
+      "answer": "蝙蝠",
+      "wrong": [
+        "鼯鼠",
+        "企鹅",
+        "鸵鸟"
+      ],
+      "sourceFactId": "fact.knowledge.nature.core.017f1dm",
+      "id": "mvp.knowledge.0118",
+      "verified": true
+    },
+    {
+      "theme": "knowledge",
+      "templateId": "knowledge-nature",
+      "prompt": "大熊猫的第六指",
+      "answer": "腕骨突起",
+      "wrong": [
+        "真正拇指",
+        "尾骨",
+        "爪鞘"
+      ],
+      "sourceFactId": "fact.knowledge.nature.core.1ri5qvq",
+      "id": "mvp.knowledge.0119",
+      "verified": true
+    },
+    {
+      "theme": "knowledge",
+      "templateId": "knowledge-nature",
+      "prompt": "章鱼有几颗心脏",
+      "answer": "3颗",
+      "wrong": [
+        "1颗",
+        "2颗",
+        "8颗"
+      ],
+      "sourceFactId": "fact.knowledge.nature.core.1inb5hz",
+      "id": "mvp.knowledge.0120",
+      "verified": true
+    },
+    {
+      "theme": "knowledge",
+      "templateId": "knowledge-nature",
+      "prompt": "骆驼驼峰主要储存",
+      "answer": "脂肪",
+      "wrong": [
+        "清水",
+        "空气",
+        "血液"
+      ],
+      "sourceFactId": "fact.knowledge.nature.core.0av45xl",
+      "id": "mvp.knowledge.0121",
+      "verified": true
+    },
+    {
+      "theme": "knowledge",
+      "templateId": "knowledge-nature",
+      "prompt": "野生企鹅主要分布",
+      "answer": "南半球",
+      "wrong": [
+        "北极圈",
+        "赤道",
+        "北半球"
+      ],
+      "sourceFactId": "fact.knowledge.nature.core.141kauh",
+      "id": "mvp.knowledge.0122",
+      "verified": true
+    },
+    {
+      "theme": "knowledge",
+      "templateId": "knowledge-nature",
+      "prompt": "考拉主要吃",
+      "answer": "桉树叶",
+      "wrong": [
+        "竹叶",
+        "松果",
+        "仙人掌"
+      ],
+      "sourceFactId": "fact.knowledge.nature.core.17c9w18",
+      "id": "mvp.knowledge.0123",
+      "verified": true
+    },
+    {
+      "theme": "knowledge",
+      "templateId": "knowledge-nature",
+      "prompt": "能倒着飞的鸟",
+      "answer": "蜂鸟",
+      "wrong": [
+        "麻雀",
+        "海鸥",
+        "孔雀"
+      ],
+      "sourceFactId": "fact.knowledge.nature.core.0ogk4po",
+      "id": "mvp.knowledge.0124",
+      "verified": true
+    },
+    {
+      "theme": "knowledge",
+      "templateId": "knowledge-nature",
+      "prompt": "鲨鱼的骨架主要是",
+      "answer": "软骨",
+      "wrong": [
+        "硬骨",
+        "甲壳",
+        "角质"
+      ],
+      "sourceFactId": "fact.knowledge.nature.core.0mtryhf",
+      "id": "mvp.knowledge.0125",
+      "verified": true
+    },
+    {
+      "theme": "knowledge",
+      "templateId": "knowledge-nature",
+      "prompt": "变色本领出名的动物",
+      "answer": "变色龙",
+      "wrong": [
+        "壁虎",
+        "鳄鱼",
+        "陆龟"
+      ],
+      "sourceFactId": "fact.knowledge.nature.core.0fml3ii",
+      "id": "mvp.knowledge.0126",
+      "verified": true
+    },
+    {
+      "theme": "knowledge",
+      "templateId": "knowledge-nature",
+      "prompt": "青蛙属于",
+      "answer": "两栖类",
+      "wrong": [
+        "爬行类",
+        "鱼类",
+        "鸟类"
+      ],
+      "sourceFactId": "fact.knowledge.nature.core.1wrwhul",
+      "id": "mvp.knowledge.0127",
+      "verified": true
+    },
+    {
+      "theme": "knowledge",
+      "templateId": "knowledge-nature",
+      "prompt": "鳄鱼属于",
+      "answer": "爬行类",
+      "wrong": [
+        "两栖类",
+        "鱼类",
+        "哺乳类"
+      ],
+      "sourceFactId": "fact.knowledge.nature.core.1gvb1x0",
+      "id": "mvp.knowledge.0128",
+      "verified": true
+    },
+    {
+      "theme": "knowledge",
+      "templateId": "knowledge-culture",
+      "prompt": "被称为诗仙",
+      "answer": "李白",
+      "wrong": [
+        "杜甫",
+        "白居易",
+        "王维"
+      ],
+      "sourceFactId": "fact.knowledge.culture.core.1t979c7",
+      "id": "mvp.knowledge.0233",
+      "verified": true
+    },
+    {
+      "theme": "knowledge",
+      "templateId": "knowledge-culture",
+      "prompt": "被称为诗圣",
+      "answer": "杜甫",
+      "wrong": [
+        "李白",
+        "李商隐",
+        "孟浩然"
+      ],
+      "sourceFactId": "fact.knowledge.culture.core.0c2rmzd",
+      "id": "mvp.knowledge.0234",
+      "verified": true
+    },
+    {
+      "theme": "knowledge",
+      "templateId": "knowledge-culture",
+      "prompt": "被称为书圣",
+      "answer": "王羲之",
+      "wrong": [
+        "颜真卿",
+        "柳公权",
+        "欧阳询"
+      ],
+      "sourceFactId": "fact.knowledge.culture.core.1dyfjfp",
+      "id": "mvp.knowledge.0235",
+      "verified": true
+    },
+    {
+      "theme": "knowledge",
+      "templateId": "knowledge-culture",
+      "prompt": "被称为画圣",
+      "answer": "吴道子",
+      "wrong": [
+        "顾恺之",
+        "阎立本",
+        "张择端"
+      ],
+      "sourceFactId": "fact.knowledge.culture.core.1770wbr",
+      "id": "mvp.knowledge.0236",
+      "verified": true
+    },
+    {
+      "theme": "knowledge",
+      "templateId": "knowledge-culture",
+      "prompt": "被称为茶圣",
+      "answer": "陆羽",
+      "wrong": [
+        "杜康",
+        "李时珍",
+        "沈括"
+      ],
+      "sourceFactId": "fact.knowledge.culture.core.0v4cugw",
+      "id": "mvp.knowledge.0237",
+      "verified": true
+    },
+    {
+      "theme": "knowledge",
+      "templateId": "knowledge-culture",
+      "prompt": "被称为药王",
+      "answer": "孙思邈",
+      "wrong": [
+        "张仲景",
+        "华佗",
+        "扁鹊"
+      ],
+      "sourceFactId": "fact.knowledge.culture.core.0ph1er6",
+      "id": "mvp.knowledge.0238",
+      "verified": true
+    },
+    {
+      "theme": "knowledge",
+      "templateId": "knowledge-culture",
+      "prompt": "《资治通鉴》作者",
+      "answer": "司马光",
+      "wrong": [
+        "司马迁",
+        "班固",
+        "沈括"
+      ],
+      "sourceFactId": "fact.knowledge.culture.core.1om3sfx",
+      "id": "mvp.knowledge.0239",
+      "verified": true
+    },
+    {
+      "theme": "knowledge",
+      "templateId": "knowledge-culture",
+      "prompt": "《本草纲目》作者",
+      "answer": "李时珍",
+      "wrong": [
+        "张仲景",
+        "华佗",
+        "孙思邈"
+      ],
+      "sourceFactId": "fact.knowledge.culture.core.000xrvl",
+      "id": "mvp.knowledge.0240",
+      "verified": true
+    },
+    {
+      "theme": "knowledge",
+      "templateId": "knowledge-culture",
+      "prompt": "《天工开物》作者",
+      "answer": "宋应星",
+      "wrong": [
+        "沈括",
+        "徐光启",
+        "郦道元"
+      ],
+      "sourceFactId": "fact.knowledge.culture.core.193327k",
+      "id": "mvp.knowledge.0241",
+      "verified": true
+    },
+    {
+      "theme": "knowledge",
+      "templateId": "knowledge-culture",
+      "prompt": "《梦溪笔谈》作者",
+      "answer": "沈括",
+      "wrong": [
+        "宋应星",
+        "徐光启",
+        "祖冲之"
+      ],
+      "sourceFactId": "fact.knowledge.culture.core.0zvolez",
+      "id": "mvp.knowledge.0242",
+      "verified": true
+    },
+    {
+      "theme": "knowledge",
+      "templateId": "knowledge-culture",
+      "prompt": "《兰亭序》作者",
+      "answer": "王羲之",
+      "wrong": [
+        "颜真卿",
+        "柳公权",
+        "怀素"
+      ],
+      "sourceFactId": "fact.knowledge.culture.core.1flmvrp",
+      "id": "mvp.knowledge.0243",
+      "verified": true
+    },
+    {
+      "theme": "knowledge",
+      "templateId": "knowledge-culture",
+      "prompt": "《清明上河图》作者",
+      "answer": "张择端",
+      "wrong": [
+        "吴道子",
+        "顾恺之",
+        "阎立本"
+      ],
+      "sourceFactId": "fact.knowledge.culture.core.0iovp9x",
+      "id": "mvp.knowledge.0244",
+      "verified": true
+    },
+    {
+      "theme": "knowledge",
+      "templateId": "knowledge-civic",
+      "prompt": "我国首都",
+      "answer": "北京",
+      "wrong": [
+        "红色",
+        "天安门",
+        "聂耳"
+      ],
+      "sourceFactId": "fact.knowledge.civic.19quj6v",
+      "id": "mvp.knowledge.0349",
+      "verified": true
+    },
+    {
+      "theme": "knowledge",
+      "templateId": "knowledge-civic",
+      "prompt": "我国国旗底色",
+      "answer": "红色",
+      "wrong": [
+        "北京",
+        "天安门",
+        "聂耳"
+      ],
+      "sourceFactId": "fact.knowledge.civic.0j46qpy",
+      "id": "mvp.knowledge.0350",
+      "verified": true
+    },
+    {
+      "theme": "knowledge",
+      "templateId": "knowledge-civic",
+      "prompt": "国徽中心建筑",
+      "answer": "天安门",
+      "wrong": [
+        "北京",
+        "红色",
+        "聂耳"
+      ],
+      "sourceFactId": "fact.knowledge.civic.1xz9fuu",
+      "id": "mvp.knowledge.0351",
+      "verified": true
+    },
+    {
+      "theme": "knowledge",
+      "templateId": "knowledge-civic",
+      "prompt": "国歌曲作者",
+      "answer": "聂耳",
+      "wrong": [
+        "北京",
+        "红色",
+        "天安门"
+      ],
+      "sourceFactId": "fact.knowledge.civic.0yjd41g",
+      "id": "mvp.knowledge.0352",
+      "verified": true
+    },
+    {
+      "theme": "knowledge",
+      "templateId": "knowledge-civic",
+      "prompt": "国家根本法",
+      "answer": "宪法",
+      "wrong": [
+        "全国人大",
+        "国务院",
+        "人民"
+      ],
+      "sourceFactId": "fact.knowledge.civic.0622gap",
+      "id": "mvp.knowledge.0353",
+      "verified": true
+    },
+    {
+      "theme": "knowledge",
+      "templateId": "knowledge-civic",
+      "prompt": "最高权力机关",
+      "answer": "全国人大",
+      "wrong": [
+        "宪法",
+        "国务院",
+        "人民"
+      ],
+      "sourceFactId": "fact.knowledge.civic.1p6yx8e",
+      "id": "mvp.knowledge.0354",
+      "verified": true
+    },
+    {
+      "theme": "knowledge",
+      "templateId": "knowledge-civic",
+      "prompt": "最高行政机关",
+      "answer": "国务院",
+      "wrong": [
+        "宪法",
+        "全国人大",
+        "人民"
+      ],
+      "sourceFactId": "fact.knowledge.civic.063xdjv",
+      "id": "mvp.knowledge.0355",
+      "verified": true
+    },
+    {
+      "theme": "knowledge",
+      "templateId": "knowledge-civic",
+      "prompt": "国家权力属于",
+      "answer": "人民",
+      "wrong": [
+        "宪法",
+        "全国人大",
+        "国务院"
+      ],
+      "sourceFactId": "fact.knowledge.civic.0irif7z",
+      "id": "mvp.knowledge.0356",
+      "verified": true
+    },
+    {
+      "theme": "knowledge",
+      "templateId": "knowledge-civic",
+      "prompt": "行使国家立法权",
+      "answer": "全国人大",
+      "wrong": [
+        "国务院",
+        "法院",
+        "检察院"
+      ],
+      "sourceFactId": "fact.knowledge.civic.14f1daq",
+      "id": "mvp.knowledge.0357",
+      "verified": true
+    },
+    {
+      "theme": "knowledge",
+      "templateId": "knowledge-civic",
+      "prompt": "行政法规制定机关",
+      "answer": "国务院",
+      "wrong": [
+        "全国人大",
+        "法院",
+        "检察院"
+      ],
+      "sourceFactId": "fact.knowledge.civic.0x6gr9w",
+      "id": "mvp.knowledge.0358",
+      "verified": true
+    },
+    {
+      "theme": "knowledge",
+      "templateId": "knowledge-civic",
+      "prompt": "法律审判机关",
+      "answer": "法院",
+      "wrong": [
+        "全国人大",
+        "国务院",
+        "检察院"
+      ],
+      "sourceFactId": "fact.knowledge.civic.19s415q",
+      "id": "mvp.knowledge.0359",
+      "verified": true
+    },
+    {
+      "theme": "knowledge",
+      "templateId": "knowledge-civic",
+      "prompt": "法律监督机关",
+      "answer": "检察院",
+      "wrong": [
+        "全国人大",
+        "国务院",
+        "法院"
+      ],
+      "sourceFactId": "fact.knowledge.civic.1gi2sel",
+      "id": "mvp.knowledge.0360",
+      "verified": true
+    },
+    {
+      "theme": "knowledge",
+      "templateId": "knowledge-astronomy",
+      "prompt": "地球围绕哪颗恒星运行",
+      "answer": "太阳",
+      "wrong": [
+        "月球",
+        "火星",
+        "北极星"
+      ],
+      "sourceFactId": "fact.knowledge.astronomy.0q3761l",
+      "id": "mvp.knowledge.0405",
+      "verified": true
+    },
+    {
+      "theme": "knowledge",
+      "templateId": "knowledge-astronomy",
+      "prompt": "地球的天然卫星",
+      "answer": "月球",
+      "wrong": [
+        "金星",
+        "太阳",
+        "木星"
+      ],
+      "sourceFactId": "fact.knowledge.astronomy.1qccr07",
+      "id": "mvp.knowledge.0406",
+      "verified": true
+    },
+    {
+      "theme": "knowledge",
+      "templateId": "knowledge-astronomy",
+      "prompt": "常被称为红色星球的是",
+      "answer": "火星",
+      "wrong": [
+        "金星",
+        "水星",
+        "土星"
+      ],
+      "sourceFactId": "fact.knowledge.astronomy.057witp",
+      "id": "mvp.knowledge.0407",
+      "verified": true
+    },
+    {
+      "theme": "knowledge",
+      "templateId": "knowledge-astronomy",
+      "prompt": "太阳系体积最大的行星",
+      "answer": "木星",
+      "wrong": [
+        "地球",
+        "火星",
+        "海王星"
+      ],
+      "sourceFactId": "fact.knowledge.astronomy.0ot99xi",
+      "id": "mvp.knowledge.0408",
+      "verified": true
+    },
+    {
+      "theme": "knowledge",
+      "templateId": "knowledge-astronomy",
+      "prompt": "以明显光环著称的行星",
+      "answer": "土星",
+      "wrong": [
+        "水星",
+        "地球",
+        "火星"
+      ],
+      "sourceFactId": "fact.knowledge.astronomy.0a4rgws",
+      "id": "mvp.knowledge.0409",
+      "verified": true
+    },
+    {
+      "theme": "knowledge",
+      "templateId": "knowledge-astronomy",
+      "prompt": "昼夜交替主要由什么造成",
+      "answer": "地球自转",
+      "wrong": [
+        "地球公转",
+        "月球公转",
+        "太阳自转"
+      ],
+      "sourceFactId": "fact.knowledge.astronomy.02lhu8z",
+      "id": "mvp.knowledge.0410",
+      "verified": true
+    },
+    {
+      "theme": "knowledge",
+      "templateId": "knowledge-astronomy",
+      "prompt": "一年主要对应地球完成一次",
+      "answer": "绕太阳公转",
+      "wrong": [
+        "自转",
+        "绕月球公转",
+        "太阳公转"
+      ],
+      "sourceFactId": "fact.knowledge.astronomy.0lwp0dn",
+      "id": "mvp.knowledge.0411",
+      "verified": true
+    },
+    {
+      "theme": "knowledge",
+      "templateId": "knowledge-astronomy",
+      "prompt": "太阳系所在的星系",
+      "answer": "银河系",
+      "wrong": [
+        "仙女座星系",
+        "大麦哲伦云",
+        "猎户座"
+      ],
+      "sourceFactId": "fact.knowledge.astronomy.15j7e36",
+      "id": "mvp.knowledge.0412",
+      "verified": true
+    },
+    {
+      "theme": "knowledge",
+      "templateId": "knowledge-astronomy",
+      "prompt": "距离太阳最近的行星",
+      "answer": "水星",
+      "wrong": [
+        "金星",
+        "地球",
+        "海王星"
+      ],
+      "sourceFactId": "fact.knowledge.astronomy.12uec6x",
+      "id": "mvp.knowledge.0413",
+      "verified": true
+    },
+    {
+      "theme": "knowledge",
+      "templateId": "knowledge-astronomy",
+      "prompt": "太阳系最热的行星",
+      "answer": "金星",
+      "wrong": [
+        "水星",
+        "地球",
+        "海王星"
+      ],
+      "sourceFactId": "fact.knowledge.astronomy.120fj40",
+      "id": "mvp.knowledge.0414",
+      "verified": true
+    },
+    {
+      "theme": "knowledge",
+      "templateId": "knowledge-astronomy",
+      "prompt": "人类居住的行星",
+      "answer": "地球",
+      "wrong": [
+        "水星",
+        "金星",
+        "海王星"
+      ],
+      "sourceFactId": "fact.knowledge.astronomy.12af4sz",
+      "id": "mvp.knowledge.0415",
+      "verified": true
+    },
+    {
+      "theme": "knowledge",
+      "templateId": "knowledge-astronomy",
+      "prompt": "距离太阳最远的行星",
+      "answer": "海王星",
+      "wrong": [
+        "水星",
+        "金星",
+        "地球"
+      ],
+      "sourceFactId": "fact.knowledge.astronomy.13od59u",
+      "id": "mvp.knowledge.0416",
+      "verified": true
+    },
+    {
+      "theme": "knowledge",
+      "templateId": "knowledge-biology",
+      "prompt": "绿色植物制造有机物主要靠",
+      "answer": "光合作用",
+      "wrong": [
+        "蒸腾作用",
+        "呼吸作用",
+        "消化作用"
+      ],
+      "sourceFactId": "fact.knowledge.biology.0u9ine4",
+      "id": "mvp.knowledge.0435",
+      "verified": true
+    },
+    {
+      "theme": "knowledge",
+      "templateId": "knowledge-biology",
+      "prompt": "人体进行气体交换的主要器官",
+      "answer": "肺",
+      "wrong": [
+        "胃",
+        "肾",
+        "肝"
+      ],
+      "sourceFactId": "fact.knowledge.biology.0zco5eg",
+      "id": "mvp.knowledge.0436",
+      "verified": true
+    },
+    {
+      "theme": "knowledge",
+      "templateId": "knowledge-biology",
+      "prompt": "推动血液循环的主要器官",
+      "answer": "心脏",
+      "wrong": [
+        "肺",
+        "胃",
+        "胰腺"
+      ],
+      "sourceFactId": "fact.knowledge.biology.1tw5y2u",
+      "id": "mvp.knowledge.0437",
+      "verified": true
+    },
+    {
+      "theme": "knowledge",
+      "templateId": "knowledge-biology",
+      "prompt": "植物吸收水分的主要部位",
+      "answer": "根",
+      "wrong": [
+        "花",
+        "果实",
+        "种子"
+      ],
+      "sourceFactId": "fact.knowledge.biology.0lj4qm5",
+      "id": "mvp.knowledge.0438",
+      "verified": true
+    },
+    {
+      "theme": "knowledge",
+      "templateId": "knowledge-biology",
+      "prompt": "鸟类身体表面通常覆盖",
+      "answer": "羽毛",
+      "wrong": [
+        "鳞片",
+        "毛发",
+        "甲壳"
+      ],
+      "sourceFactId": "fact.knowledge.biology.1d1xk61",
+      "id": "mvp.knowledge.0439",
+      "verified": true
+    },
+    {
+      "theme": "knowledge",
+      "templateId": "knowledge-biology",
+      "prompt": "鱼类主要依靠什么呼吸",
+      "answer": "鳃",
+      "wrong": [
+        "肺",
+        "皮毛",
+        "气孔"
+      ],
+      "sourceFactId": "fact.knowledge.biology.0hzq4hc",
+      "id": "mvp.knowledge.0440",
+      "verified": true
+    },
+    {
+      "theme": "knowledge",
+      "templateId": "knowledge-biology",
+      "prompt": "种子萌发通常首先需要",
+      "answer": "适量水分",
+      "wrong": [
+        "强烈阳光",
+        "大量肥料",
+        "低温冰冻"
+      ],
+      "sourceFactId": "fact.knowledge.biology.1x0o4un",
+      "id": "mvp.knowledge.0441",
+      "verified": true
+    },
+    {
+      "theme": "knowledge",
+      "templateId": "knowledge-biology",
+      "prompt": "门齿主要用于",
+      "answer": "切断食物",
+      "wrong": [
+        "磨碎食物",
+        "听声音",
+        "过滤空气"
+      ],
+      "sourceFactId": "fact.knowledge.biology.0azjqjc",
+      "id": "mvp.knowledge.0442",
+      "verified": true
+    },
+    {
+      "theme": "knowledge",
+      "templateId": "knowledge-biology",
+      "prompt": "人体最大的器官",
+      "answer": "皮肤",
+      "wrong": [
+        "大脑",
+        "小肠",
+        "耳"
+      ],
+      "sourceFactId": "fact.knowledge.biology.199upop",
+      "id": "mvp.knowledge.0443",
+      "verified": true
+    },
+    {
+      "theme": "knowledge",
+      "templateId": "knowledge-biology",
+      "prompt": "人体负责思考的主要器官",
+      "answer": "大脑",
+      "wrong": [
+        "皮肤",
+        "小肠",
+        "耳"
+      ],
+      "sourceFactId": "fact.knowledge.biology.18fvwls",
+      "id": "mvp.knowledge.0444",
+      "verified": true
+    },
+    {
+      "theme": "knowledge",
+      "templateId": "knowledge-biology",
+      "prompt": "人体消化食物的主要场所",
+      "answer": "小肠",
+      "wrong": [
+        "皮肤",
+        "大脑",
+        "耳"
+      ],
+      "sourceFactId": "fact.knowledge.biology.18pviar",
+      "id": "mvp.knowledge.0445",
+      "verified": true
+    },
+    {
+      "theme": "knowledge",
+      "templateId": "knowledge-biology",
+      "prompt": "血液中运输氧气的细胞",
+      "answer": "红细胞",
+      "wrong": [
+        "白细胞",
+        "血小板",
+        "神经细胞"
+      ],
+      "sourceFactId": "fact.knowledge.biology.1a3tirm",
+      "id": "mvp.knowledge.0446",
+      "verified": true
+    },
+    {
+      "theme": "knowledge",
+      "templateId": "knowledge-physics",
+      "prompt": "物体下落主要受到",
+      "answer": "重力",
+      "wrong": [
+        "浮力",
+        "磁力",
+        "弹力"
+      ],
+      "sourceFactId": "fact.knowledge.physics.14kl7pe",
+      "id": "mvp.knowledge.0465",
+      "verified": true
+    },
+    {
+      "theme": "knowledge",
+      "templateId": "knowledge-physics",
+      "prompt": "声音不能在什么环境传播",
+      "answer": "真空",
+      "wrong": [
+        "空气",
+        "水",
+        "钢铁"
+      ],
+      "sourceFactId": "fact.knowledge.physics.1urn1p7",
+      "id": "mvp.knowledge.0466",
+      "verified": true
+    },
+    {
+      "theme": "knowledge",
+      "templateId": "knowledge-physics",
+      "prompt": "影子的形成说明光通常",
+      "answer": "沿直线传播",
+      "wrong": [
+        "只会弯曲",
+        "没有方向",
+        "不能反射"
+      ],
+      "sourceFactId": "fact.knowledge.physics.17c5sg0",
+      "id": "mvp.knowledge.0467",
+      "verified": true
+    },
+    {
+      "theme": "knowledge",
+      "templateId": "knowledge-physics",
+      "prompt": "轮船能浮在水面主要受到",
+      "answer": "浮力",
+      "wrong": [
+        "磁力",
+        "电力",
+        "摩擦力"
+      ],
+      "sourceFactId": "fact.knowledge.physics.150izqu",
+      "id": "mvp.knowledge.0468",
+      "verified": true
+    },
+    {
+      "theme": "knowledge",
+      "templateId": "knowledge-physics",
+      "prompt": "鞋底花纹主要用于增大",
+      "answer": "摩擦力",
+      "wrong": [
+        "浮力",
+        "重力",
+        "弹力"
+      ],
+      "sourceFactId": "fact.knowledge.physics.0as93yu",
+      "id": "mvp.knowledge.0469",
+      "verified": true
+    },
+    {
+      "theme": "knowledge",
+      "templateId": "knowledge-physics",
+      "prompt": "使用开瓶器体现的简单机械",
+      "answer": "杠杆",
+      "wrong": [
+        "滑轮",
+        "斜面",
+        "齿轮"
+      ],
+      "sourceFactId": "fact.knowledge.physics.1debge8",
+      "id": "mvp.knowledge.0470",
+      "verified": true
+    },
+    {
+      "theme": "knowledge",
+      "templateId": "knowledge-physics",
+      "prompt": "平面镜成像利用光的",
+      "answer": "反射",
+      "wrong": [
+        "吸收",
+        "发声",
+        "导电"
+      ],
+      "sourceFactId": "fact.knowledge.physics.0yb7ju1",
+      "id": "mvp.knowledge.0471",
+      "verified": true
+    },
+    {
+      "theme": "knowledge",
+      "templateId": "knowledge-physics",
+      "prompt": "下列通常容易导电的是",
+      "answer": "铜线",
+      "wrong": [
+        "橡皮",
+        "玻璃",
+        "干木块"
+      ],
+      "sourceFactId": "fact.knowledge.physics.1n4p7kp",
+      "id": "mvp.knowledge.0472",
+      "verified": true
+    },
+    {
+      "theme": "knowledge",
+      "templateId": "knowledge-physics",
+      "prompt": "力的国际单位",
+      "answer": "牛顿",
+      "wrong": [
+        "千克",
+        "米",
+        "安培"
+      ],
+      "sourceFactId": "fact.knowledge.physics.0yjblcn",
+      "id": "mvp.knowledge.0473",
+      "verified": true
+    },
+    {
+      "theme": "knowledge",
+      "templateId": "knowledge-physics",
+      "prompt": "质量的国际单位",
+      "answer": "千克",
+      "wrong": [
+        "牛顿",
+        "米",
+        "安培"
+      ],
+      "sourceFactId": "fact.knowledge.physics.0ytb71m",
+      "id": "mvp.knowledge.0474",
+      "verified": true
+    },
+    {
+      "theme": "knowledge",
+      "templateId": "knowledge-physics",
+      "prompt": "长度的国际单位",
+      "answer": "米",
+      "wrong": [
+        "牛顿",
+        "千克",
+        "安培"
+      ],
+      "sourceFactId": "fact.knowledge.physics.0z3asql",
+      "id": "mvp.knowledge.0475",
+      "verified": true
+    },
+    {
+      "theme": "knowledge",
+      "templateId": "knowledge-physics",
+      "prompt": "电流的国际单位",
+      "answer": "安培",
+      "wrong": [
+        "牛顿",
+        "千克",
+        "米"
+      ],
+      "sourceFactId": "fact.knowledge.physics.0x5dkvs",
+      "id": "mvp.knowledge.0476",
+      "verified": true
+    },
+    {
+      "theme": "knowledge",
+      "templateId": "knowledge-technology",
+      "prompt": "计算机中负责运算控制的核心部件",
+      "answer": "CPU",
+      "wrong": [
+        "显示器",
+        "键盘",
+        "音箱"
+      ],
+      "sourceFactId": "fact.knowledge.technology.0g45flt",
+      "id": "mvp.knowledge.0495",
+      "verified": true
+    },
+    {
+      "theme": "knowledge",
+      "templateId": "knowledge-technology",
+      "prompt": "二维码主要用于",
+      "answer": "编码和读取信息",
+      "wrong": [
+        "测量温度",
+        "放大声音",
+        "净化空气"
+      ],
+      "sourceFactId": "fact.knowledge.technology.1uondf6",
+      "id": "mvp.knowledge.0496",
+      "verified": true
+    },
+    {
+      "theme": "knowledge",
+      "templateId": "knowledge-technology",
+      "prompt": "手机导航定位常使用",
+      "answer": "卫星定位",
+      "wrong": [
+        "显微镜",
+        "指南针磁化",
+        "声呐捕鱼"
+      ],
+      "sourceFactId": "fact.knowledge.technology.0zdzwbf",
+      "id": "mvp.knowledge.0497",
+      "verified": true
+    },
+    {
+      "theme": "knowledge",
+      "templateId": "knowledge-technology",
+      "prompt": "Wi-Fi主要提供",
+      "answer": "无线网络连接",
+      "wrong": [
+        "食品冷藏",
+        "机械动力",
+        "水质过滤"
+      ],
+      "sourceFactId": "fact.knowledge.technology.1qj0ur4",
+      "id": "mvp.knowledge.0498",
+      "verified": true
+    },
+    {
+      "theme": "knowledge",
+      "templateId": "knowledge-technology",
+      "prompt": "云存储通常把数据保存在",
+      "answer": "远程服务器",
+      "wrong": [
+        "纸张",
+        "电池",
+        "扬声器"
+      ],
+      "sourceFactId": "fact.knowledge.technology.03xymuu",
+      "id": "mvp.knowledge.0499",
+      "verified": true
+    },
+    {
+      "theme": "knowledge",
+      "templateId": "knowledge-technology",
+      "prompt": "更安全的密码做法是",
+      "answer": "使用不同的复杂密码",
+      "wrong": [
+        "所有网站相同",
+        "告诉陌生人",
+        "只用生日"
+      ],
+      "sourceFactId": "fact.knowledge.technology.1brooxc",
+      "id": "mvp.knowledge.0500",
+      "verified": true
+    },
+    {
+      "theme": "knowledge",
+      "templateId": "knowledge-technology",
+      "prompt": "及时安装安全更新有助于",
+      "answer": "修复已知漏洞",
+      "wrong": [
+        "耗尽电池",
+        "删除屏幕",
+        "关闭网络"
+      ],
+      "sourceFactId": "fact.knowledge.technology.0ct95i4",
+      "id": "mvp.knowledge.0501",
+      "verified": true
+    },
+    {
+      "theme": "knowledge",
+      "templateId": "knowledge-technology",
+      "prompt": "定期备份数据主要为了",
+      "answer": "防止意外丢失",
+      "wrong": [
+        "降低音量",
+        "加快充电",
+        "改变颜色"
+      ],
+      "sourceFactId": "fact.knowledge.technology.04173lj",
+      "id": "mvp.knowledge.0502",
+      "verified": true
+    },
+    {
+      "theme": "knowledge",
+      "templateId": "knowledge-technology",
+      "prompt": "RAM主要用于临时存放",
+      "answer": "运行数据",
+      "wrong": [
+        "永久文件",
+        "纸质文档",
+        "声音信号"
+      ],
+      "sourceFactId": "fact.knowledge.technology.0voi28y",
+      "id": "mvp.knowledge.0503",
+      "verified": true
+    },
+    {
+      "theme": "knowledge",
+      "templateId": "knowledge-technology",
+      "prompt": "SSD属于哪类设备",
+      "answer": "存储设备",
+      "wrong": [
+        "输入设备",
+        "输出设备",
+        "通信设备"
+      ],
+      "sourceFactId": "fact.knowledge.technology.0veigjz",
+      "id": "mvp.knowledge.0504",
+      "verified": true
+    },
+    {
+      "theme": "knowledge",
+      "templateId": "knowledge-technology",
+      "prompt": "显示器主要负责",
+      "answer": "输出图像",
+      "wrong": [
+        "管理软硬件资源",
+        "访问网页",
+        "检索网络信息"
+      ],
+      "sourceFactId": "fact.knowledge.technology.0v4iuv0",
+      "id": "mvp.knowledge.0505",
+      "verified": true
+    },
+    {
+      "theme": "knowledge",
+      "templateId": "knowledge-technology",
+      "prompt": "键盘主要属于",
+      "answer": "输入设备",
+      "wrong": [
+        "存储设备",
+        "输出设备",
+        "通信设备"
+      ],
+      "sourceFactId": "fact.knowledge.technology.0uuj961",
+      "id": "mvp.knowledge.0506",
+      "verified": true
+    },
+    {
+      "theme": "history",
+      "templateId": "history-modern-opening",
+      "prompt": "虎门销烟的主角",
+      "answer": "林则徐",
+      "wrong": [
+        "魏源",
+        "曾国藩",
+        "左宗棠"
+      ],
+      "sourceFactId": "fact.history.opening.1nid5b3",
+      "id": "mvp.history.0001",
+      "verified": true
+    },
+    {
+      "theme": "history",
+      "templateId": "history-modern-opening",
+      "prompt": "鸦片战争爆发于",
+      "answer": "1840",
+      "wrong": [
+        "1839",
+        "1860",
+        "1894"
+      ],
+      "sourceFactId": "fact.history.opening.1pv3e6t",
+      "id": "mvp.history.0002",
+      "verified": true
+    },
+    {
+      "theme": "history",
+      "templateId": "history-modern-opening",
+      "prompt": "近代首个不平等条约",
+      "answer": "南京条约",
+      "wrong": [
+        "北京条约",
+        "马关条约",
+        "辛丑条约"
+      ],
+      "sourceFactId": "fact.history.opening.0qhzy19",
+      "id": "mvp.history.0003",
+      "verified": true
+    },
+    {
+      "theme": "history",
+      "templateId": "history-modern-opening",
+      "prompt": "洋务运动的口号",
+      "answer": "自强求富",
+      "wrong": [
+        "师夷长技",
+        "实业救国",
+        "民主科学"
+      ],
+      "sourceFactId": "fact.history.opening.13tiuvp",
+      "id": "mvp.history.0004",
+      "verified": true
+    },
+    {
+      "theme": "history",
+      "templateId": "history-modern-opening",
+      "prompt": "北洋水师最终覆没于",
+      "answer": "威海卫",
+      "wrong": [
+        "旅顺",
+        "天津",
+        "厦门"
+      ],
+      "sourceFactId": "fact.history.opening.1x9gy9j",
+      "id": "mvp.history.0005",
+      "verified": true
+    },
+    {
+      "theme": "history",
+      "templateId": "history-modern-opening",
+      "prompt": "“公车上书”领衔者",
+      "answer": "康有为",
+      "wrong": [
+        "孙中山",
+        "陈独秀",
+        "李大钊"
+      ],
+      "sourceFactId": "fact.history.opening.0dtztnb",
+      "id": "mvp.history.0006",
+      "verified": true
+    },
+    {
+      "theme": "history",
+      "templateId": "history-modern-opening",
+      "prompt": "百日维新时的皇帝",
+      "answer": "光绪帝",
+      "wrong": [
+        "同治帝",
+        "宣统帝",
+        "道光帝"
+      ],
+      "sourceFactId": "fact.history.opening.1ocyf1a",
+      "id": "mvp.history.0007",
+      "verified": true
+    },
+    {
+      "theme": "history",
+      "templateId": "history-modern-opening",
+      "prompt": "辛亥革命首义之城",
+      "answer": "武昌",
+      "wrong": [
+        "广州",
+        "南京",
+        "长沙"
+      ],
+      "sourceFactId": "fact.history.opening.0bah453",
+      "id": "mvp.history.0008",
+      "verified": true
+    },
+    {
+      "theme": "history",
+      "templateId": "history-modern-opening",
+      "prompt": "民国临时政府设在",
+      "answer": "南京",
+      "wrong": [
+        "北京",
+        "上海",
+        "武汉"
+      ],
+      "sourceFactId": "fact.history.opening.1ehp131",
+      "id": "mvp.history.0009",
+      "verified": true
+    },
+    {
+      "theme": "history",
+      "templateId": "history-modern-opening",
+      "prompt": "清帝退位发生于",
+      "answer": "1912",
+      "wrong": [
+        "1898",
+        "1911",
+        "1919"
+      ],
+      "sourceFactId": "fact.history.opening.11qxoux",
+      "id": "mvp.history.0010",
+      "verified": true
+    },
+    {
+      "theme": "history",
+      "templateId": "history-modern-opening",
+      "prompt": "《海国图志》作者",
+      "answer": "魏源",
+      "wrong": [
+        "林则徐",
+        "严复",
+        "龚自珍"
+      ],
+      "sourceFactId": "fact.history.opening.03eyvqx",
+      "id": "mvp.history.0011",
+      "verified": true
+    },
+    {
+      "theme": "history",
+      "templateId": "history-modern-opening",
+      "prompt": "致远舰管带",
+      "answer": "邓世昌",
+      "wrong": [
+        "林永升",
+        "刘步蟾",
+        "丁汝昌"
+      ],
+      "sourceFactId": "fact.history.opening.0ajr4jt",
+      "id": "mvp.history.0012",
+      "verified": true
+    },
+    {
+      "theme": "history",
+      "templateId": "history-modern-awakening",
+      "prompt": "《新青年》创办人",
+      "answer": "陈独秀",
+      "wrong": [
+        "鲁迅",
+        "胡适",
+        "蔡元培"
+      ],
+      "sourceFactId": "fact.history.awakening.0le0yhj",
+      "id": "mvp.history.0031",
+      "verified": true
+    },
+    {
+      "theme": "history",
+      "templateId": "history-modern-awakening",
+      "prompt": "《狂人日记》作者",
+      "answer": "鲁迅",
+      "wrong": [
+        "郭沫若",
+        "老舍",
+        "巴金"
+      ],
+      "sourceFactId": "fact.history.awakening.0zfdvhe",
+      "id": "mvp.history.0032",
+      "verified": true
+    },
+    {
+      "theme": "history",
+      "templateId": "history-modern-awakening",
+      "prompt": "五四运动首先爆发在",
+      "answer": "北京",
+      "wrong": [
+        "上海",
+        "广州",
+        "天津"
+      ],
+      "sourceFactId": "fact.history.awakening.13al2bk",
+      "id": "mvp.history.0033",
+      "verified": true
+    },
+    {
+      "theme": "history",
+      "templateId": "history-modern-awakening",
+      "prompt": "五四运动导火索",
+      "answer": "巴黎和会",
+      "wrong": [
+        "武昌起义",
+        "九一八事变",
+        "北伐开始"
+      ],
+      "sourceFactId": "fact.history.awakening.0escgub",
+      "id": "mvp.history.0034",
+      "verified": true
+    },
+    {
+      "theme": "history",
+      "templateId": "history-modern-awakening",
+      "prompt": "中共一大最初开会城市",
+      "answer": "上海",
+      "wrong": [
+        "北京",
+        "广州",
+        "武汉"
+      ],
+      "sourceFactId": "fact.history.awakening.1vak6t2",
+      "id": "mvp.history.0035",
+      "verified": true
+    },
+    {
+      "theme": "history",
+      "templateId": "history-modern-awakening",
+      "prompt": "南湖红船所在城市",
+      "answer": "嘉兴",
+      "wrong": [
+        "杭州",
+        "绍兴",
+        "苏州"
+      ],
+      "sourceFactId": "fact.history.awakening.0yv45du",
+      "id": "mvp.history.0036",
+      "verified": true
+    },
+    {
+      "theme": "history",
+      "templateId": "history-modern-awakening",
+      "prompt": "首个农村革命根据地",
+      "answer": "井冈山",
+      "wrong": [
+        "延安",
+        "西柏坡",
+        "大别山"
+      ],
+      "sourceFactId": "fact.history.awakening.04ll20t",
+      "id": "mvp.history.0037",
+      "verified": true
+    },
+    {
+      "theme": "history",
+      "templateId": "history-modern-awakening",
+      "prompt": "中央红军长征集结出发地",
+      "answer": "江西于都",
+      "wrong": [
+        "陕西延安",
+        "贵州遵义",
+        "河北西柏坡"
+      ],
+      "sourceFactId": "fact.history.awakening.0nkdyww",
+      "id": "mvp.history.0038",
+      "verified": true
+    },
+    {
+      "theme": "history",
+      "templateId": "history-modern-awakening",
+      "prompt": "遵义会议所在省份",
+      "answer": "贵州",
+      "wrong": [
+        "四川",
+        "云南",
+        "湖南"
+      ],
+      "sourceFactId": "fact.history.awakening.0jl04vk",
+      "id": "mvp.history.0039",
+      "verified": true
+    },
+    {
+      "theme": "history",
+      "templateId": "history-modern-awakening",
+      "prompt": "“为中华崛起而读书”",
+      "answer": "周恩来",
+      "wrong": [
+        "蔡元培",
+        "闻一多",
+        "詹天佑"
+      ],
+      "sourceFactId": "fact.history.awakening.1kgd5yu",
+      "id": "mvp.history.0040",
+      "verified": true
+    },
+    {
+      "theme": "history",
+      "templateId": "history-modern-awakening",
+      "prompt": "戊戌变法发生于哪一年",
+      "answer": "1898年",
+      "wrong": [
+        "1911年",
+        "1919年",
+        "1921年"
+      ],
+      "sourceFactId": "fact.history.awakening.extra.1kt5t85",
+      "id": "mvp.history.0041",
+      "verified": true
+    },
+    {
+      "theme": "history",
+      "templateId": "history-modern-awakening",
+      "prompt": "戊戌变法又称",
+      "answer": "百日维新",
+      "wrong": [
+        "洋务运动",
+        "新文化运动",
+        "辛亥革命"
+      ],
+      "sourceFactId": "fact.history.awakening.extra.1jz7058",
+      "id": "mvp.history.0042",
+      "verified": true
+    },
+    {
+      "theme": "history",
+      "templateId": "history-modern-resistance",
+      "prompt": "九一八事变发生地",
+      "answer": "沈阳",
+      "wrong": [
+        "卢沟桥",
+        "上海",
+        "重庆"
+      ],
+      "sourceFactId": "fact.history.resistance.extra.0w7onmy",
+      "id": "mvp.history.0061",
+      "verified": true
+    },
+    {
+      "theme": "history",
+      "templateId": "history-modern-resistance",
+      "prompt": "卢沟桥事变发生在",
+      "answer": "北京",
+      "wrong": [
+        "天津",
+        "上海",
+        "西安"
+      ],
+      "sourceFactId": "fact.history.resistance.13x9e6b",
+      "id": "mvp.history.0062",
+      "verified": true
+    },
+    {
+      "theme": "history",
+      "templateId": "history-modern-resistance",
+      "prompt": "平型关大捷主力",
+      "answer": "八路军",
+      "wrong": [
+        "新四军",
+        "东北军",
+        "北洋军"
+      ],
+      "sourceFactId": "fact.history.resistance.09ufsd9",
+      "id": "mvp.history.0063",
+      "verified": true
+    },
+    {
+      "theme": "history",
+      "templateId": "history-modern-resistance",
+      "prompt": "台儿庄大捷指挥者",
+      "answer": "李宗仁",
+      "wrong": [
+        "彭德怀",
+        "杨靖宇",
+        "聂耳"
+      ],
+      "sourceFactId": "fact.history.resistance.extra.0tps8e7",
+      "id": "mvp.history.0064",
+      "verified": true
+    },
+    {
+      "theme": "history",
+      "templateId": "history-modern-resistance",
+      "prompt": "南京大屠杀发生于",
+      "answer": "1937",
+      "wrong": [
+        "1931",
+        "1935",
+        "1941"
+      ],
+      "sourceFactId": "fact.history.resistance.0xusz35",
+      "id": "mvp.history.0065",
+      "verified": true
+    },
+    {
+      "theme": "history",
+      "templateId": "history-modern-resistance",
+      "prompt": "地道战故事多发生在",
+      "answer": "冀中平原",
+      "wrong": [
+        "河西走廊",
+        "江南水乡",
+        "云贵高原"
+      ],
+      "sourceFactId": "fact.history.resistance.183rzr5",
+      "id": "mvp.history.0066",
+      "verified": true
+    },
+    {
+      "theme": "history",
+      "templateId": "history-modern-resistance",
+      "prompt": "百团大战主要指挥者",
+      "answer": "彭德怀",
+      "wrong": [
+        "李宗仁",
+        "杨靖宇",
+        "聂耳"
+      ],
+      "sourceFactId": "fact.history.resistance.extra.0xbq7wt",
+      "id": "mvp.history.0067",
+      "verified": true
+    },
+    {
+      "theme": "history",
+      "templateId": "history-modern-resistance",
+      "prompt": "“飞虎队”创建者",
+      "answer": "陈纳德",
+      "wrong": [
+        "白求恩",
+        "史迪威",
+        "柯棣华"
+      ],
+      "sourceFactId": "fact.history.resistance.1vocnlj",
+      "id": "mvp.history.0068",
+      "verified": true
+    },
+    {
+      "theme": "history",
+      "templateId": "history-modern-resistance",
+      "prompt": "日本宣布投降年份",
+      "answer": "1945",
+      "wrong": [
+        "1937",
+        "1943",
+        "1949"
+      ],
+      "sourceFactId": "fact.history.resistance.1inympc",
+      "id": "mvp.history.0069",
+      "verified": true
+    },
+    {
+      "theme": "history",
+      "templateId": "history-modern-resistance",
+      "prompt": "中国抗战胜利纪念日",
+      "answer": "9月3日",
+      "wrong": [
+        "7月7日",
+        "8月15日",
+        "9月18日"
+      ],
+      "sourceFactId": "fact.history.resistance.0kgbhs6",
+      "id": "mvp.history.0070",
+      "verified": true
+    },
+    {
+      "theme": "history",
+      "templateId": "history-modern-resistance",
+      "prompt": "九一八事变发生于哪一年",
+      "answer": "1931年",
+      "wrong": [
+        "1936年",
+        "1937年",
+        "1940年"
+      ],
+      "sourceFactId": "fact.history.resistance.extra.0vxp1xz",
+      "id": "mvp.history.0071",
+      "verified": true
+    },
+    {
+      "theme": "history",
+      "templateId": "history-modern-resistance",
+      "prompt": "西安事变发生于哪一年",
+      "answer": "1936年",
+      "wrong": [
+        "1931年",
+        "1937年",
+        "1940年"
+      ],
+      "sourceFactId": "fact.history.resistance.extra.0who9bx",
+      "id": "mvp.history.0072",
+      "verified": true
+    },
+    {
+      "theme": "history",
+      "templateId": "history-ancient",
+      "prompt": "秦统一后推行的文字",
+      "answer": "小篆",
+      "wrong": [
+        "甲骨文",
+        "楷书",
+        "行书"
+      ],
+      "sourceFactId": "fact.history.ancient.169u3o9",
+      "id": "mvp.history.0088",
+      "verified": true
+    },
+    {
+      "theme": "history",
+      "templateId": "history-ancient",
+      "prompt": "“凿空西域”的使者",
+      "answer": "张骞",
+      "wrong": [
+        "班超",
+        "苏武",
+        "甘英"
+      ],
+      "sourceFactId": "fact.history.ancient.0du6q5t",
+      "id": "mvp.history.0089",
+      "verified": true
+    },
+    {
+      "theme": "history",
+      "templateId": "history-ancient",
+      "prompt": "《史记》的作者",
+      "answer": "司马迁",
+      "wrong": [
+        "班固",
+        "司马光",
+        "陈寿"
+      ],
+      "sourceFactId": "fact.history.ancient.02d3kw4",
+      "id": "mvp.history.0090",
+      "verified": true
+    },
+    {
+      "theme": "history",
+      "templateId": "history-ancient",
+      "prompt": "“投笔从戎”的主角",
+      "answer": "班超",
+      "wrong": [
+        "霍去病",
+        "卫青",
+        "祖逖"
+      ],
+      "sourceFactId": "fact.history.ancient.0wzc1h2",
+      "id": "mvp.history.0091",
+      "verified": true
+    },
+    {
+      "theme": "history",
+      "templateId": "history-ancient",
+      "prompt": "《三国演义》草船借箭者",
+      "answer": "诸葛亮",
+      "wrong": [
+        "周瑜",
+        "鲁肃",
+        "司马懿"
+      ],
+      "sourceFactId": "fact.history.ancient.0um6vid",
+      "id": "mvp.history.0092",
+      "verified": true
+    },
+    {
+      "theme": "history",
+      "templateId": "history-ancient",
+      "prompt": "被称为“诗仙”",
+      "answer": "李白",
+      "wrong": [
+        "杜甫",
+        "白居易",
+        "王维"
+      ],
+      "sourceFactId": "fact.history.ancient.0ymszhs",
+      "id": "mvp.history.0093",
+      "verified": true
+    },
+    {
+      "theme": "history",
+      "templateId": "history-ancient",
+      "prompt": "玄奘取经前往古称",
+      "answer": "天竺",
+      "wrong": [
+        "大秦",
+        "安息",
+        "扶桑"
+      ],
+      "sourceFactId": "fact.history.ancient.0udi0gi",
+      "id": "mvp.history.0094",
+      "verified": true
+    },
+    {
+      "theme": "history",
+      "templateId": "history-ancient",
+      "prompt": "活字印刷术发明者",
+      "answer": "毕昇",
+      "wrong": [
+        "蔡伦",
+        "沈括",
+        "祖冲之"
+      ],
+      "sourceFactId": "fact.history.ancient.13sb7hd",
+      "id": "mvp.history.0095",
+      "verified": true
+    },
+    {
+      "theme": "history",
+      "templateId": "history-ancient",
+      "prompt": "郑和船队远航称为",
+      "answer": "下西洋",
+      "wrong": [
+        "通西域",
+        "渡东瀛",
+        "征漠北"
+      ],
+      "sourceFactId": "fact.history.ancient.1t5qa11",
+      "id": "mvp.history.0096",
+      "verified": true
+    },
+    {
+      "theme": "history",
+      "templateId": "history-ancient",
+      "prompt": "“杯酒释兵权”的皇帝",
+      "answer": "宋太祖",
+      "wrong": [
+        "唐太宗",
+        "汉武帝",
+        "明成祖"
+      ],
+      "sourceFactId": "fact.history.ancient.0pry47g",
+      "id": "mvp.history.0097",
+      "verified": true
+    },
+    {
+      "theme": "history",
+      "templateId": "history-ancient",
+      "prompt": "兵马俑所在城市",
+      "answer": "西安",
+      "wrong": [
+        "洛阳",
+        "开封",
+        "南京"
+      ],
+      "sourceFactId": "fact.history.ancient.1j3whrx",
+      "id": "mvp.history.0098",
+      "verified": true
+    },
+    {
+      "theme": "history",
+      "templateId": "history-ancient",
+      "prompt": "鸿门宴上舞剑的是",
+      "answer": "项庄",
+      "wrong": [
+        "项伯",
+        "樊哙",
+        "韩信"
+      ],
+      "sourceFactId": "fact.history.ancient.16otez7",
+      "id": "mvp.history.0099",
+      "verified": true
+    },
+    {
+      "theme": "history",
+      "templateId": "history-myth",
+      "prompt": "开天辟地的巨人",
+      "answer": "盘古",
+      "wrong": [
+        "夸父",
+        "刑天",
+        "共工"
+      ],
+      "sourceFactId": "fact.history.myth.1hgfdw3",
+      "id": "mvp.history.0116",
+      "verified": true
+    },
+    {
+      "theme": "history",
+      "templateId": "history-myth",
+      "prompt": "女娲补天使用",
+      "answer": "五色石",
+      "wrong": [
+        "定海针",
+        "息壤",
+        "昆仑玉"
+      ],
+      "sourceFactId": "fact.history.myth.1pf16z6",
+      "id": "mvp.history.0117",
+      "verified": true
+    },
+    {
+      "theme": "history",
+      "templateId": "history-myth",
+      "prompt": "后羿一共射落几个太阳",
+      "answer": "9个",
+      "wrong": [
+        "7个",
+        "8个",
+        "10个"
+      ],
+      "sourceFactId": "fact.history.myth.17weexe",
+      "id": "mvp.history.0118",
+      "verified": true
+    },
+    {
+      "theme": "history",
+      "templateId": "history-myth",
+      "prompt": "嫦娥奔月住进",
+      "answer": "广寒宫",
+      "wrong": [
+        "兜率宫",
+        "水晶宫",
+        "碧游宫"
+      ],
+      "sourceFactId": "fact.history.myth.024sfca",
+      "id": "mvp.history.0119",
+      "verified": true
+    },
+    {
+      "theme": "history",
+      "templateId": "history-myth",
+      "prompt": "追着太阳奔跑的巨人",
+      "answer": "夸父",
+      "wrong": [
+        "盘古",
+        "刑天",
+        "愚公"
+      ],
+      "sourceFactId": "fact.history.myth.13kifb2",
+      "id": "mvp.history.0120",
+      "verified": true
+    },
+    {
+      "theme": "history",
+      "templateId": "history-myth",
+      "prompt": "精卫衔石要填平",
+      "answer": "东海",
+      "wrong": [
+        "南海",
+        "西湖",
+        "黄河"
+      ],
+      "sourceFactId": "fact.history.myth.07biyeb",
+      "id": "mvp.history.0121",
+      "verified": true
+    },
+    {
+      "theme": "history",
+      "templateId": "history-myth",
+      "prompt": "大禹治水几过家门不入",
+      "answer": "3次",
+      "wrong": [
+        "1次",
+        "5次",
+        "9次"
+      ],
+      "sourceFactId": "fact.history.myth.15u4oex",
+      "id": "mvp.history.0122",
+      "verified": true
+    },
+    {
+      "theme": "history",
+      "templateId": "history-myth",
+      "prompt": "尝百草的始祖",
+      "answer": "神农",
+      "wrong": [
+        "伏羲",
+        "祝融",
+        "后稷"
+      ],
+      "sourceFactId": "fact.history.myth.12cm0ny",
+      "id": "mvp.history.0123",
+      "verified": true
+    },
+    {
+      "theme": "history",
+      "templateId": "history-myth",
+      "prompt": "失去头颅仍挥舞干戚",
+      "answer": "刑天",
+      "wrong": [
+        "蚩尤",
+        "共工",
+        "相柳"
+      ],
+      "sourceFactId": "fact.history.myth.1ozmkky",
+      "id": "mvp.history.0124",
+      "verified": true
+    },
+    {
+      "theme": "history",
+      "templateId": "history-myth",
+      "prompt": "哪吒重获身体靠",
+      "answer": "莲花化身",
+      "wrong": [
+        "蟠桃化身",
+        "仙草化身",
+        "神木化身"
+      ],
+      "sourceFactId": "fact.history.myth.10sw7l5",
+      "id": "mvp.history.0125",
+      "verified": true
+    },
+    {
+      "theme": "history",
+      "templateId": "history-myth",
+      "prompt": "筋斗云一个跟头十万八千里",
+      "answer": "孙悟空",
+      "wrong": [
+        "猪八戒",
+        "二郎神",
+        "哪吒"
+      ],
+      "sourceFactId": "fact.history.myth.02xjpyh",
+      "id": "mvp.history.0126",
+      "verified": true
+    },
+    {
+      "theme": "history",
+      "templateId": "history-myth",
+      "prompt": "八仙过海比拼的是",
+      "answer": "各显神通",
+      "wrong": [
+        "力拔山河",
+        "点石成金",
+        "呼风唤雨"
+      ],
+      "sourceFactId": "fact.history.myth.1j9pz6i",
+      "id": "mvp.history.0127",
+      "verified": true
+    },
+    {
+      "theme": "history",
+      "templateId": "history-person-event",
+      "prompt": "统一六国并建立秦朝的人物",
+      "answer": "秦始皇",
+      "wrong": [
+        "汉武帝",
+        "唐太宗",
+        "宋太祖"
+      ],
+      "sourceFactId": "fact.history.person-event.0x87w82",
+      "id": "mvp.history.0146",
+      "verified": true
+    },
+    {
+      "theme": "history",
+      "templateId": "history-person-event",
+      "prompt": "明代率船队七下西洋的人物",
+      "answer": "郑和",
+      "wrong": [
+        "张骞",
+        "玄奘",
+        "鉴真"
+      ],
+      "sourceFactId": "fact.history.person-event.0kolvyb",
+      "id": "mvp.history.0147",
+      "verified": true
+    },
+    {
+      "theme": "history",
+      "templateId": "history-person-event",
+      "prompt": "主持虎门销烟的人物",
+      "answer": "林则徐",
+      "wrong": [
+        "魏源",
+        "左宗棠",
+        "曾国藩"
+      ],
+      "sourceFactId": "fact.history.person-event.1vn7qtj",
+      "id": "mvp.history.0148",
+      "verified": true
+    },
+    {
+      "theme": "history",
+      "templateId": "history-person-event",
+      "prompt": "领导辛亥革命的重要人物",
+      "answer": "孙中山",
+      "wrong": [
+        "康有为",
+        "李鸿章",
+        "林则徐"
+      ],
+      "sourceFactId": "fact.history.person-event.0yjs7gs",
+      "id": "mvp.history.0149",
+      "verified": true
+    },
+    {
+      "theme": "history",
+      "templateId": "history-person-event",
+      "prompt": "《史记》的作者",
+      "answer": "司马迁",
+      "wrong": [
+        "司马光",
+        "班固",
+        "陈寿"
+      ],
+      "sourceFactId": "fact.history.person-event.1nybmwp",
+      "id": "mvp.history.0150",
+      "verified": true
+    },
+    {
+      "theme": "history",
+      "templateId": "history-person-event",
+      "prompt": "《本草纲目》的作者",
+      "answer": "李时珍",
+      "wrong": [
+        "张仲景",
+        "华佗",
+        "孙思邈"
+      ],
+      "sourceFactId": "fact.history.person-event.12llfr8",
+      "id": "mvp.history.0151",
+      "verified": true
+    },
+    {
+      "theme": "history",
+      "templateId": "history-person-event",
+      "prompt": "活字印刷术的发明者",
+      "answer": "毕昇",
+      "wrong": [
+        "蔡伦",
+        "张衡",
+        "祖冲之"
+      ],
+      "sourceFactId": "fact.history.person-event.1k85huc",
+      "id": "mvp.history.0152",
+      "verified": true
+    },
+    {
+      "theme": "history",
+      "templateId": "history-person-event",
+      "prompt": "西汉出使西域的重要人物",
+      "answer": "张骞",
+      "wrong": [
+        "班超",
+        "郑和",
+        "玄奘"
+      ],
+      "sourceFactId": "fact.history.person-event.0t20otd",
+      "id": "mvp.history.0153",
+      "verified": true
+    },
+    {
+      "theme": "history",
+      "templateId": "history-person-event",
+      "prompt": "改进造纸术的东汉人物",
+      "answer": "蔡伦",
+      "wrong": [
+        "张衡",
+        "岳飞",
+        "李冰"
+      ],
+      "sourceFactId": "fact.history.person-event.00gdkxh",
+      "id": "mvp.history.0154",
+      "verified": true
+    },
+    {
+      "theme": "history",
+      "templateId": "history-person-event",
+      "prompt": "测定圆周率精确值的古代数学家",
+      "answer": "祖冲之",
+      "wrong": [
+        "司马光",
+        "范仲淹",
+        "麦哲伦"
+      ],
+      "sourceFactId": "fact.history.person-event.1ynitto",
+      "id": "mvp.history.0155",
+      "verified": true
+    },
+    {
+      "theme": "history",
+      "templateId": "history-person-event",
+      "prompt": "发明地动仪的东汉科学家",
+      "answer": "张衡",
+      "wrong": [
+        "蔡伦",
+        "岳飞",
+        "李冰"
+      ],
+      "sourceFactId": "fact.history.person-event.1yxifin",
+      "id": "mvp.history.0156",
+      "verified": true
+    },
+    {
+      "theme": "history",
+      "templateId": "history-person-event",
+      "prompt": "撰写《资治通鉴》的史学家",
+      "answer": "司马光",
+      "wrong": [
+        "祖冲之",
+        "范仲淹",
+        "麦哲伦"
+      ],
+      "sourceFactId": "fact.history.person-event.1y3jmfq",
+      "id": "mvp.history.0157",
+      "verified": true
     }
   ]
 }

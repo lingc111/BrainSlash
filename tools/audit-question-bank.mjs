@@ -4,6 +4,7 @@ import path from 'node:path';
 import { CONTENT_VERSION } from '../assets/Scripts/configs/GameConfig.ts';
 import { QUESTION_BANK_PACKS, REVIEWED_FACTS, getQuestionBankStats } from '../assets/Scripts/domain/QuestionBankRegistry.ts';
 import { QUESTION_TEMPLATES } from '../assets/Scripts/domain/QuestionSystem.ts';
+import { MVP_QUESTION_INVENTORY, MVP_THEME_TARGETS } from '../assets/Scripts/domain/MvpQuestionInventory.ts';
 
 const errors = [];
 const templateIds = new Set();
@@ -33,7 +34,8 @@ for (const descriptor of descriptors) {
   if (bundle.schemaVersion !== 2 || bundle.contentVersion !== CONTENT_VERSION || bundle.bundleKind !== descriptor.kind) {
     errors.push(`${descriptor.file}: schema mismatch`);
   }
-  if (bundle.templates.length !== descriptor.templateCount || bundle.facts.length !== descriptor.factCount) {
+  if (bundle.templates.length !== descriptor.templateCount || bundle.facts.length !== descriptor.factCount
+      || bundle.questions.length !== descriptor.questionCount) {
     errors.push(`${descriptor.file}: manifest counts mismatch`);
   }
   if (new Set(bundle.templates.map((template) => template.id)).size !== QUESTION_TEMPLATES.length) {
@@ -43,10 +45,71 @@ for (const descriptor of descriptors) {
     const sourceIds = REVIEWED_FACTS.map((fact) => fact.id).sort();
     const bundleIds = bundle.facts.map((fact) => fact.id).sort();
     if (JSON.stringify(bundleIds) !== JSON.stringify(sourceIds)) errors.push(`${descriptor.file}: production facts differ from reviewed registry`);
+    const questionIds = MVP_QUESTION_INVENTORY.map((question) => question.id).sort();
+    const bundleQuestionIds = bundle.questions.map((question) => question.id).sort();
+    if (JSON.stringify(bundleQuestionIds) !== JSON.stringify(questionIds)) errors.push(`${descriptor.file}: production questions differ from MVP inventory`);
   }
   for (const template of bundle.templates.filter((item) => item.sourceKind === 'reviewed-facts')) {
     if (!bundle.facts.some((fact) => fact.enabled && fact.tags.includes(template.id))) errors.push(`${descriptor.file}: no fact for ${template.id}`);
   }
+}
+
+const inventoryIds = new Set();
+const inventorySignatures = new Set();
+const inventoryByTheme = Object.fromEntries(Object.keys(MVP_THEME_TARGETS).map((theme) => [theme, 0]));
+for (const [index, question] of MVP_QUESTION_INVENTORY.entries()) {
+  if (!question.id || inventoryIds.has(question.id)) errors.push(`inventory[${index}]: duplicate or empty id ${question.id}`);
+  inventoryIds.add(question.id);
+  if (!question.verified || !templateIds.has(question.templateId)) errors.push(`${question.id}: invalid verification or template`);
+  if (QUESTION_TEMPLATES.find((template) => template.id === question.templateId)?.theme !== question.theme) errors.push(`${question.id}: theme/template mismatch`);
+  if (typeof question.prompt !== 'string' || !question.prompt.trim()) errors.push(`${question.id}: empty prompt`);
+  if (typeof question.answer !== 'string' && typeof question.answer !== 'number') errors.push(`${question.id}: invalid answer type`);
+  if (!Array.isArray(question.wrong) || question.wrong.length < 3) errors.push(`${question.id}: fewer than three distractors`);
+  if (question.wrong.some((choice) => typeof choice !== 'string' && typeof choice !== 'number')) errors.push(`${question.id}: invalid distractor type`);
+  if (question.wrong.map(String).includes(String(question.answer))) errors.push(`${question.id}: answer appears in distractors`);
+  if (new Set(question.wrong.map(String)).size !== question.wrong.length) errors.push(`${question.id}: duplicate distractors`);
+  const signature = `${question.theme}|${question.templateId}|${question.prompt}|${question.answer}`;
+  if (inventorySignatures.has(signature)) errors.push(`${question.id}: duplicate playable content`);
+  inventorySignatures.add(signature);
+  inventoryByTheme[question.theme] += 1;
+  if (question.theme === 'math') {
+    if (question.templateId === 'math-operator') {
+      const match = question.prompt.match(/^(\d+)\( \)(\d+)=(\d+)$/);
+      if (!match || !['+', '-', '×', '÷'].includes(question.answer)) errors.push(`${question.id}: invalid operator question`);
+      else {
+        const [, leftText, rightText, resultText] = match;
+        const left = Number(leftText); const right = Number(rightText); const result = Number(resultText);
+        const calculated = question.answer === '+' ? left + right : question.answer === '-' ? left - right
+          : question.answer === '×' ? left * right : left / right;
+        if (calculated !== result) errors.push(`${question.id}: incorrect operator answer`);
+      }
+    } else if (question.templateId === 'math-digit-reverse') {
+      const match = question.prompt.match(/^(\d{5,})反转后$/);
+      if (!match || String(question.answer) !== Array.from(match[1]).reverse().join('')) errors.push(`${question.id}: incorrect digit reversal`);
+      if (question.wrong.some((choice) => String(choice).length !== String(question.answer).length)) errors.push(`${question.id}: reversal distractor length mismatch`);
+      if (question.wrong.some((choice) => Array.from(String(choice)).filter((char, offset) => char !== String(question.answer)[offset]).length > 2)) {
+        errors.push(`${question.id}: reversal distractor is not visually similar`);
+      }
+    } else if (question.templateId === 'math-remainder') {
+      const match = question.prompt.match(/^(\d+)÷(\d+)的余数$/);
+      if (!match || Number(match[2]) < 10 || Number(match[1]) % Number(match[2]) !== question.answer) errors.push(`${question.id}: incorrect remainder`);
+    } else {
+      const expression = question.prompt.replace('=?', '').replaceAll('×', '*').replaceAll('÷', '/');
+      if (!/^[0-9+*/-]+$/.test(expression)) errors.push(`${question.id}: unsafe arithmetic expression`);
+      else if (Function(`"use strict"; return (${expression})`)() !== question.answer) errors.push(`${question.id}: incorrect arithmetic answer`);
+      const operands = question.prompt.match(/\d+/g)?.map(Number) ?? [];
+      if ((question.templateId === 'math-add' || question.templateId === 'math-subtract')
+          && operands.slice(0, 2).some((value) => value < 100)) errors.push(`${question.id}: add/sub operand below three digits`);
+      if (question.templateId === 'math-multiply' && operands.slice(0, 2).some((value) => value < 10)) errors.push(`${question.id}: multiply operand below two digits`);
+      if (question.templateId === 'math-divide' && (operands[1] < 10 || Number(question.answer) < 10)) errors.push(`${question.id}: divide operand below two digits`);
+      if (question.templateId === 'math-mixed' && (operands[0] < 10 || operands[1] < 10)) errors.push(`${question.id}: mixed-operation factor below two digits`);
+    }
+  }
+}
+if (QUESTION_TEMPLATES.some((template) => template.id === 'math-rounding' || template.tags.includes('rounding'))) errors.push('rounding template must not exist');
+if (MVP_QUESTION_INVENTORY.length !== 10_000) errors.push(`MVP inventory must contain exactly 10000 questions, got ${MVP_QUESTION_INVENTORY.length}`);
+for (const [theme, target] of Object.entries(MVP_THEME_TARGETS)) {
+  if (inventoryByTheme[theme] !== target) errors.push(`${theme}: expected ${target} MVP questions, got ${inventoryByTheme[theme]}`);
 }
 
 const factKeys = new Map();
@@ -107,6 +170,7 @@ console.log(JSON.stringify({
       .map((theme) => [theme, QUESTION_TEMPLATES.filter((item) => item.theme === theme).length])),
   },
   reviewedFacts: getQuestionBankStats(),
+  mvpQuestions: { count: MVP_QUESTION_INVENTORY.length, byTheme: inventoryByTheme },
   factsByTemplate: Object.fromEntries(QUESTION_TEMPLATES.filter((template) => template.sourceKind === 'reviewed-facts')
     .map((template) => [template.id, QUESTION_BANK_PACKS.filter((pack) => pack.templateIds.includes(template.id))
       .reduce((sum, pack) => sum + pack.records.filter((record) => record.enabled).length, 0)])),

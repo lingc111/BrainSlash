@@ -96,7 +96,7 @@ test('selected math modes raise arithmetic share while preserving the chosen the
     });
 });
 
-test('short runs surface division at least once every three arithmetic questions', () => {
+test('short runs surface division at least once every five arithmetic questions', () => {
     const entry: GameEntryParams = { mode: 'brawl60', seed: 'division-quota', contentVersion: CONTENT_VERSION };
     const compiler = new QuestionCompiler(new SeededRng(`${entry.seed}:compiler`), GAMEPLAY_CONFIG, entry);
     let gap = 0;
@@ -110,10 +110,25 @@ test('short runs surface division at least once every three arithmetic questions
             assert.ok(question.prompt.text.includes('÷'));
         } else {
             gap += 1;
-            assert.ok(gap <= 2, `division absent for ${gap} arithmetic questions`);
+            assert.ok(gap <= 4, `division absent for ${gap} arithmetic questions`);
         }
     }
-    assert.ok(divisions >= 20);
+    assert.ok(divisions >= 12);
+});
+
+test('continuous operations occupy about thirty percent of direct arithmetic', () => {
+    const entry: GameEntryParams = { mode: 'brawl60', seed: 'mixed-operation-weight', contentVersion: CONTENT_VERSION };
+    const compiler = new QuestionCompiler(new SeededRng(`${entry.seed}:compiler`), GAMEPLAY_CONFIG, entry);
+    let mixed = 0;
+    let operator = 0;
+    for (let index = 0; index < 600; index++) {
+        const question = compiler.next({ themes: ['math'], requiredTags: ['arithmetic'], rules: ['standard'],
+            difficulty: 3, targetCount: 4, questionTimeMs: 2_600, speed: 1, phase: 'action' }, CONTENT_VERSION);
+        if (question.templateId === 'math-mixed') mixed += 1;
+        if (question.templateId === 'math-operator') operator += 1;
+    }
+    assert.ok(mixed / 600 >= 0.28 && mixed / 600 <= 0.32, `mixed ratio ${mixed / 600}`);
+    assert.ok(operator >= 60, `operator questions ${operator}`);
 });
 
 test('action and climax multiplication division avoid kindergarten-sized operands', () => {
@@ -151,6 +166,21 @@ test('difficulty-three property questions rotate 2 3 5 and 7 multiples', () => {
     }
 });
 
+test('multiple questions expose 2 3 5 and 7 across the other middle and high difficulties', () => {
+    for (const difficulty of [2, 4, 5] as const) {
+        const entry: GameEntryParams = { mode: 'brawl60', seed: `multiple-exposure-${difficulty}`, contentVersion: CONTENT_VERSION };
+        const compiler = new QuestionCompiler(new SeededRng(`${entry.seed}:compiler`), GAMEPLAY_CONFIG, entry);
+        const divisors = new Set<string>();
+        for (let index = 0; index < 40; index++) {
+            const question = compiler.next({ templateIds: ['math-property'], themes: ['math'], rules: ['standard'],
+                difficulty, targetCount: 5, questionTimeMs: 2_600, speed: 1, phase: 'action' }, CONTENT_VERSION);
+            const divisor = question.prompt.text.match(/^([2357])的倍数$/)?.[1];
+            if (divisor) divisors.add(divisor);
+        }
+        assert.deepEqual(divisors, new Set(['2', '3', '5', '7']));
+    }
+});
+
 test('ordinary brawl keeps reverse near one eighth of generated rules', () => {
     const entry: GameEntryParams = { mode: 'brawl60', seed: 'lower-reverse-frequency', contentVersion: CONTENT_VERSION };
     const director = new ModeQuestionDirector(new SeededRng(`${entry.seed}:director`), entry,
@@ -177,7 +207,7 @@ test('compound math order questions vary direction and content without losing ro
         assert.deepEqual(validateQuestion(question, evaluateRules(question)), []);
         assert.ok(question.targets.filter((target) => !target.isBomb).every((target) => Array.from(target.text).length <= 3));
     }
-    assert.deepEqual([...prompts].sort(), ['按结果升序', '按结果降序', '数字升序', '数字降序'].sort());
+    assert.deepEqual([...prompts].sort(), ['数字升序', '数字降序'].sort());
 });
 
 test('tower compound rules never silently degrade and rotated order alternates content families', () => {

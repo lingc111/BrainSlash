@@ -37,6 +37,7 @@ import { evaluateRules, rulesForReadableTargets } from './Rules';
 import { SeededRng } from './SeededRng';
 import { EXPANSION_ORDER_PACKS, EXPANSION_TRIVIA_PACKS, type OrderedFact } from './ThemeExpansionCatalog';
 import { ENGLISH_EXTRA_WORDS } from './EnglishVocabularyExpansion';
+import { MVP_QUESTIONS_BY_TEMPLATE, type MvpChoiceQuestion } from './MvpQuestionInventory';
 
 type Stage = 0 | 1 | 2;
 export interface QuestionCompilerEngineOptions {
@@ -121,6 +122,11 @@ export class QuestionCompilerEngine {
 
     private generate(template: QuestionTemplate, stage: Stage): QuestionInstance {
         this.index += 1;
+        const inventoryQuestion = this.pickMvpChoice(template.id);
+        if (inventoryQuestion) {
+            return this.makeChoice(template, inventoryQuestion.prompt, inventoryQuestion.answer,
+                inventoryQuestion.wrong, stage);
+        }
         switch (template.id) {
             case 'math-add': return this.mathAdd(template, stage);
             case 'math-subtract': return this.mathSubtract(template, stage);
@@ -132,7 +138,9 @@ export class QuestionCompilerEngine {
             case 'math-equation': return this.mathEquation(template, stage);
             case 'math-divide': return this.mathDivide(template, stage);
             case 'math-mixed': return this.mathMixed(template, stage);
-            case 'math-rounding': return this.mathRounding(template, stage);
+            case 'math-operator': return this.mathOperator(template, stage);
+            case 'math-digit-reverse': return this.mathDigitReverse(template, stage);
+            case 'math-remainder': return this.mathRemainder(template, stage);
             case 'math-fraction-compare': return this.mathFractionCompare(template, stage);
             case 'vision-direction': return this.visionDirection(template, stage);
             case 'vision-odd': return this.visionOdd(template, stage);
@@ -253,33 +261,30 @@ export class QuestionCompilerEngine {
     }
 
     private mathAdd(template: QuestionTemplate, stage: Stage): QuestionInstance {
-        const ceiling = 20 + this.difficultyIndex * 15 + stage * 30;
-        const minimum = stage === 0 ? 2 + this.difficultyIndex : 8 + this.difficultyIndex * 2 + stage * 2;
+        const minimum = 100 + this.difficultyIndex * 120;
+        const ceiling = minimum + 179 + stage * 40;
         const a = this.rng.int(minimum, ceiling);
         const b = this.rng.int(minimum, ceiling);
-        const c = this.difficultyIndex >= 3 && stage === 2 ? this.rng.int(2, 12) : 0;
+        const c = this.difficultyIndex >= 3 && stage === 2 ? this.rng.int(20, 99) : 0;
         const answer = a + b + c;
         const prompt = c ? `${a}+${b}+${c}=?` : `${a}+${b}=?`;
         return this.makeChoice(template, prompt, answer, [answer - 2, answer - 1, answer + 1, answer + 2, answer + 10], stage);
     }
 
     private mathSubtract(template: QuestionTemplate, stage: Stage): QuestionInstance {
-        const minimum = stage === 0 ? 2 : 8 + this.difficultyIndex * 2;
-        const b = this.rng.int(minimum, 18 + this.difficultyIndex * 12 + stage * 24);
-        const answer = this.rng.int(minimum, 20 + this.difficultyIndex * 14 + stage * 28);
+        const minimum = 100 + this.difficultyIndex * 80;
+        const b = this.rng.int(minimum, minimum + 149 + stage * 30);
+        const answer = this.rng.int(100, 249 + this.difficultyIndex * 60 + stage * 30);
         const a = answer + b;
         return this.makeChoice(template, `${a}-${b}=?`, answer, [answer - 2, answer - 1, answer + 1, answer + 2, answer + 5], stage);
     }
 
     private mathMultiply(template: QuestionTemplate, stage: Stage): QuestionInstance {
-        const minimum = stage === 0 ? 2 : 4 + Math.floor(this.difficultyIndex / 2) + stage - 1;
-        const maximum = Math.min(20, 8 + this.difficultyIndex * 2 + stage * 3);
+        const minimum = 10 + this.difficultyIndex * 8;
+        const maximum = minimum + 13 + stage * 3;
         const a = this.rng.int(minimum, maximum);
         const b = this.rng.int(minimum, maximum);
         const answer = a * b;
-        if (this.difficultyIndex % 2 === 1 && stage > 0) {
-            return this.makeChoice(template, `${answer}÷${a}=?`, b, [b - 2, b - 1, b + 1, b + 2, a], stage);
-        }
         return this.makeChoice(template, `${a}×${b}=?`, answer, [answer - a, answer + a, answer - b, answer + b, a + b], stage);
     }
 
@@ -289,14 +294,15 @@ export class QuestionCompilerEngine {
         const values = this.uniqueNumbers(count, 2, max);
         let predicate: (value: number) => boolean;
         let prompt: string;
+        const useMultiple = this.difficultyIndex === 2 || (this.difficultyIndex > 0 && this.rng.next() < 0.5);
         if (this.difficultyIndex === 0) { predicate = (value) => value % 2 === 0; prompt = '偶数'; }
-        else if (this.difficultyIndex === 1) { predicate = (value) => value % 2 !== 0; prompt = '奇数'; }
-        else if (this.difficultyIndex === 2) {
+        else if (useMultiple) {
             if (!this.propertyDivisorBag.length) this.propertyDivisorBag = this.rng.shuffle([2, 3, 5, 7]);
             const divisor = this.pendingPropertyDivisor ?? (this.pendingPropertyDivisor = this.propertyDivisorBag.pop()!);
             predicate = (value) => value % divisor === 0;
             prompt = `${divisor}的倍数`;
         }
+        else if (this.difficultyIndex === 1) { predicate = (value) => value % 2 !== 0; prompt = '奇数'; }
         else {
             const threshold = Math.max(10, Math.round(max * 0.5 / 5) * 5);
             predicate = this.difficultyIndex === 3 ? (value) => value > threshold : (value) => value < threshold;
@@ -343,10 +349,8 @@ export class QuestionCompilerEngine {
     private mathSequence(template: QuestionTemplate, stage: Stage): QuestionInstance {
         if (this.directive.rules.includes('order')) {
             const descending = this.rng.next() < 0.5;
-            const expressions = this.rng.next() < 0.5;
-            // Expression labels stay at three glyphs so Order + Rotate remains
-            // a genuine compound rule instead of dropping rotation for legibility.
-            const values = this.uniqueNumbers(this.nonBombTargetCount(), 2, expressions ? 9 : 24 + stage * 18);
+            const expressions = !this.directive.rules.includes('rotate') && this.rng.next() < 0.65;
+            const values = this.uniqueNumbers(this.nonBombTargetCount(), 100, 399 + this.difficultyIndex * 100 + stage * 100);
             const source = values.map((value, sourceIndex) => ({
                 value,
                 text: expressions ? this.orderExpression(value, sourceIndex) : String(value),
@@ -361,38 +365,50 @@ export class QuestionCompilerEngine {
                 : `数字${descending ? '降序' : '升序'}`;
             return this.make(template, prompt, targets, ordered, ['order'], stage, ordered);
         }
-        const step = 1 + this.difficultyIndex + stage;
-        const start = this.rng.int(1, 12 + stage * 8);
+        const step = 11 + this.difficultyIndex * 3 + stage * 5;
+        const start = this.rng.int(100, 399 + stage * 100);
         const answer = start + step * 3;
         return this.makeChoice(template, `${start},${start + step},${start + step * 2},?`, answer, [answer - step, answer + step, answer + 1, answer - 1, answer + step * 2], stage);
     }
 
+    private pickMvpChoice(templateId: QuestionTemplate['id']): MvpChoiceQuestion | undefined {
+        const rules = this.directive.rules;
+        if (rules.includes('multi') || rules.includes('order') || rules.includes('rotate')) return undefined;
+        const all = MVP_QUESTIONS_BY_TEMPLATE.get(templateId);
+        if (!all?.length) return undefined;
+        const pool = all.filter((question) => question.difficulty === undefined
+            || question.difficulty === this.directive.difficulty);
+        if (!pool.length) return undefined;
+        return this.pickFact(`mvp-${templateId}-d${this.directive.difficulty}`, pool, (question) => question.id);
+    }
+
     private orderExpression(value: number, index: number): string {
-        if (index % 2 === 0 || value >= 9) {
-            const addend = this.rng.int(1, value - 1);
+        if (index % 2 === 0) {
+            const addend = this.rng.int(10, value - 10);
             return `${value - addend}+${addend}`;
         }
-        const offset = this.rng.int(1, 9 - value);
+        const offset = this.rng.int(10, 99);
         return `${value + offset}-${offset}`;
     }
 
     private mathMissing(template: QuestionTemplate, stage: Stage): QuestionInstance {
-        const ceiling = 12 + this.difficultyIndex * 8 + stage * 18;
+        const minimum = 100 + this.difficultyIndex * 80;
+        const ceiling = minimum + 199 + stage * 60;
         if (this.difficultyIndex === 4) {
-            const answer = this.rng.int(2, Math.min(12, 6 + stage * 3));
-            const factor = this.rng.int(2, Math.min(12, 5 + stage * 3));
+            const answer = this.rng.int(42, 69 + stage * 10);
+            const factor = this.rng.int(34, 59 + stage * 10);
             const product = answer * factor;
             return this.makeChoice(template, `( )×${factor}=${product}`, answer, [answer - 2, answer - 1, answer + 1, answer + 2, factor], stage);
         }
-        const left = this.rng.int(2, ceiling);
-        const right = this.rng.int(2, ceiling);
+        const left = this.rng.int(minimum, ceiling);
+        const right = this.rng.int(minimum, ceiling);
         if (this.difficultyIndex === 0) {
             return this.makeChoice(template, `( )+${right}=${left + right}`, left, [left - 2, left - 1, left + 1, left + 2], stage);
         }
         if (this.difficultyIndex === 1) {
             return this.makeChoice(template, `${left}+( )=${left + right}`, right, [right - 2, right - 1, right + 1, right + 2], stage);
         }
-        const result = this.rng.int(2, ceiling);
+        const result = this.rng.int(100, ceiling);
         const minuend = result + right;
         if (this.difficultyIndex === 2) {
             return this.makeChoice(template, `( )-${right}=${result}`, minuend, [minuend - 2, minuend - 1, minuend + 1, minuend + 2], stage);
@@ -401,9 +417,9 @@ export class QuestionCompilerEngine {
     }
 
     private mathEquation(template: QuestionTemplate, stage: Stage): QuestionInstance {
-        const target = this.rng.int(8 + this.difficultyIndex * 2, 18 + this.difficultyIndex * 6 + stage * 10);
+        const target = this.rng.int(300 + this.difficultyIndex * 120, 599 + this.difficultyIndex * 140 + stage * 80);
         if (this.difficultyIndex % 2 === 0) {
-            const left = this.rng.int(2, target - 3);
+            const left = this.rng.int(100, target - 100);
             const right = target - left;
             const answer = `${left}+${right}`;
             const candidates = [
@@ -415,7 +431,7 @@ export class QuestionCompilerEngine {
             ];
             return this.makeChoice(template, `等于 ${target}`, answer, candidates, stage);
         }
-        const subtrahend = this.rng.int(2, 8 + this.difficultyIndex + stage * 3);
+        const subtrahend = this.rng.int(100, 249 + this.difficultyIndex * 40 + stage * 30);
         const minuend = target + subtrahend;
         const answer = `${minuend}-${subtrahend}`;
         const candidates = [
@@ -574,19 +590,19 @@ export class QuestionCompilerEngine {
     }
 
     private mathDivide(template: QuestionTemplate, stage: Stage): QuestionInstance {
-        const minimum = stage === 0 ? 2 : 4 + Math.floor(this.difficultyIndex / 2) + stage - 1;
-        const divisor = this.rng.int(minimum, Math.min(20, 8 + this.difficultyIndex * 2 + stage * 3));
-        const answer = this.rng.int(minimum, 12 + this.difficultyIndex * 2 + stage * 3);
+        const minimum = 10 + this.difficultyIndex * 8;
+        const divisor = this.rng.int(minimum, minimum + 13 + stage * 3);
+        const answer = this.rng.int(minimum, minimum + 13 + stage * 4);
         const dividend = divisor * answer;
         return this.makeChoice(template, `${dividend}÷${divisor}=?`, answer,
             [answer - 2, answer - 1, answer + 1, answer + 2, divisor], stage);
     }
 
     private mathMixed(template: QuestionTemplate, stage: Stage): QuestionInstance {
-        const minimum = stage === 0 ? 2 : 4 + stage - 1;
-        const multiplier = this.rng.int(minimum, Math.min(18, 8 + this.difficultyIndex * 2 + stage * 2));
-        const factor = this.rng.int(minimum, Math.min(20, 9 + this.difficultyIndex * 2 + stage * 3));
-        const offset = this.rng.int(stage === 0 ? 1 : 5, 12 + this.difficultyIndex * 5 + stage * 6);
+        const minimum = 10 + this.difficultyIndex * 8;
+        const multiplier = this.rng.int(minimum, minimum + 13 + stage * 3);
+        const factor = this.rng.int(minimum, minimum + 13 + stage * 3);
+        const offset = this.rng.int(20, 79 + this.difficultyIndex * 20 + stage * 20);
         const subtract = this.rng.next() < 0.5 && multiplier * factor > offset;
         const answer = subtract ? multiplier * factor - offset : multiplier * factor + offset;
         const operator = subtract ? '-' : '+';
@@ -594,14 +610,32 @@ export class QuestionCompilerEngine {
             [answer - multiplier, answer + multiplier, answer - 1, answer + 1, multiplier * (factor + offset)], stage);
     }
 
-    private mathRounding(template: QuestionTemplate, stage: Stage): QuestionInstance {
-        const unit = this.difficultyIndex >= 3 ? 100 : 10;
-        const max = unit === 100 ? 4_999 : 999;
-        let value = this.rng.int(unit + 1, max);
-        if (value % unit === unit / 2) value += 1;
-        const answer = Math.round(value / unit) * unit;
-        return this.makeChoice(template, `${value}约等于哪个整${unit === 10 ? '十' : '百'}数`, answer,
-            [answer - unit * 2, answer - unit, answer + unit, answer + unit * 2, value], stage);
+    private mathOperator(template: QuestionTemplate, stage: Stage): QuestionInstance {
+        const left = this.rng.int(100, 699);
+        const right = this.rng.int(100, 299);
+        return this.makeChoice(template, `${left}( )${right}=${left + right}`, '+', ['-', '×', '÷'], stage);
+    }
+
+    private mathDigitReverse(template: QuestionTemplate, stage: Stage): QuestionInstance {
+        const source = this.rng.shuffle(['1', '2', '3', '4', '5', '6', '7', '8', '9'])
+            .slice(0, 5 + this.difficultyIndex).join('');
+        const answer = Array.from(source).reverse().join('');
+        const chars = Array.from(answer);
+        const candidates = [0, 1, 2, 3].map((index) => {
+            const copy = [...chars];
+            [copy[index], copy[index + 1]] = [copy[index + 1], copy[index]];
+            return copy.join('');
+        });
+        return this.makeChoice(template, `${source}反转后`, answer, candidates, stage);
+    }
+
+    private mathRemainder(template: QuestionTemplate, stage: Stage): QuestionInstance {
+        const divisor = this.rng.int(10 + this.difficultyIndex * 8, 23 + this.difficultyIndex * 8);
+        const quotient = this.rng.int(12 + this.difficultyIndex * 8, 29 + this.difficultyIndex * 8);
+        const remainder = this.rng.int(1, divisor - 1);
+        const dividend = divisor * quotient + remainder;
+        return this.makeChoice(template, `${dividend}÷${divisor}的余数`, remainder,
+            [0, remainder - 1, remainder + 1, divisor - remainder, divisor], stage);
     }
 
     private mathFractionCompare(template: QuestionTemplate, stage: Stage): QuestionInstance {

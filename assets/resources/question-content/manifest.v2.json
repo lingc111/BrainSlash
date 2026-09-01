@@ -1,21 +1,23 @@
 {
   "schemaVersion": 2,
-  "contentVersion": "2.2.0-content-density",
+  "contentVersion": "2.3.2-math-variety",
   "bundle": "question-content",
   "bundles": [
     {
       "kind": "production",
       "file": "question-content.v2.json",
-      "sha256": "ba1a45a505bb045aa4d7ebd152eba6133f5ca690de4f27ba6ee900e02b97a0b9",
-      "templateCount": 66,
-      "factCount": 1979
+      "sha256": "c793a760371f4fe3396b1da82e27b9f91bf9d661de90846e8f48a5bd6f57c34b",
+      "templateCount": 68,
+      "factCount": 1979,
+      "questionCount": 10000
     },
     {
       "kind": "fallback",
       "file": "question-content.fallback.v2.json",
-      "sha256": "480a0734144d461fc46941a1d1af71e13d9e5de11e5e00e72b831f494d2c28b1",
-      "templateCount": 66,
-      "factCount": 360
+      "sha256": "52b3631e52aa4330c8e378cc033b62aef4556c77ae5b96825a786e036243fc58",
+      "templateCount": 68,
+      "factCount": 360,
+      "questionCount": 576
     }
   ]
 }

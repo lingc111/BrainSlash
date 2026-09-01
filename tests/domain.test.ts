@@ -20,6 +20,7 @@ import {
 } from '../assets/Scripts/domain/ContentCatalog.ts';
 import { HANZI_ANTONYM_FACTS, HANZI_SYNONYM_FACTS } from '../assets/Scripts/domain/HanziRelationCatalog.ts';
 import { EXPANSION_ORDER_PACKS, EXPANSION_TRIVIA_PACKS } from '../assets/Scripts/domain/ThemeExpansionCatalog.ts';
+import { MVP_QUESTION_INVENTORY, MVP_THEME_TARGETS } from '../assets/Scripts/domain/MvpQuestionInventory.ts';
 import {
     KNOWLEDGE_CIVIC_FACTS,
     KNOWLEDGE_CULTURE_EXPANSION,
@@ -425,8 +426,10 @@ test('rotation excludes reverse and every direction-sensitive template', () => {
         }
     }
     const math = QUESTION_TEMPLATES.find((template) => template.id === 'math-add')!;
-    assert.equal(templateSupportsRules(math, ['rotate']), true);
-    assert.equal(templateSupportsRules(math, ['bomb', 'rotate']), true);
+    assert.equal(templateSupportsRules(math, ['rotate']), false);
+    assert.equal(templateSupportsRules(math, ['bomb', 'rotate']), false);
+    const compactMath = QUESTION_TEMPLATES.find((template) => template.id === 'math-sequence')!;
+    assert.equal(templateSupportsRules(compactMath, ['rotate']), true);
 });
 
 test('reverse never turns a bomb into a required target', () => {
@@ -882,7 +885,7 @@ test('daily challenge starts without tutorial state and reuses the same-day reco
 });
 
 test('unified template catalog contains one stable entry per cognitive template', () => {
-    assert.equal(QUESTION_TEMPLATES.length, 66);
+    assert.equal(QUESTION_TEMPLATES.length, 68);
     assert.equal(new Set(QUESTION_TEMPLATES.map((template) => template.id)).size, QUESTION_TEMPLATES.length);
     assert.ok(QUESTION_TEMPLATES.every((template) => template.enabled && template.difficultyBands.length === 5));
 });
@@ -1441,6 +1444,50 @@ test('ordinary brawl enforces visible quotas across all eight themes', () => {
     }
 });
 
+test('MVP inventory contains exactly 10000 unique playable questions at the agreed theme ratio', () => {
+    assert.equal(MVP_QUESTION_INVENTORY.length, 10_000);
+    const byTheme = Object.fromEntries(Object.keys(MVP_THEME_TARGETS).map((theme) => [theme, 0]));
+    const signatures = new Set<string>();
+    for (const question of MVP_QUESTION_INVENTORY) {
+        byTheme[question.theme] += 1;
+        assert.ok(question.verified);
+        assert.ok(question.wrong.length >= 3);
+        assert.ok(!question.wrong.map(String).includes(String(question.answer)));
+        signatures.add(`${question.theme}|${question.templateId}|${question.prompt}|${question.answer}`);
+    }
+    assert.equal(signatures.size, 10_000);
+    assert.deepEqual(byTheme, MVP_THEME_TARGETS);
+});
+
+test('MVP arithmetic inventory enforces adult operand floors and contains no approximation questions', () => {
+    const math = MVP_QUESTION_INVENTORY.filter((question) => question.theme === 'math');
+    assert.equal(math.length, 2_800);
+    assert.ok(!QUESTION_TEMPLATES.some((template) => template.id === 'math-rounding' || template.tags.includes('rounding')));
+    assert.ok(!math.some((question) => /约等于|近似|最接近/.test(question.prompt)));
+    assert.equal(math.filter((question) => question.templateId === 'math-mixed').length, 700);
+    assert.equal(math.filter((question) => question.templateId === 'math-operator').length, 300);
+    assert.equal(math.filter((question) => question.templateId === 'math-digit-reverse').length, 300);
+    assert.equal(math.filter((question) => question.templateId === 'math-remainder').length, 300);
+    for (const question of math) {
+        const operands = question.prompt.match(/\d+/g)?.map(Number) ?? [];
+        if (question.templateId === 'math-add' || question.templateId === 'math-subtract') {
+            assert.ok(operands[0] >= 100 && operands[1] >= 100, question.prompt);
+        } else if (question.templateId === 'math-multiply') {
+            assert.ok(operands[0] >= 10 && operands[1] >= 10, question.prompt);
+        } else if (question.templateId === 'math-divide') {
+            assert.ok(operands[1] >= 10 && Number(question.answer) >= 10, question.prompt);
+        } else if (question.templateId === 'math-mixed') {
+            assert.ok(operands[0] >= 10 && operands[1] >= 10, question.prompt);
+        } else if (question.templateId === 'math-digit-reverse') {
+            const source = question.prompt.match(/^\d{5,}/)?.[0] ?? '';
+            assert.equal(String(question.answer), Array.from(source).reverse().join(''));
+            assert.ok(question.wrong.every((choice) => String(choice).length === String(question.answer).length));
+        } else if (question.templateId === 'math-remainder') {
+            assert.equal(operands[0] % operands[1], question.answer);
+        }
+    }
+});
+
 test('subtraction choices keep their minus sign instead of using relation layout', () => {
     const presentation = targetTextPresentation('7-2');
     assert.equal(presentation.displayText, '7-2');
@@ -1689,12 +1736,12 @@ test('save v6 resets only tower progress and trial statistics', () => {
     assert.deepEqual(migrated.player, base.player);
 });
 
-test('migrated V1 templates compile from reviewed facts', () => {
+test('migrated V1 templates compile from traceable reviewed or MVP inventory records', () => {
     const migratedTemplates = [
-        ['hanzi-pinyin', /^fact\.hanzi\.pinyin\./],
-        ['hanzi-poetry', /^fact\.hanzi\.poetry\./],
-        ['english-first-letter', /^fact\.english\.words\./],
-        ['english-length', /^fact\.english\.words\./],
+        ['hanzi-pinyin', /^(?:fact\.hanzi\.pinyin\.|mvp\.hanzi\.)/],
+        ['hanzi-poetry', /^(?:fact\.hanzi\.poetry\.|mvp\.hanzi\.)/],
+        ['english-first-letter', /^(?:fact\.english\.words\.|mvp\.english\.)/],
+        ['english-length', /^(?:fact\.english\.words\.|mvp\.english\.)/],
     ] as const;
     for (const [id, factIdPattern] of migratedTemplates) {
         const template = QUESTION_TEMPLATES.find((item) => item.id === id)!;
