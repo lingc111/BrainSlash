@@ -2,7 +2,6 @@ export * from './TowerModeV2';
 
 /* Legacy 30-floor implementation retained only as migration history.
 import type { RuleId, RunResult, ThemeId } from './Models';
-import type { ContentFamilyKind } from './ContentCatalog';
 
 export const TOWER_LAST_FLOOR = 30;
 export const TOWER_DURATION_MS = 60_000;
@@ -55,7 +54,6 @@ export interface TowerFloorConfig {
     questionTimeMs: number;
     speed: number;
     themeWeights: Readonly<Partial<Record<ThemeId, number>>>;
-    familyKinds?: readonly ContentFamilyKind[];
     ruleSequence: readonly (readonly RuleId[])[];
     unlockedRule?: Exclude<RuleId, 'standard'>;
     unlocksCompoundRules?: boolean;
@@ -237,11 +235,10 @@ function makeConfig(
     speed: number,
     themeWeights: Readonly<Partial<Record<ThemeId, number>>>,
     ruleSequence: readonly (readonly RuleId[])[],
-    familyKinds?: readonly ContentFamilyKind[],
 ): TowerFloorConfig {
     return {
         floor, durationMs: TOWER_DURATION_MS, requiredCorrect, difficultyStage, targetCount, questionTimeMs, speed,
-        themeWeights, ruleSequence, familyKinds,
+        themeWeights, ruleSequence,
         unlockedRule: RULE_UNLOCKS.find((unlock) => unlock.floor === floor)?.rule,
         unlocksCompoundRules: floor === TOWER_COMPOUND_RULE_FLOOR,
     };

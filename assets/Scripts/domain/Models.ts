@@ -31,7 +31,7 @@ export interface TargetSpec {
     attributes?: Readonly<Record<string, TargetAttributeValue>>;
 }
 export interface QuestionInstance {
-    id: string; templateId?: string; contentVersion?: string; typeId?: string; engineId?: GameplayEngineId; theme: ThemeId; familyId?: string; factIds?: string[]; prompt: PromptSpec; targets: TargetSpec[];
+    id: string; templateId: string; contentVersion: string; engineId: GameplayEngineId; theme: ThemeId; factIds: string[]; prompt: PromptSpec; targets: TargetSpec[];
     baseCorrectTargetIds: string[]; orderedTargetIds?: string[]; activeRules: RuleId[];
     timeLimitMs: number;
 }

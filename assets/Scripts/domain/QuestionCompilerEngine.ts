@@ -1,5 +1,6 @@
 import type { GameplayConfig } from '../configs/GameConfig';
-import type { TemplateCompileDirective } from './QuestionPolicy';
+import type { QuestionCompileDirective } from './QuestionPolicy';
+import type { QuestionTemplate } from './QuestionTemplateCatalog';
 import {
     ENGLISH_ANTONYMS,
     ENGLISH_WORDS,
@@ -14,7 +15,6 @@ import {
     KNOWLEDGE_NATURE_FACTS,
     KNOWLEDGE_SCIENCE_FACTS,
     LIFE_CATEGORY_FACTS,
-    type ContentFamilySpec,
     type TriviaFact,
 } from './ContentCatalog';
 import {
@@ -55,7 +55,7 @@ const OPPOSITE_ARROW: Readonly<Record<string, string>> = { '←': '→', '→': 
 /** @internal Concrete template algorithms. Only QuestionCompiler may call this class. */
 export class QuestionCompilerEngine {
     private index = 0;
-    private directive!: TemplateCompileDirective;
+    private directive!: QuestionCompileDirective;
     private readonly factBags = new Map<string, number[]>();
     private readonly recentQuestionFacts: string[][] = [];
     private readonly recentSemanticSignatures: string[] = [];
@@ -66,6 +66,8 @@ export class QuestionCompilerEngine {
     private factRank = 0;
     private activeFactIds: string[] = [];
     private activeFactPoolExhausted = false;
+
+    private get difficultyIndex(): number { return this.directive.difficulty - 1; }
 
     public constructor(
         private readonly rng: SeededRng,
@@ -82,12 +84,12 @@ export class QuestionCompilerEngine {
         }
     }
 
-    public compile(directive: TemplateCompileDirective): QuestionInstance {
+    public compile(directive: QuestionCompileDirective): QuestionInstance {
         this.directive = directive;
         for (let attempt = 0; attempt < 24; attempt++) {
             this.activeFactIds = [];
             this.activeFactPoolExhausted = false;
-            const question = this.generate(directive.family, directive.difficultyStage);
+            const question = this.generate(directive.template, directive.difficultyStage);
             question.activeRules = rulesForReadableTargets(question.activeRules, question.targets);
             if (validateQuestion(question, evaluateRules(question)).length) continue;
             const semanticSignature = this.semanticSignature(question);
@@ -104,51 +106,51 @@ export class QuestionCompilerEngine {
                 return question;
             }
         }
-        throw new Error(`Template ${directive.family.kind} could not produce a legal non-repeating question`);
+        throw new Error(`Template ${directive.template.id} could not produce a legal non-repeating question`);
     }
 
-    private generate(family: ContentFamilySpec, stage: Stage): QuestionInstance {
+    private generate(template: QuestionTemplate, stage: Stage): QuestionInstance {
         this.index += 1;
-        switch (family.kind) {
-            case 'math-add': return this.mathAdd(family, stage);
-            case 'math-subtract': return this.mathSubtract(family, stage);
-            case 'math-multiply': return this.mathMultiply(family, stage);
-            case 'math-property': return this.mathProperty(family, stage);
-            case 'math-compare': return this.mathCompare(family, stage);
-            case 'math-sequence': return this.mathSequence(family, stage);
-            case 'math-missing': return this.mathMissing(family, stage);
-            case 'math-equation': return this.mathEquation(family, stage);
-            case 'vision-direction': return this.visionDirection(family, stage);
-            case 'vision-odd': return this.visionOdd(family, stage);
-            case 'vision-count': return this.visionCount(family, stage);
-            case 'vision-stroop': return this.visionStroop(family, stage);
-            case 'vision-pattern': return this.visionPattern(family, stage);
-            case 'vision-match': return this.visionMatch(family, stage);
-            case 'hanzi-fill': return this.hanziFill(family, stage);
-            case 'hanzi-order': return this.hanziOrder(family, stage);
-            case 'hanzi-antonym': return this.hanziRelation(family, stage, 'antonym');
-            case 'hanzi-synonym': return this.hanziRelation(family, stage, 'synonym');
-            case 'english-meaning': return this.englishMeaning(family, stage);
-            case 'english-category': return this.englishCategory(family, stage);
-            case 'english-antonym': return this.englishAntonym(family, stage);
-            case 'life-category': return this.lifeCategory(family, stage);
-            case 'geography-capital': return this.geographyCapital(family, stage);
-            case 'geography-country': return this.geographyCountry(family, stage);
-            case 'knowledge-science': return this.trivia(family, stage, 'knowledge-science', [...KNOWLEDGE_SCIENCE_FACTS, ...KNOWLEDGE_SCIENCE_EXPANSION]);
-            case 'knowledge-nature': return this.trivia(family, stage, 'knowledge-nature', [...KNOWLEDGE_NATURE_FACTS, ...KNOWLEDGE_NATURE_EXPANSION]);
-            case 'knowledge-culture': return this.trivia(family, stage, 'knowledge-culture', [...KNOWLEDGE_CULTURE_FACTS, ...KNOWLEDGE_CULTURE_EXPANSION]);
-            case 'knowledge-civic': return this.trivia(family, stage, 'knowledge-civic', KNOWLEDGE_CIVIC_FACTS);
-            case 'history-modern-opening': return this.trivia(family, stage, 'history-modern-opening', HISTORY_MODERN_OPENING_FACTS);
-            case 'history-modern-awakening': return this.trivia(family, stage, 'history-modern-awakening', HISTORY_MODERN_AWAKENING_FACTS);
-            case 'history-modern-resistance': return this.trivia(family, stage, 'history-modern-resistance', HISTORY_MODERN_RESISTANCE_FACTS);
-            case 'history-ancient': return this.trivia(family, stage, 'history-ancient', HISTORY_ANCIENT_FACTS);
-            case 'history-myth': return this.trivia(family, stage, 'history-myth', HISTORY_MYTH_FACTS);
-            default: return this.makeChoice(family, '偶数', 2, [3, 4, 5, 6], stage);
+        switch (template.id) {
+            case 'math-add': return this.mathAdd(template, stage);
+            case 'math-subtract': return this.mathSubtract(template, stage);
+            case 'math-multiply': return this.mathMultiply(template, stage);
+            case 'math-property': return this.mathProperty(template, stage);
+            case 'math-compare': return this.mathCompare(template, stage);
+            case 'math-sequence': return this.mathSequence(template, stage);
+            case 'math-missing': return this.mathMissing(template, stage);
+            case 'math-equation': return this.mathEquation(template, stage);
+            case 'vision-direction': return this.visionDirection(template, stage);
+            case 'vision-odd': return this.visionOdd(template, stage);
+            case 'vision-count': return this.visionCount(template, stage);
+            case 'vision-stroop': return this.visionStroop(template, stage);
+            case 'vision-pattern': return this.visionPattern(template, stage);
+            case 'vision-match': return this.visionMatch(template, stage);
+            case 'hanzi-fill': return this.hanziFill(template, stage);
+            case 'hanzi-order': return this.hanziOrder(template, stage);
+            case 'hanzi-antonym': return this.hanziRelation(template, stage, 'antonym');
+            case 'hanzi-synonym': return this.hanziRelation(template, stage, 'synonym');
+            case 'english-meaning': return this.englishMeaning(template, stage);
+            case 'english-category': return this.englishCategory(template, stage);
+            case 'english-antonym': return this.englishAntonym(template, stage);
+            case 'life-category': return this.lifeCategory(template, stage);
+            case 'geography-capital': return this.geographyCapital(template, stage);
+            case 'geography-country': return this.geographyCountry(template, stage);
+            case 'knowledge-science': return this.trivia(template, stage, 'knowledge-science', [...KNOWLEDGE_SCIENCE_FACTS, ...KNOWLEDGE_SCIENCE_EXPANSION]);
+            case 'knowledge-nature': return this.trivia(template, stage, 'knowledge-nature', [...KNOWLEDGE_NATURE_FACTS, ...KNOWLEDGE_NATURE_EXPANSION]);
+            case 'knowledge-culture': return this.trivia(template, stage, 'knowledge-culture', [...KNOWLEDGE_CULTURE_FACTS, ...KNOWLEDGE_CULTURE_EXPANSION]);
+            case 'knowledge-civic': return this.trivia(template, stage, 'knowledge-civic', KNOWLEDGE_CIVIC_FACTS);
+            case 'history-modern-opening': return this.trivia(template, stage, 'history-modern-opening', HISTORY_MODERN_OPENING_FACTS);
+            case 'history-modern-awakening': return this.trivia(template, stage, 'history-modern-awakening', HISTORY_MODERN_AWAKENING_FACTS);
+            case 'history-modern-resistance': return this.trivia(template, stage, 'history-modern-resistance', HISTORY_MODERN_RESISTANCE_FACTS);
+            case 'history-ancient': return this.trivia(template, stage, 'history-ancient', HISTORY_ANCIENT_FACTS);
+            case 'history-myth': return this.trivia(template, stage, 'history-myth', HISTORY_MYTH_FACTS);
+            default: throw new Error(`Unknown question template: ${String(template.id)}`);
         }
     }
 
     private make(
-        family: ContentFamilySpec,
+        template: QuestionTemplate,
         prompt: string,
         targets: TargetSpec[],
         correct: string[],
@@ -158,9 +160,11 @@ export class QuestionCompilerEngine {
     ): QuestionInstance {
         const activeRules = [...this.directive.rules];
         return {
-            id: `${family.id}-${this.index}`,
-            familyId: family.id,
-            theme: family.theme,
+            id: `${template.id}-${this.index}`,
+            templateId: template.id,
+            engineId: template.engine,
+            contentVersion: this.directive.contentVersion,
+            theme: template.theme,
             factIds: [...this.activeFactIds],
             prompt: { text: prompt },
             targets,
@@ -172,7 +176,7 @@ export class QuestionCompilerEngine {
     }
 
     private makeChoice<T extends string | number>(
-        family: ContentFamilySpec,
+        template: QuestionTemplate,
         prompt: string,
         answer: T,
         candidates: readonly T[],
@@ -191,7 +195,7 @@ export class QuestionCompilerEngine {
         if (answerIndex < 0) { values[0] = answer; answerIndex = 0; }
         const targets: TargetSpec[] = values.map((value, index) => ({ id: `t${index}`, text: String(value), value }));
         this.appendBomb(targets);
-        return this.make(family, prompt, targets, [`t${answerIndex}`], rules, stage);
+        return this.make(template, prompt, targets, [`t${answerIndex}`], rules, stage);
     }
 
     private includeAnswer<T>(answer: T, candidates: readonly T[], count: number): T[] {
@@ -205,46 +209,46 @@ export class QuestionCompilerEngine {
         return this.rng.shuffle([answer, ...unique.slice(0, Math.max(1, count - 1))]);
     }
 
-    private mathAdd(family: ContentFamilySpec, stage: Stage): QuestionInstance {
-        const ceiling = 12 + family.variant * 8 + stage * 18;
-        const a = this.rng.int(2 + family.variant, ceiling);
+    private mathAdd(template: QuestionTemplate, stage: Stage): QuestionInstance {
+        const ceiling = 12 + this.difficultyIndex * 8 + stage * 18;
+        const a = this.rng.int(2 + this.difficultyIndex, ceiling);
         const b = this.rng.int(2, ceiling);
-        const c = family.variant >= 3 && stage === 2 ? this.rng.int(2, 12) : 0;
+        const c = this.difficultyIndex >= 3 && stage === 2 ? this.rng.int(2, 12) : 0;
         const answer = a + b + c;
         const prompt = c ? `${a}+${b}+${c}=?` : `${a}+${b}=?`;
-        return this.makeChoice(family, prompt, answer, [answer - 2, answer - 1, answer + 1, answer + 2, answer + 10], stage);
+        return this.makeChoice(template, prompt, answer, [answer - 2, answer - 1, answer + 1, answer + 2, answer + 10], stage);
     }
 
-    private mathSubtract(family: ContentFamilySpec, stage: Stage): QuestionInstance {
-        const b = this.rng.int(2, 10 + family.variant * 5 + stage * 8);
-        const answer = this.rng.int(2, 12 + family.variant * 6 + stage * 10);
+    private mathSubtract(template: QuestionTemplate, stage: Stage): QuestionInstance {
+        const b = this.rng.int(2, 10 + this.difficultyIndex * 5 + stage * 8);
+        const answer = this.rng.int(2, 12 + this.difficultyIndex * 6 + stage * 10);
         const a = answer + b;
-        return this.makeChoice(family, `${a}-${b}=?`, answer, [answer - 2, answer - 1, answer + 1, answer + 2, answer + 5], stage);
+        return this.makeChoice(template, `${a}-${b}=?`, answer, [answer - 2, answer - 1, answer + 1, answer + 2, answer + 5], stage);
     }
 
-    private mathMultiply(family: ContentFamilySpec, stage: Stage): QuestionInstance {
-        const a = this.rng.int(2, Math.min(12, 5 + family.variant + stage * 2));
-        const b = this.rng.int(2, Math.min(12, 6 + family.variant + stage * 2));
+    private mathMultiply(template: QuestionTemplate, stage: Stage): QuestionInstance {
+        const a = this.rng.int(2, Math.min(12, 5 + this.difficultyIndex + stage * 2));
+        const b = this.rng.int(2, Math.min(12, 6 + this.difficultyIndex + stage * 2));
         const answer = a * b;
-        if (family.variant % 2 === 1 && stage > 0) {
-            return this.makeChoice(family, `${answer}÷${a}=?`, b, [b - 2, b - 1, b + 1, b + 2, a], stage);
+        if (this.difficultyIndex % 2 === 1 && stage > 0) {
+            return this.makeChoice(template, `${answer}÷${a}=?`, b, [b - 2, b - 1, b + 1, b + 2, a], stage);
         }
-        return this.makeChoice(family, `${a}×${b}=?`, answer, [answer - a, answer + a, answer - b, answer + b, a + b], stage);
+        return this.makeChoice(template, `${a}×${b}=?`, answer, [answer - a, answer + a, answer - b, answer + b, a + b], stage);
     }
 
-    private mathProperty(family: ContentFamilySpec, stage: Stage): QuestionInstance {
+    private mathProperty(template: QuestionTemplate, stage: Stage): QuestionInstance {
         const count = this.nonBombTargetCount();
-        const max = 30 + family.variant * 20 + stage * 60;
+        const max = 30 + this.difficultyIndex * 20 + stage * 60;
         const values = this.uniqueNumbers(count, 2, max);
         let predicate: (value: number) => boolean;
         let prompt: string;
-        if (family.variant === 0) { predicate = (value) => value % 2 === 0; prompt = '偶数'; }
-        else if (family.variant === 1) { predicate = (value) => value % 2 !== 0; prompt = '奇数'; }
-        else if (family.variant === 2) { predicate = (value) => value % 3 === 0; prompt = '3的倍数'; }
+        if (this.difficultyIndex === 0) { predicate = (value) => value % 2 === 0; prompt = '偶数'; }
+        else if (this.difficultyIndex === 1) { predicate = (value) => value % 2 !== 0; prompt = '奇数'; }
+        else if (this.difficultyIndex === 2) { predicate = (value) => value % 3 === 0; prompt = '3的倍数'; }
         else {
             const threshold = Math.max(10, Math.round(max * 0.5 / 5) * 5);
-            predicate = family.variant === 3 ? (value) => value > threshold : (value) => value < threshold;
-            prompt = family.variant === 3 ? `大于${threshold}` : `小于${threshold}`;
+            predicate = this.difficultyIndex === 3 ? (value) => value > threshold : (value) => value < threshold;
+            prompt = this.difficultyIndex === 3 ? `大于${threshold}` : `小于${threshold}`;
         }
         if (!values.some(predicate)) this.forcePropertyValue(values, 0, predicate, true, max);
         if (values.every(predicate)) this.forcePropertyValue(values, values.length - 1, predicate, false, max);
@@ -273,58 +277,58 @@ export class QuestionCompilerEngine {
         const correct = targets.filter((target) => predicate(Number(target.value))).map((target) => target.id);
         this.appendBomb(targets);
         const rules = this.directive.rules;
-        return this.make(family, prompt, targets, correct, rules, stage);
+        return this.make(template, prompt, targets, correct, rules, stage);
     }
 
-    private mathCompare(family: ContentFamilySpec, stage: Stage): QuestionInstance {
+    private mathCompare(template: QuestionTemplate, stage: Stage): QuestionInstance {
         const count = this.nonBombTargetCount();
-        const values = this.uniqueNumbers(count, 5, 50 + family.variant * 25 + stage * 80);
-        const largest = family.variant % 2 === 0;
+        const values = this.uniqueNumbers(count, 5, 50 + this.difficultyIndex * 25 + stage * 80);
+        const largest = this.difficultyIndex % 2 === 0;
         const answer = largest ? Math.max(...values) : Math.min(...values);
-        return this.makeChoice(family, largest ? '最大的' : '最小的', answer, values, stage);
+        return this.makeChoice(template, largest ? '最大的' : '最小的', answer, values, stage);
     }
 
-    private mathSequence(family: ContentFamilySpec, stage: Stage): QuestionInstance {
+    private mathSequence(template: QuestionTemplate, stage: Stage): QuestionInstance {
         if (this.directive.rules.includes('order')) {
             const values = this.uniqueNumbers(this.nonBombTargetCount(), 1, 50 + stage * 50);
             const targets: TargetSpec[] = this.rng.shuffle(values).map((value, index) => ({ id: `o${index}`, text: String(value), value }));
             const ordered = [...targets].sort((a, b) => Number(a.value) - Number(b.value)).map((target) => target.id);
             this.appendBomb(targets);
-            return this.make(family, '从小到大', targets, ordered, ['order'], stage, ordered);
+            return this.make(template, '从小到大', targets, ordered, ['order'], stage, ordered);
         }
-        const step = 1 + family.variant + stage;
+        const step = 1 + this.difficultyIndex + stage;
         const start = this.rng.int(1, 12 + stage * 8);
         const answer = start + step * 3;
-        return this.makeChoice(family, `${start},${start + step},${start + step * 2},?`, answer, [answer - step, answer + step, answer + 1, answer - 1, answer + step * 2], stage);
+        return this.makeChoice(template, `${start},${start + step},${start + step * 2},?`, answer, [answer - step, answer + step, answer + 1, answer - 1, answer + step * 2], stage);
     }
 
-    private mathMissing(family: ContentFamilySpec, stage: Stage): QuestionInstance {
-        const ceiling = 12 + family.variant * 8 + stage * 18;
-        if (family.variant === 4) {
+    private mathMissing(template: QuestionTemplate, stage: Stage): QuestionInstance {
+        const ceiling = 12 + this.difficultyIndex * 8 + stage * 18;
+        if (this.difficultyIndex === 4) {
             const answer = this.rng.int(2, Math.min(12, 6 + stage * 3));
             const factor = this.rng.int(2, Math.min(12, 5 + stage * 3));
             const product = answer * factor;
-            return this.makeChoice(family, `( )×${factor}=${product}`, answer, [answer - 2, answer - 1, answer + 1, answer + 2, factor], stage);
+            return this.makeChoice(template, `( )×${factor}=${product}`, answer, [answer - 2, answer - 1, answer + 1, answer + 2, factor], stage);
         }
         const left = this.rng.int(2, ceiling);
         const right = this.rng.int(2, ceiling);
-        if (family.variant === 0) {
-            return this.makeChoice(family, `( )+${right}=${left + right}`, left, [left - 2, left - 1, left + 1, left + 2], stage);
+        if (this.difficultyIndex === 0) {
+            return this.makeChoice(template, `( )+${right}=${left + right}`, left, [left - 2, left - 1, left + 1, left + 2], stage);
         }
-        if (family.variant === 1) {
-            return this.makeChoice(family, `${left}+( )=${left + right}`, right, [right - 2, right - 1, right + 1, right + 2], stage);
+        if (this.difficultyIndex === 1) {
+            return this.makeChoice(template, `${left}+( )=${left + right}`, right, [right - 2, right - 1, right + 1, right + 2], stage);
         }
         const result = this.rng.int(2, ceiling);
         const minuend = result + right;
-        if (family.variant === 2) {
-            return this.makeChoice(family, `( )-${right}=${result}`, minuend, [minuend - 2, minuend - 1, minuend + 1, minuend + 2], stage);
+        if (this.difficultyIndex === 2) {
+            return this.makeChoice(template, `( )-${right}=${result}`, minuend, [minuend - 2, minuend - 1, minuend + 1, minuend + 2], stage);
         }
-        return this.makeChoice(family, `${minuend}-( )=${result}`, right, [right - 2, right - 1, right + 1, right + 2], stage);
+        return this.makeChoice(template, `${minuend}-( )=${result}`, right, [right - 2, right - 1, right + 1, right + 2], stage);
     }
 
-    private mathEquation(family: ContentFamilySpec, stage: Stage): QuestionInstance {
-        const target = this.rng.int(8 + family.variant * 2, 18 + family.variant * 6 + stage * 10);
-        if (family.variant % 2 === 0) {
+    private mathEquation(template: QuestionTemplate, stage: Stage): QuestionInstance {
+        const target = this.rng.int(8 + this.difficultyIndex * 2, 18 + this.difficultyIndex * 6 + stage * 10);
+        if (this.difficultyIndex % 2 === 0) {
             const left = this.rng.int(2, target - 3);
             const right = target - left;
             const answer = `${left}+${right}`;
@@ -335,9 +339,9 @@ export class QuestionCompilerEngine {
                 `${left + 2}+${right + 1}`,
                 `${left + 1}+${right - 2}`,
             ];
-            return this.makeChoice(family, `等于 ${target}`, answer, candidates, stage);
+            return this.makeChoice(template, `等于 ${target}`, answer, candidates, stage);
         }
-        const subtrahend = this.rng.int(2, 8 + family.variant + stage * 3);
+        const subtrahend = this.rng.int(2, 8 + this.difficultyIndex + stage * 3);
         const minuend = target + subtrahend;
         const answer = `${minuend}-${subtrahend}`;
         const candidates = [
@@ -347,83 +351,83 @@ export class QuestionCompilerEngine {
             `${minuend}-${subtrahend + 2}`,
             `${minuend + 3}-${subtrahend + 1}`,
         ];
-        return this.makeChoice(family, `等于 ${target}`, answer, candidates, stage);
+        return this.makeChoice(template, `等于 ${target}`, answer, candidates, stage);
     }
 
-    private visionDirection(family: ContentFamilySpec, stage: Stage): QuestionInstance {
+    private visionDirection(template: QuestionTemplate, stage: Stage): QuestionInstance {
         const shown = this.rng.pick(ARROWS);
-        const opposite = family.variant >= 3 && stage > 0;
+        const opposite = this.difficultyIndex >= 3 && stage > 0;
         const answer = opposite ? OPPOSITE_ARROW[shown] : shown;
-        return this.makeChoice(family, opposite ? `${shown} 的反向` : shown, answer, ARROWS, stage, { allowBomb: false });
+        return this.makeChoice(template, opposite ? `${shown} 的反向` : shown, answer, ARROWS, stage, { allowBomb: false });
     }
 
-    private visionOdd(family: ContentFamilySpec, stage: Stage): QuestionInstance {
+    private visionOdd(template: QuestionTemplate, stage: Stage): QuestionInstance {
         const pairs: readonly (readonly [string, string])[] = [['●', '○'], ['▲', '△'], ['■', '□'], ['◆', '◇'], ['★', '☆']];
-        const [base, odd] = pairs[family.variant];
+        const [base, odd] = pairs[this.difficultyIndex];
         const count = this.nonBombTargetCount();
         const oddIndex = this.rng.int(0, count - 1);
         const targets: TargetSpec[] = Array.from({ length: count }, (_, index) => ({ id: `v${index}`, text: index === oddIndex ? odd : base, value: index }));
         this.appendBomb(targets);
-        return this.make(family, '不同的', targets, [`v${oddIndex}`], ['standard'], stage);
+        return this.make(template, '不同的', targets, [`v${oddIndex}`], ['standard'], stage);
     }
 
-    private visionCount(family: ContentFamilySpec, stage: Stage): QuestionInstance {
+    private visionCount(template: QuestionTemplate, stage: Stage): QuestionInstance {
         const symbols = ['●', '▲', '■', '◆', '★'];
-        const symbol = symbols[family.variant];
+        const symbol = symbols[this.difficultyIndex];
         const answerCount = this.rng.int(2, 4 + stage);
         const values = this.includeAnswer(answerCount, [1, 2, 3, 4, 5, 6], this.nonBombTargetCount());
         const targets: TargetSpec[] = values.map((value, index) => ({ id: `c${index}`, text: symbol.repeat(value), value }));
         this.appendBomb(targets);
-        return this.make(family, `${answerCount}个`, targets, [targets.find((target) => target.value === answerCount)!.id], ['standard'], stage);
+        return this.make(template, `${answerCount}个`, targets, [targets.find((target) => target.value === answerCount)!.id], ['standard'], stage);
     }
 
-    private visionStroop(family: ContentFamilySpec, stage: Stage): QuestionInstance {
-        const wanted = COLOR_WORDS[family.variant % COLOR_WORDS.length];
+    private visionStroop(template: QuestionTemplate, stage: Stage): QuestionInstance {
+        const wanted = COLOR_WORDS[this.difficultyIndex % COLOR_WORDS.length];
         const colors = this.includeAnswer(wanted, COLOR_WORDS, this.nonBombTargetCount());
         const targets: TargetSpec[] = colors.map((color, index) => ({
             id: `s${index}`,
-            text: COLOR_WORDS[(COLOR_WORDS.indexOf(color) + 1 + family.variant % 3) % COLOR_WORDS.length],
+            text: COLOR_WORDS[(COLOR_WORDS.indexOf(color) + 1 + this.difficultyIndex % 3) % COLOR_WORDS.length],
             colorName: color,
             value: color,
         }));
         this.appendBomb(targets);
-        return this.make(family, `字体颜色·${wanted}`, targets, [targets.find((target) => target.value === wanted)!.id], this.directive.rules, stage);
+        return this.make(template, `字体颜色·${wanted}`, targets, [targets.find((target) => target.value === wanted)!.id], this.directive.rules, stage);
     }
 
-    private visionPattern(family: ContentFamilySpec, stage: Stage): QuestionInstance {
+    private visionPattern(template: QuestionTemplate, stage: Stage): QuestionInstance {
         const symbols = ['○', '△', '□', '◇', '☆', '●', '▲', '■', '◆', '★'];
-        if (family.variant === 0) {
+        if (this.difficultyIndex === 0) {
             const first = this.rng.pick(symbols);
             const second = this.rng.pick(symbols.filter((symbol) => symbol !== first));
-            return this.makeChoice(family, `${first}${second}${first}${second}?`, first, symbols, stage, { allowBomb: false });
+            return this.makeChoice(template, `${first}${second}${first}${second}?`, first, symbols, stage, { allowBomb: false });
         }
-        if (family.variant === 1) {
+        if (this.difficultyIndex === 1) {
             const start = this.rng.int(0, ARROWS.length - 1);
             const step = this.rng.next() < 0.5 ? 1 : -1;
             const sequence = Array.from({ length: 4 }, (_, index) => ARROWS[(start + index * step + ARROWS.length * 2) % ARROWS.length]);
-            return this.makeChoice(family, `${sequence[0]}${sequence[1]}${sequence[2]}?`, sequence[3], [...ARROWS, '↗'], stage, { allowBomb: false });
+            return this.makeChoice(template, `${sequence[0]}${sequence[1]}${sequence[2]}?`, sequence[3], [...ARROWS, '↗'], stage, { allowBomb: false });
         }
-        if (family.variant === 2) {
+        if (this.difficultyIndex === 2) {
             const first = this.rng.pick(symbols);
             const second = this.rng.pick(symbols.filter((symbol) => symbol !== first));
             const run = this.rng.int(1, 3);
             const block = `${first}${second.repeat(run)}`;
-            return this.makeChoice(family, `${block}${block}?`, first, symbols, stage, { allowBomb: false });
+            return this.makeChoice(template, `${block}${block}?`, first, symbols, stage, { allowBomb: false });
         }
-        if (family.variant === 3) {
+        if (this.difficultyIndex === 3) {
             const first = this.rng.int(0, 9);
             let second = this.rng.int(0, 9);
             if (second === first) second = (second + 1) % 10;
-            return this.makeChoice(family, `${first},${second},${first},${second},?`, first, [0, 1, 2, 3, 4, 5, 6, 7, 8, 9], stage, { allowBomb: false });
+            return this.makeChoice(template, `${first},${second},${first},${second},?`, first, [0, 1, 2, 3, 4, 5, 6, 7, 8, 9], stage, { allowBomb: false });
         }
         const sizes = ['小', '中', '大'] as const;
         const start = this.rng.int(0, sizes.length - 1);
         const step = this.rng.next() < 0.5 ? 1 : -1;
         const sequence = Array.from({ length: 6 }, (_, index) => sizes[(start + index * step + sizes.length * 3) % sizes.length]);
-        return this.makeChoice(family, `${sequence.slice(0, 5).join('')}?`, sequence[5], ['小', '中', '大', '特大'], stage, { allowBomb: false });
+        return this.makeChoice(template, `${sequence.slice(0, 5).join('')}?`, sequence[5], ['小', '中', '大', '特大'], stage, { allowBomb: false });
     }
 
-    private visionMatch(family: ContentFamilySpec, stage: Stage): QuestionInstance {
+    private visionMatch(template: QuestionTemplate, stage: Stage): QuestionInstance {
         const symbolSets: readonly (readonly string[])[] = [
             ['●', '○', '▲', '△'],
             ['■', '□', '◆', '◇'],
@@ -431,7 +435,7 @@ export class QuestionCompilerEngine {
             ['▲', '△', '◆', '◇'],
             ['■', '□', '★', '☆'],
         ];
-        const symbols = symbolSets[family.variant];
+        const symbols = symbolSets[this.difficultyIndex];
         const first = this.rng.pick(symbols);
         const second = this.rng.pick(symbols.filter((symbol) => symbol !== first));
         const answer = `${first}${second}`;
@@ -442,35 +446,35 @@ export class QuestionCompilerEngine {
                 if (pair !== answer) candidates.push(pair);
             }
         }
-        return this.makeChoice(family, `找相同 ${answer}`, answer, candidates, stage);
+        return this.makeChoice(template, `找相同 ${answer}`, answer, candidates, stage);
     }
 
-    private hanziFill(family: ContentFamilySpec, stage: Stage): QuestionInstance {
+    private hanziFill(template: QuestionTemplate, stage: Stage): QuestionInstance {
         const entry = this.pickFact('idioms', IDIOMS, (item) => `idiom:${item.text}`);
         const answer = entry.text[entry.missingIndex];
         const prompt = `${entry.text.slice(0, entry.missingIndex)}( )${entry.text.slice(entry.missingIndex + 1)}`;
-        return this.makeChoice(family, prompt, answer, entry.wrong, stage);
+        return this.makeChoice(template, prompt, answer, entry.wrong, stage);
     }
 
-    private hanziOrder(family: ContentFamilySpec, stage: Stage): QuestionInstance {
+    private hanziOrder(template: QuestionTemplate, stage: Stage): QuestionInstance {
         const orderable = IDIOMS.filter((entry) => new Set(entry.text).size === 4);
         const entry = this.pickFact('idioms-orderable', orderable, (item) => `idiom:${item.text}`);
         const source = Array.from(entry.text).map((text, originalIndex) => ({ text, originalIndex }));
         const targets: TargetSpec[] = this.rng.shuffle(source).map((item, index) => ({ id: `h${index}`, text: item.text, value: item.originalIndex }));
         const ordered = [...targets].sort((a, b) => Number(a.value) - Number(b.value)).map((target) => target.id);
         this.appendBomb(targets);
-        return this.make(family, '排成语', targets, ordered, ['order'], stage, ordered);
+        return this.make(template, '排成语', targets, ordered, ['order'], stage, ordered);
     }
 
-    private englishMeaning(family: ContentFamilySpec, stage: Stage): QuestionInstance {
+    private englishMeaning(template: QuestionTemplate, stage: Stage): QuestionInstance {
         const word = this.pickFact('english-words', ENGLISH_WORDS, (item) => `english:${item.en}`);
         const sameCategory = ENGLISH_WORDS.filter((candidate) => candidate.category === word.category && candidate.en !== word.en).map((candidate) => candidate.zh);
-        return this.makeChoice(family, `${word.en} 是？`, word.zh, sameCategory, stage);
+        return this.makeChoice(template, `${word.en} 是？`, word.zh, sameCategory, stage);
     }
 
-    private englishCategory(family: ContentFamilySpec, stage: Stage): QuestionInstance {
+    private englishCategory(template: QuestionTemplate, stage: Stage): QuestionInstance {
         const categories = ['动物', '颜色', '食物', '动作', '物品'] as const;
-        const category = categories[family.variant];
+        const category = categories[this.difficultyIndex];
         const count = this.nonBombTargetCount();
         const matchingPool = ENGLISH_WORDS.filter((word) => word.category === category);
         const others = this.rng.shuffle(ENGLISH_WORDS.filter((word) => word.category !== category));
@@ -482,10 +486,10 @@ export class QuestionCompilerEngine {
         const targets: TargetSpec[] = words.map((word, index) => ({ id: `e${index}`, text: word.en, value: word.category }));
         const correct = targets.filter((target) => target.value === category).map((target) => target.id);
         this.appendBomb(targets);
-        return this.make(family, category, targets, correct, this.directive.rules, stage);
+        return this.make(template, category, targets, correct, this.directive.rules, stage);
     }
 
-    private englishAntonym(family: ContentFamilySpec, stage: Stage): QuestionInstance {
+    private englishAntonym(template: QuestionTemplate, stage: Stage): QuestionInstance {
         const pair = this.pickFact('english-antonyms', ENGLISH_ANTONYMS, (item) => `antonym:${item[0]}:${item[1]}`);
         const reversePair = this.rng.next() < 0.5;
         const promptWord = pair[reversePair ? 1 : 0];
@@ -493,12 +497,12 @@ export class QuestionCompilerEngine {
         const antonymWords: string[] = [];
         for (const item of ENGLISH_ANTONYMS) antonymWords.push(item[0], item[1]);
         const candidates = this.rng.shuffle(antonymWords).filter((word) => word !== promptWord);
-        return this.makeChoice(family, `${promptWord} 的反义词`, answer, candidates, stage);
+        return this.makeChoice(template, `${promptWord} 的反义词`, answer, candidates, stage);
     }
 
-    private lifeCategory(family: ContentFamilySpec, stage: Stage): QuestionInstance {
+    private lifeCategory(template: QuestionTemplate, stage: Stage): QuestionInstance {
         const categories = ['清洁工具', '厨房用品', '学习用品', '安全用品', '交通工具'] as const;
-        const category = categories[family.variant];
+        const category = categories[this.difficultyIndex];
         const count = this.nonBombTargetCount();
         const matchingPool = LIFE_CATEGORY_FACTS.filter((fact) => fact.category === category);
         const others = this.rng.shuffle(LIFE_CATEGORY_FACTS.filter((fact) => fact.category !== category));
@@ -510,23 +514,23 @@ export class QuestionCompilerEngine {
         const targets: TargetSpec[] = facts.map((fact, index) => ({ id: `l${index}`, text: fact.item, value: fact.category }));
         const correct = targets.filter((target) => target.value === category).map((target) => target.id);
         this.appendBomb(targets);
-        return this.make(family, category, targets, correct, this.directive.rules, stage);
+        return this.make(template, category, targets, correct, this.directive.rules, stage);
     }
 
-    private geographyCapital(family: ContentFamilySpec, stage: Stage): QuestionInstance {
+    private geographyCapital(template: QuestionTemplate, stage: Stage): QuestionInstance {
         const fact = this.pickFact('geography-facts', GEOGRAPHY_FACTS, (item) => `geography:${item.country}`);
         const candidates = GEOGRAPHY_FACTS.filter((candidate) => candidate.capital !== fact.capital).map((candidate) => candidate.capital);
-        return this.makeChoice(family, `${fact.country}首都`, fact.capital, candidates, stage);
+        return this.makeChoice(template, `${fact.country}首都`, fact.capital, candidates, stage);
     }
 
-    private geographyCountry(family: ContentFamilySpec, stage: Stage): QuestionInstance {
+    private geographyCountry(template: QuestionTemplate, stage: Stage): QuestionInstance {
         const fact = this.pickFact('geography-facts', GEOGRAPHY_FACTS, (item) => `geography:${item.country}`);
         const candidates = GEOGRAPHY_FACTS.filter((candidate) => candidate.country !== fact.country).map((candidate) => candidate.country);
-        return this.makeChoice(family, `${fact.capital}在哪国`, fact.country, candidates, stage);
+        return this.makeChoice(template, `${fact.capital}在哪国`, fact.country, candidates, stage);
     }
 
     private hanziRelation(
-        family: ContentFamilySpec,
+        template: QuestionTemplate,
         stage: Stage,
         kind: HanziRelationKind,
     ): QuestionInstance {
@@ -539,7 +543,7 @@ export class QuestionCompilerEngine {
         const answer = reversePair ? fact.left : fact.right;
         const distractors = reversePair ? fact.leftDistractors : fact.rightDistractors;
         return this.makeChoice(
-            family,
+            template,
             `${promptWord}的${kind === 'antonym' ? '反义词' : '近义词'}`,
             answer,
             distractors,
@@ -547,9 +551,9 @@ export class QuestionCompilerEngine {
         );
     }
 
-    private trivia(family: ContentFamilySpec, stage: Stage, poolId: string, facts: readonly TriviaFact[]): QuestionInstance {
+    private trivia(template: QuestionTemplate, stage: Stage, poolId: string, facts: readonly TriviaFact[]): QuestionInstance {
         const fact = this.pickFact(poolId, facts, (item) => `${poolId}:${item.prompt}`);
-        return this.makeChoice(family, fact.prompt, fact.answer, fact.wrong, stage);
+        return this.makeChoice(template, fact.prompt, fact.answer, fact.wrong, stage);
     }
 
     private uniqueNumbers(count: number, min: number, max: number): number[] {
@@ -648,8 +652,7 @@ export class QuestionCompilerEngine {
     }
 
     private semanticSignature(question: QuestionInstance): string {
-        const familyKind = (question.familyId ?? '').replace(/\.v\d+$/, '');
-        return `${question.theme}|${question.typeId ?? familyKind}|${this.normalizePrompt(question.prompt.text)}|${this.answerSignature(question)}`;
+        return `${question.theme}|${question.templateId}|${this.normalizePrompt(question.prompt.text)}|${this.answerSignature(question)}`;
     }
 
     private answerSignature(question: QuestionInstance): string {

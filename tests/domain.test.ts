@@ -1,11 +1,9 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
 import { CONTENT_VERSION, GAMEPLAY_CONFIG, validateRuleSet } from '../assets/Scripts/configs/GameConfig.ts';
-import { familySupportsRules, isDirectionSensitiveFamily, legalRuleSetsForTheme, phaseAt, targetCountForFamily } from '../assets/Scripts/domain/QuestionPolicy.ts';
-import { BrawlRequestFixture, DirectiveCompilerFixture, FriendChallengeRequestFixture } from './legacy-question-adapter.ts';
+import { isDirectionSensitiveTemplate, legalRuleSetsForTheme, phaseAt, targetCountForTemplate, templateSupportsRules } from '../assets/Scripts/domain/QuestionPolicy.ts';
+import { BrawlRequestFixture, DirectiveCompilerFixture, FriendChallengeRequestFixture } from './question-compiler-fixtures.ts';
 import {
-    CONTENT_FAMILIES,
-    CONTENT_FAMILY_TARGETS,
     ENGLISH_ANTONYMS,
     ENGLISH_WORDS,
     GEOGRAPHY_FACTS,
@@ -91,6 +89,10 @@ function pipeline(seed: string): { director: BrawlRequestFixture; generator: Dir
         generator: new DirectiveCompilerFixture(new SeededRng(`${seed}:gameplay`), GAMEPLAY_CONFIG),
     };
 }
+
+const TEST_QUESTION_META: Pick<QuestionInstance, 'templateId' | 'contentVersion' | 'engineId' | 'factIds'> = {
+    templateId: 'math-add', contentVersion: 'test', engineId: 'single', factIds: [],
+};
 
 function assertCompletesAcrossSeparateStrokes(constraint: ReturnType<typeof evaluateRules>): void {
     assert.equal(shouldKeepIncompleteGesture(constraint), true);
@@ -337,7 +339,7 @@ test('game feedback policy maps master, combo, failures and final countdown', ()
 });
 
 test('numeric comparison targets remain primitive numbers with readable labels', () => {
-    const family = CONTENT_FAMILIES.find((candidate) => candidate.kind === 'math-compare')!;
+    const template = QUESTION_TEMPLATES.find((candidate) => candidate.id === 'math-compare')!;
     const generator = new DirectiveCompilerFixture(new SeededRng('wechat-set-spread-regression'), GAMEPLAY_CONFIG);
     const question = generator.next({
         phase: 'warmup',
@@ -345,7 +347,7 @@ test('numeric comparison targets remain primitive numbers with readable labels',
         targetCount: 2,
         questionTimeMs: 3_000,
         speed: 1,
-        family,
+        template,
         rules: ['standard'],
     });
 
@@ -411,23 +413,23 @@ test('friend challenge sessions honor 60, 90 and 120 second durations with three
     }
 });
 
-test('rotation excludes reverse and every direction-sensitive family', () => {
+test('rotation excludes reverse and every direction-sensitive template', () => {
     assert.equal(validateRuleSet(['rotate']), true);
     assert.equal(validateRuleSet(['multi', 'rotate']), true);
     assert.equal(validateRuleSet(['reverse', 'rotate']), false);
-    for (const family of CONTENT_FAMILIES) {
-        if (isDirectionSensitiveFamily(family.kind)) {
-            assert.equal(familySupportsRules(family, ['rotate']), false);
-            assert.equal(familySupportsRules(family, ['bomb', 'rotate']), false);
+    for (const template of QUESTION_TEMPLATES) {
+        if (isDirectionSensitiveTemplate(template)) {
+            assert.equal(templateSupportsRules(template, ['rotate']), false);
+            assert.equal(templateSupportsRules(template, ['bomb', 'rotate']), false);
         }
     }
-    const math = CONTENT_FAMILIES.find((family) => family.kind === 'math-add')!;
-    assert.equal(familySupportsRules(math, ['rotate']), true);
-    assert.equal(familySupportsRules(math, ['bomb', 'rotate']), true);
+    const math = QUESTION_TEMPLATES.find((template) => template.id === 'math-add')!;
+    assert.equal(templateSupportsRules(math, ['rotate']), true);
+    assert.equal(templateSupportsRules(math, ['bomb', 'rotate']), true);
 });
 
 test('reverse never turns a bomb into a required target', () => {
-    const question: QuestionInstance = {
+    const question: QuestionInstance = { ...TEST_QUESTION_META,
         id: 'reverse', theme: 'math', prompt: { text: '反向' },
         targets: [{ id: 'right', text: '2' }, { id: 'wrong', text: '3' }, { id: 'bomb', text: '爆', isBomb: true }],
         baseCorrectTargetIds: ['right'], activeRules: ['reverse', 'bomb'], timeLimitMs: 3000,
@@ -438,7 +440,7 @@ test('reverse never turns a bomb into a required target', () => {
 });
 
 test('mistake review records the effective answer after applying rules', () => {
-    const question: QuestionInstance = {
+    const question: QuestionInstance = { ...TEST_QUESTION_META,
         id: 'mistake-reverse', theme: 'math', prompt: { text: '偶数' },
         targets: [{ id: 'even', text: '2' }, { id: 'odd', text: '3' }, { id: 'bomb', text: '爆', isBomb: true }],
         baseCorrectTargetIds: ['even'], activeRules: ['reverse', 'bomb'], timeLimitMs: 3_000,
@@ -537,16 +539,16 @@ test('all tower opening descriptions fit portrait safe widths', () => {
 
 
 test('fill-in prompts show a spaced parenthesis placeholder', () => {
-    const fillFamilies = CONTENT_FAMILIES.filter((family) => family.kind === 'math-missing' || family.kind === 'hanzi-fill');
-    assert.ok(fillFamilies.length > 0);
-    for (const family of fillFamilies) {
-        const generator = new DirectiveCompilerFixture(new SeededRng(`placeholder-${family.id}`), GAMEPLAY_CONFIG);
+    const fillTemplates = QUESTION_TEMPLATES.filter((template) => template.id === 'math-missing' || template.id === 'hanzi-fill');
+    assert.ok(fillTemplates.length > 0);
+    for (const template of fillTemplates) {
+        const generator = new DirectiveCompilerFixture(new SeededRng(`placeholder-${template.id}`), GAMEPLAY_CONFIG);
         const question = generator.next({
             phase: 'action', difficultyStage: 1, targetCount: 4, questionTimeMs: 2_600,
-            speed: 1, family, rules: ['standard'],
+            speed: 1, template, rules: ['standard'],
         });
-        assert.ok(question.prompt.text.includes('( )'), `${family.id}: ${question.prompt.text}`);
-        assert.equal(question.prompt.text.includes('□'), false, family.id);
+        assert.ok(question.prompt.text.includes('( )'), `${template.id}: ${question.prompt.text}`);
+        assert.equal(question.prompt.text.includes('□'), false, template.id);
     }
 });
 
@@ -586,7 +588,7 @@ test('every orderable idiom completes only after all four characters', () => {
 });
 
 test('standard parity accepts either even while multi parity requires all evens', () => {
-    const base: QuestionInstance = {
+    const base: QuestionInstance = { ...TEST_QUESTION_META,
         id: 'parity', theme: 'math', prompt: { text: '斩偶数' },
         targets: [{ id: '6', text: '6', value: 6 }, { id: '12', text: '12', value: 12 }, { id: '13', text: '13', value: 13 }],
         baseCorrectTargetIds: ['6', '12'], activeRules: ['standard'], timeLimitMs: 3000,
@@ -622,19 +624,19 @@ test('master slash requires multiple answers completed without lifting the point
 });
 
 test('ordinary single selection generates exactly one correct target', () => {
-    const familyKinds = new Set(['math-property', 'english-category', 'life-category']);
+    const templateIds = new Set(['math-property', 'english-category', 'life-category']);
     const ruleSets = [['standard'], ['bomb'], ['rotate']] as const;
-    for (const family of CONTENT_FAMILIES.filter((candidate) => familyKinds.has(candidate.kind))) {
+    for (const template of QUESTION_TEMPLATES.filter((candidate) => templateIds.has(candidate.id))) {
         for (const rules of ruleSets) {
-            if (!familySupportsRules(family, rules)) continue;
+            if (!templateSupportsRules(template, rules)) continue;
             for (let seedIndex = 0; seedIndex < 20; seedIndex++) {
-                const generator = new DirectiveCompilerFixture(new SeededRng(`single-${family.id}-${rules.join('+')}-${seedIndex}`), GAMEPLAY_CONFIG);
+                const generator = new DirectiveCompilerFixture(new SeededRng(`single-${template.id}-${rules.join('+')}-${seedIndex}`), GAMEPLAY_CONFIG);
                 const question = generator.next({
                     phase: 'climax', difficultyStage: 2, targetCount: 6, questionTimeMs: 3_000,
-                    speed: 1, family, rules: [...rules],
+                    speed: 1, template, rules: [...rules],
                 });
                 const constraint = evaluateRules(question);
-                assert.equal(constraint.requiredTargetIds.length, 1, `${family.id}:${rules.join('+')}`);
+                assert.equal(constraint.requiredTargetIds.length, 1, `${template.id}:${rules.join('+')}`);
                 assert.equal(validateQuestion(question, constraint).includes('single-needs-one-target'), false);
             }
         }
@@ -642,7 +644,7 @@ test('ordinary single selection generates exactly one correct target', () => {
 });
 
 test('reverse selection may still accept any one of multiple reversed targets', () => {
-    const question: QuestionInstance = {
+    const question: QuestionInstance = { ...TEST_QUESTION_META,
         id: 'reverse-single', theme: 'math', prompt: { text: '奇数' },
         targets: [{ id: '3', text: '3', value: 3 }, { id: '4', text: '4', value: 4 }, { id: '6', text: '6', value: 6 }],
         baseCorrectTargetIds: ['3'], activeRules: ['reverse'], timeLimitMs: 3_000,
@@ -672,13 +674,13 @@ test('multi selection keeps correct progress across separate strokes', () => {
 test('session applies a question result only once', () => {
     const entry = { mode: 'brawl60' as const, seed: 's', contentVersion: 'v' };
     const session = new GameSession(entry, GAMEPLAY_CONFIG); session.start(); session.beginQuestion();
-    const q: QuestionInstance = { id: 'q', theme: 'math', prompt: { text: 'x' }, targets: [{ id: 'a', text: '1' }, { id: 'b', text: '2' }], baseCorrectTargetIds: ['a'], activeRules: ['standard'], timeLimitMs: 3000 };
+    const q: QuestionInstance = { ...TEST_QUESTION_META, id: 'q', theme: 'math', prompt: { text: 'x' }, targets: [{ id: 'a', text: '1' }, { id: 'b', text: '2' }], baseCorrectTargetIds: ['a'], activeRules: ['standard'], timeLimitMs: 3000 };
     assert.ok(session.resolveSuccess(q)); assert.equal(session.resolveSuccess(q), null); assert.equal(session.state.correctCount, 1);
 });
 
 test('session counts master slashes and adds their independent score bonus', () => {
     const session = new GameSession({ mode: 'brawl60', seed: 'master-slash', contentVersion: 'v' }, GAMEPLAY_CONFIG);
-    const question: QuestionInstance = { id: 'multi', theme: 'math', prompt: { text: '斩全部偶数' }, targets: [{ id: 'a', text: '2' }, { id: 'b', text: '4' }], baseCorrectTargetIds: ['a', 'b'], activeRules: ['multi'], timeLimitMs: 3000 };
+    const question: QuestionInstance = { ...TEST_QUESTION_META, id: 'multi', theme: 'math', prompt: { text: '斩全部偶数' }, targets: [{ id: 'a', text: '2' }, { id: 'b', text: '4' }], baseCorrectTargetIds: ['a', 'b'], activeRules: ['multi'], timeLimitMs: 3000 };
     session.start(); session.beginQuestion(); session.tick(1000);
     const result = session.resolveSuccess(question, true);
     assert.equal(result?.kind, 'masterSlash');
@@ -690,12 +692,12 @@ test('session counts master slashes and adds their independent score bonus', () 
 test('question preview time does not reduce the measured answer window', () => {
     const entry = { mode: 'brawl60' as const, seed: 'preview-window', contentVersion: 'v' };
     const session = new GameSession(entry, GAMEPLAY_CONFIG); session.start(); session.tick(300); session.beginQuestion(); session.tick(120);
-    const q: QuestionInstance = { id: 'preview-q', theme: 'math', prompt: { text: '1+1=?' }, targets: [{ id: 'a', text: '2' }, { id: 'b', text: '3' }], baseCorrectTargetIds: ['a'], activeRules: ['standard'], timeLimitMs: 3000 };
+    const q: QuestionInstance = { ...TEST_QUESTION_META, id: 'preview-q', theme: 'math', prompt: { text: '1+1=?' }, targets: [{ id: 'a', text: '2' }, { id: 'b', text: '3' }], baseCorrectTargetIds: ['a'], activeRules: ['standard'], timeLimitMs: 3000 };
     assert.equal(session.resolveSuccess(q)?.reactionMs, 120);
 });
 
 test('master hit window starts after target entrance settles', () => {
-    const question: QuestionInstance = { id: 'master-hit-window', theme: 'math', prompt: { text: '1+1=?' }, targets: [{ id: 'a', text: '2' }, { id: 'b', text: '3' }], baseCorrectTargetIds: ['a'], activeRules: ['standard'], timeLimitMs: 3000 };
+    const question: QuestionInstance = { ...TEST_QUESTION_META, id: 'master-hit-window', theme: 'math', prompt: { text: '1+1=?' }, targets: [{ id: 'a', text: '2' }, { id: 'b', text: '3' }], baseCorrectTargetIds: ['a'], activeRules: ['standard'], timeLimitMs: 3000 };
     const withinWindow = new GameSession({ mode: 'brawl60', seed: 'master-hit-within', contentVersion: 'v' }, GAMEPLAY_CONFIG);
     withinWindow.start(); withinWindow.beginQuestion(); withinWindow.tick(990);
     assert.equal(withinWindow.resolveSuccess(question)?.masterHit, true);
@@ -706,7 +708,7 @@ test('master hit window starts after target entrance settles', () => {
 });
 
 test('endless brawl only ends on life depletion and heals every third consecutive correct answer', () => {
-    const question: QuestionInstance = { id: 'endless-q', theme: 'math', prompt: { text: '1+1=?' }, targets: [{ id: 'a', text: '2' }, { id: 'b', text: '3' }], baseCorrectTargetIds: ['a'], activeRules: ['standard'], timeLimitMs: 3_000 };
+    const question: QuestionInstance = { ...TEST_QUESTION_META, id: 'endless-q', theme: 'math', prompt: { text: '1+1=?' }, targets: [{ id: 'a', text: '2' }, { id: 'b', text: '3' }], baseCorrectTargetIds: ['a'], activeRules: ['standard'], timeLimitMs: 3_000 };
     const session = new GameSession({ mode: 'brawl60', seed: 'endless', contentVersion: 'v' }, GAMEPLAY_CONFIG);
     session.start();
     session.tick(10 * 60_000);
@@ -878,13 +880,10 @@ test('daily challenge starts without tutorial state and reuses the same-day reco
     assert.deepEqual(nextDay?.tutorialBaseline, []);
 });
 
-test('expanded content catalog contains five times the recommended family counts', () => {
-    const counts = Object.fromEntries(Object.keys(CONTENT_FAMILY_TARGETS).map((theme) => [theme, 0])) as Record<keyof typeof CONTENT_FAMILY_TARGETS, number>;
-    for (const family of CONTENT_FAMILIES) counts[family.theme] += 1;
-    assert.deepEqual(counts, CONTENT_FAMILY_TARGETS);
-    assert.equal(CONTENT_FAMILIES.length, 165);
-    assert.equal(new Set(CONTENT_FAMILIES.map((family) => family.id)).size, CONTENT_FAMILIES.length);
-    assert.ok(!CONTENT_FAMILIES.some((family) => family.kind === 'life-use'));
+test('unified template catalog contains one stable entry per cognitive template', () => {
+    assert.equal(QUESTION_TEMPLATES.length, 33);
+    assert.equal(new Set(QUESTION_TEMPLATES.map((template) => template.id)).size, QUESTION_TEMPLATES.length);
+    assert.ok(QUESTION_TEMPLATES.every((template) => template.enabled && template.difficultyBands.length === 5));
 });
 
 test('question-bank registry reports audited base records instead of generated combinations', () => {
@@ -933,13 +932,13 @@ test('new relationship and common-knowledge packs keep short answers and clean c
 
 test('warmup catalog includes distinct equation and symbol-matching questions', () => {
     for (const kind of ['math-equation', 'vision-match'] as const) {
-        const families = CONTENT_FAMILIES.filter((family) => family.kind === kind);
-        assert.equal(families.length, 5);
-        for (const family of families) {
-            const generator = new DirectiveCompilerFixture(new SeededRng(`warmup-${family.id}`), GAMEPLAY_CONFIG);
+        const templates = QUESTION_TEMPLATES.filter((template) => template.id === kind);
+        assert.equal(templates.length, 1);
+        for (const template of templates) {
+            const generator = new DirectiveCompilerFixture(new SeededRng(`warmup-${template.id}`), GAMEPLAY_CONFIG);
             const question = generator.next({
                 phase: 'warmup', difficultyStage: 0, targetCount: 3, questionTimeMs: 3_000,
-                speed: 0.72, family, rules: ['standard'],
+                speed: 0.72, template, rules: ['standard'],
             });
             assert.deepEqual(validateQuestion(question, evaluateRules(question)), []);
             assert.equal(question.baseCorrectTargetIds.length, 1);
@@ -1007,12 +1006,13 @@ test('brawl director exposes exact four-phase boundaries and rising pressure', (
 });
 
 test('target density respects content readability and compound-rule pressure', () => {
-    assert.equal(targetCountForFamily(6, 'math-add', ['bomb', 'reverse']), 4);
-    assert.equal(targetCountForFamily(5, 'math-property', ['bomb', 'multi']), 5);
-    assert.equal(targetCountForFamily(6, 'math-property', ['multi', 'reverse']), 4);
-    assert.equal(targetCountForFamily(6, 'vision-odd', ['standard']), 6);
-    assert.equal(targetCountForFamily(6, 'vision-odd', ['bomb', 'reverse']), 5);
-    assert.equal(targetCountForFamily(6, 'hanzi-order', ['bomb', 'order']), 5);
+    const byId = (id: string) => QUESTION_TEMPLATES.find((template) => template.id === id)!;
+    assert.equal(targetCountForTemplate(6, byId('math-add'), ['bomb', 'reverse']), 4);
+    assert.equal(targetCountForTemplate(5, byId('math-property'), ['bomb', 'multi']), 5);
+    assert.equal(targetCountForTemplate(6, byId('math-property'), ['multi', 'reverse']), 4);
+    assert.equal(targetCountForTemplate(6, byId('vision-odd'), ['standard']), 6);
+    assert.equal(targetCountForTemplate(6, byId('vision-odd'), ['bomb', 'reverse']), 5);
+    assert.equal(targetCountForTemplate(6, byId('hanzi-order'), ['bomb', 'order']), 5);
 
     const climax = pipeline('portrait-climax');
     for (let i = 0; i < 30; i++) assert.ok(climax.director.next(50_000).targetCount <= 5);
@@ -1210,14 +1210,14 @@ test('rotation rule spins targets deterministically after their entrance settles
 
 
 
-test('brawl topic and question-family order varies across fresh session seeds', () => {
+test('brawl topic and question-template order varies across fresh session seeds', () => {
     const signatures = new Set<string>();
     for (let seedIndex = 0; seedIndex < 32; seedIndex++) {
         const director = new BrawlRequestFixture(new SeededRng(`session-order-${seedIndex}`));
         const signature = Array.from({ length: 12 }, (_, questionIndex) => {
             const elapsed = questionIndex < 3 ? 5_000 : questionIndex < 8 ? 15_000 : 30_000;
             const directive = director.next(elapsed);
-            return `${directive.family.id}:${directive.rules.join('+')}`;
+            return `${directive.template.id}:${directive.rules.join('+')}`;
         }).join(',');
         signatures.add(signature);
     }
@@ -1280,7 +1280,7 @@ test('daily runs stay on their selected theme and remain deterministic for a see
                 const question = generator.next(director.next(elapsed), CONTENT_VERSION);
                 assert.equal(question.theme, challenge.recipe.theme);
                 assert.equal(validateQuestion(question, evaluateRules(question)).length, 0);
-                return `${question.familyId}:${question.activeRules.join('+')}`;
+                return `${question.templateId}:${question.activeRules.join('+')}`;
             }).join(',');
         };
         const first = build(), second = build();
@@ -1309,13 +1309,13 @@ test('fact bag keeps reviewed facts from non-exhausted pools more than 20 questi
 
 
 test('question appearance keeps semantic questions and answers on rolling cooldowns', () => {
-    const family = CONTENT_FAMILIES.find((candidate) => candidate.kind === 'knowledge-science')!;
+    const template = QUESTION_TEMPLATES.find((candidate) => candidate.id === 'knowledge-science')!;
     const generator = new DirectiveCompilerFixture(new SeededRng('semantic-question-cooldown'), GAMEPLAY_CONFIG);
     const seen = new Set<string>();
     for (let index = 0; index < 40; index++) {
         const question = generator.next({
             phase: 'action', difficultyStage: 1, targetCount: 4, questionTimeMs: 2_600,
-            speed: 1, family, rules: ['standard'],
+            speed: 1, template, rules: ['standard'],
         });
         const textById = new Map(question.targets.map((target) => [target.id, target.text]));
         const answer = question.baseCorrectTargetIds.map((id) => textById.get(id)).sort().join('→');
@@ -1392,7 +1392,7 @@ test('tower has five non-healing lives while other modes keep three', () => {
         assert.equal(session.state.life, 3);
         assert.equal(session.state.maxLife, 3);
     }
-    const question: QuestionInstance = { id: 'tower-life-q', theme: 'math', prompt: { text: '1+1=?' }, targets: [{ id: 'a', text: '2' }, { id: 'b', text: '3' }], baseCorrectTargetIds: ['a'], activeRules: ['standard'], timeLimitMs: 3_000 };
+    const question: QuestionInstance = { ...TEST_QUESTION_META, id: 'tower-life-q', theme: 'math', prompt: { text: '1+1=?' }, targets: [{ id: 'a', text: '2' }, { id: 'b', text: '3' }], baseCorrectTargetIds: ['a'], activeRules: ['standard'], timeLimitMs: 3_000 };
     tower.start();
     tower.beginQuestion(); tower.resolveFailure('wrong'); tower.continueAfterFeedback();
     for (let index = 0; index < 3; index++) { tower.beginQuestion(); tower.resolveSuccess(question); tower.continueAfterFeedback(); }
@@ -1428,7 +1428,7 @@ test('ordinary brawl enforces visible quotas across all eight themes', () => {
     const counts = new Map<string, number>();
     const elapsed = [15_000, 30_000, 50_000];
     for (let index = 0; index < 3_000; index++) {
-        const theme = director.next(elapsed[index % elapsed.length]).family.theme;
+        const theme = director.next(elapsed[index % elapsed.length]).template.theme;
         counts.set(theme, (counts.get(theme) ?? 0) + 1);
     }
     for (const theme of ['math', 'vision', 'hanzi', 'english', 'life', 'geography', 'knowledge', 'history']) {

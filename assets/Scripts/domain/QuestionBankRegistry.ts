@@ -12,8 +12,8 @@ import {
     KNOWLEDGE_NATURE_FACTS,
     KNOWLEDGE_SCIENCE_FACTS,
     LIFE_CATEGORY_FACTS,
-    type ContentFamilyKind,
 } from './ContentCatalog';
+import type { QuestionTemplateId } from './QuestionTemplateCatalog';
 import { HANZI_ANTONYM_FACTS, HANZI_SYNONYM_FACTS } from './HanziRelationCatalog';
 import {
     KNOWLEDGE_CIVIC_FACTS,
@@ -30,31 +30,39 @@ export interface QuestionBankPack {
     label: string;
     theme: ThemeId;
     storage: QuestionBankStorage;
-    familyKinds: readonly ContentFamilyKind[];
+    templateIds: readonly QuestionTemplateId[];
     records: readonly unknown[];
+    review: {
+        source: string;
+        status: 'reviewed';
+        reviewedAt: string;
+    };
 }
 
-export const QUESTION_BANK_PACKS: readonly QuestionBankPack[] = [
-    { id: 'hanzi.idioms', label: '成语', theme: 'hanzi', storage: 'curated', familyKinds: ['hanzi-fill', 'hanzi-order'], records: IDIOMS },
-    { id: 'hanzi.antonyms', label: '汉字反义关系', theme: 'hanzi', storage: 'relationship', familyKinds: ['hanzi-antonym'], records: HANZI_ANTONYM_FACTS },
-    { id: 'hanzi.synonyms', label: '汉字近义关系', theme: 'hanzi', storage: 'relationship', familyKinds: ['hanzi-synonym'], records: HANZI_SYNONYM_FACTS },
-    { id: 'english.words', label: '英语词汇', theme: 'english', storage: 'curated', familyKinds: ['english-meaning', 'english-category'], records: ENGLISH_WORDS },
-    { id: 'english.antonyms', label: '英语反义词', theme: 'english', storage: 'relationship', familyKinds: ['english-antonym'], records: ENGLISH_ANTONYMS },
-    { id: 'life.categories', label: '生活分类', theme: 'life', storage: 'curated', familyKinds: ['life-category'], records: LIFE_CATEGORY_FACTS },
-    { id: 'geography.world', label: '国家与首都', theme: 'geography', storage: 'relationship', familyKinds: ['geography-capital', 'geography-country'], records: GEOGRAPHY_FACTS },
-    { id: 'knowledge.science.core', label: '科学常识', theme: 'knowledge', storage: 'curated', familyKinds: ['knowledge-science'], records: KNOWLEDGE_SCIENCE_FACTS },
-    { id: 'knowledge.science.extra', label: '科学常识扩展', theme: 'knowledge', storage: 'curated', familyKinds: ['knowledge-science'], records: KNOWLEDGE_SCIENCE_EXPANSION },
-    { id: 'knowledge.nature.core', label: '自然常识', theme: 'knowledge', storage: 'curated', familyKinds: ['knowledge-nature'], records: KNOWLEDGE_NATURE_FACTS },
-    { id: 'knowledge.nature.extra', label: '自然常识扩展', theme: 'knowledge', storage: 'curated', familyKinds: ['knowledge-nature'], records: KNOWLEDGE_NATURE_EXPANSION },
-    { id: 'knowledge.culture.core', label: '文化常识', theme: 'knowledge', storage: 'curated', familyKinds: ['knowledge-culture'], records: KNOWLEDGE_CULTURE_FACTS },
-    { id: 'knowledge.culture.extra', label: '文化常识扩展', theme: 'knowledge', storage: 'curated', familyKinds: ['knowledge-culture'], records: KNOWLEDGE_CULTURE_EXPANSION },
-    { id: 'knowledge.civic', label: '公考常识', theme: 'knowledge', storage: 'curated', familyKinds: ['knowledge-civic'], records: KNOWLEDGE_CIVIC_FACTS },
-    { id: 'history.opening', label: '近代开端', theme: 'history', storage: 'curated', familyKinds: ['history-modern-opening'], records: HISTORY_MODERN_OPENING_FACTS },
-    { id: 'history.awakening', label: '近代觉醒', theme: 'history', storage: 'curated', familyKinds: ['history-modern-awakening'], records: HISTORY_MODERN_AWAKENING_FACTS },
-    { id: 'history.resistance', label: '抗战常识', theme: 'history', storage: 'curated', familyKinds: ['history-modern-resistance'], records: HISTORY_MODERN_RESISTANCE_FACTS },
-    { id: 'history.ancient', label: '古代常识', theme: 'history', storage: 'curated', familyKinds: ['history-ancient'], records: HISTORY_ANCIENT_FACTS },
-    { id: 'history.myth', label: '神话常识', theme: 'history', storage: 'curated', familyKinds: ['history-myth'], records: HISTORY_MYTH_FACTS },
+const RAW_QUESTION_BANK_PACKS: readonly Omit<QuestionBankPack, 'review'>[] = [
+    { id: 'hanzi.idioms', label: '成语', theme: 'hanzi', storage: 'curated', templateIds: ['hanzi-fill', 'hanzi-order'], records: IDIOMS },
+    { id: 'hanzi.antonyms', label: '汉字反义关系', theme: 'hanzi', storage: 'relationship', templateIds: ['hanzi-antonym'], records: HANZI_ANTONYM_FACTS },
+    { id: 'hanzi.synonyms', label: '汉字近义关系', theme: 'hanzi', storage: 'relationship', templateIds: ['hanzi-synonym'], records: HANZI_SYNONYM_FACTS },
+    { id: 'english.words', label: '英语词汇', theme: 'english', storage: 'curated', templateIds: ['english-meaning', 'english-category'], records: ENGLISH_WORDS },
+    { id: 'english.antonyms', label: '英语反义词', theme: 'english', storage: 'relationship', templateIds: ['english-antonym'], records: ENGLISH_ANTONYMS },
+    { id: 'life.categories', label: '生活分类', theme: 'life', storage: 'curated', templateIds: ['life-category'], records: LIFE_CATEGORY_FACTS },
+    { id: 'geography.world', label: '国家与首都', theme: 'geography', storage: 'relationship', templateIds: ['geography-capital', 'geography-country'], records: GEOGRAPHY_FACTS },
+    { id: 'knowledge.science.core', label: '科学常识', theme: 'knowledge', storage: 'curated', templateIds: ['knowledge-science'], records: KNOWLEDGE_SCIENCE_FACTS },
+    { id: 'knowledge.science.extra', label: '科学常识扩展', theme: 'knowledge', storage: 'curated', templateIds: ['knowledge-science'], records: KNOWLEDGE_SCIENCE_EXPANSION },
+    { id: 'knowledge.nature.core', label: '自然常识', theme: 'knowledge', storage: 'curated', templateIds: ['knowledge-nature'], records: KNOWLEDGE_NATURE_FACTS },
+    { id: 'knowledge.nature.extra', label: '自然常识扩展', theme: 'knowledge', storage: 'curated', templateIds: ['knowledge-nature'], records: KNOWLEDGE_NATURE_EXPANSION },
+    { id: 'knowledge.culture.core', label: '文化常识', theme: 'knowledge', storage: 'curated', templateIds: ['knowledge-culture'], records: KNOWLEDGE_CULTURE_FACTS },
+    { id: 'knowledge.culture.extra', label: '文化常识扩展', theme: 'knowledge', storage: 'curated', templateIds: ['knowledge-culture'], records: KNOWLEDGE_CULTURE_EXPANSION },
+    { id: 'knowledge.civic', label: '公考常识', theme: 'knowledge', storage: 'curated', templateIds: ['knowledge-civic'], records: KNOWLEDGE_CIVIC_FACTS },
+    { id: 'history.opening', label: '近代开端', theme: 'history', storage: 'curated', templateIds: ['history-modern-opening'], records: HISTORY_MODERN_OPENING_FACTS },
+    { id: 'history.awakening', label: '近代觉醒', theme: 'history', storage: 'curated', templateIds: ['history-modern-awakening'], records: HISTORY_MODERN_AWAKENING_FACTS },
+    { id: 'history.resistance', label: '抗战常识', theme: 'history', storage: 'curated', templateIds: ['history-modern-resistance'], records: HISTORY_MODERN_RESISTANCE_FACTS },
+    { id: 'history.ancient', label: '古代常识', theme: 'history', storage: 'curated', templateIds: ['history-ancient'], records: HISTORY_ANCIENT_FACTS },
+    { id: 'history.myth', label: '神话常识', theme: 'history', storage: 'curated', templateIds: ['history-myth'], records: HISTORY_MYTH_FACTS },
 ];
+
+const REVIEW = { source: 'internal-reviewed-catalog', status: 'reviewed', reviewedAt: '2026-09-01' } as const;
+export const QUESTION_BANK_PACKS: readonly QuestionBankPack[] = RAW_QUESTION_BANK_PACKS.map((pack) => ({ ...pack, review: REVIEW }));
 
 export interface QuestionBankStats {
     baseRecordCount: number;
@@ -74,4 +82,3 @@ export function getQuestionBankStats(): QuestionBankStats {
         byTheme,
     };
 }
-

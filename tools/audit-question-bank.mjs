@@ -8,12 +8,18 @@ for (const template of QUESTION_TEMPLATES) {
   templateIds.add(template.id);
   if (!template.capabilities.length) errors.push(`${template.id}: missing capabilities`);
   if (template.difficultyBands.length !== 5) errors.push(`${template.id}: incomplete difficulty coverage`);
+  if (!template.supportedRuleSets.length) errors.push(`${template.id}: missing supported rule sets`);
+  if (!Number.isInteger(template.targetCap) || template.targetCap < 2 || template.targetCap > 6) errors.push(`${template.id}: invalid target cap`);
   if (!template.enabled) errors.push(`${template.id}: disabled template is present in the production catalog`);
 }
 
 const factKeys = new Map();
 for (const pack of QUESTION_BANK_PACKS) {
   if (!pack.records.length) errors.push(`${pack.id}: empty reviewed fact pack`);
+  if (pack.review.status !== 'reviewed' || !pack.review.source || !/^\d{4}-\d{2}-\d{2}$/.test(pack.review.reviewedAt)) {
+    errors.push(`${pack.id}: invalid review metadata`);
+  }
+  for (const templateId of pack.templateIds) if (!templateIds.has(templateId)) errors.push(`${pack.id}: unknown template ${templateId}`);
   pack.records.forEach((record, index) => {
     const key = JSON.stringify(record);
     if (factKeys.has(key)) errors.push(`${pack.id}[${index}]: duplicate of ${factKeys.get(key)}`);
@@ -23,6 +29,12 @@ for (const pack of QUESTION_BANK_PACKS) {
       if (new Set(record.wrong).size !== record.wrong.length) errors.push(`${pack.id}[${index}]: duplicate distractors`);
     }
   });
+}
+
+for (const template of QUESTION_TEMPLATES) {
+  if (template.sourceKind === 'reviewed-facts' && !QUESTION_BANK_PACKS.some((pack) => pack.templateIds.includes(template.id))) {
+    errors.push(`${template.id}: reviewed-facts template has no registered fact pack`);
+  }
 }
 
 console.log(JSON.stringify({

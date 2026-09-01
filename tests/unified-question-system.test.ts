@@ -10,7 +10,18 @@ import { validateQuestion } from '../assets/Scripts/domain/FairnessValidator.ts'
 import { TowerChallengeRuntime } from '../assets/Scripts/domain/TowerChallenge.ts';
 import { TowerDirector } from '../assets/Scripts/domain/TowerDirector.ts';
 import { towerFloorConfig } from '../assets/Scripts/domain/TowerMode.ts';
-import type { GameEntryParams } from '../assets/Scripts/domain/Models.ts';
+import type { GameEntryParams, QuestionInstance } from '../assets/Scripts/domain/Models.ts';
+
+function assertTraceable(question: QuestionInstance): void {
+    const template = QUESTION_TEMPLATES.find((item) => item.id === question.templateId);
+    assert.ok(template, `unknown template ${question.templateId}`);
+    assert.equal(question.theme, template.theme);
+    assert.equal(question.engineId, template.engine);
+    assert.equal(question.contentVersion, CONTENT_VERSION);
+    assert.ok(Array.isArray(question.factIds));
+    assert.equal('familyId' in question, false);
+    assert.equal('typeId' in question, false);
+}
 
 test('unified catalog contains one stable real template id per cognitive template', () => {
     assert.equal(new Set(QUESTION_TEMPLATES.map((item) => item.id)).size, QUESTION_TEMPLATES.length);
@@ -24,8 +35,7 @@ test('endless mode can continuously compile legal traceable questions after the 
     for (let index = 0; index < 2_000; index++) {
         const request = director.next(60_000 + index * 2_000);
         const question = compiler.next(request, CONTENT_VERSION);
-        assert.equal(question.contentVersion, CONTENT_VERSION);
-        assert.ok(question.templateId && QUESTION_TEMPLATES.some((item) => item.id === question.templateId));
+        assertTraceable(question);
         assert.deepEqual(validateQuestion(question, evaluateRules(question)), []);
     }
 });
@@ -40,6 +50,7 @@ test('friend challenge honors the selected theme and rule pool and reproduces th
             const request = director.next(index * 700);
             assert.ok(request.rules.every((rule) => entry.challengeConfig.enabledRules.includes(rule as never)));
             const question = compiler.next(request, CONTENT_VERSION);
+            assertTraceable(question);
             assert.ok(entry.challengeConfig.themeIds.includes(question.theme as never));
             return [question.templateId, question.prompt.text, question.targets.map((target) => target.text), question.activeRules];
         });
@@ -59,6 +70,7 @@ test('daily retries keep one date theme but receive different question content',
         const compiler = new QuestionCompiler(new SeededRng(`${entry.seed}:compiler`), GAMEPLAY_CONFIG, entry);
         return Array.from({ length: 20 }, (_, index) => {
             const question = compiler.next(director.next(index * 2_000), CONTENT_VERSION);
+            assertTraceable(question);
             assert.equal(question.theme, entry.dailyTheme);
             return `${question.templateId}:${question.prompt.text}:${question.targets.map((target) => target.text).join(',')}`;
         }).join('|');
@@ -76,6 +88,7 @@ test('all 50 tower floors compile through capability requests', () => {
             const request = director.next(index * 1_000, runtime.nextRequest());
             assert.ok(templatesForRequest(request).length > 0, `floor ${floor}`);
             const question = compiler.next(request, CONTENT_VERSION);
+            assertTraceable(question);
             assert.deepEqual(validateQuestion(question, evaluateRules(question)), [], `floor ${floor}`);
             if (request.requiredCapabilities?.includes('stroop')) assert.equal(question.templateId, 'vision-stroop');
             if (request.requiredCapabilities?.includes('master-slash')) assert.ok(evaluateRules(question).requiredTargetIds.length > 1);
