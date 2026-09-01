@@ -1247,16 +1247,23 @@ test('run seed factory refreshes every attempt while keeping the daily recipe st
     assert.match(dailyA.seed, /^daily:[^:]+:2026-08-20:[a-z-]+:attempt:[a-z0-9]+:[a-z0-9]+:[a-z0-9]+$/);
 });
 
-test('friend challenge replay preserves the exact shared seed and configuration', () => {
+test('friend challenge creator replay refreshes the seed while responder replay preserves the shared sequence', () => {
     const factory = new RunSeedFactory(() => new Date(2026, 7, 20, 12, 0, 0), () => 123_456_789);
-    const entry = factory.createFriendChallenge({
+    const config = {
         themeIds: ['math', 'history'], enabledRules: ['standard', 'reverse'], durationMs: 90_000,
-    }, CONTENT_VERSION);
-    const replay = factory.createReplay(entry, CONTENT_VERSION);
+    } as const;
+    const entry = factory.createFriendChallenge(config, CONTENT_VERSION);
+    const creatorReplay = factory.createReplay(entry, CONTENT_VERSION);
+    const responder = { ...entry, challengeRole: 'responder' as const, targetScore: 900 };
+    const responderReplay = factory.createReplay(responder, CONTENT_VERSION);
     const brawl = factory.create('brawl60', CONTENT_VERSION);
 
-    assert.deepEqual(replay, entry);
-    assert.notEqual(replay, entry);
+    assert.notEqual(creatorReplay.seed, entry.seed);
+    assert.deepEqual(creatorReplay.challengeConfig, entry.challengeConfig);
+    assert.equal(creatorReplay.challengeRole, 'creator');
+    assert.equal(creatorReplay.targetScore, undefined);
+    assert.deepEqual(responderReplay, responder);
+    assert.notEqual(responderReplay, responder);
     assert.notEqual(factory.createReplay(brawl, CONTENT_VERSION).seed, brawl.seed);
 });
 

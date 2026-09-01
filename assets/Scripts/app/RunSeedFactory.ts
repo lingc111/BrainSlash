@@ -63,9 +63,12 @@ export class RunSeedFactory {
         return { ...entry, recipeId: undefined, challengeConfig: clone(config), challengeRole: 'creator' };
     }
 
-    /** Friend challenges replay the exact shared question sequence; other modes start a fresh attempt. */
+    /** Creators start a fresh sequence with the same config; responders replay the shared sequence. */
     public createReplay(entry: GameEntryParams, contentVersion: string): GameEntryParams {
         if (entry.mode === 'friendChallenge') {
+            if (entry.challengeRole === 'creator' && entry.challengeConfig) {
+                return this.createFriendChallenge(entry.challengeConfig, contentVersion);
+            }
             return {
                 ...entry,
                 ...(entry.challengeConfig ? { challengeConfig: clone(entry.challengeConfig) } : {}),

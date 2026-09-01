@@ -780,11 +780,17 @@ export class HomeController extends Component {
         };
 
         this.bindButton(allThemes.node, () => {
-            draft.themeIds = [...FRIEND_CHALLENGE_THEMES]; refresh();
+            draft.themeIds = draft.themeIds.length === FRIEND_CHALLENGE_THEMES.length
+                ? []
+                : [...FRIEND_CHALLENGE_THEMES];
+            refresh();
         });
         themeButtons.forEach((choice, theme) => this.bindButton(choice.node, () => { toggleToken(draft.themeIds, theme); refresh(); }));
         this.bindButton(allRules.node, () => {
-            draft.enabledRules = [...FRIEND_CHALLENGE_RULES]; refresh();
+            draft.enabledRules = draft.enabledRules.length === FRIEND_CHALLENGE_RULES.length
+                ? []
+                : [...FRIEND_CHALLENGE_RULES];
+            refresh();
         });
         ruleButtons.forEach((choice, rule) => this.bindButton(choice.node, () => { toggleToken(draft.enabledRules, rule); refresh(); }));
         durationButtons.forEach((choice, duration) => this.bindButton(choice.node, () => { draft.durationMs = duration; refresh(); }));

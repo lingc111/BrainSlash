@@ -137,8 +137,8 @@ class AppRuntimeState {
     }
     public replay(): void {
         if (this.transitioning) return;
-        // Friend challenges must replay the shared seed so creator and responder
-        // always see the same question sequence. Other modes get a fresh attempt.
+        // Creators start a fresh sequence with the same challenge config.
+        // Responders keep the shared seed when choosing "再战同题".
         this.entry = this.seedFactory.createReplay(this.entry, CONTENT_VERSION);
         if (this.entry.mode === 'daily') this.save.beginDaily(this.entry);
         this.result = null; this.towerResult = null;
