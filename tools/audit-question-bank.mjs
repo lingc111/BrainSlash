@@ -76,6 +76,11 @@ for (const template of QUESTION_TEMPLATES) {
   if (template.sourceKind === 'reviewed-facts' && !QUESTION_BANK_PACKS.some((pack) => pack.templateIds.includes(template.id))) {
     errors.push(`${template.id}: reviewed-facts template has no registered fact pack`);
   }
+  if (template.sourceKind === 'reviewed-facts') {
+    const factCount = QUESTION_BANK_PACKS.filter((pack) => pack.templateIds.includes(template.id))
+      .reduce((sum, pack) => sum + pack.records.filter((record) => record.enabled).length, 0);
+    if (factCount < 8) errors.push(`${template.id}: only ${factCount} enabled facts; minimum is 8`);
+  }
 }
 
 console.log(JSON.stringify({

@@ -28,6 +28,22 @@ test('unified catalog contains one stable real template id per cognitive templat
     assert.ok(QUESTION_TEMPLATES.every((item) => item.enabled && item.capabilities.length > 0 && item.difficultyBands.length === 5));
 });
 
+test('every template compiles at every difficulty with every declared rule set', () => {
+    for (const template of QUESTION_TEMPLATES) {
+        for (const difficulty of [1, 2, 3, 4, 5] as const) {
+            for (const rules of template.supportedRuleSets) {
+                const seed = `coverage-${template.id}-${difficulty}-${rules.join('+')}`;
+                const entry = { mode: 'brawl60' as const, seed, contentVersion: CONTENT_VERSION };
+                const compiler = new QuestionCompiler(new SeededRng(seed), GAMEPLAY_CONFIG, entry);
+                const question = compiler.next({ templateIds: [template.id], rules, difficulty, targetCount: 5,
+                    questionTimeMs: 2_600, speed: 1, phase: 'action' }, CONTENT_VERSION);
+                assert.equal(question.templateId, template.id);
+                assert.deepEqual(validateQuestion(question, evaluateRules(question)), [], `${template.id}:${difficulty}:${rules.join('+')}`);
+            }
+        }
+    }
+});
+
 test('endless mode can continuously compile legal traceable questions after the 60-second phase boundary', () => {
     const entry = { mode: 'brawl60' as const, seed: 'endless-unified', contentVersion: CONTENT_VERSION };
     const director = new ModeQuestionDirector(new SeededRng('endless-unified:director'), entry, new Set(['standard', 'reverse', 'rotate', 'multi', 'order', 'bomb']));
@@ -37,6 +53,61 @@ test('endless mode can continuously compile legal traceable questions after the 
         const question = compiler.next(request, CONTENT_VERSION);
         assertTraceable(question);
         assert.deepEqual(validateQuestion(question, evaluateRules(question)), []);
+    }
+});
+
+test('brawl uses deterministic phase arithmetic quotas without starving other themes', () => {
+    const entry = { mode: 'brawl60' as const, seed: 'arithmetic-mix', contentVersion: CONTENT_VERSION };
+    const director = new ModeQuestionDirector(new SeededRng('arithmetic-mix:director'), entry,
+        new Set(['standard', 'reverse', 'rotate', 'multi', 'order', 'bomb']));
+    let arithmetic = 0;
+    const themes = new Set<string>();
+    const elapsed = [15_000, 30_000, 50_000];
+    for (let index = 0; index < 3_000; index++) {
+        const request = director.next(elapsed[index % elapsed.length]);
+        themes.add(request.themes![0]);
+        if (request.requiredTags?.includes('arithmetic')) {
+            arithmetic += 1;
+            assert.deepEqual(request.themes, ['math']);
+            assert.ok(templatesForRequest(request).every((template) => template.tags.includes('arithmetic')));
+        }
+    }
+    assert.ok(arithmetic / 3_000 >= 0.245 && arithmetic / 3_000 <= 0.25);
+    assert.equal(themes.size, 8);
+});
+
+test('selected math modes raise arithmetic share while preserving the chosen theme', () => {
+    const entries: GameEntryParams[] = [
+        { mode: 'daily', seed: 'daily-math-mix', contentVersion: CONTENT_VERSION, dailyTheme: 'math' },
+        { mode: 'friendChallenge', seed: 'friend-math-mix', contentVersion: CONTENT_VERSION, challengeRole: 'creator',
+            challengeConfig: { themeIds: ['math'], enabledRules: ['standard', 'reverse', 'bomb'], durationMs: 60_000 } },
+    ];
+    const expected = [0.6, 0.65];
+    entries.forEach((entry, entryIndex) => {
+        const director = new ModeQuestionDirector(new SeededRng(`${entry.seed}:director`), entry);
+        let arithmetic = 0;
+        for (let index = 0; index < 200; index++) {
+            const request = director.next(index * 300);
+            assert.deepEqual(request.themes, ['math']);
+            if (request.requiredTags?.includes('arithmetic')) arithmetic += 1;
+            assert.ok(templatesForRequest(request).length > 0);
+        }
+        assert.ok(Math.abs(arithmetic / 200 - expected[entryIndex]) <= 0.01);
+    });
+});
+
+test('friend arithmetic preference never overrides an incompatible selected rule', () => {
+    const entry: GameEntryParams = { mode: 'friendChallenge', seed: 'friend-order-only', contentVersion: CONTENT_VERSION,
+        challengeRole: 'creator', challengeConfig: { themeIds: ['math'], enabledRules: ['order'], durationMs: 60_000 } };
+    const director = new ModeQuestionDirector(new SeededRng(`${entry.seed}:director`), entry);
+    const compiler = new QuestionCompiler(new SeededRng(`${entry.seed}:compiler`), GAMEPLAY_CONFIG, entry);
+    for (let index = 0; index < 20; index++) {
+        const request = director.next(index * 1_000);
+        assert.deepEqual(request.rules, ['order']);
+        assert.ok(!request.requiredTags?.includes('arithmetic'));
+        const question = compiler.next(request, CONTENT_VERSION);
+        assert.equal(question.theme, 'math');
+        assert.deepEqual(question.activeRules, ['order']);
     }
 });
 

@@ -1,6 +1,6 @@
 {
   "schemaVersion": 2,
-  "contentVersion": "2.0.0-unified-question-content",
+  "contentVersion": "2.1.0-expanded-question-content",
   "bundleKind": "production",
   "templates": [
     {
@@ -318,6 +318,162 @@
       "enabled": true
     },
     {
+      "id": "math-divide",
+      "theme": "math",
+      "engine": "single",
+      "capabilities": [
+        "single",
+        "numeric"
+      ],
+      "sourceKind": "algorithmic",
+      "tags": [
+        "arithmetic",
+        "division"
+      ],
+      "difficultyBands": [
+        1,
+        2,
+        3,
+        4,
+        5
+      ],
+      "supportedRuleSets": [
+        [
+          "standard"
+        ],
+        [
+          "reverse"
+        ],
+        [
+          "bomb"
+        ],
+        [
+          "bomb",
+          "reverse"
+        ]
+      ],
+      "targetCap": 4,
+      "directionSensitive": false,
+      "enabled": true
+    },
+    {
+      "id": "math-mixed",
+      "theme": "math",
+      "engine": "single",
+      "capabilities": [
+        "single",
+        "numeric"
+      ],
+      "sourceKind": "algorithmic",
+      "tags": [
+        "arithmetic",
+        "mixed-operation"
+      ],
+      "difficultyBands": [
+        1,
+        2,
+        3,
+        4,
+        5
+      ],
+      "supportedRuleSets": [
+        [
+          "standard"
+        ],
+        [
+          "reverse"
+        ],
+        [
+          "bomb"
+        ],
+        [
+          "bomb",
+          "reverse"
+        ]
+      ],
+      "targetCap": 4,
+      "directionSensitive": false,
+      "enabled": true
+    },
+    {
+      "id": "math-rounding",
+      "theme": "math",
+      "engine": "single",
+      "capabilities": [
+        "single",
+        "numeric"
+      ],
+      "sourceKind": "algorithmic",
+      "tags": [
+        "arithmetic",
+        "rounding"
+      ],
+      "difficultyBands": [
+        1,
+        2,
+        3,
+        4,
+        5
+      ],
+      "supportedRuleSets": [
+        [
+          "standard"
+        ],
+        [
+          "reverse"
+        ],
+        [
+          "bomb"
+        ],
+        [
+          "bomb",
+          "reverse"
+        ]
+      ],
+      "targetCap": 4,
+      "directionSensitive": false,
+      "enabled": true
+    },
+    {
+      "id": "math-fraction-compare",
+      "theme": "math",
+      "engine": "compare",
+      "capabilities": [
+        "single",
+        "numeric"
+      ],
+      "sourceKind": "algorithmic",
+      "tags": [
+        "fraction",
+        "compare"
+      ],
+      "difficultyBands": [
+        1,
+        2,
+        3,
+        4,
+        5
+      ],
+      "supportedRuleSets": [
+        [
+          "standard"
+        ],
+        [
+          "reverse"
+        ],
+        [
+          "bomb"
+        ],
+        [
+          "bomb",
+          "reverse"
+        ]
+      ],
+      "targetCap": 4,
+      "directionSensitive": false,
+      "enabled": true
+    },
+    {
       "id": "vision-direction",
       "theme": "vision",
       "engine": "single",
@@ -532,6 +688,154 @@
       ],
       "targetCap": 6,
       "directionSensitive": false,
+      "enabled": true
+    },
+    {
+      "id": "vision-mirror",
+      "theme": "vision",
+      "engine": "single",
+      "capabilities": [
+        "single"
+      ],
+      "sourceKind": "algorithmic",
+      "tags": [
+        "mirror"
+      ],
+      "difficultyBands": [
+        1,
+        2,
+        3,
+        4,
+        5
+      ],
+      "supportedRuleSets": [
+        [
+          "standard"
+        ],
+        [
+          "reverse"
+        ],
+        [
+          "bomb"
+        ],
+        [
+          "bomb",
+          "reverse"
+        ]
+      ],
+      "targetCap": 6,
+      "directionSensitive": true,
+      "enabled": true
+    },
+    {
+      "id": "vision-symmetry",
+      "theme": "vision",
+      "engine": "odd-one-out",
+      "capabilities": [
+        "single"
+      ],
+      "sourceKind": "algorithmic",
+      "tags": [
+        "symmetry"
+      ],
+      "difficultyBands": [
+        1,
+        2,
+        3,
+        4,
+        5
+      ],
+      "supportedRuleSets": [
+        [
+          "standard"
+        ],
+        [
+          "reverse"
+        ],
+        [
+          "bomb"
+        ],
+        [
+          "bomb",
+          "reverse"
+        ]
+      ],
+      "targetCap": 6,
+      "directionSensitive": false,
+      "enabled": true
+    },
+    {
+      "id": "vision-grid-position",
+      "theme": "vision",
+      "engine": "single",
+      "capabilities": [
+        "single"
+      ],
+      "sourceKind": "algorithmic",
+      "tags": [
+        "grid-position"
+      ],
+      "difficultyBands": [
+        1,
+        2,
+        3,
+        4,
+        5
+      ],
+      "supportedRuleSets": [
+        [
+          "standard"
+        ],
+        [
+          "reverse"
+        ],
+        [
+          "bomb"
+        ],
+        [
+          "bomb",
+          "reverse"
+        ]
+      ],
+      "targetCap": 6,
+      "directionSensitive": false,
+      "enabled": true
+    },
+    {
+      "id": "vision-rotation",
+      "theme": "vision",
+      "engine": "single",
+      "capabilities": [
+        "single"
+      ],
+      "sourceKind": "algorithmic",
+      "tags": [
+        "rotation"
+      ],
+      "difficultyBands": [
+        1,
+        2,
+        3,
+        4,
+        5
+      ],
+      "supportedRuleSets": [
+        [
+          "standard"
+        ],
+        [
+          "reverse"
+        ],
+        [
+          "bomb"
+        ],
+        [
+          "bomb",
+          "reverse"
+        ]
+      ],
+      "targetCap": 6,
+      "directionSensitive": true,
       "enabled": true
     },
     {
@@ -760,6 +1064,120 @@
       "enabled": true
     },
     {
+      "id": "hanzi-radical",
+      "theme": "hanzi",
+      "engine": "pair",
+      "capabilities": [
+        "single",
+        "short-text"
+      ],
+      "sourceKind": "reviewed-facts",
+      "tags": [
+        "radical"
+      ],
+      "difficultyBands": [
+        1,
+        2,
+        3,
+        4,
+        5
+      ],
+      "supportedRuleSets": [
+        [
+          "standard"
+        ],
+        [
+          "reverse"
+        ],
+        [
+          "bomb"
+        ],
+        [
+          "bomb",
+          "reverse"
+        ]
+      ],
+      "targetCap": 4,
+      "directionSensitive": false,
+      "enabled": true
+    },
+    {
+      "id": "hanzi-homophone",
+      "theme": "hanzi",
+      "engine": "pair",
+      "capabilities": [
+        "single",
+        "short-text"
+      ],
+      "sourceKind": "reviewed-facts",
+      "tags": [
+        "homophone"
+      ],
+      "difficultyBands": [
+        1,
+        2,
+        3,
+        4,
+        5
+      ],
+      "supportedRuleSets": [
+        [
+          "standard"
+        ],
+        [
+          "reverse"
+        ],
+        [
+          "bomb"
+        ],
+        [
+          "bomb",
+          "reverse"
+        ]
+      ],
+      "targetCap": 4,
+      "directionSensitive": false,
+      "enabled": true
+    },
+    {
+      "id": "hanzi-compose",
+      "theme": "hanzi",
+      "engine": "pair",
+      "capabilities": [
+        "single",
+        "short-text"
+      ],
+      "sourceKind": "reviewed-facts",
+      "tags": [
+        "character-compose"
+      ],
+      "difficultyBands": [
+        1,
+        2,
+        3,
+        4,
+        5
+      ],
+      "supportedRuleSets": [
+        [
+          "standard"
+        ],
+        [
+          "reverse"
+        ],
+        [
+          "bomb"
+        ],
+        [
+          "bomb",
+          "reverse"
+        ]
+      ],
+      "targetCap": 4,
+      "directionSensitive": false,
+      "enabled": true
+    },
+    {
       "id": "english-meaning",
       "theme": "english",
       "engine": "pair",
@@ -959,6 +1377,116 @@
       "enabled": true
     },
     {
+      "id": "english-missing-letter",
+      "theme": "english",
+      "engine": "fill",
+      "capabilities": [
+        "single",
+        "short-text"
+      ],
+      "sourceKind": "reviewed-facts",
+      "tags": [
+        "spelling",
+        "fill"
+      ],
+      "difficultyBands": [
+        1,
+        2,
+        3,
+        4,
+        5
+      ],
+      "supportedRuleSets": [
+        [
+          "standard"
+        ],
+        [
+          "reverse"
+        ],
+        [
+          "bomb"
+        ],
+        [
+          "bomb",
+          "reverse"
+        ]
+      ],
+      "targetCap": 4,
+      "directionSensitive": false,
+      "enabled": true
+    },
+    {
+      "id": "english-synonym",
+      "theme": "english",
+      "engine": "pair",
+      "capabilities": [
+        "single",
+        "short-text"
+      ],
+      "sourceKind": "reviewed-facts",
+      "tags": [
+        "synonym"
+      ],
+      "difficultyBands": [
+        1,
+        2,
+        3,
+        4,
+        5
+      ],
+      "supportedRuleSets": [
+        [
+          "standard"
+        ],
+        [
+          "reverse"
+        ],
+        [
+          "bomb"
+        ],
+        [
+          "bomb",
+          "reverse"
+        ]
+      ],
+      "targetCap": 4,
+      "directionSensitive": false,
+      "enabled": true
+    },
+    {
+      "id": "english-word-order",
+      "theme": "english",
+      "engine": "order",
+      "capabilities": [
+        "order",
+        "short-text"
+      ],
+      "sourceKind": "reviewed-facts",
+      "tags": [
+        "sentence",
+        "order"
+      ],
+      "difficultyBands": [
+        1,
+        2,
+        3,
+        4,
+        5
+      ],
+      "supportedRuleSets": [
+        [
+          "order"
+        ],
+        [
+          "bomb",
+          "order"
+        ]
+      ],
+      "targetCap": 5,
+      "directionSensitive": false,
+      "enabled": true
+    },
+    {
       "id": "life-category",
       "theme": "life",
       "engine": "condition",
@@ -997,6 +1525,191 @@
         [
           "multi",
           "reverse"
+        ]
+      ],
+      "targetCap": 5,
+      "directionSensitive": false,
+      "enabled": true
+    },
+    {
+      "id": "life-use",
+      "theme": "life",
+      "engine": "pair",
+      "capabilities": [
+        "single",
+        "short-text"
+      ],
+      "sourceKind": "reviewed-facts",
+      "tags": [
+        "item-use"
+      ],
+      "difficultyBands": [
+        1,
+        2,
+        3,
+        4,
+        5
+      ],
+      "supportedRuleSets": [
+        [
+          "standard"
+        ],
+        [
+          "reverse"
+        ],
+        [
+          "bomb"
+        ],
+        [
+          "bomb",
+          "reverse"
+        ]
+      ],
+      "targetCap": 4,
+      "directionSensitive": false,
+      "enabled": true
+    },
+    {
+      "id": "life-place",
+      "theme": "life",
+      "engine": "pair",
+      "capabilities": [
+        "single",
+        "short-text"
+      ],
+      "sourceKind": "reviewed-facts",
+      "tags": [
+        "item-place"
+      ],
+      "difficultyBands": [
+        1,
+        2,
+        3,
+        4,
+        5
+      ],
+      "supportedRuleSets": [
+        [
+          "standard"
+        ],
+        [
+          "reverse"
+        ],
+        [
+          "bomb"
+        ],
+        [
+          "bomb",
+          "reverse"
+        ]
+      ],
+      "targetCap": 4,
+      "directionSensitive": false,
+      "enabled": true
+    },
+    {
+      "id": "life-public-sign",
+      "theme": "life",
+      "engine": "pair",
+      "capabilities": [
+        "single",
+        "short-text"
+      ],
+      "sourceKind": "reviewed-facts",
+      "tags": [
+        "public-sign"
+      ],
+      "difficultyBands": [
+        1,
+        2,
+        3,
+        4,
+        5
+      ],
+      "supportedRuleSets": [
+        [
+          "standard"
+        ],
+        [
+          "reverse"
+        ],
+        [
+          "bomb"
+        ],
+        [
+          "bomb",
+          "reverse"
+        ]
+      ],
+      "targetCap": 4,
+      "directionSensitive": false,
+      "enabled": true
+    },
+    {
+      "id": "life-safe-behavior",
+      "theme": "life",
+      "engine": "single",
+      "capabilities": [
+        "single",
+        "short-text"
+      ],
+      "sourceKind": "reviewed-facts",
+      "tags": [
+        "safe-behavior"
+      ],
+      "difficultyBands": [
+        1,
+        2,
+        3,
+        4,
+        5
+      ],
+      "supportedRuleSets": [
+        [
+          "standard"
+        ],
+        [
+          "reverse"
+        ],
+        [
+          "bomb"
+        ],
+        [
+          "bomb",
+          "reverse"
+        ]
+      ],
+      "targetCap": 4,
+      "directionSensitive": false,
+      "enabled": true
+    },
+    {
+      "id": "life-process",
+      "theme": "life",
+      "engine": "order",
+      "capabilities": [
+        "order",
+        "short-text"
+      ],
+      "sourceKind": "reviewed-facts",
+      "tags": [
+        "daily-process",
+        "order"
+      ],
+      "difficultyBands": [
+        1,
+        2,
+        3,
+        4,
+        5
+      ],
+      "supportedRuleSets": [
+        [
+          "order"
+        ],
+        [
+          "bomb",
+          "order"
         ]
       ],
       "targetCap": 5,
@@ -1052,6 +1765,158 @@
       "sourceKind": "reviewed-facts",
       "tags": [
         "country"
+      ],
+      "difficultyBands": [
+        1,
+        2,
+        3,
+        4,
+        5
+      ],
+      "supportedRuleSets": [
+        [
+          "standard"
+        ],
+        [
+          "reverse"
+        ],
+        [
+          "bomb"
+        ],
+        [
+          "bomb",
+          "reverse"
+        ]
+      ],
+      "targetCap": 4,
+      "directionSensitive": false,
+      "enabled": true
+    },
+    {
+      "id": "geography-continent",
+      "theme": "geography",
+      "engine": "pair",
+      "capabilities": [
+        "single",
+        "short-text"
+      ],
+      "sourceKind": "reviewed-facts",
+      "tags": [
+        "continent"
+      ],
+      "difficultyBands": [
+        1,
+        2,
+        3,
+        4,
+        5
+      ],
+      "supportedRuleSets": [
+        [
+          "standard"
+        ],
+        [
+          "reverse"
+        ],
+        [
+          "bomb"
+        ],
+        [
+          "bomb",
+          "reverse"
+        ]
+      ],
+      "targetCap": 4,
+      "directionSensitive": false,
+      "enabled": true
+    },
+    {
+      "id": "geography-landmark",
+      "theme": "geography",
+      "engine": "pair",
+      "capabilities": [
+        "single",
+        "short-text"
+      ],
+      "sourceKind": "reviewed-facts",
+      "tags": [
+        "landmark"
+      ],
+      "difficultyBands": [
+        1,
+        2,
+        3,
+        4,
+        5
+      ],
+      "supportedRuleSets": [
+        [
+          "standard"
+        ],
+        [
+          "reverse"
+        ],
+        [
+          "bomb"
+        ],
+        [
+          "bomb",
+          "reverse"
+        ]
+      ],
+      "targetCap": 4,
+      "directionSensitive": false,
+      "enabled": true
+    },
+    {
+      "id": "geography-province-capital",
+      "theme": "geography",
+      "engine": "pair",
+      "capabilities": [
+        "single",
+        "short-text"
+      ],
+      "sourceKind": "reviewed-facts",
+      "tags": [
+        "province-capital"
+      ],
+      "difficultyBands": [
+        1,
+        2,
+        3,
+        4,
+        5
+      ],
+      "supportedRuleSets": [
+        [
+          "standard"
+        ],
+        [
+          "reverse"
+        ],
+        [
+          "bomb"
+        ],
+        [
+          "bomb",
+          "reverse"
+        ]
+      ],
+      "targetCap": 4,
+      "directionSensitive": false,
+      "enabled": true
+    },
+    {
+      "id": "geography-relative-position",
+      "theme": "geography",
+      "engine": "pair",
+      "capabilities": [
+        "single",
+        "short-text"
+      ],
+      "sourceKind": "reviewed-facts",
+      "tags": [
+        "relative-position"
       ],
       "difficultyBands": [
         1,
@@ -1204,6 +2069,158 @@
       "sourceKind": "reviewed-facts",
       "tags": [
         "civic"
+      ],
+      "difficultyBands": [
+        1,
+        2,
+        3,
+        4,
+        5
+      ],
+      "supportedRuleSets": [
+        [
+          "standard"
+        ],
+        [
+          "reverse"
+        ],
+        [
+          "bomb"
+        ],
+        [
+          "bomb",
+          "reverse"
+        ]
+      ],
+      "targetCap": 4,
+      "directionSensitive": false,
+      "enabled": true
+    },
+    {
+      "id": "knowledge-astronomy",
+      "theme": "knowledge",
+      "engine": "single",
+      "capabilities": [
+        "single",
+        "short-text"
+      ],
+      "sourceKind": "reviewed-facts",
+      "tags": [
+        "astronomy"
+      ],
+      "difficultyBands": [
+        1,
+        2,
+        3,
+        4,
+        5
+      ],
+      "supportedRuleSets": [
+        [
+          "standard"
+        ],
+        [
+          "reverse"
+        ],
+        [
+          "bomb"
+        ],
+        [
+          "bomb",
+          "reverse"
+        ]
+      ],
+      "targetCap": 4,
+      "directionSensitive": false,
+      "enabled": true
+    },
+    {
+      "id": "knowledge-biology",
+      "theme": "knowledge",
+      "engine": "single",
+      "capabilities": [
+        "single",
+        "short-text"
+      ],
+      "sourceKind": "reviewed-facts",
+      "tags": [
+        "biology"
+      ],
+      "difficultyBands": [
+        1,
+        2,
+        3,
+        4,
+        5
+      ],
+      "supportedRuleSets": [
+        [
+          "standard"
+        ],
+        [
+          "reverse"
+        ],
+        [
+          "bomb"
+        ],
+        [
+          "bomb",
+          "reverse"
+        ]
+      ],
+      "targetCap": 4,
+      "directionSensitive": false,
+      "enabled": true
+    },
+    {
+      "id": "knowledge-physics",
+      "theme": "knowledge",
+      "engine": "single",
+      "capabilities": [
+        "single",
+        "short-text"
+      ],
+      "sourceKind": "reviewed-facts",
+      "tags": [
+        "physics"
+      ],
+      "difficultyBands": [
+        1,
+        2,
+        3,
+        4,
+        5
+      ],
+      "supportedRuleSets": [
+        [
+          "standard"
+        ],
+        [
+          "reverse"
+        ],
+        [
+          "bomb"
+        ],
+        [
+          "bomb",
+          "reverse"
+        ]
+      ],
+      "targetCap": 4,
+      "directionSensitive": false,
+      "enabled": true
+    },
+    {
+      "id": "knowledge-technology",
+      "theme": "knowledge",
+      "engine": "single",
+      "capabilities": [
+        "single",
+        "short-text"
+      ],
+      "sourceKind": "reviewed-facts",
+      "tags": [
+        "technology"
       ],
       "difficultyBands": [
         1,
@@ -1394,6 +2411,77 @@
       "sourceKind": "reviewed-facts",
       "tags": [
         "myth"
+      ],
+      "difficultyBands": [
+        1,
+        2,
+        3,
+        4,
+        5
+      ],
+      "supportedRuleSets": [
+        [
+          "standard"
+        ],
+        [
+          "reverse"
+        ],
+        [
+          "bomb"
+        ],
+        [
+          "bomb",
+          "reverse"
+        ]
+      ],
+      "targetCap": 4,
+      "directionSensitive": false,
+      "enabled": true
+    },
+    {
+      "id": "history-chronology",
+      "theme": "history",
+      "engine": "order",
+      "capabilities": [
+        "order",
+        "short-text"
+      ],
+      "sourceKind": "reviewed-facts",
+      "tags": [
+        "chronology",
+        "order"
+      ],
+      "difficultyBands": [
+        1,
+        2,
+        3,
+        4,
+        5
+      ],
+      "supportedRuleSets": [
+        [
+          "order"
+        ],
+        [
+          "bomb",
+          "order"
+        ]
+      ],
+      "targetCap": 5,
+      "directionSensitive": false,
+      "enabled": true
+    },
+    {
+      "id": "history-person-event",
+      "theme": "history",
+      "engine": "pair",
+      "capabilities": [
+        "single",
+        "short-text"
+      ],
+      "sourceKind": "reviewed-facts",
+      "tags": [
+        "person-event"
       ],
       "difficultyBands": [
         1,
@@ -9735,7 +10823,8 @@
       },
       "tags": [
         "hanzi",
-        "hanzi-pinyin"
+        "hanzi-pinyin",
+        "hanzi-homophone"
       ],
       "source": "internal-reviewed-catalog",
       "reviewStatus": "reviewed",
@@ -9754,7 +10843,8 @@
       },
       "tags": [
         "hanzi",
-        "hanzi-pinyin"
+        "hanzi-pinyin",
+        "hanzi-homophone"
       ],
       "source": "internal-reviewed-catalog",
       "reviewStatus": "reviewed",
@@ -9773,7 +10863,8 @@
       },
       "tags": [
         "hanzi",
-        "hanzi-pinyin"
+        "hanzi-pinyin",
+        "hanzi-homophone"
       ],
       "source": "internal-reviewed-catalog",
       "reviewStatus": "reviewed",
@@ -9792,7 +10883,8 @@
       },
       "tags": [
         "hanzi",
-        "hanzi-pinyin"
+        "hanzi-pinyin",
+        "hanzi-homophone"
       ],
       "source": "internal-reviewed-catalog",
       "reviewStatus": "reviewed",
@@ -9811,7 +10903,8 @@
       },
       "tags": [
         "hanzi",
-        "hanzi-pinyin"
+        "hanzi-pinyin",
+        "hanzi-homophone"
       ],
       "source": "internal-reviewed-catalog",
       "reviewStatus": "reviewed",
@@ -9830,7 +10923,8 @@
       },
       "tags": [
         "hanzi",
-        "hanzi-pinyin"
+        "hanzi-pinyin",
+        "hanzi-homophone"
       ],
       "source": "internal-reviewed-catalog",
       "reviewStatus": "reviewed",
@@ -9849,7 +10943,8 @@
       },
       "tags": [
         "hanzi",
-        "hanzi-pinyin"
+        "hanzi-pinyin",
+        "hanzi-homophone"
       ],
       "source": "internal-reviewed-catalog",
       "reviewStatus": "reviewed",
@@ -9868,7 +10963,8 @@
       },
       "tags": [
         "hanzi",
-        "hanzi-pinyin"
+        "hanzi-pinyin",
+        "hanzi-homophone"
       ],
       "source": "internal-reviewed-catalog",
       "reviewStatus": "reviewed",
@@ -9887,7 +10983,8 @@
       },
       "tags": [
         "hanzi",
-        "hanzi-pinyin"
+        "hanzi-pinyin",
+        "hanzi-homophone"
       ],
       "source": "internal-reviewed-catalog",
       "reviewStatus": "reviewed",
@@ -9906,7 +11003,8 @@
       },
       "tags": [
         "hanzi",
-        "hanzi-pinyin"
+        "hanzi-pinyin",
+        "hanzi-homophone"
       ],
       "source": "internal-reviewed-catalog",
       "reviewStatus": "reviewed",
@@ -9925,7 +11023,8 @@
       },
       "tags": [
         "hanzi",
-        "hanzi-pinyin"
+        "hanzi-pinyin",
+        "hanzi-homophone"
       ],
       "source": "internal-reviewed-catalog",
       "reviewStatus": "reviewed",
@@ -9944,7 +11043,8 @@
       },
       "tags": [
         "hanzi",
-        "hanzi-pinyin"
+        "hanzi-pinyin",
+        "hanzi-homophone"
       ],
       "source": "internal-reviewed-catalog",
       "reviewStatus": "reviewed",
@@ -10216,6 +11316,358 @@
       "enabled": true
     },
     {
+      "id": "fact.hanzi.radical.1ygtetk",
+      "kind": "hanzi.radical",
+      "fields": {
+        "id": "radical.休",
+        "prompt": "“休”的部首",
+        "answer": "亻",
+        "wrong": [
+          "木",
+          "人",
+          "十"
+        ]
+      },
+      "tags": [
+        "hanzi",
+        "hanzi-radical"
+      ],
+      "source": "internal-reviewed-catalog",
+      "reviewStatus": "reviewed",
+      "reviewedAt": "2026-09-01",
+      "enabled": true
+    },
+    {
+      "id": "fact.hanzi.radical.0gosuea",
+      "kind": "hanzi.radical",
+      "fields": {
+        "id": "radical.江",
+        "prompt": "“江”的部首",
+        "answer": "氵",
+        "wrong": [
+          "工",
+          "水",
+          "冫"
+        ]
+      },
+      "tags": [
+        "hanzi",
+        "hanzi-radical"
+      ],
+      "source": "internal-reviewed-catalog",
+      "reviewStatus": "reviewed",
+      "reviewedAt": "2026-09-01",
+      "enabled": true
+    },
+    {
+      "id": "fact.hanzi.radical.0avsk00",
+      "kind": "hanzi.radical",
+      "fields": {
+        "id": "radical.草",
+        "prompt": "“草”的部首",
+        "answer": "艹",
+        "wrong": [
+          "早",
+          "日",
+          "十"
+        ]
+      },
+      "tags": [
+        "hanzi",
+        "hanzi-radical"
+      ],
+      "source": "internal-reviewed-catalog",
+      "reviewStatus": "reviewed",
+      "reviewedAt": "2026-09-01",
+      "enabled": true
+    },
+    {
+      "id": "fact.hanzi.radical.0rizghz",
+      "kind": "hanzi.radical",
+      "fields": {
+        "id": "radical.晴",
+        "prompt": "“晴”的部首",
+        "answer": "日",
+        "wrong": [
+          "青",
+          "月",
+          "目"
+        ]
+      },
+      "tags": [
+        "hanzi",
+        "hanzi-radical"
+      ],
+      "source": "internal-reviewed-catalog",
+      "reviewStatus": "reviewed",
+      "reviewedAt": "2026-09-01",
+      "enabled": true
+    },
+    {
+      "id": "fact.hanzi.radical.1h16zd4",
+      "kind": "hanzi.radical",
+      "fields": {
+        "id": "radical.跑",
+        "prompt": "“跑”的部首",
+        "answer": "足",
+        "wrong": [
+          "包",
+          "走",
+          "止"
+        ]
+      },
+      "tags": [
+        "hanzi",
+        "hanzi-radical"
+      ],
+      "source": "internal-reviewed-catalog",
+      "reviewStatus": "reviewed",
+      "reviewedAt": "2026-09-01",
+      "enabled": true
+    },
+    {
+      "id": "fact.hanzi.radical.0sjmglv",
+      "kind": "hanzi.radical",
+      "fields": {
+        "id": "radical.妈",
+        "prompt": "“妈”的部首",
+        "answer": "女",
+        "wrong": [
+          "马",
+          "母",
+          "人"
+        ]
+      },
+      "tags": [
+        "hanzi",
+        "hanzi-radical"
+      ],
+      "source": "internal-reviewed-catalog",
+      "reviewStatus": "reviewed",
+      "reviewedAt": "2026-09-01",
+      "enabled": true
+    },
+    {
+      "id": "fact.hanzi.radical.0mssy2s",
+      "kind": "hanzi.radical",
+      "fields": {
+        "id": "radical.桥",
+        "prompt": "“桥”的部首",
+        "answer": "木",
+        "wrong": [
+          "乔",
+          "禾",
+          "朩"
+        ]
+      },
+      "tags": [
+        "hanzi",
+        "hanzi-radical"
+      ],
+      "source": "internal-reviewed-catalog",
+      "reviewStatus": "reviewed",
+      "reviewedAt": "2026-09-01",
+      "enabled": true
+    },
+    {
+      "id": "fact.hanzi.radical.0rsf5qy",
+      "kind": "hanzi.radical",
+      "fields": {
+        "id": "radical.海",
+        "prompt": "“海”的部首",
+        "answer": "氵",
+        "wrong": [
+          "每",
+          "水",
+          "母"
+        ]
+      },
+      "tags": [
+        "hanzi",
+        "hanzi-radical"
+      ],
+      "source": "internal-reviewed-catalog",
+      "reviewStatus": "reviewed",
+      "reviewedAt": "2026-09-01",
+      "enabled": true
+    },
+    {
+      "id": "fact.hanzi.compose.1npw30w",
+      "kind": "hanzi.compose",
+      "fields": {
+        "id": "compose.林",
+        "prompt": "木＋木组成",
+        "answer": "林",
+        "wrong": [
+          "森",
+          "休",
+          "本"
+        ]
+      },
+      "tags": [
+        "hanzi",
+        "hanzi-compose"
+      ],
+      "source": "internal-reviewed-catalog",
+      "reviewStatus": "reviewed",
+      "reviewedAt": "2026-09-01",
+      "enabled": true
+    },
+    {
+      "id": "fact.hanzi.compose.0m9i5l7",
+      "kind": "hanzi.compose",
+      "fields": {
+        "id": "compose.明",
+        "prompt": "日＋月组成",
+        "answer": "明",
+        "wrong": [
+          "朋",
+          "晴",
+          "阳"
+        ]
+      },
+      "tags": [
+        "hanzi",
+        "hanzi-compose"
+      ],
+      "source": "internal-reviewed-catalog",
+      "reviewStatus": "reviewed",
+      "reviewedAt": "2026-09-01",
+      "enabled": true
+    },
+    {
+      "id": "fact.hanzi.compose.0pttphe",
+      "kind": "hanzi.compose",
+      "fields": {
+        "id": "compose.休",
+        "prompt": "亻＋木组成",
+        "answer": "休",
+        "wrong": [
+          "体",
+          "林",
+          "保"
+        ]
+      },
+      "tags": [
+        "hanzi",
+        "hanzi-compose"
+      ],
+      "source": "internal-reviewed-catalog",
+      "reviewStatus": "reviewed",
+      "reviewedAt": "2026-09-01",
+      "enabled": true
+    },
+    {
+      "id": "fact.hanzi.compose.00bp84u",
+      "kind": "hanzi.compose",
+      "fields": {
+        "id": "compose.好",
+        "prompt": "女＋子组成",
+        "answer": "好",
+        "wrong": [
+          "妈",
+          "字",
+          "仔"
+        ]
+      },
+      "tags": [
+        "hanzi",
+        "hanzi-compose"
+      ],
+      "source": "internal-reviewed-catalog",
+      "reviewStatus": "reviewed",
+      "reviewedAt": "2026-09-01",
+      "enabled": true
+    },
+    {
+      "id": "fact.hanzi.compose.0fctoj4",
+      "kind": "hanzi.compose",
+      "fields": {
+        "id": "compose.男",
+        "prompt": "田＋力组成",
+        "answer": "男",
+        "wrong": [
+          "苗",
+          "勇",
+          "累"
+        ]
+      },
+      "tags": [
+        "hanzi",
+        "hanzi-compose"
+      ],
+      "source": "internal-reviewed-catalog",
+      "reviewStatus": "reviewed",
+      "reviewedAt": "2026-09-01",
+      "enabled": true
+    },
+    {
+      "id": "fact.hanzi.compose.0oh1pib",
+      "kind": "hanzi.compose",
+      "fields": {
+        "id": "compose.尖",
+        "prompt": "小＋大组成",
+        "answer": "尖",
+        "wrong": [
+          "尘",
+          "太",
+          "少"
+        ]
+      },
+      "tags": [
+        "hanzi",
+        "hanzi-compose"
+      ],
+      "source": "internal-reviewed-catalog",
+      "reviewStatus": "reviewed",
+      "reviewedAt": "2026-09-01",
+      "enabled": true
+    },
+    {
+      "id": "fact.hanzi.compose.1e9yjey",
+      "kind": "hanzi.compose",
+      "fields": {
+        "id": "compose.岩",
+        "prompt": "山＋石组成",
+        "answer": "岩",
+        "wrong": [
+          "岸",
+          "矿",
+          "磊"
+        ]
+      },
+      "tags": [
+        "hanzi",
+        "hanzi-compose"
+      ],
+      "source": "internal-reviewed-catalog",
+      "reviewStatus": "reviewed",
+      "reviewedAt": "2026-09-01",
+      "enabled": true
+    },
+    {
+      "id": "fact.hanzi.compose.0scw57x",
+      "kind": "hanzi.compose",
+      "fields": {
+        "id": "compose.尘",
+        "prompt": "小＋土组成",
+        "answer": "尘",
+        "wrong": [
+          "尖",
+          "灰",
+          "沙"
+        ]
+      },
+      "tags": [
+        "hanzi",
+        "hanzi-compose"
+      ],
+      "source": "internal-reviewed-catalog",
+      "reviewStatus": "reviewed",
+      "reviewedAt": "2026-09-01",
+      "enabled": true
+    },
+    {
       "id": "fact.english.words.0mh9c78",
       "kind": "english.words",
       "fields": {
@@ -10228,7 +11680,8 @@
         "english-meaning",
         "english-category",
         "english-first-letter",
-        "english-length"
+        "english-length",
+        "english-missing-letter"
       ],
       "source": "internal-reviewed-catalog",
       "reviewStatus": "reviewed",
@@ -10248,7 +11701,8 @@
         "english-meaning",
         "english-category",
         "english-first-letter",
-        "english-length"
+        "english-length",
+        "english-missing-letter"
       ],
       "source": "internal-reviewed-catalog",
       "reviewStatus": "reviewed",
@@ -10268,7 +11722,8 @@
         "english-meaning",
         "english-category",
         "english-first-letter",
-        "english-length"
+        "english-length",
+        "english-missing-letter"
       ],
       "source": "internal-reviewed-catalog",
       "reviewStatus": "reviewed",
@@ -10288,7 +11743,8 @@
         "english-meaning",
         "english-category",
         "english-first-letter",
-        "english-length"
+        "english-length",
+        "english-missing-letter"
       ],
       "source": "internal-reviewed-catalog",
       "reviewStatus": "reviewed",
@@ -10308,7 +11764,8 @@
         "english-meaning",
         "english-category",
         "english-first-letter",
-        "english-length"
+        "english-length",
+        "english-missing-letter"
       ],
       "source": "internal-reviewed-catalog",
       "reviewStatus": "reviewed",
@@ -10328,7 +11785,8 @@
         "english-meaning",
         "english-category",
         "english-first-letter",
-        "english-length"
+        "english-length",
+        "english-missing-letter"
       ],
       "source": "internal-reviewed-catalog",
       "reviewStatus": "reviewed",
@@ -10348,7 +11806,8 @@
         "english-meaning",
         "english-category",
         "english-first-letter",
-        "english-length"
+        "english-length",
+        "english-missing-letter"
       ],
       "source": "internal-reviewed-catalog",
       "reviewStatus": "reviewed",
@@ -10368,7 +11827,8 @@
         "english-meaning",
         "english-category",
         "english-first-letter",
-        "english-length"
+        "english-length",
+        "english-missing-letter"
       ],
       "source": "internal-reviewed-catalog",
       "reviewStatus": "reviewed",
@@ -10388,7 +11848,8 @@
         "english-meaning",
         "english-category",
         "english-first-letter",
-        "english-length"
+        "english-length",
+        "english-missing-letter"
       ],
       "source": "internal-reviewed-catalog",
       "reviewStatus": "reviewed",
@@ -10408,7 +11869,8 @@
         "english-meaning",
         "english-category",
         "english-first-letter",
-        "english-length"
+        "english-length",
+        "english-missing-letter"
       ],
       "source": "internal-reviewed-catalog",
       "reviewStatus": "reviewed",
@@ -10428,7 +11890,8 @@
         "english-meaning",
         "english-category",
         "english-first-letter",
-        "english-length"
+        "english-length",
+        "english-missing-letter"
       ],
       "source": "internal-reviewed-catalog",
       "reviewStatus": "reviewed",
@@ -10448,7 +11911,8 @@
         "english-meaning",
         "english-category",
         "english-first-letter",
-        "english-length"
+        "english-length",
+        "english-missing-letter"
       ],
       "source": "internal-reviewed-catalog",
       "reviewStatus": "reviewed",
@@ -10468,7 +11932,8 @@
         "english-meaning",
         "english-category",
         "english-first-letter",
-        "english-length"
+        "english-length",
+        "english-missing-letter"
       ],
       "source": "internal-reviewed-catalog",
       "reviewStatus": "reviewed",
@@ -10488,7 +11953,8 @@
         "english-meaning",
         "english-category",
         "english-first-letter",
-        "english-length"
+        "english-length",
+        "english-missing-letter"
       ],
       "source": "internal-reviewed-catalog",
       "reviewStatus": "reviewed",
@@ -10508,7 +11974,8 @@
         "english-meaning",
         "english-category",
         "english-first-letter",
-        "english-length"
+        "english-length",
+        "english-missing-letter"
       ],
       "source": "internal-reviewed-catalog",
       "reviewStatus": "reviewed",
@@ -10528,7 +11995,8 @@
         "english-meaning",
         "english-category",
         "english-first-letter",
-        "english-length"
+        "english-length",
+        "english-missing-letter"
       ],
       "source": "internal-reviewed-catalog",
       "reviewStatus": "reviewed",
@@ -10548,7 +12016,8 @@
         "english-meaning",
         "english-category",
         "english-first-letter",
-        "english-length"
+        "english-length",
+        "english-missing-letter"
       ],
       "source": "internal-reviewed-catalog",
       "reviewStatus": "reviewed",
@@ -10568,7 +12037,8 @@
         "english-meaning",
         "english-category",
         "english-first-letter",
-        "english-length"
+        "english-length",
+        "english-missing-letter"
       ],
       "source": "internal-reviewed-catalog",
       "reviewStatus": "reviewed",
@@ -10588,7 +12058,8 @@
         "english-meaning",
         "english-category",
         "english-first-letter",
-        "english-length"
+        "english-length",
+        "english-missing-letter"
       ],
       "source": "internal-reviewed-catalog",
       "reviewStatus": "reviewed",
@@ -10608,7 +12079,8 @@
         "english-meaning",
         "english-category",
         "english-first-letter",
-        "english-length"
+        "english-length",
+        "english-missing-letter"
       ],
       "source": "internal-reviewed-catalog",
       "reviewStatus": "reviewed",
@@ -10628,7 +12100,8 @@
         "english-meaning",
         "english-category",
         "english-first-letter",
-        "english-length"
+        "english-length",
+        "english-missing-letter"
       ],
       "source": "internal-reviewed-catalog",
       "reviewStatus": "reviewed",
@@ -10648,7 +12121,8 @@
         "english-meaning",
         "english-category",
         "english-first-letter",
-        "english-length"
+        "english-length",
+        "english-missing-letter"
       ],
       "source": "internal-reviewed-catalog",
       "reviewStatus": "reviewed",
@@ -10668,7 +12142,8 @@
         "english-meaning",
         "english-category",
         "english-first-letter",
-        "english-length"
+        "english-length",
+        "english-missing-letter"
       ],
       "source": "internal-reviewed-catalog",
       "reviewStatus": "reviewed",
@@ -10688,7 +12163,8 @@
         "english-meaning",
         "english-category",
         "english-first-letter",
-        "english-length"
+        "english-length",
+        "english-missing-letter"
       ],
       "source": "internal-reviewed-catalog",
       "reviewStatus": "reviewed",
@@ -10708,7 +12184,8 @@
         "english-meaning",
         "english-category",
         "english-first-letter",
-        "english-length"
+        "english-length",
+        "english-missing-letter"
       ],
       "source": "internal-reviewed-catalog",
       "reviewStatus": "reviewed",
@@ -10728,7 +12205,8 @@
         "english-meaning",
         "english-category",
         "english-first-letter",
-        "english-length"
+        "english-length",
+        "english-missing-letter"
       ],
       "source": "internal-reviewed-catalog",
       "reviewStatus": "reviewed",
@@ -10748,7 +12226,8 @@
         "english-meaning",
         "english-category",
         "english-first-letter",
-        "english-length"
+        "english-length",
+        "english-missing-letter"
       ],
       "source": "internal-reviewed-catalog",
       "reviewStatus": "reviewed",
@@ -10768,7 +12247,8 @@
         "english-meaning",
         "english-category",
         "english-first-letter",
-        "english-length"
+        "english-length",
+        "english-missing-letter"
       ],
       "source": "internal-reviewed-catalog",
       "reviewStatus": "reviewed",
@@ -10788,7 +12268,8 @@
         "english-meaning",
         "english-category",
         "english-first-letter",
-        "english-length"
+        "english-length",
+        "english-missing-letter"
       ],
       "source": "internal-reviewed-catalog",
       "reviewStatus": "reviewed",
@@ -10808,7 +12289,8 @@
         "english-meaning",
         "english-category",
         "english-first-letter",
-        "english-length"
+        "english-length",
+        "english-missing-letter"
       ],
       "source": "internal-reviewed-catalog",
       "reviewStatus": "reviewed",
@@ -10828,7 +12310,8 @@
         "english-meaning",
         "english-category",
         "english-first-letter",
-        "english-length"
+        "english-length",
+        "english-missing-letter"
       ],
       "source": "internal-reviewed-catalog",
       "reviewStatus": "reviewed",
@@ -10848,7 +12331,8 @@
         "english-meaning",
         "english-category",
         "english-first-letter",
-        "english-length"
+        "english-length",
+        "english-missing-letter"
       ],
       "source": "internal-reviewed-catalog",
       "reviewStatus": "reviewed",
@@ -10868,7 +12352,8 @@
         "english-meaning",
         "english-category",
         "english-first-letter",
-        "english-length"
+        "english-length",
+        "english-missing-letter"
       ],
       "source": "internal-reviewed-catalog",
       "reviewStatus": "reviewed",
@@ -10888,7 +12373,8 @@
         "english-meaning",
         "english-category",
         "english-first-letter",
-        "english-length"
+        "english-length",
+        "english-missing-letter"
       ],
       "source": "internal-reviewed-catalog",
       "reviewStatus": "reviewed",
@@ -10908,7 +12394,8 @@
         "english-meaning",
         "english-category",
         "english-first-letter",
-        "english-length"
+        "english-length",
+        "english-missing-letter"
       ],
       "source": "internal-reviewed-catalog",
       "reviewStatus": "reviewed",
@@ -10928,7 +12415,8 @@
         "english-meaning",
         "english-category",
         "english-first-letter",
-        "english-length"
+        "english-length",
+        "english-missing-letter"
       ],
       "source": "internal-reviewed-catalog",
       "reviewStatus": "reviewed",
@@ -10948,7 +12436,8 @@
         "english-meaning",
         "english-category",
         "english-first-letter",
-        "english-length"
+        "english-length",
+        "english-missing-letter"
       ],
       "source": "internal-reviewed-catalog",
       "reviewStatus": "reviewed",
@@ -10968,7 +12457,8 @@
         "english-meaning",
         "english-category",
         "english-first-letter",
-        "english-length"
+        "english-length",
+        "english-missing-letter"
       ],
       "source": "internal-reviewed-catalog",
       "reviewStatus": "reviewed",
@@ -10988,7 +12478,8 @@
         "english-meaning",
         "english-category",
         "english-first-letter",
-        "english-length"
+        "english-length",
+        "english-missing-letter"
       ],
       "source": "internal-reviewed-catalog",
       "reviewStatus": "reviewed",
@@ -11008,7 +12499,8 @@
         "english-meaning",
         "english-category",
         "english-first-letter",
-        "english-length"
+        "english-length",
+        "english-missing-letter"
       ],
       "source": "internal-reviewed-catalog",
       "reviewStatus": "reviewed",
@@ -11028,7 +12520,8 @@
         "english-meaning",
         "english-category",
         "english-first-letter",
-        "english-length"
+        "english-length",
+        "english-missing-letter"
       ],
       "source": "internal-reviewed-catalog",
       "reviewStatus": "reviewed",
@@ -11048,7 +12541,8 @@
         "english-meaning",
         "english-category",
         "english-first-letter",
-        "english-length"
+        "english-length",
+        "english-missing-letter"
       ],
       "source": "internal-reviewed-catalog",
       "reviewStatus": "reviewed",
@@ -11068,7 +12562,8 @@
         "english-meaning",
         "english-category",
         "english-first-letter",
-        "english-length"
+        "english-length",
+        "english-missing-letter"
       ],
       "source": "internal-reviewed-catalog",
       "reviewStatus": "reviewed",
@@ -11088,7 +12583,8 @@
         "english-meaning",
         "english-category",
         "english-first-letter",
-        "english-length"
+        "english-length",
+        "english-missing-letter"
       ],
       "source": "internal-reviewed-catalog",
       "reviewStatus": "reviewed",
@@ -11108,7 +12604,8 @@
         "english-meaning",
         "english-category",
         "english-first-letter",
-        "english-length"
+        "english-length",
+        "english-missing-letter"
       ],
       "source": "internal-reviewed-catalog",
       "reviewStatus": "reviewed",
@@ -11128,7 +12625,8 @@
         "english-meaning",
         "english-category",
         "english-first-letter",
-        "english-length"
+        "english-length",
+        "english-missing-letter"
       ],
       "source": "internal-reviewed-catalog",
       "reviewStatus": "reviewed",
@@ -11148,7 +12646,8 @@
         "english-meaning",
         "english-category",
         "english-first-letter",
-        "english-length"
+        "english-length",
+        "english-missing-letter"
       ],
       "source": "internal-reviewed-catalog",
       "reviewStatus": "reviewed",
@@ -11168,7 +12667,8 @@
         "english-meaning",
         "english-category",
         "english-first-letter",
-        "english-length"
+        "english-length",
+        "english-missing-letter"
       ],
       "source": "internal-reviewed-catalog",
       "reviewStatus": "reviewed",
@@ -11188,7 +12688,8 @@
         "english-meaning",
         "english-category",
         "english-first-letter",
-        "english-length"
+        "english-length",
+        "english-missing-letter"
       ],
       "source": "internal-reviewed-catalog",
       "reviewStatus": "reviewed",
@@ -11208,7 +12709,8 @@
         "english-meaning",
         "english-category",
         "english-first-letter",
-        "english-length"
+        "english-length",
+        "english-missing-letter"
       ],
       "source": "internal-reviewed-catalog",
       "reviewStatus": "reviewed",
@@ -11228,7 +12730,8 @@
         "english-meaning",
         "english-category",
         "english-first-letter",
-        "english-length"
+        "english-length",
+        "english-missing-letter"
       ],
       "source": "internal-reviewed-catalog",
       "reviewStatus": "reviewed",
@@ -11248,7 +12751,8 @@
         "english-meaning",
         "english-category",
         "english-first-letter",
-        "english-length"
+        "english-length",
+        "english-missing-letter"
       ],
       "source": "internal-reviewed-catalog",
       "reviewStatus": "reviewed",
@@ -11268,7 +12772,8 @@
         "english-meaning",
         "english-category",
         "english-first-letter",
-        "english-length"
+        "english-length",
+        "english-missing-letter"
       ],
       "source": "internal-reviewed-catalog",
       "reviewStatus": "reviewed",
@@ -11288,7 +12793,8 @@
         "english-meaning",
         "english-category",
         "english-first-letter",
-        "english-length"
+        "english-length",
+        "english-missing-letter"
       ],
       "source": "internal-reviewed-catalog",
       "reviewStatus": "reviewed",
@@ -11308,7 +12814,8 @@
         "english-meaning",
         "english-category",
         "english-first-letter",
-        "english-length"
+        "english-length",
+        "english-missing-letter"
       ],
       "source": "internal-reviewed-catalog",
       "reviewStatus": "reviewed",
@@ -11328,7 +12835,8 @@
         "english-meaning",
         "english-category",
         "english-first-letter",
-        "english-length"
+        "english-length",
+        "english-missing-letter"
       ],
       "source": "internal-reviewed-catalog",
       "reviewStatus": "reviewed",
@@ -11348,7 +12856,8 @@
         "english-meaning",
         "english-category",
         "english-first-letter",
-        "english-length"
+        "english-length",
+        "english-missing-letter"
       ],
       "source": "internal-reviewed-catalog",
       "reviewStatus": "reviewed",
@@ -11368,7 +12877,8 @@
         "english-meaning",
         "english-category",
         "english-first-letter",
-        "english-length"
+        "english-length",
+        "english-missing-letter"
       ],
       "source": "internal-reviewed-catalog",
       "reviewStatus": "reviewed",
@@ -11388,7 +12898,8 @@
         "english-meaning",
         "english-category",
         "english-first-letter",
-        "english-length"
+        "english-length",
+        "english-missing-letter"
       ],
       "source": "internal-reviewed-catalog",
       "reviewStatus": "reviewed",
@@ -11408,7 +12919,8 @@
         "english-meaning",
         "english-category",
         "english-first-letter",
-        "english-length"
+        "english-length",
+        "english-missing-letter"
       ],
       "source": "internal-reviewed-catalog",
       "reviewStatus": "reviewed",
@@ -11428,7 +12940,8 @@
         "english-meaning",
         "english-category",
         "english-first-letter",
-        "english-length"
+        "english-length",
+        "english-missing-letter"
       ],
       "source": "internal-reviewed-catalog",
       "reviewStatus": "reviewed",
@@ -11448,7 +12961,8 @@
         "english-meaning",
         "english-category",
         "english-first-letter",
-        "english-length"
+        "english-length",
+        "english-missing-letter"
       ],
       "source": "internal-reviewed-catalog",
       "reviewStatus": "reviewed",
@@ -11468,7 +12982,8 @@
         "english-meaning",
         "english-category",
         "english-first-letter",
-        "english-length"
+        "english-length",
+        "english-missing-letter"
       ],
       "source": "internal-reviewed-catalog",
       "reviewStatus": "reviewed",
@@ -11488,7 +13003,8 @@
         "english-meaning",
         "english-category",
         "english-first-letter",
-        "english-length"
+        "english-length",
+        "english-missing-letter"
       ],
       "source": "internal-reviewed-catalog",
       "reviewStatus": "reviewed",
@@ -11508,7 +13024,8 @@
         "english-meaning",
         "english-category",
         "english-first-letter",
-        "english-length"
+        "english-length",
+        "english-missing-letter"
       ],
       "source": "internal-reviewed-catalog",
       "reviewStatus": "reviewed",
@@ -11528,7 +13045,8 @@
         "english-meaning",
         "english-category",
         "english-first-letter",
-        "english-length"
+        "english-length",
+        "english-missing-letter"
       ],
       "source": "internal-reviewed-catalog",
       "reviewStatus": "reviewed",
@@ -11548,7 +13066,8 @@
         "english-meaning",
         "english-category",
         "english-first-letter",
-        "english-length"
+        "english-length",
+        "english-missing-letter"
       ],
       "source": "internal-reviewed-catalog",
       "reviewStatus": "reviewed",
@@ -11568,7 +13087,8 @@
         "english-meaning",
         "english-category",
         "english-first-letter",
-        "english-length"
+        "english-length",
+        "english-missing-letter"
       ],
       "source": "internal-reviewed-catalog",
       "reviewStatus": "reviewed",
@@ -11588,7 +13108,8 @@
         "english-meaning",
         "english-category",
         "english-first-letter",
-        "english-length"
+        "english-length",
+        "english-missing-letter"
       ],
       "source": "internal-reviewed-catalog",
       "reviewStatus": "reviewed",
@@ -11608,7 +13129,8 @@
         "english-meaning",
         "english-category",
         "english-first-letter",
-        "english-length"
+        "english-length",
+        "english-missing-letter"
       ],
       "source": "internal-reviewed-catalog",
       "reviewStatus": "reviewed",
@@ -11628,7 +13150,8 @@
         "english-meaning",
         "english-category",
         "english-first-letter",
-        "english-length"
+        "english-length",
+        "english-missing-letter"
       ],
       "source": "internal-reviewed-catalog",
       "reviewStatus": "reviewed",
@@ -11648,7 +13171,8 @@
         "english-meaning",
         "english-category",
         "english-first-letter",
-        "english-length"
+        "english-length",
+        "english-missing-letter"
       ],
       "source": "internal-reviewed-catalog",
       "reviewStatus": "reviewed",
@@ -11668,7 +13192,8 @@
         "english-meaning",
         "english-category",
         "english-first-letter",
-        "english-length"
+        "english-length",
+        "english-missing-letter"
       ],
       "source": "internal-reviewed-catalog",
       "reviewStatus": "reviewed",
@@ -11688,7 +13213,8 @@
         "english-meaning",
         "english-category",
         "english-first-letter",
-        "english-length"
+        "english-length",
+        "english-missing-letter"
       ],
       "source": "internal-reviewed-catalog",
       "reviewStatus": "reviewed",
@@ -11708,7 +13234,8 @@
         "english-meaning",
         "english-category",
         "english-first-letter",
-        "english-length"
+        "english-length",
+        "english-missing-letter"
       ],
       "source": "internal-reviewed-catalog",
       "reviewStatus": "reviewed",
@@ -11728,7 +13255,8 @@
         "english-meaning",
         "english-category",
         "english-first-letter",
-        "english-length"
+        "english-length",
+        "english-missing-letter"
       ],
       "source": "internal-reviewed-catalog",
       "reviewStatus": "reviewed",
@@ -11748,7 +13276,8 @@
         "english-meaning",
         "english-category",
         "english-first-letter",
-        "english-length"
+        "english-length",
+        "english-missing-letter"
       ],
       "source": "internal-reviewed-catalog",
       "reviewStatus": "reviewed",
@@ -11768,7 +13297,8 @@
         "english-meaning",
         "english-category",
         "english-first-letter",
-        "english-length"
+        "english-length",
+        "english-missing-letter"
       ],
       "source": "internal-reviewed-catalog",
       "reviewStatus": "reviewed",
@@ -11788,7 +13318,8 @@
         "english-meaning",
         "english-category",
         "english-first-letter",
-        "english-length"
+        "english-length",
+        "english-missing-letter"
       ],
       "source": "internal-reviewed-catalog",
       "reviewStatus": "reviewed",
@@ -11808,7 +13339,8 @@
         "english-meaning",
         "english-category",
         "english-first-letter",
-        "english-length"
+        "english-length",
+        "english-missing-letter"
       ],
       "source": "internal-reviewed-catalog",
       "reviewStatus": "reviewed",
@@ -11828,7 +13360,8 @@
         "english-meaning",
         "english-category",
         "english-first-letter",
-        "english-length"
+        "english-length",
+        "english-missing-letter"
       ],
       "source": "internal-reviewed-catalog",
       "reviewStatus": "reviewed",
@@ -11848,7 +13381,8 @@
         "english-meaning",
         "english-category",
         "english-first-letter",
-        "english-length"
+        "english-length",
+        "english-missing-letter"
       ],
       "source": "internal-reviewed-catalog",
       "reviewStatus": "reviewed",
@@ -11868,7 +13402,8 @@
         "english-meaning",
         "english-category",
         "english-first-letter",
-        "english-length"
+        "english-length",
+        "english-missing-letter"
       ],
       "source": "internal-reviewed-catalog",
       "reviewStatus": "reviewed",
@@ -11888,7 +13423,8 @@
         "english-meaning",
         "english-category",
         "english-first-letter",
-        "english-length"
+        "english-length",
+        "english-missing-letter"
       ],
       "source": "internal-reviewed-catalog",
       "reviewStatus": "reviewed",
@@ -11908,7 +13444,8 @@
         "english-meaning",
         "english-category",
         "english-first-letter",
-        "english-length"
+        "english-length",
+        "english-missing-letter"
       ],
       "source": "internal-reviewed-catalog",
       "reviewStatus": "reviewed",
@@ -11928,7 +13465,8 @@
         "english-meaning",
         "english-category",
         "english-first-letter",
-        "english-length"
+        "english-length",
+        "english-missing-letter"
       ],
       "source": "internal-reviewed-catalog",
       "reviewStatus": "reviewed",
@@ -11948,7 +13486,8 @@
         "english-meaning",
         "english-category",
         "english-first-letter",
-        "english-length"
+        "english-length",
+        "english-missing-letter"
       ],
       "source": "internal-reviewed-catalog",
       "reviewStatus": "reviewed",
@@ -11968,7 +13507,8 @@
         "english-meaning",
         "english-category",
         "english-first-letter",
-        "english-length"
+        "english-length",
+        "english-missing-letter"
       ],
       "source": "internal-reviewed-catalog",
       "reviewStatus": "reviewed",
@@ -11988,7 +13528,8 @@
         "english-meaning",
         "english-category",
         "english-first-letter",
-        "english-length"
+        "english-length",
+        "english-missing-letter"
       ],
       "source": "internal-reviewed-catalog",
       "reviewStatus": "reviewed",
@@ -12008,7 +13549,8 @@
         "english-meaning",
         "english-category",
         "english-first-letter",
-        "english-length"
+        "english-length",
+        "english-missing-letter"
       ],
       "source": "internal-reviewed-catalog",
       "reviewStatus": "reviewed",
@@ -12028,7 +13570,8 @@
         "english-meaning",
         "english-category",
         "english-first-letter",
-        "english-length"
+        "english-length",
+        "english-missing-letter"
       ],
       "source": "internal-reviewed-catalog",
       "reviewStatus": "reviewed",
@@ -12048,7 +13591,8 @@
         "english-meaning",
         "english-category",
         "english-first-letter",
-        "english-length"
+        "english-length",
+        "english-missing-letter"
       ],
       "source": "internal-reviewed-catalog",
       "reviewStatus": "reviewed",
@@ -12068,7 +13612,8 @@
         "english-meaning",
         "english-category",
         "english-first-letter",
-        "english-length"
+        "english-length",
+        "english-missing-letter"
       ],
       "source": "internal-reviewed-catalog",
       "reviewStatus": "reviewed",
@@ -12088,7 +13633,8 @@
         "english-meaning",
         "english-category",
         "english-first-letter",
-        "english-length"
+        "english-length",
+        "english-missing-letter"
       ],
       "source": "internal-reviewed-catalog",
       "reviewStatus": "reviewed",
@@ -12108,7 +13654,8 @@
         "english-meaning",
         "english-category",
         "english-first-letter",
-        "english-length"
+        "english-length",
+        "english-missing-letter"
       ],
       "source": "internal-reviewed-catalog",
       "reviewStatus": "reviewed",
@@ -12128,7 +13675,8 @@
         "english-meaning",
         "english-category",
         "english-first-letter",
-        "english-length"
+        "english-length",
+        "english-missing-letter"
       ],
       "source": "internal-reviewed-catalog",
       "reviewStatus": "reviewed",
@@ -12856,6 +14404,353 @@
       "enabled": true
     },
     {
+      "id": "fact.english.synonyms.0beuttf",
+      "kind": "english.synonyms",
+      "fields": {
+        "id": "synonym.quick",
+        "prompt": "QUICK的近义词",
+        "answer": "FAST",
+        "wrong": [
+          "SLOW",
+          "LATE",
+          "QUIET"
+        ]
+      },
+      "tags": [
+        "english",
+        "english-synonym"
+      ],
+      "source": "internal-reviewed-catalog",
+      "reviewStatus": "reviewed",
+      "reviewedAt": "2026-09-01",
+      "enabled": true
+    },
+    {
+      "id": "fact.english.synonyms.1g76yd7",
+      "kind": "english.synonyms",
+      "fields": {
+        "id": "synonym.large",
+        "prompt": "LARGE的近义词",
+        "answer": "BIG",
+        "wrong": [
+          "SMALL",
+          "THIN",
+          "SHORT"
+        ]
+      },
+      "tags": [
+        "english",
+        "english-synonym"
+      ],
+      "source": "internal-reviewed-catalog",
+      "reviewStatus": "reviewed",
+      "reviewedAt": "2026-09-01",
+      "enabled": true
+    },
+    {
+      "id": "fact.english.synonyms.0wazetv",
+      "kind": "english.synonyms",
+      "fields": {
+        "id": "synonym.small",
+        "prompt": "SMALL的近义词",
+        "answer": "LITTLE",
+        "wrong": [
+          "LARGE",
+          "LONG",
+          "WIDE"
+        ]
+      },
+      "tags": [
+        "english",
+        "english-synonym"
+      ],
+      "source": "internal-reviewed-catalog",
+      "reviewStatus": "reviewed",
+      "reviewedAt": "2026-09-01",
+      "enabled": true
+    },
+    {
+      "id": "fact.english.synonyms.1qazt9t",
+      "kind": "english.synonyms",
+      "fields": {
+        "id": "synonym.begin",
+        "prompt": "BEGIN的近义词",
+        "answer": "START",
+        "wrong": [
+          "STOP",
+          "END",
+          "WAIT"
+        ]
+      },
+      "tags": [
+        "english",
+        "english-synonym"
+      ],
+      "source": "internal-reviewed-catalog",
+      "reviewStatus": "reviewed",
+      "reviewedAt": "2026-09-01",
+      "enabled": true
+    },
+    {
+      "id": "fact.english.synonyms.0zjx05h",
+      "kind": "english.synonyms",
+      "fields": {
+        "id": "synonym.smart",
+        "prompt": "SMART的近义词",
+        "answer": "CLEVER",
+        "wrong": [
+          "SLOW",
+          "WEAK",
+          "LOUD"
+        ]
+      },
+      "tags": [
+        "english",
+        "english-synonym"
+      ],
+      "source": "internal-reviewed-catalog",
+      "reviewStatus": "reviewed",
+      "reviewedAt": "2026-09-01",
+      "enabled": true
+    },
+    {
+      "id": "fact.english.synonyms.1otpsea",
+      "kind": "english.synonyms",
+      "fields": {
+        "id": "synonym.happy",
+        "prompt": "HAPPY的近义词",
+        "answer": "GLAD",
+        "wrong": [
+          "SAD",
+          "ANGRY",
+          "TIRED"
+        ]
+      },
+      "tags": [
+        "english",
+        "english-synonym"
+      ],
+      "source": "internal-reviewed-catalog",
+      "reviewStatus": "reviewed",
+      "reviewedAt": "2026-09-01",
+      "enabled": true
+    },
+    {
+      "id": "fact.english.synonyms.0ibzrk4",
+      "kind": "english.synonyms",
+      "fields": {
+        "id": "synonym.quiet",
+        "prompt": "QUIET的近义词",
+        "answer": "SILENT",
+        "wrong": [
+          "LOUD",
+          "FAST",
+          "BRIGHT"
+        ]
+      },
+      "tags": [
+        "english",
+        "english-synonym"
+      ],
+      "source": "internal-reviewed-catalog",
+      "reviewStatus": "reviewed",
+      "reviewedAt": "2026-09-01",
+      "enabled": true
+    },
+    {
+      "id": "fact.english.synonyms.0bubk1n",
+      "kind": "english.synonyms",
+      "fields": {
+        "id": "synonym.finish",
+        "prompt": "FINISH的近义词",
+        "answer": "END",
+        "wrong": [
+          "BEGIN",
+          "OPEN",
+          "ENTER"
+        ]
+      },
+      "tags": [
+        "english",
+        "english-synonym"
+      ],
+      "source": "internal-reviewed-catalog",
+      "reviewStatus": "reviewed",
+      "reviewedAt": "2026-09-01",
+      "enabled": true
+    },
+    {
+      "id": "fact.english.sentences.0k0tua7",
+      "kind": "english.sentences",
+      "fields": {
+        "id": "sentence.i-like-apples",
+        "prompt": "组成英语句子",
+        "parts": [
+          "I",
+          "LIKE",
+          "APPLES"
+        ]
+      },
+      "tags": [
+        "english",
+        "english-word-order"
+      ],
+      "source": "internal-reviewed-catalog",
+      "reviewStatus": "reviewed",
+      "reviewedAt": "2026-09-01",
+      "enabled": true
+    },
+    {
+      "id": "fact.english.sentences.17yu40u",
+      "kind": "english.sentences",
+      "fields": {
+        "id": "sentence.she-can-swim",
+        "prompt": "组成英语句子",
+        "parts": [
+          "SHE",
+          "CAN",
+          "SWIM"
+        ]
+      },
+      "tags": [
+        "english",
+        "english-word-order"
+      ],
+      "source": "internal-reviewed-catalog",
+      "reviewStatus": "reviewed",
+      "reviewedAt": "2026-09-01",
+      "enabled": true
+    },
+    {
+      "id": "fact.english.sentences.0swhl5l",
+      "kind": "english.sentences",
+      "fields": {
+        "id": "sentence.this-is-book",
+        "prompt": "组成英语句子",
+        "parts": [
+          "THIS",
+          "IS",
+          "A",
+          "BOOK"
+        ]
+      },
+      "tags": [
+        "english",
+        "english-word-order"
+      ],
+      "source": "internal-reviewed-catalog",
+      "reviewStatus": "reviewed",
+      "reviewedAt": "2026-09-01",
+      "enabled": true
+    },
+    {
+      "id": "fact.english.sentences.1p13zfq",
+      "kind": "english.sentences",
+      "fields": {
+        "id": "sentence.we-go-school",
+        "prompt": "组成英语句子",
+        "parts": [
+          "WE",
+          "GO",
+          "TO",
+          "SCHOOL"
+        ]
+      },
+      "tags": [
+        "english",
+        "english-word-order"
+      ],
+      "source": "internal-reviewed-catalog",
+      "reviewStatus": "reviewed",
+      "reviewedAt": "2026-09-01",
+      "enabled": true
+    },
+    {
+      "id": "fact.english.sentences.1k6a49y",
+      "kind": "english.sentences",
+      "fields": {
+        "id": "sentence.bird-can-fly",
+        "prompt": "组成英语句子",
+        "parts": [
+          "THE",
+          "BIRD",
+          "CAN",
+          "FLY"
+        ]
+      },
+      "tags": [
+        "english",
+        "english-word-order"
+      ],
+      "source": "internal-reviewed-catalog",
+      "reviewStatus": "reviewed",
+      "reviewedAt": "2026-09-01",
+      "enabled": true
+    },
+    {
+      "id": "fact.english.sentences.0c81mqa",
+      "kind": "english.sentences",
+      "fields": {
+        "id": "sentence.he-reads-books",
+        "prompt": "组成英语句子",
+        "parts": [
+          "HE",
+          "READS",
+          "BOOKS"
+        ]
+      },
+      "tags": [
+        "english",
+        "english-word-order"
+      ],
+      "source": "internal-reviewed-catalog",
+      "reviewStatus": "reviewed",
+      "reviewedAt": "2026-09-01",
+      "enabled": true
+    },
+    {
+      "id": "fact.english.sentences.0f9ljk9",
+      "kind": "english.sentences",
+      "fields": {
+        "id": "sentence.the-sun-shines",
+        "prompt": "组成英语句子",
+        "parts": [
+          "THE",
+          "SUN",
+          "SHINES"
+        ]
+      },
+      "tags": [
+        "english",
+        "english-word-order"
+      ],
+      "source": "internal-reviewed-catalog",
+      "reviewStatus": "reviewed",
+      "reviewedAt": "2026-09-01",
+      "enabled": true
+    },
+    {
+      "id": "fact.english.sentences.0d2xpu5",
+      "kind": "english.sentences",
+      "fields": {
+        "id": "sentence.they-play-football",
+        "prompt": "组成英语句子",
+        "parts": [
+          "THEY",
+          "PLAY",
+          "FOOTBALL"
+        ]
+      },
+      "tags": [
+        "english",
+        "english-word-order"
+      ],
+      "source": "internal-reviewed-catalog",
+      "reviewStatus": "reviewed",
+      "reviewedAt": "2026-09-01",
+      "enabled": true
+    },
+    {
       "id": "fact.life.categories.0268fit",
       "kind": "life.categories",
       "fields": {
@@ -12865,7 +14760,8 @@
       },
       "tags": [
         "life",
-        "life-category"
+        "life-category",
+        "life-use"
       ],
       "source": "internal-reviewed-catalog",
       "reviewStatus": "reviewed",
@@ -12882,7 +14778,8 @@
       },
       "tags": [
         "life",
-        "life-category"
+        "life-category",
+        "life-use"
       ],
       "source": "internal-reviewed-catalog",
       "reviewStatus": "reviewed",
@@ -12899,7 +14796,8 @@
       },
       "tags": [
         "life",
-        "life-category"
+        "life-category",
+        "life-use"
       ],
       "source": "internal-reviewed-catalog",
       "reviewStatus": "reviewed",
@@ -12916,7 +14814,8 @@
       },
       "tags": [
         "life",
-        "life-category"
+        "life-category",
+        "life-use"
       ],
       "source": "internal-reviewed-catalog",
       "reviewStatus": "reviewed",
@@ -12933,7 +14832,8 @@
       },
       "tags": [
         "life",
-        "life-category"
+        "life-category",
+        "life-use"
       ],
       "source": "internal-reviewed-catalog",
       "reviewStatus": "reviewed",
@@ -12950,7 +14850,8 @@
       },
       "tags": [
         "life",
-        "life-category"
+        "life-category",
+        "life-use"
       ],
       "source": "internal-reviewed-catalog",
       "reviewStatus": "reviewed",
@@ -12967,7 +14868,8 @@
       },
       "tags": [
         "life",
-        "life-category"
+        "life-category",
+        "life-use"
       ],
       "source": "internal-reviewed-catalog",
       "reviewStatus": "reviewed",
@@ -12984,7 +14886,8 @@
       },
       "tags": [
         "life",
-        "life-category"
+        "life-category",
+        "life-use"
       ],
       "source": "internal-reviewed-catalog",
       "reviewStatus": "reviewed",
@@ -13001,7 +14904,8 @@
       },
       "tags": [
         "life",
-        "life-category"
+        "life-category",
+        "life-use"
       ],
       "source": "internal-reviewed-catalog",
       "reviewStatus": "reviewed",
@@ -13018,7 +14922,8 @@
       },
       "tags": [
         "life",
-        "life-category"
+        "life-category",
+        "life-use"
       ],
       "source": "internal-reviewed-catalog",
       "reviewStatus": "reviewed",
@@ -13035,7 +14940,8 @@
       },
       "tags": [
         "life",
-        "life-category"
+        "life-category",
+        "life-use"
       ],
       "source": "internal-reviewed-catalog",
       "reviewStatus": "reviewed",
@@ -13052,7 +14958,8 @@
       },
       "tags": [
         "life",
-        "life-category"
+        "life-category",
+        "life-use"
       ],
       "source": "internal-reviewed-catalog",
       "reviewStatus": "reviewed",
@@ -13069,7 +14976,8 @@
       },
       "tags": [
         "life",
-        "life-category"
+        "life-category",
+        "life-use"
       ],
       "source": "internal-reviewed-catalog",
       "reviewStatus": "reviewed",
@@ -13086,7 +14994,8 @@
       },
       "tags": [
         "life",
-        "life-category"
+        "life-category",
+        "life-use"
       ],
       "source": "internal-reviewed-catalog",
       "reviewStatus": "reviewed",
@@ -13103,7 +15012,8 @@
       },
       "tags": [
         "life",
-        "life-category"
+        "life-category",
+        "life-use"
       ],
       "source": "internal-reviewed-catalog",
       "reviewStatus": "reviewed",
@@ -13120,7 +15030,8 @@
       },
       "tags": [
         "life",
-        "life-category"
+        "life-category",
+        "life-use"
       ],
       "source": "internal-reviewed-catalog",
       "reviewStatus": "reviewed",
@@ -13137,7 +15048,8 @@
       },
       "tags": [
         "life",
-        "life-category"
+        "life-category",
+        "life-use"
       ],
       "source": "internal-reviewed-catalog",
       "reviewStatus": "reviewed",
@@ -13154,7 +15066,8 @@
       },
       "tags": [
         "life",
-        "life-category"
+        "life-category",
+        "life-use"
       ],
       "source": "internal-reviewed-catalog",
       "reviewStatus": "reviewed",
@@ -13171,7 +15084,8 @@
       },
       "tags": [
         "life",
-        "life-category"
+        "life-category",
+        "life-use"
       ],
       "source": "internal-reviewed-catalog",
       "reviewStatus": "reviewed",
@@ -13188,7 +15102,8 @@
       },
       "tags": [
         "life",
-        "life-category"
+        "life-category",
+        "life-use"
       ],
       "source": "internal-reviewed-catalog",
       "reviewStatus": "reviewed",
@@ -13205,7 +15120,8 @@
       },
       "tags": [
         "life",
-        "life-category"
+        "life-category",
+        "life-use"
       ],
       "source": "internal-reviewed-catalog",
       "reviewStatus": "reviewed",
@@ -13222,7 +15138,8 @@
       },
       "tags": [
         "life",
-        "life-category"
+        "life-category",
+        "life-use"
       ],
       "source": "internal-reviewed-catalog",
       "reviewStatus": "reviewed",
@@ -13239,7 +15156,8 @@
       },
       "tags": [
         "life",
-        "life-category"
+        "life-category",
+        "life-use"
       ],
       "source": "internal-reviewed-catalog",
       "reviewStatus": "reviewed",
@@ -13256,7 +15174,8 @@
       },
       "tags": [
         "life",
-        "life-category"
+        "life-category",
+        "life-use"
       ],
       "source": "internal-reviewed-catalog",
       "reviewStatus": "reviewed",
@@ -13273,7 +15192,8 @@
       },
       "tags": [
         "life",
-        "life-category"
+        "life-category",
+        "life-use"
       ],
       "source": "internal-reviewed-catalog",
       "reviewStatus": "reviewed",
@@ -13290,7 +15210,8 @@
       },
       "tags": [
         "life",
-        "life-category"
+        "life-category",
+        "life-use"
       ],
       "source": "internal-reviewed-catalog",
       "reviewStatus": "reviewed",
@@ -13307,7 +15228,8 @@
       },
       "tags": [
         "life",
-        "life-category"
+        "life-category",
+        "life-use"
       ],
       "source": "internal-reviewed-catalog",
       "reviewStatus": "reviewed",
@@ -13324,7 +15246,8 @@
       },
       "tags": [
         "life",
-        "life-category"
+        "life-category",
+        "life-use"
       ],
       "source": "internal-reviewed-catalog",
       "reviewStatus": "reviewed",
@@ -13341,7 +15264,8 @@
       },
       "tags": [
         "life",
-        "life-category"
+        "life-category",
+        "life-use"
       ],
       "source": "internal-reviewed-catalog",
       "reviewStatus": "reviewed",
@@ -13358,7 +15282,1252 @@
       },
       "tags": [
         "life",
-        "life-category"
+        "life-category",
+        "life-use"
+      ],
+      "source": "internal-reviewed-catalog",
+      "reviewStatus": "reviewed",
+      "reviewedAt": "2026-09-01",
+      "enabled": true
+    },
+    {
+      "id": "fact.life.categories.0907kit",
+      "kind": "life.categories",
+      "fields": {
+        "item": "扫地机器人",
+        "use": "自动清扫地面",
+        "category": "清洁工具"
+      },
+      "tags": [
+        "life",
+        "life-category",
+        "life-use"
+      ],
+      "source": "internal-reviewed-catalog",
+      "reviewStatus": "reviewed",
+      "reviewedAt": "2026-09-01",
+      "enabled": true
+    },
+    {
+      "id": "fact.life.categories.10ggfxz",
+      "kind": "life.categories",
+      "fields": {
+        "item": "马桶刷",
+        "use": "刷洗马桶",
+        "category": "清洁工具"
+      },
+      "tags": [
+        "life",
+        "life-category",
+        "life-use"
+      ],
+      "source": "internal-reviewed-catalog",
+      "reviewStatus": "reviewed",
+      "reviewedAt": "2026-09-01",
+      "enabled": true
+    },
+    {
+      "id": "fact.life.categories.0tttvy5",
+      "kind": "life.categories",
+      "fields": {
+        "item": "除尘刷",
+        "use": "刷除灰尘",
+        "category": "清洁工具"
+      },
+      "tags": [
+        "life",
+        "life-category",
+        "life-use"
+      ],
+      "source": "internal-reviewed-catalog",
+      "reviewStatus": "reviewed",
+      "reviewedAt": "2026-09-01",
+      "enabled": true
+    },
+    {
+      "id": "fact.life.categories.1qxu9dv",
+      "kind": "life.categories",
+      "fields": {
+        "item": "洗地机",
+        "use": "清洗地面",
+        "category": "清洁工具"
+      },
+      "tags": [
+        "life",
+        "life-category",
+        "life-use"
+      ],
+      "source": "internal-reviewed-catalog",
+      "reviewStatus": "reviewed",
+      "reviewedAt": "2026-09-01",
+      "enabled": true
+    },
+    {
+      "id": "fact.life.categories.055e2ws",
+      "kind": "life.categories",
+      "fields": {
+        "item": "清洁铲",
+        "use": "铲除污物",
+        "category": "清洁工具"
+      },
+      "tags": [
+        "life",
+        "life-category",
+        "life-use"
+      ],
+      "source": "internal-reviewed-catalog",
+      "reviewStatus": "reviewed",
+      "reviewedAt": "2026-09-01",
+      "enabled": true
+    },
+    {
+      "id": "fact.life.categories.0e05sou",
+      "kind": "life.categories",
+      "fields": {
+        "item": "百叶窗刷",
+        "use": "清洁窗叶",
+        "category": "清洁工具"
+      },
+      "tags": [
+        "life",
+        "life-category",
+        "life-use"
+      ],
+      "source": "internal-reviewed-catalog",
+      "reviewStatus": "reviewed",
+      "reviewedAt": "2026-09-01",
+      "enabled": true
+    },
+    {
+      "id": "fact.life.categories.19cre99",
+      "kind": "life.categories",
+      "fields": {
+        "item": "电饭锅",
+        "use": "煮制米饭",
+        "category": "厨房用品"
+      },
+      "tags": [
+        "life",
+        "life-category",
+        "life-use"
+      ],
+      "source": "internal-reviewed-catalog",
+      "reviewStatus": "reviewed",
+      "reviewedAt": "2026-09-01",
+      "enabled": true
+    },
+    {
+      "id": "fact.life.categories.0hczk6b",
+      "kind": "life.categories",
+      "fields": {
+        "item": "锅铲",
+        "use": "翻炒食物",
+        "category": "厨房用品"
+      },
+      "tags": [
+        "life",
+        "life-category",
+        "life-use"
+      ],
+      "source": "internal-reviewed-catalog",
+      "reviewStatus": "reviewed",
+      "reviewedAt": "2026-09-01",
+      "enabled": true
+    },
+    {
+      "id": "fact.life.categories.1hfliou",
+      "kind": "life.categories",
+      "fields": {
+        "item": "汤勺",
+        "use": "舀取汤汁",
+        "category": "厨房用品"
+      },
+      "tags": [
+        "life",
+        "life-category",
+        "life-use"
+      ],
+      "source": "internal-reviewed-catalog",
+      "reviewStatus": "reviewed",
+      "reviewedAt": "2026-09-01",
+      "enabled": true
+    },
+    {
+      "id": "fact.life.categories.1nm1at8",
+      "kind": "life.categories",
+      "fields": {
+        "item": "削皮器",
+        "use": "削去果蔬外皮",
+        "category": "厨房用品"
+      },
+      "tags": [
+        "life",
+        "life-category",
+        "life-use"
+      ],
+      "source": "internal-reviewed-catalog",
+      "reviewStatus": "reviewed",
+      "reviewedAt": "2026-09-01",
+      "enabled": true
+    },
+    {
+      "id": "fact.life.categories.1az04pk",
+      "kind": "life.categories",
+      "fields": {
+        "item": "烤盘",
+        "use": "承放烘烤食物",
+        "category": "厨房用品"
+      },
+      "tags": [
+        "life",
+        "life-category",
+        "life-use"
+      ],
+      "source": "internal-reviewed-catalog",
+      "reviewStatus": "reviewed",
+      "reviewedAt": "2026-09-01",
+      "enabled": true
+    },
+    {
+      "id": "fact.life.categories.1d6jzfu",
+      "kind": "life.categories",
+      "fields": {
+        "item": "量杯",
+        "use": "量取液体",
+        "category": "厨房用品"
+      },
+      "tags": [
+        "life",
+        "life-category",
+        "life-use"
+      ],
+      "source": "internal-reviewed-catalog",
+      "reviewStatus": "reviewed",
+      "reviewedAt": "2026-09-01",
+      "enabled": true
+    },
+    {
+      "id": "fact.life.categories.13vg566",
+      "kind": "life.categories",
+      "fields": {
+        "item": "直尺",
+        "use": "测量长度",
+        "category": "学习用品"
+      },
+      "tags": [
+        "life",
+        "life-category",
+        "life-use"
+      ],
+      "source": "internal-reviewed-catalog",
+      "reviewStatus": "reviewed",
+      "reviewedAt": "2026-09-01",
+      "enabled": true
+    },
+    {
+      "id": "fact.life.categories.1sb3gbm",
+      "kind": "life.categories",
+      "fields": {
+        "item": "钢笔",
+        "use": "蘸墨书写",
+        "category": "学习用品"
+      },
+      "tags": [
+        "life",
+        "life-category",
+        "life-use"
+      ],
+      "source": "internal-reviewed-catalog",
+      "reviewStatus": "reviewed",
+      "reviewedAt": "2026-09-01",
+      "enabled": true
+    },
+    {
+      "id": "fact.life.categories.1pqrmhb",
+      "kind": "life.categories",
+      "fields": {
+        "item": "记号笔",
+        "use": "醒目标记",
+        "category": "学习用品"
+      },
+      "tags": [
+        "life",
+        "life-category",
+        "life-use"
+      ],
+      "source": "internal-reviewed-catalog",
+      "reviewStatus": "reviewed",
+      "reviewedAt": "2026-09-01",
+      "enabled": true
+    },
+    {
+      "id": "fact.life.categories.1ll3fvm",
+      "kind": "life.categories",
+      "fields": {
+        "item": "订书机",
+        "use": "装订纸张",
+        "category": "学习用品"
+      },
+      "tags": [
+        "life",
+        "life-category",
+        "life-use"
+      ],
+      "source": "internal-reviewed-catalog",
+      "reviewStatus": "reviewed",
+      "reviewedAt": "2026-09-01",
+      "enabled": true
+    },
+    {
+      "id": "fact.life.categories.0xuls8m",
+      "kind": "life.categories",
+      "fields": {
+        "item": "课本",
+        "use": "学习课程内容",
+        "category": "学习用品"
+      },
+      "tags": [
+        "life",
+        "life-category",
+        "life-use"
+      ],
+      "source": "internal-reviewed-catalog",
+      "reviewStatus": "reviewed",
+      "reviewedAt": "2026-09-01",
+      "enabled": true
+    },
+    {
+      "id": "fact.life.categories.03sjfeo",
+      "kind": "life.categories",
+      "fields": {
+        "item": "计算器",
+        "use": "辅助计算",
+        "category": "学习用品"
+      },
+      "tags": [
+        "life",
+        "life-category",
+        "life-use"
+      ],
+      "source": "internal-reviewed-catalog",
+      "reviewStatus": "reviewed",
+      "reviewedAt": "2026-09-01",
+      "enabled": true
+    },
+    {
+      "id": "fact.life.categories.1isg0va",
+      "kind": "life.categories",
+      "fields": {
+        "item": "烟雾报警器",
+        "use": "探测烟雾报警",
+        "category": "安全用品"
+      },
+      "tags": [
+        "life",
+        "life-category",
+        "life-use"
+      ],
+      "source": "internal-reviewed-catalog",
+      "reviewStatus": "reviewed",
+      "reviewedAt": "2026-09-01",
+      "enabled": true
+    },
+    {
+      "id": "fact.life.categories.1bijm6x",
+      "kind": "life.categories",
+      "fields": {
+        "item": "救生衣",
+        "use": "水上提供浮力",
+        "category": "安全用品"
+      },
+      "tags": [
+        "life",
+        "life-category",
+        "life-use"
+      ],
+      "source": "internal-reviewed-catalog",
+      "reviewStatus": "reviewed",
+      "reviewedAt": "2026-09-01",
+      "enabled": true
+    },
+    {
+      "id": "fact.life.categories.03ui507",
+      "kind": "life.categories",
+      "fields": {
+        "item": "反光背心",
+        "use": "提高人员可见度",
+        "category": "安全用品"
+      },
+      "tags": [
+        "life",
+        "life-category",
+        "life-use"
+      ],
+      "source": "internal-reviewed-catalog",
+      "reviewStatus": "reviewed",
+      "reviewedAt": "2026-09-01",
+      "enabled": true
+    },
+    {
+      "id": "fact.life.categories.171knmy",
+      "kind": "life.categories",
+      "fields": {
+        "item": "安全绳",
+        "use": "防止高处坠落",
+        "category": "安全用品"
+      },
+      "tags": [
+        "life",
+        "life-category",
+        "life-use"
+      ],
+      "source": "internal-reviewed-catalog",
+      "reviewStatus": "reviewed",
+      "reviewedAt": "2026-09-01",
+      "enabled": true
+    },
+    {
+      "id": "fact.life.categories.1nrpar4",
+      "kind": "life.categories",
+      "fields": {
+        "item": "应急灯",
+        "use": "停电时照明",
+        "category": "安全用品"
+      },
+      "tags": [
+        "life",
+        "life-category",
+        "life-use"
+      ],
+      "source": "internal-reviewed-catalog",
+      "reviewStatus": "reviewed",
+      "reviewedAt": "2026-09-01",
+      "enabled": true
+    },
+    {
+      "id": "fact.life.categories.14b2ehv",
+      "kind": "life.categories",
+      "fields": {
+        "item": "防毒面具",
+        "use": "防护有害气体",
+        "category": "安全用品"
+      },
+      "tags": [
+        "life",
+        "life-category",
+        "life-use"
+      ],
+      "source": "internal-reviewed-catalog",
+      "reviewStatus": "reviewed",
+      "reviewedAt": "2026-09-01",
+      "enabled": true
+    },
+    {
+      "id": "fact.life.categories.0hrm2az",
+      "kind": "life.categories",
+      "fields": {
+        "item": "出租车",
+        "use": "载客出行",
+        "category": "交通工具"
+      },
+      "tags": [
+        "life",
+        "life-category",
+        "life-use"
+      ],
+      "source": "internal-reviewed-catalog",
+      "reviewStatus": "reviewed",
+      "reviewedAt": "2026-09-01",
+      "enabled": true
+    },
+    {
+      "id": "fact.life.categories.17v33sh",
+      "kind": "life.categories",
+      "fields": {
+        "item": "摩托车",
+        "use": "机动出行",
+        "category": "交通工具"
+      },
+      "tags": [
+        "life",
+        "life-category",
+        "life-use"
+      ],
+      "source": "internal-reviewed-catalog",
+      "reviewStatus": "reviewed",
+      "reviewedAt": "2026-09-01",
+      "enabled": true
+    },
+    {
+      "id": "fact.life.categories.0ib6zp6",
+      "kind": "life.categories",
+      "fields": {
+        "item": "有轨电车",
+        "use": "城市轨道出行",
+        "category": "交通工具"
+      },
+      "tags": [
+        "life",
+        "life-category",
+        "life-use"
+      ],
+      "source": "internal-reviewed-catalog",
+      "reviewStatus": "reviewed",
+      "reviewedAt": "2026-09-01",
+      "enabled": true
+    },
+    {
+      "id": "fact.life.categories.1ngb6dp",
+      "kind": "life.categories",
+      "fields": {
+        "item": "直升机",
+        "use": "空中飞行运输",
+        "category": "交通工具"
+      },
+      "tags": [
+        "life",
+        "life-category",
+        "life-use"
+      ],
+      "source": "internal-reviewed-catalog",
+      "reviewStatus": "reviewed",
+      "reviewedAt": "2026-09-01",
+      "enabled": true
+    },
+    {
+      "id": "fact.life.categories.1cycz3x",
+      "kind": "life.categories",
+      "fields": {
+        "item": "货车",
+        "use": "道路运输货物",
+        "category": "交通工具"
+      },
+      "tags": [
+        "life",
+        "life-category",
+        "life-use"
+      ],
+      "source": "internal-reviewed-catalog",
+      "reviewStatus": "reviewed",
+      "reviewedAt": "2026-09-01",
+      "enabled": true
+    },
+    {
+      "id": "fact.life.categories.0txfi34",
+      "kind": "life.categories",
+      "fields": {
+        "item": "缆车",
+        "use": "沿索道运送乘客",
+        "category": "交通工具"
+      },
+      "tags": [
+        "life",
+        "life-category",
+        "life-use"
+      ],
+      "source": "internal-reviewed-catalog",
+      "reviewStatus": "reviewed",
+      "reviewedAt": "2026-09-01",
+      "enabled": true
+    },
+    {
+      "id": "fact.life.places.1y54fln",
+      "kind": "life.places",
+      "fields": {
+        "id": "place.book",
+        "prompt": "借阅图书通常去哪里",
+        "answer": "图书馆",
+        "wrong": [
+          "体育馆",
+          "菜市场",
+          "车站"
+        ]
+      },
+      "tags": [
+        "life",
+        "life-place"
+      ],
+      "source": "internal-reviewed-catalog",
+      "reviewStatus": "reviewed",
+      "reviewedAt": "2026-09-01",
+      "enabled": true
+    },
+    {
+      "id": "fact.life.places.0axqmg5",
+      "kind": "life.places",
+      "fields": {
+        "id": "place.mail",
+        "prompt": "寄送包裹通常去哪里",
+        "answer": "邮局",
+        "wrong": [
+          "药店",
+          "公园",
+          "影院"
+        ]
+      },
+      "tags": [
+        "life",
+        "life-place"
+      ],
+      "source": "internal-reviewed-catalog",
+      "reviewStatus": "reviewed",
+      "reviewedAt": "2026-09-01",
+      "enabled": true
+    },
+    {
+      "id": "fact.life.places.09y3mmm",
+      "kind": "life.places",
+      "fields": {
+        "id": "place.medicine",
+        "prompt": "购买常用药通常去哪里",
+        "answer": "药店",
+        "wrong": [
+          "书店",
+          "银行",
+          "车站"
+        ]
+      },
+      "tags": [
+        "life",
+        "life-place"
+      ],
+      "source": "internal-reviewed-catalog",
+      "reviewStatus": "reviewed",
+      "reviewedAt": "2026-09-01",
+      "enabled": true
+    },
+    {
+      "id": "fact.life.places.1f91szw",
+      "kind": "life.places",
+      "fields": {
+        "id": "place.train",
+        "prompt": "乘坐火车通常去哪里",
+        "answer": "火车站",
+        "wrong": [
+          "码头",
+          "超市",
+          "医院"
+        ]
+      },
+      "tags": [
+        "life",
+        "life-place"
+      ],
+      "source": "internal-reviewed-catalog",
+      "reviewStatus": "reviewed",
+      "reviewedAt": "2026-09-01",
+      "enabled": true
+    },
+    {
+      "id": "fact.life.places.0ok78ju",
+      "kind": "life.places",
+      "fields": {
+        "id": "place.swim",
+        "prompt": "学习游泳通常去哪里",
+        "answer": "游泳馆",
+        "wrong": [
+          "图书馆",
+          "博物馆",
+          "音乐厅"
+        ]
+      },
+      "tags": [
+        "life",
+        "life-place"
+      ],
+      "source": "internal-reviewed-catalog",
+      "reviewStatus": "reviewed",
+      "reviewedAt": "2026-09-01",
+      "enabled": true
+    },
+    {
+      "id": "fact.life.places.0v0p7ir",
+      "kind": "life.places",
+      "fields": {
+        "id": "place.exhibit",
+        "prompt": "参观历史文物通常去哪里",
+        "answer": "博物馆",
+        "wrong": [
+          "体育馆",
+          "邮局",
+          "餐厅"
+        ]
+      },
+      "tags": [
+        "life",
+        "life-place"
+      ],
+      "source": "internal-reviewed-catalog",
+      "reviewStatus": "reviewed",
+      "reviewedAt": "2026-09-01",
+      "enabled": true
+    },
+    {
+      "id": "fact.life.places.1hio8m0",
+      "kind": "life.places",
+      "fields": {
+        "id": "place.deposit",
+        "prompt": "办理存款通常去哪里",
+        "answer": "银行",
+        "wrong": [
+          "学校",
+          "剧院",
+          "公园"
+        ]
+      },
+      "tags": [
+        "life",
+        "life-place"
+      ],
+      "source": "internal-reviewed-catalog",
+      "reviewStatus": "reviewed",
+      "reviewedAt": "2026-09-01",
+      "enabled": true
+    },
+    {
+      "id": "fact.life.places.0guanop",
+      "kind": "life.places",
+      "fields": {
+        "id": "place.doctor",
+        "prompt": "身体不适需要就诊去哪里",
+        "answer": "医院",
+        "wrong": [
+          "商场",
+          "车站",
+          "书店"
+        ]
+      },
+      "tags": [
+        "life",
+        "life-place"
+      ],
+      "source": "internal-reviewed-catalog",
+      "reviewStatus": "reviewed",
+      "reviewedAt": "2026-09-01",
+      "enabled": true
+    },
+    {
+      "id": "fact.life.signs.15g0c7a",
+      "kind": "life.signs",
+      "fields": {
+        "id": "sign.exit",
+        "prompt": "“安全出口”标志指向",
+        "answer": "疏散出口",
+        "wrong": [
+          "收银台",
+          "停车位",
+          "卫生间"
+        ]
+      },
+      "tags": [
+        "life",
+        "life-public-sign"
+      ],
+      "source": "internal-reviewed-catalog",
+      "reviewStatus": "reviewed",
+      "reviewedAt": "2026-09-01",
+      "enabled": true
+    },
+    {
+      "id": "fact.life.signs.08kl062",
+      "kind": "life.signs",
+      "fields": {
+        "id": "sign.no-smoking",
+        "prompt": "划掉香烟的标志表示",
+        "answer": "禁止吸烟",
+        "wrong": [
+          "允许点火",
+          "出售香烟",
+          "注意通风"
+        ]
+      },
+      "tags": [
+        "life",
+        "life-public-sign"
+      ],
+      "source": "internal-reviewed-catalog",
+      "reviewStatus": "reviewed",
+      "reviewedAt": "2026-09-01",
+      "enabled": true
+    },
+    {
+      "id": "fact.life.signs.0uhgjiv",
+      "kind": "life.signs",
+      "fields": {
+        "id": "sign.crosswalk",
+        "prompt": "斑马线标志提示",
+        "answer": "人行横道",
+        "wrong": [
+          "高速入口",
+          "禁止行人",
+          "停车区域"
+        ]
+      },
+      "tags": [
+        "life",
+        "life-public-sign"
+      ],
+      "source": "internal-reviewed-catalog",
+      "reviewStatus": "reviewed",
+      "reviewedAt": "2026-09-01",
+      "enabled": true
+    },
+    {
+      "id": "fact.life.signs.0lq9d97",
+      "kind": "life.signs",
+      "fields": {
+        "id": "sign.first-aid",
+        "prompt": "绿色十字标志通常表示",
+        "answer": "急救点",
+        "wrong": [
+          "餐饮区",
+          "售票处",
+          "行李处"
+        ]
+      },
+      "tags": [
+        "life",
+        "life-public-sign"
+      ],
+      "source": "internal-reviewed-catalog",
+      "reviewStatus": "reviewed",
+      "reviewedAt": "2026-09-01",
+      "enabled": true
+    },
+    {
+      "id": "fact.life.signs.0vak89n",
+      "kind": "life.signs",
+      "fields": {
+        "id": "sign.recycle",
+        "prompt": "循环箭头标志通常表示",
+        "answer": "可回收",
+        "wrong": [
+          "有毒",
+          "易燃",
+          "不可触摸"
+        ]
+      },
+      "tags": [
+        "life",
+        "life-public-sign"
+      ],
+      "source": "internal-reviewed-catalog",
+      "reviewStatus": "reviewed",
+      "reviewedAt": "2026-09-01",
+      "enabled": true
+    },
+    {
+      "id": "fact.life.signs.0190m99",
+      "kind": "life.signs",
+      "fields": {
+        "id": "sign.wet-floor",
+        "prompt": "“小心地滑”标志提醒",
+        "answer": "地面湿滑",
+        "wrong": [
+          "台阶损坏",
+          "高温区域",
+          "车辆经过"
+        ]
+      },
+      "tags": [
+        "life",
+        "life-public-sign"
+      ],
+      "source": "internal-reviewed-catalog",
+      "reviewStatus": "reviewed",
+      "reviewedAt": "2026-09-01",
+      "enabled": true
+    },
+    {
+      "id": "fact.life.signs.08sjd9w",
+      "kind": "life.signs",
+      "fields": {
+        "id": "sign.no-entry",
+        "prompt": "红圈白横杠标志表示",
+        "answer": "禁止驶入",
+        "wrong": [
+          "直行",
+          "停车",
+          "减速"
+        ]
+      },
+      "tags": [
+        "life",
+        "life-public-sign"
+      ],
+      "source": "internal-reviewed-catalog",
+      "reviewStatus": "reviewed",
+      "reviewedAt": "2026-09-01",
+      "enabled": true
+    },
+    {
+      "id": "fact.life.signs.0ornk48",
+      "kind": "life.signs",
+      "fields": {
+        "id": "sign.accessible",
+        "prompt": "轮椅图案标志表示",
+        "answer": "无障碍设施",
+        "wrong": [
+          "儿童区域",
+          "行李寄存",
+          "自行车道"
+        ]
+      },
+      "tags": [
+        "life",
+        "life-public-sign"
+      ],
+      "source": "internal-reviewed-catalog",
+      "reviewStatus": "reviewed",
+      "reviewedAt": "2026-09-01",
+      "enabled": true
+    },
+    {
+      "id": "fact.life.safety.0y0x3ee",
+      "kind": "life.safety",
+      "fields": {
+        "id": "safe.fire",
+        "prompt": "发现初起火灾应优先",
+        "answer": "报警并撤离",
+        "wrong": [
+          "乘电梯下楼",
+          "躲进衣柜",
+          "返回取物"
+        ]
+      },
+      "tags": [
+        "life",
+        "life-safe-behavior"
+      ],
+      "source": "internal-reviewed-catalog",
+      "reviewStatus": "reviewed",
+      "reviewedAt": "2026-09-01",
+      "enabled": true
+    },
+    {
+      "id": "fact.life.safety.19d7ytc",
+      "kind": "life.safety",
+      "fields": {
+        "id": "safe.road",
+        "prompt": "过马路的正确做法",
+        "answer": "走人行横道",
+        "wrong": [
+          "低头看手机",
+          "翻越护栏",
+          "追逐车辆"
+        ]
+      },
+      "tags": [
+        "life",
+        "life-safe-behavior"
+      ],
+      "source": "internal-reviewed-catalog",
+      "reviewStatus": "reviewed",
+      "reviewedAt": "2026-09-01",
+      "enabled": true
+    },
+    {
+      "id": "fact.life.safety.125v2vx",
+      "kind": "life.safety",
+      "fields": {
+        "id": "safe.electric",
+        "prompt": "发现电线破损应当",
+        "answer": "远离并求助",
+        "wrong": [
+          "徒手触摸",
+          "用水冲洗",
+          "继续使用"
+        ]
+      },
+      "tags": [
+        "life",
+        "life-safe-behavior"
+      ],
+      "source": "internal-reviewed-catalog",
+      "reviewStatus": "reviewed",
+      "reviewedAt": "2026-09-01",
+      "enabled": true
+    },
+    {
+      "id": "fact.life.safety.0fr5rfv",
+      "kind": "life.safety",
+      "fields": {
+        "id": "safe.gas",
+        "prompt": "闻到燃气味应当",
+        "answer": "关阀并通风",
+        "wrong": [
+          "打开电灯",
+          "点火检查",
+          "使用打火机"
+        ]
+      },
+      "tags": [
+        "life",
+        "life-safe-behavior"
+      ],
+      "source": "internal-reviewed-catalog",
+      "reviewStatus": "reviewed",
+      "reviewedAt": "2026-09-01",
+      "enabled": true
+    },
+    {
+      "id": "fact.life.safety.1g7nlkr",
+      "kind": "life.safety",
+      "fields": {
+        "id": "safe.storm",
+        "prompt": "雷雨时较安全的做法",
+        "answer": "进入建筑物内",
+        "wrong": [
+          "躲在孤树下",
+          "站在高处",
+          "触摸金属杆"
+        ]
+      },
+      "tags": [
+        "life",
+        "life-safe-behavior"
+      ],
+      "source": "internal-reviewed-catalog",
+      "reviewStatus": "reviewed",
+      "reviewedAt": "2026-09-01",
+      "enabled": true
+    },
+    {
+      "id": "fact.life.safety.0qjpzkg",
+      "kind": "life.safety",
+      "fields": {
+        "id": "safe.stranger",
+        "prompt": "陌生人索要验证码时",
+        "answer": "拒绝并核实",
+        "wrong": [
+          "立即告知",
+          "转发给朋友",
+          "公开在群里"
+        ]
+      },
+      "tags": [
+        "life",
+        "life-safe-behavior"
+      ],
+      "source": "internal-reviewed-catalog",
+      "reviewStatus": "reviewed",
+      "reviewedAt": "2026-09-01",
+      "enabled": true
+    },
+    {
+      "id": "fact.life.safety.00b46bx",
+      "kind": "life.safety",
+      "fields": {
+        "id": "safe.water",
+        "prompt": "不会游泳者落水时同伴应",
+        "answer": "呼救找工具",
+        "wrong": [
+          "直接跳水",
+          "独自下水",
+          "转身离开"
+        ]
+      },
+      "tags": [
+        "life",
+        "life-safe-behavior"
+      ],
+      "source": "internal-reviewed-catalog",
+      "reviewStatus": "reviewed",
+      "reviewedAt": "2026-09-01",
+      "enabled": true
+    },
+    {
+      "id": "fact.life.safety.0yzpj1u",
+      "kind": "life.safety",
+      "fields": {
+        "id": "safe.food",
+        "prompt": "发现食品过期应当",
+        "answer": "停止食用",
+        "wrong": [
+          "加热后食用",
+          "继续保存",
+          "掩盖日期"
+        ]
+      },
+      "tags": [
+        "life",
+        "life-safe-behavior"
+      ],
+      "source": "internal-reviewed-catalog",
+      "reviewStatus": "reviewed",
+      "reviewedAt": "2026-09-01",
+      "enabled": true
+    },
+    {
+      "id": "fact.life.process.0zsjqty",
+      "kind": "life.process",
+      "fields": {
+        "id": "process.handwash",
+        "prompt": "洗手顺序",
+        "parts": [
+          "打湿双手",
+          "涂洗手液",
+          "揉搓双手",
+          "冲洗擦干"
+        ]
+      },
+      "tags": [
+        "life",
+        "life-process"
+      ],
+      "source": "internal-reviewed-catalog",
+      "reviewStatus": "reviewed",
+      "reviewedAt": "2026-09-01",
+      "enabled": true
+    },
+    {
+      "id": "fact.life.process.02jdbte",
+      "kind": "life.process",
+      "fields": {
+        "id": "process.toothbrush",
+        "prompt": "刷牙顺序",
+        "parts": [
+          "挤牙膏",
+          "刷牙齿",
+          "漱口",
+          "清洗牙刷"
+        ]
+      },
+      "tags": [
+        "life",
+        "life-process"
+      ],
+      "source": "internal-reviewed-catalog",
+      "reviewStatus": "reviewed",
+      "reviewedAt": "2026-09-01",
+      "enabled": true
+    },
+    {
+      "id": "fact.life.process.0taa15u",
+      "kind": "life.process",
+      "fields": {
+        "id": "process.cook-rice",
+        "prompt": "电饭锅煮饭顺序",
+        "parts": [
+          "量取大米",
+          "淘洗加水",
+          "按下煮饭键",
+          "等待完成"
+        ]
+      },
+      "tags": [
+        "life",
+        "life-process"
+      ],
+      "source": "internal-reviewed-catalog",
+      "reviewStatus": "reviewed",
+      "reviewedAt": "2026-09-01",
+      "enabled": true
+    },
+    {
+      "id": "fact.life.process.1fblznn",
+      "kind": "life.process",
+      "fields": {
+        "id": "process.mail",
+        "prompt": "寄快递顺序",
+        "parts": [
+          "包装物品",
+          "填写信息",
+          "交给快递员",
+          "查询物流"
+        ]
+      },
+      "tags": [
+        "life",
+        "life-process"
+      ],
+      "source": "internal-reviewed-catalog",
+      "reviewStatus": "reviewed",
+      "reviewedAt": "2026-09-01",
+      "enabled": true
+    },
+    {
+      "id": "fact.life.process.0b97dbe",
+      "kind": "life.process",
+      "fields": {
+        "id": "process.bus",
+        "prompt": "乘公交顺序",
+        "parts": [
+          "查看线路",
+          "排队候车",
+          "上车付费",
+          "到站下车"
+        ]
+      },
+      "tags": [
+        "life",
+        "life-process"
+      ],
+      "source": "internal-reviewed-catalog",
+      "reviewStatus": "reviewed",
+      "reviewedAt": "2026-09-01",
+      "enabled": true
+    },
+    {
+      "id": "fact.life.process.0tyjy07",
+      "kind": "life.process",
+      "fields": {
+        "id": "process.library",
+        "prompt": "借书顺序",
+        "parts": [
+          "查找图书",
+          "取下图书",
+          "办理借阅",
+          "按期归还"
+        ]
+      },
+      "tags": [
+        "life",
+        "life-process"
+      ],
+      "source": "internal-reviewed-catalog",
+      "reviewStatus": "reviewed",
+      "reviewedAt": "2026-09-01",
+      "enabled": true
+    },
+    {
+      "id": "fact.life.process.03rp22l",
+      "kind": "life.process",
+      "fields": {
+        "id": "process.laundry",
+        "prompt": "洗衣顺序",
+        "parts": [
+          "分类衣物",
+          "放入洗衣机",
+          "启动洗涤",
+          "取出晾晒"
+        ]
+      },
+      "tags": [
+        "life",
+        "life-process"
+      ],
+      "source": "internal-reviewed-catalog",
+      "reviewStatus": "reviewed",
+      "reviewedAt": "2026-09-01",
+      "enabled": true
+    },
+    {
+      "id": "fact.life.process.01hhybd",
+      "kind": "life.process",
+      "fields": {
+        "id": "process.recycle",
+        "prompt": "投放垃圾顺序",
+        "parts": [
+          "确认垃圾种类",
+          "找到对应桶",
+          "分类投放",
+          "清洁双手"
+        ]
+      },
+      "tags": [
+        "life",
+        "life-process"
       ],
       "source": "internal-reviewed-catalog",
       "reviewStatus": "reviewed",
@@ -14379,6 +17548,710 @@
         "geography",
         "geography-capital",
         "geography-country"
+      ],
+      "source": "internal-reviewed-catalog",
+      "reviewStatus": "reviewed",
+      "reviewedAt": "2026-09-01",
+      "enabled": true
+    },
+    {
+      "id": "fact.geography.continent.0u35r8m",
+      "kind": "geography.continent",
+      "fields": {
+        "id": "continent.china",
+        "prompt": "中国位于哪个洲",
+        "answer": "亚洲",
+        "wrong": [
+          "欧洲",
+          "非洲",
+          "南美洲"
+        ]
+      },
+      "tags": [
+        "geography",
+        "geography-continent"
+      ],
+      "source": "internal-reviewed-catalog",
+      "reviewStatus": "reviewed",
+      "reviewedAt": "2026-09-01",
+      "enabled": true
+    },
+    {
+      "id": "fact.geography.continent.1hm2nrw",
+      "kind": "geography.continent",
+      "fields": {
+        "id": "continent.france",
+        "prompt": "法国位于哪个洲",
+        "answer": "欧洲",
+        "wrong": [
+          "亚洲",
+          "非洲",
+          "北美洲"
+        ]
+      },
+      "tags": [
+        "geography",
+        "geography-continent"
+      ],
+      "source": "internal-reviewed-catalog",
+      "reviewStatus": "reviewed",
+      "reviewedAt": "2026-09-01",
+      "enabled": true
+    },
+    {
+      "id": "fact.geography.continent.1tjioai",
+      "kind": "geography.continent",
+      "fields": {
+        "id": "continent.egypt",
+        "prompt": "埃及主要位于哪个洲",
+        "answer": "非洲",
+        "wrong": [
+          "欧洲",
+          "亚洲",
+          "南美洲"
+        ]
+      },
+      "tags": [
+        "geography",
+        "geography-continent"
+      ],
+      "source": "internal-reviewed-catalog",
+      "reviewStatus": "reviewed",
+      "reviewedAt": "2026-09-01",
+      "enabled": true
+    },
+    {
+      "id": "fact.geography.continent.0kr4h2l",
+      "kind": "geography.continent",
+      "fields": {
+        "id": "continent.brazil",
+        "prompt": "巴西位于哪个洲",
+        "answer": "南美洲",
+        "wrong": [
+          "北美洲",
+          "非洲",
+          "欧洲"
+        ]
+      },
+      "tags": [
+        "geography",
+        "geography-continent"
+      ],
+      "source": "internal-reviewed-catalog",
+      "reviewStatus": "reviewed",
+      "reviewedAt": "2026-09-01",
+      "enabled": true
+    },
+    {
+      "id": "fact.geography.continent.1iqc2bx",
+      "kind": "geography.continent",
+      "fields": {
+        "id": "continent.canada",
+        "prompt": "加拿大位于哪个洲",
+        "answer": "北美洲",
+        "wrong": [
+          "南美洲",
+          "欧洲",
+          "大洋洲"
+        ]
+      },
+      "tags": [
+        "geography",
+        "geography-continent"
+      ],
+      "source": "internal-reviewed-catalog",
+      "reviewStatus": "reviewed",
+      "reviewedAt": "2026-09-01",
+      "enabled": true
+    },
+    {
+      "id": "fact.geography.continent.1n1y5qf",
+      "kind": "geography.continent",
+      "fields": {
+        "id": "continent.australia",
+        "prompt": "澳大利亚位于哪个洲",
+        "answer": "大洋洲",
+        "wrong": [
+          "亚洲",
+          "欧洲",
+          "非洲"
+        ]
+      },
+      "tags": [
+        "geography",
+        "geography-continent"
+      ],
+      "source": "internal-reviewed-catalog",
+      "reviewStatus": "reviewed",
+      "reviewedAt": "2026-09-01",
+      "enabled": true
+    },
+    {
+      "id": "fact.geography.continent.0frzgkm",
+      "kind": "geography.continent",
+      "fields": {
+        "id": "continent.india",
+        "prompt": "印度位于哪个洲",
+        "answer": "亚洲",
+        "wrong": [
+          "欧洲",
+          "非洲",
+          "大洋洲"
+        ]
+      },
+      "tags": [
+        "geography",
+        "geography-continent"
+      ],
+      "source": "internal-reviewed-catalog",
+      "reviewStatus": "reviewed",
+      "reviewedAt": "2026-09-01",
+      "enabled": true
+    },
+    {
+      "id": "fact.geography.continent.08mgucs",
+      "kind": "geography.continent",
+      "fields": {
+        "id": "continent.argentina",
+        "prompt": "阿根廷位于哪个洲",
+        "answer": "南美洲",
+        "wrong": [
+          "北美洲",
+          "亚洲",
+          "欧洲"
+        ]
+      },
+      "tags": [
+        "geography",
+        "geography-continent"
+      ],
+      "source": "internal-reviewed-catalog",
+      "reviewStatus": "reviewed",
+      "reviewedAt": "2026-09-01",
+      "enabled": true
+    },
+    {
+      "id": "fact.geography.landmark.02zbkut",
+      "kind": "geography.landmark",
+      "fields": {
+        "id": "landmark.great-wall",
+        "prompt": "长城位于哪个国家",
+        "answer": "中国",
+        "wrong": [
+          "日本",
+          "印度",
+          "埃及"
+        ]
+      },
+      "tags": [
+        "geography",
+        "geography-landmark"
+      ],
+      "source": "internal-reviewed-catalog",
+      "reviewStatus": "reviewed",
+      "reviewedAt": "2026-09-01",
+      "enabled": true
+    },
+    {
+      "id": "fact.geography.landmark.0gbbcce",
+      "kind": "geography.landmark",
+      "fields": {
+        "id": "landmark.eiffel",
+        "prompt": "埃菲尔铁塔位于哪个国家",
+        "answer": "法国",
+        "wrong": [
+          "英国",
+          "德国",
+          "意大利"
+        ]
+      },
+      "tags": [
+        "geography",
+        "geography-landmark"
+      ],
+      "source": "internal-reviewed-catalog",
+      "reviewStatus": "reviewed",
+      "reviewedAt": "2026-09-01",
+      "enabled": true
+    },
+    {
+      "id": "fact.geography.landmark.1ldn0hn",
+      "kind": "geography.landmark",
+      "fields": {
+        "id": "landmark.pyramid",
+        "prompt": "吉萨金字塔位于哪个国家",
+        "answer": "埃及",
+        "wrong": [
+          "希腊",
+          "土耳其",
+          "印度"
+        ]
+      },
+      "tags": [
+        "geography",
+        "geography-landmark"
+      ],
+      "source": "internal-reviewed-catalog",
+      "reviewStatus": "reviewed",
+      "reviewedAt": "2026-09-01",
+      "enabled": true
+    },
+    {
+      "id": "fact.geography.landmark.1jtm34o",
+      "kind": "geography.landmark",
+      "fields": {
+        "id": "landmark.liberty",
+        "prompt": "自由女神像位于哪个国家",
+        "answer": "美国",
+        "wrong": [
+          "加拿大",
+          "法国",
+          "巴西"
+        ]
+      },
+      "tags": [
+        "geography",
+        "geography-landmark"
+      ],
+      "source": "internal-reviewed-catalog",
+      "reviewStatus": "reviewed",
+      "reviewedAt": "2026-09-01",
+      "enabled": true
+    },
+    {
+      "id": "fact.geography.landmark.0vrsg6g",
+      "kind": "geography.landmark",
+      "fields": {
+        "id": "landmark.opera",
+        "prompt": "悉尼歌剧院位于哪个国家",
+        "answer": "澳大利亚",
+        "wrong": [
+          "新西兰",
+          "英国",
+          "美国"
+        ]
+      },
+      "tags": [
+        "geography",
+        "geography-landmark"
+      ],
+      "source": "internal-reviewed-catalog",
+      "reviewStatus": "reviewed",
+      "reviewedAt": "2026-09-01",
+      "enabled": true
+    },
+    {
+      "id": "fact.geography.landmark.1i01kk5",
+      "kind": "geography.landmark",
+      "fields": {
+        "id": "landmark.colosseum",
+        "prompt": "斗兽场位于哪个国家",
+        "answer": "意大利",
+        "wrong": [
+          "西班牙",
+          "希腊",
+          "法国"
+        ]
+      },
+      "tags": [
+        "geography",
+        "geography-landmark"
+      ],
+      "source": "internal-reviewed-catalog",
+      "reviewStatus": "reviewed",
+      "reviewedAt": "2026-09-01",
+      "enabled": true
+    },
+    {
+      "id": "fact.geography.landmark.0jqmrid",
+      "kind": "geography.landmark",
+      "fields": {
+        "id": "landmark.fuji",
+        "prompt": "富士山位于哪个国家",
+        "answer": "日本",
+        "wrong": [
+          "韩国",
+          "中国",
+          "尼泊尔"
+        ]
+      },
+      "tags": [
+        "geography",
+        "geography-landmark"
+      ],
+      "source": "internal-reviewed-catalog",
+      "reviewStatus": "reviewed",
+      "reviewedAt": "2026-09-01",
+      "enabled": true
+    },
+    {
+      "id": "fact.geography.landmark.0if84gw",
+      "kind": "geography.landmark",
+      "fields": {
+        "id": "landmark.taj",
+        "prompt": "泰姬陵位于哪个国家",
+        "answer": "印度",
+        "wrong": [
+          "泰国",
+          "巴基斯坦",
+          "伊朗"
+        ]
+      },
+      "tags": [
+        "geography",
+        "geography-landmark"
+      ],
+      "source": "internal-reviewed-catalog",
+      "reviewStatus": "reviewed",
+      "reviewedAt": "2026-09-01",
+      "enabled": true
+    },
+    {
+      "id": "fact.geography.province.0sd0nbp",
+      "kind": "geography.province",
+      "fields": {
+        "id": "province.guangdong",
+        "prompt": "广东省省会",
+        "answer": "广州",
+        "wrong": [
+          "深圳",
+          "珠海",
+          "佛山"
+        ]
+      },
+      "tags": [
+        "geography",
+        "geography-province-capital"
+      ],
+      "source": "internal-reviewed-catalog",
+      "reviewStatus": "reviewed",
+      "reviewedAt": "2026-09-01",
+      "enabled": true
+    },
+    {
+      "id": "fact.geography.province.0v39a1e",
+      "kind": "geography.province",
+      "fields": {
+        "id": "province.sichuan",
+        "prompt": "四川省省会",
+        "answer": "成都",
+        "wrong": [
+          "重庆",
+          "绵阳",
+          "乐山"
+        ]
+      },
+      "tags": [
+        "geography",
+        "geography-province-capital"
+      ],
+      "source": "internal-reviewed-catalog",
+      "reviewStatus": "reviewed",
+      "reviewedAt": "2026-09-01",
+      "enabled": true
+    },
+    {
+      "id": "fact.geography.province.1to75qd",
+      "kind": "geography.province",
+      "fields": {
+        "id": "province.zhejiang",
+        "prompt": "浙江省省会",
+        "answer": "杭州",
+        "wrong": [
+          "宁波",
+          "温州",
+          "绍兴"
+        ]
+      },
+      "tags": [
+        "geography",
+        "geography-province-capital"
+      ],
+      "source": "internal-reviewed-catalog",
+      "reviewStatus": "reviewed",
+      "reviewedAt": "2026-09-01",
+      "enabled": true
+    },
+    {
+      "id": "fact.geography.province.1ivs7f0",
+      "kind": "geography.province",
+      "fields": {
+        "id": "province.jiangsu",
+        "prompt": "江苏省省会",
+        "answer": "南京",
+        "wrong": [
+          "苏州",
+          "无锡",
+          "徐州"
+        ]
+      },
+      "tags": [
+        "geography",
+        "geography-province-capital"
+      ],
+      "source": "internal-reviewed-catalog",
+      "reviewStatus": "reviewed",
+      "reviewedAt": "2026-09-01",
+      "enabled": true
+    },
+    {
+      "id": "fact.geography.province.12rt10q",
+      "kind": "geography.province",
+      "fields": {
+        "id": "province.hubei",
+        "prompt": "湖北省省会",
+        "answer": "武汉",
+        "wrong": [
+          "宜昌",
+          "襄阳",
+          "荆州"
+        ]
+      },
+      "tags": [
+        "geography",
+        "geography-province-capital"
+      ],
+      "source": "internal-reviewed-catalog",
+      "reviewStatus": "reviewed",
+      "reviewedAt": "2026-09-01",
+      "enabled": true
+    },
+    {
+      "id": "fact.geography.province.1v3ttmj",
+      "kind": "geography.province",
+      "fields": {
+        "id": "province.hunan",
+        "prompt": "湖南省省会",
+        "answer": "长沙",
+        "wrong": [
+          "株洲",
+          "衡阳",
+          "岳阳"
+        ]
+      },
+      "tags": [
+        "geography",
+        "geography-province-capital"
+      ],
+      "source": "internal-reviewed-catalog",
+      "reviewStatus": "reviewed",
+      "reviewedAt": "2026-09-01",
+      "enabled": true
+    },
+    {
+      "id": "fact.geography.province.0f1r5sj",
+      "kind": "geography.province",
+      "fields": {
+        "id": "province.shandong",
+        "prompt": "山东省省会",
+        "answer": "济南",
+        "wrong": [
+          "青岛",
+          "烟台",
+          "潍坊"
+        ]
+      },
+      "tags": [
+        "geography",
+        "geography-province-capital"
+      ],
+      "source": "internal-reviewed-catalog",
+      "reviewStatus": "reviewed",
+      "reviewedAt": "2026-09-01",
+      "enabled": true
+    },
+    {
+      "id": "fact.geography.province.0qtnx6e",
+      "kind": "geography.province",
+      "fields": {
+        "id": "province.fujian",
+        "prompt": "福建省省会",
+        "answer": "福州",
+        "wrong": [
+          "厦门",
+          "泉州",
+          "漳州"
+        ]
+      },
+      "tags": [
+        "geography",
+        "geography-province-capital"
+      ],
+      "source": "internal-reviewed-catalog",
+      "reviewStatus": "reviewed",
+      "reviewedAt": "2026-09-01",
+      "enabled": true
+    },
+    {
+      "id": "fact.geography.position.1sqwsv4",
+      "kind": "geography.position",
+      "fields": {
+        "id": "position.japan",
+        "prompt": "日本位于中国的大致方向",
+        "answer": "东面",
+        "wrong": [
+          "西面",
+          "南面",
+          "北面"
+        ]
+      },
+      "tags": [
+        "geography",
+        "geography-relative-position"
+      ],
+      "source": "internal-reviewed-catalog",
+      "reviewStatus": "reviewed",
+      "reviewedAt": "2026-09-01",
+      "enabled": true
+    },
+    {
+      "id": "fact.geography.position.0xptvem",
+      "kind": "geography.position",
+      "fields": {
+        "id": "position.mongolia",
+        "prompt": "蒙古位于中国的大致方向",
+        "answer": "北面",
+        "wrong": [
+          "南面",
+          "东面",
+          "西面"
+        ]
+      },
+      "tags": [
+        "geography",
+        "geography-relative-position"
+      ],
+      "source": "internal-reviewed-catalog",
+      "reviewStatus": "reviewed",
+      "reviewedAt": "2026-09-01",
+      "enabled": true
+    },
+    {
+      "id": "fact.geography.position.1mufxbz",
+      "kind": "geography.position",
+      "fields": {
+        "id": "position.india",
+        "prompt": "印度位于中国的大致方向",
+        "answer": "西南",
+        "wrong": [
+          "东北",
+          "正东",
+          "东南"
+        ]
+      },
+      "tags": [
+        "geography",
+        "geography-relative-position"
+      ],
+      "source": "internal-reviewed-catalog",
+      "reviewStatus": "reviewed",
+      "reviewedAt": "2026-09-01",
+      "enabled": true
+    },
+    {
+      "id": "fact.geography.position.0stf16d",
+      "kind": "geography.position",
+      "fields": {
+        "id": "position.russia",
+        "prompt": "俄罗斯位于中国的大致方向",
+        "answer": "北面",
+        "wrong": [
+          "南面",
+          "东南",
+          "西南"
+        ]
+      },
+      "tags": [
+        "geography",
+        "geography-relative-position"
+      ],
+      "source": "internal-reviewed-catalog",
+      "reviewStatus": "reviewed",
+      "reviewedAt": "2026-09-01",
+      "enabled": true
+    },
+    {
+      "id": "fact.geography.position.0jbqhee",
+      "kind": "geography.position",
+      "fields": {
+        "id": "position.korea",
+        "prompt": "韩国位于中国的大致方向",
+        "answer": "东面",
+        "wrong": [
+          "西面",
+          "南面",
+          "西北"
+        ]
+      },
+      "tags": [
+        "geography",
+        "geography-relative-position"
+      ],
+      "source": "internal-reviewed-catalog",
+      "reviewStatus": "reviewed",
+      "reviewedAt": "2026-09-01",
+      "enabled": true
+    },
+    {
+      "id": "fact.geography.position.1qa2j1k",
+      "kind": "geography.position",
+      "fields": {
+        "id": "position.vietnam",
+        "prompt": "越南位于中国的大致方向",
+        "answer": "南面",
+        "wrong": [
+          "北面",
+          "东面",
+          "西北"
+        ]
+      },
+      "tags": [
+        "geography",
+        "geography-relative-position"
+      ],
+      "source": "internal-reviewed-catalog",
+      "reviewStatus": "reviewed",
+      "reviewedAt": "2026-09-01",
+      "enabled": true
+    },
+    {
+      "id": "fact.geography.position.1ott76e",
+      "kind": "geography.position",
+      "fields": {
+        "id": "position.nepal",
+        "prompt": "尼泊尔位于中国的大致方向",
+        "answer": "西南",
+        "wrong": [
+          "东北",
+          "东南",
+          "正东"
+        ]
+      },
+      "tags": [
+        "geography",
+        "geography-relative-position"
+      ],
+      "source": "internal-reviewed-catalog",
+      "reviewStatus": "reviewed",
+      "reviewedAt": "2026-09-01",
+      "enabled": true
+    },
+    {
+      "id": "fact.geography.position.1fkmwhb",
+      "kind": "geography.position",
+      "fields": {
+        "id": "position.philippines",
+        "prompt": "菲律宾位于中国的大致方向",
+        "answer": "东南",
+        "wrong": [
+          "西北",
+          "东北",
+          "正西"
+        ]
+      },
+      "tags": [
+        "geography",
+        "geography-relative-position"
       ],
       "source": "internal-reviewed-catalog",
       "reviewStatus": "reviewed",
@@ -22870,6 +26743,710 @@
       "enabled": true
     },
     {
+      "id": "fact.knowledge.astronomy.0q3761l",
+      "kind": "knowledge.astronomy",
+      "fields": {
+        "id": "astro.earth-star",
+        "prompt": "地球围绕哪颗恒星运行",
+        "answer": "太阳",
+        "wrong": [
+          "月球",
+          "火星",
+          "北极星"
+        ]
+      },
+      "tags": [
+        "knowledge",
+        "knowledge-astronomy"
+      ],
+      "source": "internal-reviewed-catalog",
+      "reviewStatus": "reviewed",
+      "reviewedAt": "2026-09-01",
+      "enabled": true
+    },
+    {
+      "id": "fact.knowledge.astronomy.1qccr07",
+      "kind": "knowledge.astronomy",
+      "fields": {
+        "id": "astro.satellite",
+        "prompt": "地球的天然卫星",
+        "answer": "月球",
+        "wrong": [
+          "金星",
+          "太阳",
+          "木星"
+        ]
+      },
+      "tags": [
+        "knowledge",
+        "knowledge-astronomy"
+      ],
+      "source": "internal-reviewed-catalog",
+      "reviewStatus": "reviewed",
+      "reviewedAt": "2026-09-01",
+      "enabled": true
+    },
+    {
+      "id": "fact.knowledge.astronomy.057witp",
+      "kind": "knowledge.astronomy",
+      "fields": {
+        "id": "astro.red",
+        "prompt": "常被称为红色星球的是",
+        "answer": "火星",
+        "wrong": [
+          "金星",
+          "水星",
+          "土星"
+        ]
+      },
+      "tags": [
+        "knowledge",
+        "knowledge-astronomy"
+      ],
+      "source": "internal-reviewed-catalog",
+      "reviewStatus": "reviewed",
+      "reviewedAt": "2026-09-01",
+      "enabled": true
+    },
+    {
+      "id": "fact.knowledge.astronomy.0ot99xi",
+      "kind": "knowledge.astronomy",
+      "fields": {
+        "id": "astro.largest",
+        "prompt": "太阳系体积最大的行星",
+        "answer": "木星",
+        "wrong": [
+          "地球",
+          "火星",
+          "海王星"
+        ]
+      },
+      "tags": [
+        "knowledge",
+        "knowledge-astronomy"
+      ],
+      "source": "internal-reviewed-catalog",
+      "reviewStatus": "reviewed",
+      "reviewedAt": "2026-09-01",
+      "enabled": true
+    },
+    {
+      "id": "fact.knowledge.astronomy.0a4rgws",
+      "kind": "knowledge.astronomy",
+      "fields": {
+        "id": "astro.ring",
+        "prompt": "以明显光环著称的行星",
+        "answer": "土星",
+        "wrong": [
+          "水星",
+          "地球",
+          "火星"
+        ]
+      },
+      "tags": [
+        "knowledge",
+        "knowledge-astronomy"
+      ],
+      "source": "internal-reviewed-catalog",
+      "reviewStatus": "reviewed",
+      "reviewedAt": "2026-09-01",
+      "enabled": true
+    },
+    {
+      "id": "fact.knowledge.astronomy.02lhu8z",
+      "kind": "knowledge.astronomy",
+      "fields": {
+        "id": "astro.day-night",
+        "prompt": "昼夜交替主要由什么造成",
+        "answer": "地球自转",
+        "wrong": [
+          "地球公转",
+          "月球公转",
+          "太阳自转"
+        ]
+      },
+      "tags": [
+        "knowledge",
+        "knowledge-astronomy"
+      ],
+      "source": "internal-reviewed-catalog",
+      "reviewStatus": "reviewed",
+      "reviewedAt": "2026-09-01",
+      "enabled": true
+    },
+    {
+      "id": "fact.knowledge.astronomy.0lwp0dn",
+      "kind": "knowledge.astronomy",
+      "fields": {
+        "id": "astro.year",
+        "prompt": "一年主要对应地球完成一次",
+        "answer": "绕太阳公转",
+        "wrong": [
+          "自转",
+          "绕月球公转",
+          "太阳公转"
+        ]
+      },
+      "tags": [
+        "knowledge",
+        "knowledge-astronomy"
+      ],
+      "source": "internal-reviewed-catalog",
+      "reviewStatus": "reviewed",
+      "reviewedAt": "2026-09-01",
+      "enabled": true
+    },
+    {
+      "id": "fact.knowledge.astronomy.15j7e36",
+      "kind": "knowledge.astronomy",
+      "fields": {
+        "id": "astro.galaxy",
+        "prompt": "太阳系所在的星系",
+        "answer": "银河系",
+        "wrong": [
+          "仙女座星系",
+          "大麦哲伦云",
+          "猎户座"
+        ]
+      },
+      "tags": [
+        "knowledge",
+        "knowledge-astronomy"
+      ],
+      "source": "internal-reviewed-catalog",
+      "reviewStatus": "reviewed",
+      "reviewedAt": "2026-09-01",
+      "enabled": true
+    },
+    {
+      "id": "fact.knowledge.biology.0u9ine4",
+      "kind": "knowledge.biology",
+      "fields": {
+        "id": "biology.photosynthesis",
+        "prompt": "绿色植物制造有机物主要靠",
+        "answer": "光合作用",
+        "wrong": [
+          "蒸腾作用",
+          "呼吸作用",
+          "消化作用"
+        ]
+      },
+      "tags": [
+        "knowledge",
+        "knowledge-biology"
+      ],
+      "source": "internal-reviewed-catalog",
+      "reviewStatus": "reviewed",
+      "reviewedAt": "2026-09-01",
+      "enabled": true
+    },
+    {
+      "id": "fact.knowledge.biology.0zco5eg",
+      "kind": "knowledge.biology",
+      "fields": {
+        "id": "biology.breath",
+        "prompt": "人体进行气体交换的主要器官",
+        "answer": "肺",
+        "wrong": [
+          "胃",
+          "肾",
+          "肝"
+        ]
+      },
+      "tags": [
+        "knowledge",
+        "knowledge-biology"
+      ],
+      "source": "internal-reviewed-catalog",
+      "reviewStatus": "reviewed",
+      "reviewedAt": "2026-09-01",
+      "enabled": true
+    },
+    {
+      "id": "fact.knowledge.biology.1tw5y2u",
+      "kind": "knowledge.biology",
+      "fields": {
+        "id": "biology.blood",
+        "prompt": "推动血液循环的主要器官",
+        "answer": "心脏",
+        "wrong": [
+          "肺",
+          "胃",
+          "胰腺"
+        ]
+      },
+      "tags": [
+        "knowledge",
+        "knowledge-biology"
+      ],
+      "source": "internal-reviewed-catalog",
+      "reviewStatus": "reviewed",
+      "reviewedAt": "2026-09-01",
+      "enabled": true
+    },
+    {
+      "id": "fact.knowledge.biology.0lj4qm5",
+      "kind": "knowledge.biology",
+      "fields": {
+        "id": "biology.plant-water",
+        "prompt": "植物吸收水分的主要部位",
+        "answer": "根",
+        "wrong": [
+          "花",
+          "果实",
+          "种子"
+        ]
+      },
+      "tags": [
+        "knowledge",
+        "knowledge-biology"
+      ],
+      "source": "internal-reviewed-catalog",
+      "reviewStatus": "reviewed",
+      "reviewedAt": "2026-09-01",
+      "enabled": true
+    },
+    {
+      "id": "fact.knowledge.biology.1d1xk61",
+      "kind": "knowledge.biology",
+      "fields": {
+        "id": "biology.bird",
+        "prompt": "鸟类身体表面通常覆盖",
+        "answer": "羽毛",
+        "wrong": [
+          "鳞片",
+          "毛发",
+          "甲壳"
+        ]
+      },
+      "tags": [
+        "knowledge",
+        "knowledge-biology"
+      ],
+      "source": "internal-reviewed-catalog",
+      "reviewStatus": "reviewed",
+      "reviewedAt": "2026-09-01",
+      "enabled": true
+    },
+    {
+      "id": "fact.knowledge.biology.0hzq4hc",
+      "kind": "knowledge.biology",
+      "fields": {
+        "id": "biology.fish",
+        "prompt": "鱼类主要依靠什么呼吸",
+        "answer": "鳃",
+        "wrong": [
+          "肺",
+          "皮毛",
+          "气孔"
+        ]
+      },
+      "tags": [
+        "knowledge",
+        "knowledge-biology"
+      ],
+      "source": "internal-reviewed-catalog",
+      "reviewStatus": "reviewed",
+      "reviewedAt": "2026-09-01",
+      "enabled": true
+    },
+    {
+      "id": "fact.knowledge.biology.1x0o4un",
+      "kind": "knowledge.biology",
+      "fields": {
+        "id": "biology.seed",
+        "prompt": "种子萌发通常首先需要",
+        "answer": "适量水分",
+        "wrong": [
+          "强烈阳光",
+          "大量肥料",
+          "低温冰冻"
+        ]
+      },
+      "tags": [
+        "knowledge",
+        "knowledge-biology"
+      ],
+      "source": "internal-reviewed-catalog",
+      "reviewStatus": "reviewed",
+      "reviewedAt": "2026-09-01",
+      "enabled": true
+    },
+    {
+      "id": "fact.knowledge.biology.0azjqjc",
+      "kind": "knowledge.biology",
+      "fields": {
+        "id": "biology.teeth",
+        "prompt": "门齿主要用于",
+        "answer": "切断食物",
+        "wrong": [
+          "磨碎食物",
+          "听声音",
+          "过滤空气"
+        ]
+      },
+      "tags": [
+        "knowledge",
+        "knowledge-biology"
+      ],
+      "source": "internal-reviewed-catalog",
+      "reviewStatus": "reviewed",
+      "reviewedAt": "2026-09-01",
+      "enabled": true
+    },
+    {
+      "id": "fact.knowledge.physics.14kl7pe",
+      "kind": "knowledge.physics",
+      "fields": {
+        "id": "physics.gravity",
+        "prompt": "物体下落主要受到",
+        "answer": "重力",
+        "wrong": [
+          "浮力",
+          "磁力",
+          "弹力"
+        ]
+      },
+      "tags": [
+        "knowledge",
+        "knowledge-physics"
+      ],
+      "source": "internal-reviewed-catalog",
+      "reviewStatus": "reviewed",
+      "reviewedAt": "2026-09-01",
+      "enabled": true
+    },
+    {
+      "id": "fact.knowledge.physics.1urn1p7",
+      "kind": "knowledge.physics",
+      "fields": {
+        "id": "physics.sound",
+        "prompt": "声音不能在什么环境传播",
+        "answer": "真空",
+        "wrong": [
+          "空气",
+          "水",
+          "钢铁"
+        ]
+      },
+      "tags": [
+        "knowledge",
+        "knowledge-physics"
+      ],
+      "source": "internal-reviewed-catalog",
+      "reviewStatus": "reviewed",
+      "reviewedAt": "2026-09-01",
+      "enabled": true
+    },
+    {
+      "id": "fact.knowledge.physics.17c5sg0",
+      "kind": "knowledge.physics",
+      "fields": {
+        "id": "physics.shadow",
+        "prompt": "影子的形成说明光通常",
+        "answer": "沿直线传播",
+        "wrong": [
+          "只会弯曲",
+          "没有方向",
+          "不能反射"
+        ]
+      },
+      "tags": [
+        "knowledge",
+        "knowledge-physics"
+      ],
+      "source": "internal-reviewed-catalog",
+      "reviewStatus": "reviewed",
+      "reviewedAt": "2026-09-01",
+      "enabled": true
+    },
+    {
+      "id": "fact.knowledge.physics.150izqu",
+      "kind": "knowledge.physics",
+      "fields": {
+        "id": "physics.float",
+        "prompt": "轮船能浮在水面主要受到",
+        "answer": "浮力",
+        "wrong": [
+          "磁力",
+          "电力",
+          "摩擦力"
+        ]
+      },
+      "tags": [
+        "knowledge",
+        "knowledge-physics"
+      ],
+      "source": "internal-reviewed-catalog",
+      "reviewStatus": "reviewed",
+      "reviewedAt": "2026-09-01",
+      "enabled": true
+    },
+    {
+      "id": "fact.knowledge.physics.0as93yu",
+      "kind": "knowledge.physics",
+      "fields": {
+        "id": "physics.friction",
+        "prompt": "鞋底花纹主要用于增大",
+        "answer": "摩擦力",
+        "wrong": [
+          "浮力",
+          "重力",
+          "弹力"
+        ]
+      },
+      "tags": [
+        "knowledge",
+        "knowledge-physics"
+      ],
+      "source": "internal-reviewed-catalog",
+      "reviewStatus": "reviewed",
+      "reviewedAt": "2026-09-01",
+      "enabled": true
+    },
+    {
+      "id": "fact.knowledge.physics.1debge8",
+      "kind": "knowledge.physics",
+      "fields": {
+        "id": "physics.lever",
+        "prompt": "使用开瓶器体现的简单机械",
+        "answer": "杠杆",
+        "wrong": [
+          "滑轮",
+          "斜面",
+          "齿轮"
+        ]
+      },
+      "tags": [
+        "knowledge",
+        "knowledge-physics"
+      ],
+      "source": "internal-reviewed-catalog",
+      "reviewStatus": "reviewed",
+      "reviewedAt": "2026-09-01",
+      "enabled": true
+    },
+    {
+      "id": "fact.knowledge.physics.0yb7ju1",
+      "kind": "knowledge.physics",
+      "fields": {
+        "id": "physics.reflect",
+        "prompt": "平面镜成像利用光的",
+        "answer": "反射",
+        "wrong": [
+          "吸收",
+          "发声",
+          "导电"
+        ]
+      },
+      "tags": [
+        "knowledge",
+        "knowledge-physics"
+      ],
+      "source": "internal-reviewed-catalog",
+      "reviewStatus": "reviewed",
+      "reviewedAt": "2026-09-01",
+      "enabled": true
+    },
+    {
+      "id": "fact.knowledge.physics.1n4p7kp",
+      "kind": "knowledge.physics",
+      "fields": {
+        "id": "physics.conductor",
+        "prompt": "下列通常容易导电的是",
+        "answer": "铜线",
+        "wrong": [
+          "橡皮",
+          "玻璃",
+          "干木块"
+        ]
+      },
+      "tags": [
+        "knowledge",
+        "knowledge-physics"
+      ],
+      "source": "internal-reviewed-catalog",
+      "reviewStatus": "reviewed",
+      "reviewedAt": "2026-09-01",
+      "enabled": true
+    },
+    {
+      "id": "fact.knowledge.technology.0g45flt",
+      "kind": "knowledge.technology",
+      "fields": {
+        "id": "tech.cpu",
+        "prompt": "计算机中负责运算控制的核心部件",
+        "answer": "CPU",
+        "wrong": [
+          "显示器",
+          "键盘",
+          "音箱"
+        ]
+      },
+      "tags": [
+        "knowledge",
+        "knowledge-technology"
+      ],
+      "source": "internal-reviewed-catalog",
+      "reviewStatus": "reviewed",
+      "reviewedAt": "2026-09-01",
+      "enabled": true
+    },
+    {
+      "id": "fact.knowledge.technology.1uondf6",
+      "kind": "knowledge.technology",
+      "fields": {
+        "id": "tech.qr",
+        "prompt": "二维码主要用于",
+        "answer": "编码和读取信息",
+        "wrong": [
+          "测量温度",
+          "放大声音",
+          "净化空气"
+        ]
+      },
+      "tags": [
+        "knowledge",
+        "knowledge-technology"
+      ],
+      "source": "internal-reviewed-catalog",
+      "reviewStatus": "reviewed",
+      "reviewedAt": "2026-09-01",
+      "enabled": true
+    },
+    {
+      "id": "fact.knowledge.technology.0zdzwbf",
+      "kind": "knowledge.technology",
+      "fields": {
+        "id": "tech.gps",
+        "prompt": "手机导航定位常使用",
+        "answer": "卫星定位",
+        "wrong": [
+          "显微镜",
+          "指南针磁化",
+          "声呐捕鱼"
+        ]
+      },
+      "tags": [
+        "knowledge",
+        "knowledge-technology"
+      ],
+      "source": "internal-reviewed-catalog",
+      "reviewStatus": "reviewed",
+      "reviewedAt": "2026-09-01",
+      "enabled": true
+    },
+    {
+      "id": "fact.knowledge.technology.1qj0ur4",
+      "kind": "knowledge.technology",
+      "fields": {
+        "id": "tech.wifi",
+        "prompt": "Wi-Fi主要提供",
+        "answer": "无线网络连接",
+        "wrong": [
+          "食品冷藏",
+          "机械动力",
+          "水质过滤"
+        ]
+      },
+      "tags": [
+        "knowledge",
+        "knowledge-technology"
+      ],
+      "source": "internal-reviewed-catalog",
+      "reviewStatus": "reviewed",
+      "reviewedAt": "2026-09-01",
+      "enabled": true
+    },
+    {
+      "id": "fact.knowledge.technology.03xymuu",
+      "kind": "knowledge.technology",
+      "fields": {
+        "id": "tech.cloud",
+        "prompt": "云存储通常把数据保存在",
+        "answer": "远程服务器",
+        "wrong": [
+          "纸张",
+          "电池",
+          "扬声器"
+        ]
+      },
+      "tags": [
+        "knowledge",
+        "knowledge-technology"
+      ],
+      "source": "internal-reviewed-catalog",
+      "reviewStatus": "reviewed",
+      "reviewedAt": "2026-09-01",
+      "enabled": true
+    },
+    {
+      "id": "fact.knowledge.technology.1brooxc",
+      "kind": "knowledge.technology",
+      "fields": {
+        "id": "tech.password",
+        "prompt": "更安全的密码做法是",
+        "answer": "使用不同的复杂密码",
+        "wrong": [
+          "所有网站相同",
+          "告诉陌生人",
+          "只用生日"
+        ]
+      },
+      "tags": [
+        "knowledge",
+        "knowledge-technology"
+      ],
+      "source": "internal-reviewed-catalog",
+      "reviewStatus": "reviewed",
+      "reviewedAt": "2026-09-01",
+      "enabled": true
+    },
+    {
+      "id": "fact.knowledge.technology.0ct95i4",
+      "kind": "knowledge.technology",
+      "fields": {
+        "id": "tech.update",
+        "prompt": "及时安装安全更新有助于",
+        "answer": "修复已知漏洞",
+        "wrong": [
+          "耗尽电池",
+          "删除屏幕",
+          "关闭网络"
+        ]
+      },
+      "tags": [
+        "knowledge",
+        "knowledge-technology"
+      ],
+      "source": "internal-reviewed-catalog",
+      "reviewStatus": "reviewed",
+      "reviewedAt": "2026-09-01",
+      "enabled": true
+    },
+    {
+      "id": "fact.knowledge.technology.04173lj",
+      "kind": "knowledge.technology",
+      "fields": {
+        "id": "tech.backup",
+        "prompt": "定期备份数据主要为了",
+        "answer": "防止意外丢失",
+        "wrong": [
+          "降低音量",
+          "加快充电",
+          "改变颜色"
+        ]
+      },
+      "tags": [
+        "knowledge",
+        "knowledge-technology"
+      ],
+      "source": "internal-reviewed-catalog",
+      "reviewStatus": "reviewed",
+      "reviewedAt": "2026-09-01",
+      "enabled": true
+    },
+    {
       "id": "fact.history.opening.1nid5b3",
       "kind": "history.opening",
       "fields": {
@@ -24417,6 +28994,358 @@
       "tags": [
         "history",
         "history-myth"
+      ],
+      "source": "internal-reviewed-catalog",
+      "reviewStatus": "reviewed",
+      "reviewedAt": "2026-09-01",
+      "enabled": true
+    },
+    {
+      "id": "fact.history.chronology.0y3csl3",
+      "kind": "history.chronology",
+      "fields": {
+        "id": "chronology.dynasty-1",
+        "prompt": "按朝代先后排序",
+        "parts": [
+          "秦",
+          "汉",
+          "唐",
+          "宋"
+        ]
+      },
+      "tags": [
+        "history",
+        "history-chronology"
+      ],
+      "source": "internal-reviewed-catalog",
+      "reviewStatus": "reviewed",
+      "reviewedAt": "2026-09-01",
+      "enabled": true
+    },
+    {
+      "id": "fact.history.chronology.0ydcea2",
+      "kind": "history.chronology",
+      "fields": {
+        "id": "chronology.dynasty-2",
+        "prompt": "按朝代先后排序",
+        "parts": [
+          "夏",
+          "商",
+          "周",
+          "秦"
+        ]
+      },
+      "tags": [
+        "history",
+        "history-chronology"
+      ],
+      "source": "internal-reviewed-catalog",
+      "reviewStatus": "reviewed",
+      "reviewedAt": "2026-09-01",
+      "enabled": true
+    },
+    {
+      "id": "fact.history.chronology.0ynbzz1",
+      "kind": "history.chronology",
+      "fields": {
+        "id": "chronology.dynasty-3",
+        "prompt": "按朝代先后排序",
+        "parts": [
+          "隋",
+          "唐",
+          "宋",
+          "元"
+        ]
+      },
+      "tags": [
+        "history",
+        "history-chronology"
+      ],
+      "source": "internal-reviewed-catalog",
+      "reviewStatus": "reviewed",
+      "reviewedAt": "2026-09-01",
+      "enabled": true
+    },
+    {
+      "id": "fact.history.chronology.0grziye",
+      "kind": "history.chronology",
+      "fields": {
+        "id": "chronology.modern-1",
+        "prompt": "按事件先后排序",
+        "parts": [
+          "鸦片战争",
+          "洋务运动",
+          "戊戌变法",
+          "辛亥革命"
+        ]
+      },
+      "tags": [
+        "history",
+        "history-chronology"
+      ],
+      "source": "internal-reviewed-catalog",
+      "reviewStatus": "reviewed",
+      "reviewedAt": "2026-09-01",
+      "enabled": true
+    },
+    {
+      "id": "fact.history.chronology.0ghzx9f",
+      "kind": "history.chronology",
+      "fields": {
+        "id": "chronology.modern-2",
+        "prompt": "按事件先后排序",
+        "parts": [
+          "五四运动",
+          "九一八事变",
+          "七七事变",
+          "抗战胜利"
+        ]
+      },
+      "tags": [
+        "history",
+        "history-chronology"
+      ],
+      "source": "internal-reviewed-catalog",
+      "reviewStatus": "reviewed",
+      "reviewedAt": "2026-09-01",
+      "enabled": true
+    },
+    {
+      "id": "fact.history.chronology.1jjrb1n",
+      "kind": "history.chronology",
+      "fields": {
+        "id": "chronology.discovery",
+        "prompt": "按发明出现先后排序",
+        "parts": [
+          "造纸术",
+          "印刷术",
+          "指南针航海",
+          "蒸汽机"
+        ]
+      },
+      "tags": [
+        "history",
+        "history-chronology"
+      ],
+      "source": "internal-reviewed-catalog",
+      "reviewStatus": "reviewed",
+      "reviewedAt": "2026-09-01",
+      "enabled": true
+    },
+    {
+      "id": "fact.history.chronology.0n3lo7f",
+      "kind": "history.chronology",
+      "fields": {
+        "id": "chronology.republic",
+        "prompt": "按事件先后排序",
+        "parts": [
+          "辛亥革命",
+          "五四运动",
+          "北伐战争",
+          "抗战胜利"
+        ]
+      },
+      "tags": [
+        "history",
+        "history-chronology"
+      ],
+      "source": "internal-reviewed-catalog",
+      "reviewStatus": "reviewed",
+      "reviewedAt": "2026-09-01",
+      "enabled": true
+    },
+    {
+      "id": "fact.history.chronology.0lfm155",
+      "kind": "history.chronology",
+      "fields": {
+        "id": "chronology.world",
+        "prompt": "按时代先后排序",
+        "parts": [
+          "古代",
+          "中世纪",
+          "近代",
+          "现代"
+        ]
+      },
+      "tags": [
+        "history",
+        "history-chronology"
+      ],
+      "source": "internal-reviewed-catalog",
+      "reviewStatus": "reviewed",
+      "reviewedAt": "2026-09-01",
+      "enabled": true
+    },
+    {
+      "id": "fact.history.person-event.0x87w82",
+      "kind": "history.person-event",
+      "fields": {
+        "id": "person.qin",
+        "prompt": "统一六国并建立秦朝的人物",
+        "answer": "秦始皇",
+        "wrong": [
+          "汉武帝",
+          "唐太宗",
+          "宋太祖"
+        ]
+      },
+      "tags": [
+        "history",
+        "history-person-event"
+      ],
+      "source": "internal-reviewed-catalog",
+      "reviewStatus": "reviewed",
+      "reviewedAt": "2026-09-01",
+      "enabled": true
+    },
+    {
+      "id": "fact.history.person-event.0kolvyb",
+      "kind": "history.person-event",
+      "fields": {
+        "id": "person.zhenghe",
+        "prompt": "明代率船队七下西洋的人物",
+        "answer": "郑和",
+        "wrong": [
+          "张骞",
+          "玄奘",
+          "鉴真"
+        ]
+      },
+      "tags": [
+        "history",
+        "history-person-event"
+      ],
+      "source": "internal-reviewed-catalog",
+      "reviewStatus": "reviewed",
+      "reviewedAt": "2026-09-01",
+      "enabled": true
+    },
+    {
+      "id": "fact.history.person-event.1vn7qtj",
+      "kind": "history.person-event",
+      "fields": {
+        "id": "person.linzexu",
+        "prompt": "主持虎门销烟的人物",
+        "answer": "林则徐",
+        "wrong": [
+          "魏源",
+          "左宗棠",
+          "曾国藩"
+        ]
+      },
+      "tags": [
+        "history",
+        "history-person-event"
+      ],
+      "source": "internal-reviewed-catalog",
+      "reviewStatus": "reviewed",
+      "reviewedAt": "2026-09-01",
+      "enabled": true
+    },
+    {
+      "id": "fact.history.person-event.0yjs7gs",
+      "kind": "history.person-event",
+      "fields": {
+        "id": "person.sun",
+        "prompt": "领导辛亥革命的重要人物",
+        "answer": "孙中山",
+        "wrong": [
+          "康有为",
+          "李鸿章",
+          "林则徐"
+        ]
+      },
+      "tags": [
+        "history",
+        "history-person-event"
+      ],
+      "source": "internal-reviewed-catalog",
+      "reviewStatus": "reviewed",
+      "reviewedAt": "2026-09-01",
+      "enabled": true
+    },
+    {
+      "id": "fact.history.person-event.1nybmwp",
+      "kind": "history.person-event",
+      "fields": {
+        "id": "person.simaqian",
+        "prompt": "《史记》的作者",
+        "answer": "司马迁",
+        "wrong": [
+          "司马光",
+          "班固",
+          "陈寿"
+        ]
+      },
+      "tags": [
+        "history",
+        "history-person-event"
+      ],
+      "source": "internal-reviewed-catalog",
+      "reviewStatus": "reviewed",
+      "reviewedAt": "2026-09-01",
+      "enabled": true
+    },
+    {
+      "id": "fact.history.person-event.12llfr8",
+      "kind": "history.person-event",
+      "fields": {
+        "id": "person.lishizhen",
+        "prompt": "《本草纲目》的作者",
+        "answer": "李时珍",
+        "wrong": [
+          "张仲景",
+          "华佗",
+          "孙思邈"
+        ]
+      },
+      "tags": [
+        "history",
+        "history-person-event"
+      ],
+      "source": "internal-reviewed-catalog",
+      "reviewStatus": "reviewed",
+      "reviewedAt": "2026-09-01",
+      "enabled": true
+    },
+    {
+      "id": "fact.history.person-event.1k85huc",
+      "kind": "history.person-event",
+      "fields": {
+        "id": "person.bisheng",
+        "prompt": "活字印刷术的发明者",
+        "answer": "毕昇",
+        "wrong": [
+          "蔡伦",
+          "张衡",
+          "祖冲之"
+        ]
+      },
+      "tags": [
+        "history",
+        "history-person-event"
+      ],
+      "source": "internal-reviewed-catalog",
+      "reviewStatus": "reviewed",
+      "reviewedAt": "2026-09-01",
+      "enabled": true
+    },
+    {
+      "id": "fact.history.person-event.0t20otd",
+      "kind": "history.person-event",
+      "fields": {
+        "id": "person.zhangqian",
+        "prompt": "西汉出使西域的重要人物",
+        "answer": "张骞",
+        "wrong": [
+          "班超",
+          "郑和",
+          "玄奘"
+        ]
+      },
+      "tags": [
+        "history",
+        "history-person-event"
       ],
       "source": "internal-reviewed-catalog",
       "reviewStatus": "reviewed",

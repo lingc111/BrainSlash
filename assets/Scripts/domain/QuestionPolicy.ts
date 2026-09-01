@@ -33,29 +33,39 @@ export interface QuestionCompileDirective {
     bombEnabled?: boolean;
 }
 
+/** Target share of all questions that should be direct mental arithmetic. */
+export const BRAWL_ARITHMETIC_RATIOS: Readonly<Record<BrawlPhaseId, number>> = {
+    warmup: 0.5,
+    action: 0.3,
+    twist: 0.22,
+    climax: 0.22,
+};
+
 export const BRAWL_PHASES: readonly BrawlPhaseSettings[] = [
     {
         id: 'warmup', startMs: 0, endMs: 10_000, difficultyStage: 0,
         targetCount: 3, questionTimeMs: 3_000, speed: 0.72,
-        themeWeights: { math: 3, vision: 2 },
+        // Arithmetic is injected by the rolling quota. Remaining warmup slots
+        // intentionally use vision so math does not crowd out the full catalog.
+        themeWeights: { vision: 2 },
         ruleSequence: [['standard']],
     },
     {
         id: 'action', startMs: 10_000, endMs: 25_000, difficultyStage: 1,
         targetCount: 4, questionTimeMs: 2_600, speed: 0.95,
-        themeWeights: { math: 4, vision: 4, hanzi: 3, english: 2, life: 2, geography: 2, knowledge: 4, history: 2 },
+        themeWeights: { math: 1, vision: 4, hanzi: 3, english: 2, life: 2, geography: 2, knowledge: 4, history: 2 },
         ruleSequence: [['multi'], ['bomb'], ['standard'], ['order'], ['bomb'], ['reverse'], ['rotate']],
     },
     {
         id: 'twist', startMs: 25_000, endMs: 45_000, difficultyStage: 2,
         targetCount: 5, questionTimeMs: 2_250, speed: 1.15,
-        themeWeights: { math: 4, vision: 4, hanzi: 3, english: 3, life: 3, geography: 3, knowledge: 4, history: 3 },
+        themeWeights: { math: 1, vision: 4, hanzi: 3, english: 3, life: 3, geography: 3, knowledge: 4, history: 3 },
         ruleSequence: [['reverse'], ['rotate'], ['standard'], ['reverse'], ['multi'], ['standard'], ['bomb']],
     },
     {
         id: 'climax', startMs: 45_000, endMs: 60_001, difficultyStage: 2,
         targetCount: 5, questionTimeMs: 1_850, speed: 1.38,
-        themeWeights: { math: 4, vision: 4, hanzi: 3, english: 3, life: 3, geography: 3, knowledge: 4, history: 3 },
+        themeWeights: { math: 1, vision: 4, hanzi: 3, english: 3, life: 3, geography: 3, knowledge: 4, history: 3 },
         ruleSequence: [
             ['bomb', 'multi'], ['bomb', 'reverse'], ['bomb', 'order'], ['bomb', 'rotate'],
             ['multi', 'reverse'], ['multi', 'rotate'], ['order', 'rotate'],

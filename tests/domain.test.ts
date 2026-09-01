@@ -881,24 +881,24 @@ test('daily challenge starts without tutorial state and reuses the same-day reco
 });
 
 test('unified template catalog contains one stable entry per cognitive template', () => {
-    assert.equal(QUESTION_TEMPLATES.length, 37);
+    assert.equal(QUESTION_TEMPLATES.length, 66);
     assert.equal(new Set(QUESTION_TEMPLATES.map((template) => template.id)).size, QUESTION_TEMPLATES.length);
     assert.ok(QUESTION_TEMPLATES.every((template) => template.enabled && template.difficultyBands.length === 5));
 });
 
 test('question-bank registry reports audited base records instead of generated combinations', () => {
     const stats = getQuestionBankStats();
-    assert.equal(stats.baseRecordCount, 1028);
-    assert.equal(stats.packCount, 21);
+    assert.equal(stats.baseRecordCount, 1202);
+    assert.equal(stats.packCount, 39);
     assert.deepEqual(stats.byTheme, {
         math: 0,
         vision: 0,
-        hanzi: 324,
-        english: 136,
-        life: 30,
-        geography: 60,
-        knowledge: 404,
-        history: 74,
+        hanzi: 340,
+        english: 152,
+        life: 92,
+        geography: 92,
+        knowledge: 436,
+        history: 90,
     });
     assert.equal(new Set(QUESTION_BANK_PACKS.map((pack) => pack.id)).size, QUESTION_BANK_PACKS.length);
 });
@@ -1433,8 +1433,10 @@ test('ordinary brawl enforces visible quotas across all eight themes', () => {
     }
     for (const theme of ['math', 'vision', 'hanzi', 'english', 'life', 'geography', 'knowledge', 'history']) {
         const ratio = (counts.get(theme) ?? 0) / 3_000;
-        assert.ok(ratio >= 0.09, `${theme} quota too low: ${ratio}`);
-        assert.ok(ratio <= 0.18, `${theme} quota too high: ${ratio}`);
+        const minimum = theme === 'math' ? 0.25 : 0.07;
+        const maximum = theme === 'math' ? 0.35 : 0.18;
+        assert.ok(ratio >= minimum, `${theme} quota too low: ${ratio}`);
+        assert.ok(ratio <= maximum, `${theme} quota too high: ${ratio}`);
     }
 });
 
@@ -1447,7 +1449,7 @@ test('category question pools exclude context-dependent items and polysemous Eng
     assert.ok(LIFE_CATEGORY_FACTS.every((fact) => !excludedLifeItems.has(fact.item)));
     assert.equal(new Set(LIFE_CATEGORY_FACTS.map((fact) => fact.item)).size, LIFE_CATEGORY_FACTS.length);
     for (const category of ['清洁工具', '厨房用品', '学习用品', '安全用品', '交通工具']) {
-        assert.equal(LIFE_CATEGORY_FACTS.filter((fact) => fact.category === category).length, 6);
+        assert.equal(LIFE_CATEGORY_FACTS.filter((fact) => fact.category === category).length, 12);
     }
 });
 

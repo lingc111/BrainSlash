@@ -35,6 +35,7 @@ import { reviewedFactIdForRecord } from './QuestionBankRegistry';
 import type { GameEntryParams, QuestionInstance, RuleId, TargetSpec, ThemeId } from './Models';
 import { evaluateRules, rulesForReadableTargets } from './Rules';
 import { SeededRng } from './SeededRng';
+import { EXPANSION_ORDER_PACKS, EXPANSION_TRIVIA_PACKS, type OrderedFact } from './ThemeExpansionCatalog';
 
 type Stage = 0 | 1 | 2;
 export interface QuestionCompilerEngineOptions {
@@ -122,35 +123,64 @@ export class QuestionCompilerEngine {
             case 'math-sequence': return this.mathSequence(template, stage);
             case 'math-missing': return this.mathMissing(template, stage);
             case 'math-equation': return this.mathEquation(template, stage);
+            case 'math-divide': return this.mathDivide(template, stage);
+            case 'math-mixed': return this.mathMixed(template, stage);
+            case 'math-rounding': return this.mathRounding(template, stage);
+            case 'math-fraction-compare': return this.mathFractionCompare(template, stage);
             case 'vision-direction': return this.visionDirection(template, stage);
             case 'vision-odd': return this.visionOdd(template, stage);
             case 'vision-count': return this.visionCount(template, stage);
             case 'vision-stroop': return this.visionStroop(template, stage);
             case 'vision-pattern': return this.visionPattern(template, stage);
             case 'vision-match': return this.visionMatch(template, stage);
+            case 'vision-mirror': return this.visionMirror(template, stage);
+            case 'vision-symmetry': return this.visionSymmetry(template, stage);
+            case 'vision-grid-position': return this.visionGridPosition(template, stage);
+            case 'vision-rotation': return this.visionRotation(template, stage);
             case 'hanzi-fill': return this.hanziFill(template, stage);
             case 'hanzi-order': return this.hanziOrder(template, stage);
             case 'hanzi-antonym': return this.hanziRelation(template, stage, 'antonym');
             case 'hanzi-synonym': return this.hanziRelation(template, stage, 'synonym');
             case 'hanzi-pinyin': return this.hanziPinyin(template, stage);
             case 'hanzi-poetry': return this.hanziPoetry(template, stage);
+            case 'hanzi-radical': return this.expansionTrivia(template, stage);
+            case 'hanzi-homophone': return this.hanziHomophone(template, stage);
+            case 'hanzi-compose': return this.expansionTrivia(template, stage);
             case 'english-meaning': return this.englishMeaning(template, stage);
             case 'english-category': return this.englishCategory(template, stage);
             case 'english-antonym': return this.englishAntonym(template, stage);
             case 'english-first-letter': return this.englishFirstLetter(template, stage);
             case 'english-length': return this.englishLength(template, stage);
+            case 'english-missing-letter': return this.englishMissingLetter(template, stage);
+            case 'english-synonym': return this.expansionTrivia(template, stage);
+            case 'english-word-order': return this.expansionOrder(template, stage);
             case 'life-category': return this.lifeCategory(template, stage);
+            case 'life-use': return this.lifeUse(template, stage);
+            case 'life-place': return this.expansionTrivia(template, stage);
+            case 'life-public-sign': return this.expansionTrivia(template, stage);
+            case 'life-safe-behavior': return this.expansionTrivia(template, stage);
+            case 'life-process': return this.expansionOrder(template, stage);
             case 'geography-capital': return this.geographyCapital(template, stage);
             case 'geography-country': return this.geographyCountry(template, stage);
+            case 'geography-continent': return this.expansionTrivia(template, stage);
+            case 'geography-landmark': return this.expansionTrivia(template, stage);
+            case 'geography-province-capital': return this.expansionTrivia(template, stage);
+            case 'geography-relative-position': return this.expansionTrivia(template, stage);
             case 'knowledge-science': return this.trivia(template, stage, 'knowledge-science', [...KNOWLEDGE_SCIENCE_FACTS, ...KNOWLEDGE_SCIENCE_EXPANSION]);
             case 'knowledge-nature': return this.trivia(template, stage, 'knowledge-nature', [...KNOWLEDGE_NATURE_FACTS, ...KNOWLEDGE_NATURE_EXPANSION]);
             case 'knowledge-culture': return this.trivia(template, stage, 'knowledge-culture', [...KNOWLEDGE_CULTURE_FACTS, ...KNOWLEDGE_CULTURE_EXPANSION]);
             case 'knowledge-civic': return this.trivia(template, stage, 'knowledge-civic', KNOWLEDGE_CIVIC_FACTS);
+            case 'knowledge-astronomy': return this.expansionTrivia(template, stage);
+            case 'knowledge-biology': return this.expansionTrivia(template, stage);
+            case 'knowledge-physics': return this.expansionTrivia(template, stage);
+            case 'knowledge-technology': return this.expansionTrivia(template, stage);
             case 'history-modern-opening': return this.trivia(template, stage, 'history-modern-opening', HISTORY_MODERN_OPENING_FACTS);
             case 'history-modern-awakening': return this.trivia(template, stage, 'history-modern-awakening', HISTORY_MODERN_AWAKENING_FACTS);
             case 'history-modern-resistance': return this.trivia(template, stage, 'history-modern-resistance', HISTORY_MODERN_RESISTANCE_FACTS);
             case 'history-ancient': return this.trivia(template, stage, 'history-ancient', HISTORY_ANCIENT_FACTS);
             case 'history-myth': return this.trivia(template, stage, 'history-myth', HISTORY_MYTH_FACTS);
+            case 'history-chronology': return this.expansionOrder(template, stage);
+            case 'history-person-event': return this.expansionTrivia(template, stage);
             default: throw new Error(`Unknown question template: ${String(template.id)}`);
         }
     }
@@ -455,6 +485,38 @@ export class QuestionCompilerEngine {
         return this.makeChoice(template, `找相同 ${answer}`, answer, candidates, stage);
     }
 
+    private visionMirror(template: QuestionTemplate, stage: Stage): QuestionInstance {
+        const mirrors: Readonly<Record<string, string>> = { '←': '→', '→': '←', '↖': '↗', '↗': '↖', '↙': '↘', '↘': '↙' };
+        const source = this.rng.pick(Object.keys(mirrors));
+        return this.makeChoice(template, `${source}的左右镜像`, mirrors[source], Object.values(mirrors), stage);
+    }
+
+    private visionSymmetry(template: QuestionTemplate, stage: Stage): QuestionInstance {
+        const answer = this.rng.pick(['◇', '○', '□', '△', '十', '工']);
+        return this.makeChoice(template, '选择左右对称的图形', answer, ['▷', '◁', 'Γ', 'F', 'P', 'L'], stage);
+    }
+
+    private visionGridPosition(template: QuestionTemplate, stage: Stage): QuestionInstance {
+        const size = 3 + Math.min(1, this.difficultyIndex);
+        const row = this.rng.int(1, size);
+        const column = this.rng.int(1, size);
+        const answer = `${row}行${column}列`;
+        const grid = Array.from({ length: size }, (_, rowIndex) => Array.from({ length: size }, (_, columnIndex) =>
+            rowIndex === row - 1 && columnIndex === column - 1 ? '●' : '○').join('')).join('\n');
+        return this.makeChoice(template, `找●位置\n${grid}`, answer,
+            [`${column}行${row}列`, `${row === 1 ? size : row - 1}行${column}列`,
+                `${row}行${column === 1 ? size : column - 1}列`, `${row === size ? 1 : row + 1}行${column}列`], stage);
+    }
+
+    private visionRotation(template: QuestionTemplate, stage: Stage): QuestionInstance {
+        const startIndex = this.rng.int(0, ARROWS.length - 1);
+        const turns = this.difficultyIndex >= 3 ? 2 : 1;
+        const clockwise = this.rng.next() < 0.5;
+        const offset = clockwise ? turns : -turns;
+        const answer = ARROWS[(startIndex + offset + ARROWS.length) % ARROWS.length];
+        return this.makeChoice(template, `${ARROWS[startIndex]}${clockwise ? '顺' : '逆'}时针转${turns * 90}°`, answer, ARROWS, stage);
+    }
+
     private hanziFill(template: QuestionTemplate, stage: Stage): QuestionInstance {
         const entry = this.pickFact('idioms', IDIOMS, reviewedFactIdForRecord);
         const missingIndex = this.rng.next() < 0.5 ? entry.missingIndex : (entry.missingIndex + 1) % entry.text.length;
@@ -473,10 +535,54 @@ export class QuestionCompilerEngine {
         return this.make(template, '排成语', targets, ordered, ['order'], stage, ordered);
     }
 
+    private mathDivide(template: QuestionTemplate, stage: Stage): QuestionInstance {
+        const divisor = this.rng.int(2, Math.min(12, 5 + this.difficultyIndex + stage * 2));
+        const answer = this.rng.int(2, 8 + this.difficultyIndex * 2 + stage * 2);
+        const dividend = divisor * answer;
+        return this.makeChoice(template, `${dividend}÷${divisor}=?`, answer,
+            [answer - 2, answer - 1, answer + 1, answer + 2, divisor], stage);
+    }
+
+    private mathMixed(template: QuestionTemplate, stage: Stage): QuestionInstance {
+        const multiplier = this.rng.int(2, Math.min(9, 4 + this.difficultyIndex + stage));
+        const factor = this.rng.int(2, Math.min(12, 6 + this.difficultyIndex + stage));
+        const offset = this.rng.int(1, 8 + this.difficultyIndex * 3);
+        const subtract = this.rng.next() < 0.5 && multiplier * factor > offset;
+        const answer = subtract ? multiplier * factor - offset : multiplier * factor + offset;
+        const operator = subtract ? '-' : '+';
+        return this.makeChoice(template, `${multiplier}×${factor}${operator}${offset}=?`, answer,
+            [answer - multiplier, answer + multiplier, answer - 1, answer + 1, multiplier * (factor + offset)], stage);
+    }
+
+    private mathRounding(template: QuestionTemplate, stage: Stage): QuestionInstance {
+        const unit = this.difficultyIndex >= 3 ? 100 : 10;
+        const max = unit === 100 ? 4_999 : 999;
+        let value = this.rng.int(unit + 1, max);
+        if (value % unit === unit / 2) value += 1;
+        const answer = Math.round(value / unit) * unit;
+        return this.makeChoice(template, `${value}约等于哪个整${unit === 10 ? '十' : '百'}数`, answer,
+            [answer - unit * 2, answer - unit, answer + unit, answer + unit * 2, value], stage);
+    }
+
+    private mathFractionCompare(template: QuestionTemplate, stage: Stage): QuestionInstance {
+        const denominator = this.rng.int(4, 8 + this.difficultyIndex + stage);
+        const left = this.rng.int(1, denominator - 2);
+        const right = this.rng.int(left + 1, denominator - 1);
+        const larger = `${right}/${denominator}`;
+        return this.makeChoice(template, '选择较大的分数', larger,
+            [`${left}/${denominator}`, `${left}/${denominator + 1}`, `${right - 1}/${denominator + 1}`, `${left + 1}/${denominator + 2}`], stage);
+    }
+
     private hanziPinyin(template: QuestionTemplate, stage: Stage): QuestionInstance {
         const fact = this.pickFact('hanzi-pinyin', PINYIN_FACTS, reviewedFactIdForRecord);
         const candidates = PINYIN_FACTS.filter((item) => item.id !== fact.id).map((item) => item.pinyin);
         return this.makeChoice(template, `${fact.character}的拼音`, fact.pinyin, candidates, stage);
+    }
+
+    private hanziHomophone(template: QuestionTemplate, stage: Stage): QuestionInstance {
+        const fact = this.pickFact('hanzi-homophone', PINYIN_FACTS, reviewedFactIdForRecord);
+        const candidates = PINYIN_FACTS.filter((item) => item.id !== fact.id).map((item) => item.homophone);
+        return this.makeChoice(template, `${fact.character}读音相近的字`, fact.homophone, candidates, stage);
     }
 
     private hanziPoetry(template: QuestionTemplate, stage: Stage): QuestionInstance {
@@ -531,6 +637,14 @@ export class QuestionCompilerEngine {
         return this.makeChoice(template, `${word.en}有几字母`, answer, [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12], stage);
     }
 
+    private englishMissingLetter(template: QuestionTemplate, stage: Stage): QuestionInstance {
+        const word = this.pickFact('english-missing-letter', ENGLISH_WORDS, reviewedFactIdForRecord);
+        const index = this.rng.int(0, word.en.length - 1);
+        const answer = word.en[index];
+        const prompt = `${word.en.slice(0, index)}_${word.en.slice(index + 1)} = ${word.zh}`;
+        return this.makeChoice(template, prompt, answer, 'ABCDEFGHIJKLMNOPQRSTUVWXYZ'.split(''), stage);
+    }
+
     private lifeCategory(template: QuestionTemplate, stage: Stage): QuestionInstance {
         const categories = ['清洁工具', '厨房用品', '学习用品', '安全用品', '交通工具'] as const;
         const category = categories[this.difficultyIndex];
@@ -546,6 +660,12 @@ export class QuestionCompilerEngine {
         const correct = targets.filter((target) => target.value === category).map((target) => target.id);
         this.appendBomb(targets);
         return this.make(template, category, targets, correct, this.directive.rules, stage);
+    }
+
+    private lifeUse(template: QuestionTemplate, stage: Stage): QuestionInstance {
+        const fact = this.pickFact('life-use', LIFE_CATEGORY_FACTS, reviewedFactIdForRecord);
+        const candidates = LIFE_CATEGORY_FACTS.filter((item) => item.item !== fact.item).map((item) => item.use);
+        return this.makeChoice(template, `${fact.item}主要用于`, fact.use, candidates, stage);
     }
 
     private geographyCapital(template: QuestionTemplate, stage: Stage): QuestionInstance {
@@ -585,6 +705,23 @@ export class QuestionCompilerEngine {
     private trivia(template: QuestionTemplate, stage: Stage, poolId: string, facts: readonly TriviaFact[]): QuestionInstance {
         const fact = this.pickFact(poolId, facts, reviewedFactIdForRecord);
         return this.makeChoice(template, fact.prompt, fact.answer, fact.wrong, stage);
+    }
+
+    private expansionTrivia(template: QuestionTemplate, stage: Stage): QuestionInstance {
+        const facts = EXPANSION_TRIVIA_PACKS[template.id];
+        if (!facts?.length) throw new Error(`Missing expansion facts for ${template.id}`);
+        return this.trivia(template, stage, template.id, facts);
+    }
+
+    private expansionOrder(template: QuestionTemplate, stage: Stage): QuestionInstance {
+        const facts = EXPANSION_ORDER_PACKS[template.id];
+        if (!facts?.length) throw new Error(`Missing ordered facts for ${template.id}`);
+        const fact: OrderedFact = this.pickFact(template.id, facts, reviewedFactIdForRecord);
+        const source = fact.parts.map((text, originalIndex) => ({ text, originalIndex }));
+        const targets: TargetSpec[] = this.rng.shuffle(source).map((item, index) => ({ id: `o${index}`, text: item.text, value: item.originalIndex }));
+        const ordered = [...targets].sort((a, b) => Number(a.value) - Number(b.value)).map((target) => target.id);
+        this.appendBomb(targets);
+        return this.make(template, fact.prompt, targets, ordered, ['order'], stage, ordered);
     }
 
     private uniqueNumbers(count: number, min: number, max: number): number[] {

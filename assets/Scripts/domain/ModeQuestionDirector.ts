@@ -1,4 +1,4 @@
-import { BRAWL_PHASES, legalRuleSetsForTheme, phaseAt } from './QuestionPolicy';
+import { BRAWL_ARITHMETIC_RATIOS, BRAWL_PHASES, legalRuleSetsForTheme, phaseAt } from './QuestionPolicy';
 import type { FriendChallengeConfig, GameEntryParams, RuleId, ThemeId } from './Models';
 import type { QuestionCapability, QuestionRequest } from './QuestionSystem';
 import { requestCanGenerate } from './QuestionSystem';
@@ -8,6 +8,7 @@ import { SeededRng } from './SeededRng';
 export class ModeQuestionDirector {
     private readonly ruleBags = new Map<string, RuleId[][]>();
     private themeBag: ThemeId[] = [];
+    private readonly mixCredits = new Map<string, number>();
 
     public constructor(
         private readonly rng: SeededRng,
@@ -18,13 +19,29 @@ export class ModeQuestionDirector {
 
     public next(elapsedMs: number): QuestionRequest {
         const phase = phaseAt(this.normalizedElapsed(elapsedMs));
-        const themes = this.themesForQuestion(phase.themeWeights);
-        const rules = this.pickRules(phase.id, phase.ruleSequence, themes);
+        const forceBrawlArithmetic = this.entry.mode === 'brawl60'
+            && this.consumeMixCredit(`brawl:${phase.id}`, BRAWL_ARITHMETIC_RATIOS[phase.id]);
+        const themes = forceBrawlArithmetic ? ['math' as const] : this.themesForQuestion(phase.themeWeights);
+        const forceSelectedMathArithmetic = !forceBrawlArithmetic && themes[0] === 'math'
+            && (this.entry.mode === 'daily'
+                ? this.consumeMixCredit('daily:math', 0.6)
+                : this.entry.mode === 'friendChallenge' && this.consumeMixCredit('friend:math', 0.65));
+        let requiredTags = forceBrawlArithmetic || forceSelectedMathArithmetic ? ['arithmetic'] : [];
+        if (requiredTags.length && this.entry.mode === 'friendChallenge') {
+            const enabledRules = (this.entry.challengeConfig as FriendChallengeConfig).enabledRules;
+            const supportsArithmetic = legalRuleSetsForTheme(themes[0], enabledRules).some((rules) => requestCanGenerate({
+                themes, requiredTags, rules, difficulty: 3, targetCount: 4,
+                questionTimeMs: 2_600, speed: 1, phase: 'action',
+            }));
+            if (!supportsArithmetic) requiredTags = [];
+        }
+        const rules = this.pickRules(phase.id, phase.ruleSequence, themes, requiredTags);
         const requiredCapabilities: QuestionCapability[] = [];
         if (rules.includes('multi')) requiredCapabilities.push('multi');
         if (rules.includes('order')) requiredCapabilities.push('order');
         return {
             themes,
+            requiredTags,
             requiredCapabilities,
             rules,
             difficulty: (phase.difficultyStage === 0 ? 1 : phase.difficultyStage === 1 ? 3 : 5),
@@ -57,7 +74,19 @@ export class ModeQuestionDirector {
         return [this.rng.pick(weighted)];
     }
 
-    private pickRules(phaseId: string, configuredSets: readonly (readonly RuleId[])[], themes: readonly ThemeId[]): RuleId[] {
+    private consumeMixCredit(key: string, ratio: number): boolean {
+        const credit = (this.mixCredits.get(key) ?? 0) + ratio;
+        if (credit < 1) { this.mixCredits.set(key, credit); return false; }
+        this.mixCredits.set(key, credit - 1);
+        return true;
+    }
+
+    private pickRules(
+        phaseId: string,
+        configuredSets: readonly (readonly RuleId[])[],
+        themes: readonly ThemeId[],
+        requiredTags: readonly string[],
+    ): RuleId[] {
         let candidates: RuleId[][];
         if (this.entry.mode === 'friendChallenge') {
             const config = this.entry.challengeConfig as FriendChallengeConfig;
@@ -69,10 +98,11 @@ export class ModeQuestionDirector {
         }
         candidates = candidates.filter((rules) => requestCanGenerate({
             themes, rules, requiredCapabilities: rules.includes('multi') ? ['multi'] : rules.includes('order') ? ['order'] : [],
+            requiredTags,
             difficulty: 3, targetCount: 4, questionTimeMs: 2_600, speed: 1, phase: 'action',
         }));
         if (!candidates.length) candidates = [['standard']];
-        const key = `${phaseId}:${themes.join(',')}:${candidates.map((item) => item.join('+')).join('|')}`;
+        const key = `${phaseId}:${themes.join(',')}:${requiredTags.join(',')}:${candidates.map((item) => item.join('+')).join('|')}`;
         let bag = this.ruleBags.get(key);
         if (!bag?.length) { bag = this.rng.shuffle(candidates); this.ruleBags.set(key, bag); }
         return [...bag.pop()!];
