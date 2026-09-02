@@ -3,7 +3,7 @@ export interface GameplayConfig {
     durationMs: number; readyMs: number; maxLife: number; maxLifeByMode: Readonly<Record<GameMode, number>>; masterWindowMs: number; masterHitSettleDelayMs: number;
     baseScore: number; masterBonus: number; masterSlashBonus: number; ruleMultiplierStep: number; questionTimeMs: [number, number, number];
 }
-export const CONTENT_VERSION = '2.3.3-question-quality';
+export const CONTENT_VERSION = '2.3.11-balanced-compound-reverse';
 export const GAMEPLAY_CONFIG: GameplayConfig = {
     durationMs: 60_000, readyMs: 600, maxLife: 3,
     maxLifeByMode: { brawl60: 3, daily: 3, friendChallenge: 3, tower: 5 },

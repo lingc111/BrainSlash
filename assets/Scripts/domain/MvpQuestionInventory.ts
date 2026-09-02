@@ -15,8 +15,8 @@ export interface MvpChoiceQuestion {
 }
 
 export const MVP_THEME_TARGETS: Readonly<Record<ThemeId, number>> = {
-    math: 2800, vision: 600, hanzi: 1200, english: 1600,
-    life: 900, geography: 900, knowledge: 1200, history: 800,
+    math: 2800, vision: 600, hanzi: 1600, english: 1300,
+    life: 600, geography: 900, knowledge: 1800, history: 1400,
 };
 
 const PROMPT_STYLES = [

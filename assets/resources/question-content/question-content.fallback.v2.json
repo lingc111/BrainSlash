@@ -1,6 +1,6 @@
 {
   "schemaVersion": 2,
-  "contentVersion": "2.3.3-question-quality",
+  "contentVersion": "2.3.11-balanced-compound-reverse",
   "bundleKind": "fallback",
   "templates": [
     {
@@ -132,6 +132,7 @@
       ],
       "sourceKind": "algorithmic",
       "tags": [
+        "arithmetic",
         "property"
       ],
       "difficultyBands": [
@@ -199,7 +200,7 @@
           "reverse"
         ]
       ],
-      "targetCap": 4,
+      "targetCap": 5,
       "directionSensitive": false,
       "rotationSafe": true,
       "enabled": true
@@ -455,6 +456,7 @@
       ],
       "sourceKind": "algorithmic",
       "tags": [
+        "arithmetic",
         "digit-reverse"
       ],
       "difficultyBands": [
@@ -534,6 +536,7 @@
       ],
       "sourceKind": "algorithmic",
       "tags": [
+        "arithmetic",
         "fraction",
         "compare"
       ],
@@ -1288,6 +1291,45 @@
       "enabled": true
     },
     {
+      "id": "hanzi-xiehouyu",
+      "theme": "hanzi",
+      "engine": "pair",
+      "capabilities": [
+        "single",
+        "short-text"
+      ],
+      "sourceKind": "reviewed-facts",
+      "tags": [
+        "xiehouyu"
+      ],
+      "difficultyBands": [
+        1,
+        2,
+        3,
+        4,
+        5
+      ],
+      "supportedRuleSets": [
+        [
+          "standard"
+        ],
+        [
+          "reverse"
+        ],
+        [
+          "bomb"
+        ],
+        [
+          "bomb",
+          "reverse"
+        ]
+      ],
+      "targetCap": 4,
+      "directionSensitive": false,
+      "rotationSafe": false,
+      "enabled": true
+    },
+    {
       "id": "english-meaning",
       "theme": "english",
       "engine": "pair",
@@ -1762,40 +1804,6 @@
         ]
       ],
       "targetCap": 4,
-      "directionSensitive": false,
-      "rotationSafe": false,
-      "enabled": true
-    },
-    {
-      "id": "life-process",
-      "theme": "life",
-      "engine": "order",
-      "capabilities": [
-        "order",
-        "short-text"
-      ],
-      "sourceKind": "reviewed-facts",
-      "tags": [
-        "daily-process",
-        "order"
-      ],
-      "difficultyBands": [
-        1,
-        2,
-        3,
-        4,
-        5
-      ],
-      "supportedRuleSets": [
-        [
-          "order"
-        ],
-        [
-          "bomb",
-          "order"
-        ]
-      ],
-      "targetCap": 5,
       "directionSensitive": false,
       "rotationSafe": false,
       "enabled": true
@@ -2308,45 +2316,6 @@
       "enabled": true
     },
     {
-      "id": "knowledge-technology",
-      "theme": "knowledge",
-      "engine": "single",
-      "capabilities": [
-        "single",
-        "short-text"
-      ],
-      "sourceKind": "reviewed-facts",
-      "tags": [
-        "technology"
-      ],
-      "difficultyBands": [
-        1,
-        2,
-        3,
-        4,
-        5
-      ],
-      "supportedRuleSets": [
-        [
-          "standard"
-        ],
-        [
-          "reverse"
-        ],
-        [
-          "bomb"
-        ],
-        [
-          "bomb",
-          "reverse"
-        ]
-      ],
-      "targetCap": 4,
-      "directionSensitive": false,
-      "rotationSafe": false,
-      "enabled": true
-    },
-    {
       "id": "history-modern-opening",
       "theme": "history",
       "engine": "single",
@@ -2542,6 +2511,46 @@
       "enabled": true
     },
     {
+      "id": "history-myth-person",
+      "theme": "history",
+      "engine": "pair",
+      "capabilities": [
+        "single",
+        "short-text"
+      ],
+      "sourceKind": "reviewed-facts",
+      "tags": [
+        "myth",
+        "person-event"
+      ],
+      "difficultyBands": [
+        1,
+        2,
+        3,
+        4,
+        5
+      ],
+      "supportedRuleSets": [
+        [
+          "standard"
+        ],
+        [
+          "reverse"
+        ],
+        [
+          "bomb"
+        ],
+        [
+          "bomb",
+          "reverse"
+        ]
+      ],
+      "targetCap": 4,
+      "directionSensitive": false,
+      "rotationSafe": false,
+      "enabled": true
+    },
+    {
       "id": "history-chronology",
       "theme": "history",
       "engine": "order",
@@ -2585,6 +2594,46 @@
       ],
       "sourceKind": "reviewed-facts",
       "tags": [
+        "person-event"
+      ],
+      "difficultyBands": [
+        1,
+        2,
+        3,
+        4,
+        5
+      ],
+      "supportedRuleSets": [
+        [
+          "standard"
+        ],
+        [
+          "reverse"
+        ],
+        [
+          "bomb"
+        ],
+        [
+          "bomb",
+          "reverse"
+        ]
+      ],
+      "targetCap": 4,
+      "directionSensitive": false,
+      "rotationSafe": false,
+      "enabled": true
+    },
+    {
+      "id": "history-allusion-person",
+      "theme": "history",
+      "engine": "pair",
+      "capabilities": [
+        "single",
+        "short-text"
+      ],
+      "sourceKind": "reviewed-facts",
+      "tags": [
+        "allusion",
         "person-event"
       ],
       "difficultyBands": [
@@ -3962,6 +4011,182 @@
       "tags": [
         "hanzi",
         "hanzi-compose"
+      ],
+      "source": "internal-reviewed-catalog",
+      "reviewStatus": "reviewed",
+      "reviewedAt": "2026-09-01",
+      "enabled": true
+    },
+    {
+      "id": "fact.hanzi.xiehouyu.14542ie",
+      "kind": "hanzi.xiehouyu",
+      "fields": {
+        "id": "hanzi.xiehouyu.01",
+        "prompt": "“八仙过海”的下半句",
+        "answer": "各显神通",
+        "wrong": [
+          "自身难保",
+          "里外不是人",
+          "尽是书"
+        ]
+      },
+      "tags": [
+        "hanzi",
+        "hanzi-xiehouyu"
+      ],
+      "source": "internal-reviewed-catalog",
+      "reviewStatus": "reviewed",
+      "reviewedAt": "2026-09-01",
+      "enabled": true
+    },
+    {
+      "id": "fact.hanzi.xiehouyu.13v4gtf",
+      "kind": "hanzi.xiehouyu",
+      "fields": {
+        "id": "hanzi.xiehouyu.02",
+        "prompt": "“泥菩萨过江”的下半句",
+        "answer": "自身难保",
+        "wrong": [
+          "各显神通",
+          "里外不是人",
+          "尽是书"
+        ]
+      },
+      "tags": [
+        "hanzi",
+        "hanzi-xiehouyu"
+      ],
+      "source": "internal-reviewed-catalog",
+      "reviewStatus": "reviewed",
+      "reviewedAt": "2026-09-01",
+      "enabled": true
+    },
+    {
+      "id": "fact.hanzi.xiehouyu.13l4v4g",
+      "kind": "hanzi.xiehouyu",
+      "fields": {
+        "id": "hanzi.xiehouyu.03",
+        "prompt": "“猪八戒照镜子”的下半句",
+        "answer": "里外不是人",
+        "wrong": [
+          "各显神通",
+          "自身难保",
+          "尽是书"
+        ]
+      },
+      "tags": [
+        "hanzi",
+        "hanzi-xiehouyu"
+      ],
+      "source": "internal-reviewed-catalog",
+      "reviewStatus": "reviewed",
+      "reviewedAt": "2026-09-01",
+      "enabled": true
+    },
+    {
+      "id": "fact.hanzi.xiehouyu.15j22z9",
+      "kind": "hanzi.xiehouyu",
+      "fields": {
+        "id": "hanzi.xiehouyu.04",
+        "prompt": "“孔夫子搬家”的下半句",
+        "answer": "尽是书",
+        "wrong": [
+          "各显神通",
+          "自身难保",
+          "里外不是人"
+        ]
+      },
+      "tags": [
+        "hanzi",
+        "hanzi-xiehouyu"
+      ],
+      "source": "internal-reviewed-catalog",
+      "reviewStatus": "reviewed",
+      "reviewedAt": "2026-09-01",
+      "enabled": true
+    },
+    {
+      "id": "fact.hanzi.xiehouyu.1592haa",
+      "kind": "hanzi.xiehouyu",
+      "fields": {
+        "id": "hanzi.xiehouyu.05",
+        "prompt": "“小葱拌豆腐”的下半句",
+        "answer": "一清二白",
+        "wrong": [
+          "各显神通",
+          "自身难保",
+          "里外不是人"
+        ]
+      },
+      "tags": [
+        "hanzi",
+        "hanzi-xiehouyu"
+      ],
+      "source": "internal-reviewed-catalog",
+      "reviewStatus": "reviewed",
+      "reviewedAt": "2026-09-01",
+      "enabled": true
+    },
+    {
+      "id": "fact.hanzi.xiehouyu.14z2vlb",
+      "kind": "hanzi.xiehouyu",
+      "fields": {
+        "id": "hanzi.xiehouyu.06",
+        "prompt": "“芝麻开花”的下半句",
+        "answer": "节节高",
+        "wrong": [
+          "各显神通",
+          "自身难保",
+          "里外不是人"
+        ]
+      },
+      "tags": [
+        "hanzi",
+        "hanzi-xiehouyu"
+      ],
+      "source": "internal-reviewed-catalog",
+      "reviewStatus": "reviewed",
+      "reviewedAt": "2026-09-01",
+      "enabled": true
+    },
+    {
+      "id": "fact.hanzi.xiehouyu.14p39wc",
+      "kind": "hanzi.xiehouyu",
+      "fields": {
+        "id": "hanzi.xiehouyu.07",
+        "prompt": "“竹篮打水”的下半句",
+        "answer": "一场空",
+        "wrong": [
+          "各显神通",
+          "自身难保",
+          "里外不是人"
+        ]
+      },
+      "tags": [
+        "hanzi",
+        "hanzi-xiehouyu"
+      ],
+      "source": "internal-reviewed-catalog",
+      "reviewStatus": "reviewed",
+      "reviewedAt": "2026-09-01",
+      "enabled": true
+    },
+    {
+      "id": "fact.hanzi.xiehouyu.16n0hr5",
+      "kind": "hanzi.xiehouyu",
+      "fields": {
+        "id": "hanzi.xiehouyu.08",
+        "prompt": "“十五个吊桶打水”的下半句",
+        "answer": "七上八下",
+        "wrong": [
+          "各显神通",
+          "自身难保",
+          "里外不是人"
+        ]
+      },
+      "tags": [
+        "hanzi",
+        "hanzi-xiehouyu"
       ],
       "source": "internal-reviewed-catalog",
       "reviewStatus": "reviewed",
@@ -5445,182 +5670,6 @@
       "tags": [
         "life",
         "life-safe-behavior"
-      ],
-      "source": "internal-reviewed-catalog",
-      "reviewStatus": "reviewed",
-      "reviewedAt": "2026-09-01",
-      "enabled": true
-    },
-    {
-      "id": "fact.life.process.0zsjqty",
-      "kind": "life.process",
-      "fields": {
-        "id": "process.handwash",
-        "prompt": "洗手",
-        "parts": [
-          "打湿双手",
-          "涂洗手液",
-          "揉搓双手",
-          "冲净擦干"
-        ]
-      },
-      "tags": [
-        "life",
-        "life-process"
-      ],
-      "source": "internal-reviewed-catalog",
-      "reviewStatus": "reviewed",
-      "reviewedAt": "2026-09-01",
-      "enabled": true
-    },
-    {
-      "id": "fact.life.process.02jdbte",
-      "kind": "life.process",
-      "fields": {
-        "id": "process.toothbrush",
-        "prompt": "刷牙",
-        "parts": [
-          "挤牙膏",
-          "刷牙齿",
-          "漱口",
-          "清洗牙刷"
-        ]
-      },
-      "tags": [
-        "life",
-        "life-process"
-      ],
-      "source": "internal-reviewed-catalog",
-      "reviewStatus": "reviewed",
-      "reviewedAt": "2026-09-01",
-      "enabled": true
-    },
-    {
-      "id": "fact.life.process.0taa15u",
-      "kind": "life.process",
-      "fields": {
-        "id": "process.cook-rice",
-        "prompt": "电饭锅煮饭",
-        "parts": [
-          "量取大米",
-          "淘米加水",
-          "按煮饭键",
-          "等待煮熟"
-        ]
-      },
-      "tags": [
-        "life",
-        "life-process"
-      ],
-      "source": "internal-reviewed-catalog",
-      "reviewStatus": "reviewed",
-      "reviewedAt": "2026-09-01",
-      "enabled": true
-    },
-    {
-      "id": "fact.life.process.1fblznn",
-      "kind": "life.process",
-      "fields": {
-        "id": "process.mail",
-        "prompt": "寄快递",
-        "parts": [
-          "包装物品",
-          "填写信息",
-          "交给快递员",
-          "查询物流"
-        ]
-      },
-      "tags": [
-        "life",
-        "life-process"
-      ],
-      "source": "internal-reviewed-catalog",
-      "reviewStatus": "reviewed",
-      "reviewedAt": "2026-09-01",
-      "enabled": true
-    },
-    {
-      "id": "fact.life.process.0b97dbe",
-      "kind": "life.process",
-      "fields": {
-        "id": "process.bus",
-        "prompt": "乘公交",
-        "parts": [
-          "查看线路",
-          "排队候车",
-          "上车付费",
-          "到站下车"
-        ]
-      },
-      "tags": [
-        "life",
-        "life-process"
-      ],
-      "source": "internal-reviewed-catalog",
-      "reviewStatus": "reviewed",
-      "reviewedAt": "2026-09-01",
-      "enabled": true
-    },
-    {
-      "id": "fact.life.process.0tyjy07",
-      "kind": "life.process",
-      "fields": {
-        "id": "process.library",
-        "prompt": "借书",
-        "parts": [
-          "查找图书",
-          "取下图书",
-          "办理借阅",
-          "按期归还"
-        ]
-      },
-      "tags": [
-        "life",
-        "life-process"
-      ],
-      "source": "internal-reviewed-catalog",
-      "reviewStatus": "reviewed",
-      "reviewedAt": "2026-09-01",
-      "enabled": true
-    },
-    {
-      "id": "fact.life.process.03rp22l",
-      "kind": "life.process",
-      "fields": {
-        "id": "process.laundry",
-        "prompt": "洗衣",
-        "parts": [
-          "分类衣物",
-          "放入洗衣机",
-          "启动洗涤",
-          "取出晾晒"
-        ]
-      },
-      "tags": [
-        "life",
-        "life-process"
-      ],
-      "source": "internal-reviewed-catalog",
-      "reviewStatus": "reviewed",
-      "reviewedAt": "2026-09-01",
-      "enabled": true
-    },
-    {
-      "id": "fact.life.process.01hhybd",
-      "kind": "life.process",
-      "fields": {
-        "id": "process.recycle",
-        "prompt": "扔垃圾",
-        "parts": [
-          "确认类别",
-          "找到对应桶",
-          "分类投放",
-          "清洁双手"
-        ]
-      },
-      "tags": [
-        "life",
-        "life-process"
       ],
       "source": "internal-reviewed-catalog",
       "reviewStatus": "reviewed",
@@ -8172,182 +8221,6 @@
       "enabled": true
     },
     {
-      "id": "fact.knowledge.technology.0g45flt",
-      "kind": "knowledge.technology",
-      "fields": {
-        "id": "tech.cpu",
-        "prompt": "计算机中负责运算控制的核心部件",
-        "answer": "CPU",
-        "wrong": [
-          "显示器",
-          "键盘",
-          "音箱"
-        ]
-      },
-      "tags": [
-        "knowledge",
-        "knowledge-technology"
-      ],
-      "source": "internal-reviewed-catalog",
-      "reviewStatus": "reviewed",
-      "reviewedAt": "2026-09-01",
-      "enabled": true
-    },
-    {
-      "id": "fact.knowledge.technology.1uondf6",
-      "kind": "knowledge.technology",
-      "fields": {
-        "id": "tech.qr",
-        "prompt": "二维码主要用于",
-        "answer": "编码和读取信息",
-        "wrong": [
-          "测量温度",
-          "放大声音",
-          "净化空气"
-        ]
-      },
-      "tags": [
-        "knowledge",
-        "knowledge-technology"
-      ],
-      "source": "internal-reviewed-catalog",
-      "reviewStatus": "reviewed",
-      "reviewedAt": "2026-09-01",
-      "enabled": true
-    },
-    {
-      "id": "fact.knowledge.technology.0zdzwbf",
-      "kind": "knowledge.technology",
-      "fields": {
-        "id": "tech.gps",
-        "prompt": "手机导航定位常使用",
-        "answer": "卫星定位",
-        "wrong": [
-          "显微镜",
-          "指南针磁化",
-          "声呐捕鱼"
-        ]
-      },
-      "tags": [
-        "knowledge",
-        "knowledge-technology"
-      ],
-      "source": "internal-reviewed-catalog",
-      "reviewStatus": "reviewed",
-      "reviewedAt": "2026-09-01",
-      "enabled": true
-    },
-    {
-      "id": "fact.knowledge.technology.1qj0ur4",
-      "kind": "knowledge.technology",
-      "fields": {
-        "id": "tech.wifi",
-        "prompt": "Wi-Fi主要提供",
-        "answer": "无线网络连接",
-        "wrong": [
-          "食品冷藏",
-          "机械动力",
-          "水质过滤"
-        ]
-      },
-      "tags": [
-        "knowledge",
-        "knowledge-technology"
-      ],
-      "source": "internal-reviewed-catalog",
-      "reviewStatus": "reviewed",
-      "reviewedAt": "2026-09-01",
-      "enabled": true
-    },
-    {
-      "id": "fact.knowledge.technology.03xymuu",
-      "kind": "knowledge.technology",
-      "fields": {
-        "id": "tech.cloud",
-        "prompt": "云存储通常把数据保存在",
-        "answer": "远程服务器",
-        "wrong": [
-          "纸张",
-          "电池",
-          "扬声器"
-        ]
-      },
-      "tags": [
-        "knowledge",
-        "knowledge-technology"
-      ],
-      "source": "internal-reviewed-catalog",
-      "reviewStatus": "reviewed",
-      "reviewedAt": "2026-09-01",
-      "enabled": true
-    },
-    {
-      "id": "fact.knowledge.technology.1brooxc",
-      "kind": "knowledge.technology",
-      "fields": {
-        "id": "tech.password",
-        "prompt": "更安全的密码做法是",
-        "answer": "使用不同的复杂密码",
-        "wrong": [
-          "所有网站相同",
-          "告诉陌生人",
-          "只用生日"
-        ]
-      },
-      "tags": [
-        "knowledge",
-        "knowledge-technology"
-      ],
-      "source": "internal-reviewed-catalog",
-      "reviewStatus": "reviewed",
-      "reviewedAt": "2026-09-01",
-      "enabled": true
-    },
-    {
-      "id": "fact.knowledge.technology.0ct95i4",
-      "kind": "knowledge.technology",
-      "fields": {
-        "id": "tech.update",
-        "prompt": "及时安装安全更新有助于",
-        "answer": "修复已知漏洞",
-        "wrong": [
-          "耗尽电池",
-          "删除屏幕",
-          "关闭网络"
-        ]
-      },
-      "tags": [
-        "knowledge",
-        "knowledge-technology"
-      ],
-      "source": "internal-reviewed-catalog",
-      "reviewStatus": "reviewed",
-      "reviewedAt": "2026-09-01",
-      "enabled": true
-    },
-    {
-      "id": "fact.knowledge.technology.04173lj",
-      "kind": "knowledge.technology",
-      "fields": {
-        "id": "tech.backup",
-        "prompt": "定期备份数据主要为了",
-        "answer": "防止意外丢失",
-        "wrong": [
-          "降低音量",
-          "加快充电",
-          "改变颜色"
-        ]
-      },
-      "tags": [
-        "knowledge",
-        "knowledge-technology"
-      ],
-      "source": "internal-reviewed-catalog",
-      "reviewStatus": "reviewed",
-      "reviewedAt": "2026-09-01",
-      "enabled": true
-    },
-    {
       "id": "fact.history.opening.1nid5b3",
       "kind": "history.opening",
       "fields": {
@@ -10068,6 +9941,182 @@
       "enabled": true
     },
     {
+      "id": "fact.history.myth-person.11du7hy",
+      "kind": "history.myth-person",
+      "fields": {
+        "id": "history.myth-person.01",
+        "prompt": "开天辟地的神话人物",
+        "answer": "盘古",
+        "wrong": [
+          "女娲",
+          "夸父",
+          "精卫"
+        ]
+      },
+      "tags": [
+        "history",
+        "history-myth-person"
+      ],
+      "source": "internal-reviewed-catalog",
+      "reviewStatus": "reviewed",
+      "reviewedAt": "2026-09-01",
+      "enabled": true
+    },
+    {
+      "id": "fact.history.myth-person.113ulsz",
+      "kind": "history.myth-person",
+      "fields": {
+        "id": "history.myth-person.02",
+        "prompt": "炼石补天的神话人物",
+        "answer": "女娲",
+        "wrong": [
+          "盘古",
+          "夸父",
+          "精卫"
+        ]
+      },
+      "tags": [
+        "history",
+        "history-myth-person"
+      ],
+      "source": "internal-reviewed-catalog",
+      "reviewStatus": "reviewed",
+      "reviewedAt": "2026-09-01",
+      "enabled": true
+    },
+    {
+      "id": "fact.history.myth-person.10tv040",
+      "kind": "history.myth-person",
+      "fields": {
+        "id": "history.myth-person.03",
+        "prompt": "抟土造人的神话人物",
+        "answer": "女娲",
+        "wrong": [
+          "盘古",
+          "夸父",
+          "精卫"
+        ]
+      },
+      "tags": [
+        "history",
+        "history-myth-person"
+      ],
+      "source": "internal-reviewed-catalog",
+      "reviewStatus": "reviewed",
+      "reviewedAt": "2026-09-01",
+      "enabled": true
+    },
+    {
+      "id": "fact.history.myth-person.12rs7yt",
+      "kind": "history.myth-person",
+      "fields": {
+        "id": "history.myth-person.04",
+        "prompt": "追逐太阳的神话人物",
+        "answer": "夸父",
+        "wrong": [
+          "盘古",
+          "女娲",
+          "精卫"
+        ]
+      },
+      "tags": [
+        "history",
+        "history-myth-person"
+      ],
+      "source": "internal-reviewed-catalog",
+      "reviewStatus": "reviewed",
+      "reviewedAt": "2026-09-01",
+      "enabled": true
+    },
+    {
+      "id": "fact.history.myth-person.12hsm9u",
+      "kind": "history.myth-person",
+      "fields": {
+        "id": "history.myth-person.05",
+        "prompt": "衔石填海的神话人物",
+        "answer": "精卫",
+        "wrong": [
+          "盘古",
+          "女娲",
+          "夸父"
+        ]
+      },
+      "tags": [
+        "history",
+        "history-myth-person"
+      ],
+      "source": "internal-reviewed-catalog",
+      "reviewStatus": "reviewed",
+      "reviewedAt": "2026-09-01",
+      "enabled": true
+    },
+    {
+      "id": "fact.history.myth-person.127t0kv",
+      "kind": "history.myth-person",
+      "fields": {
+        "id": "history.myth-person.06",
+        "prompt": "射落九个太阳的神话人物",
+        "answer": "后羿",
+        "wrong": [
+          "盘古",
+          "女娲",
+          "夸父"
+        ]
+      },
+      "tags": [
+        "history",
+        "history-myth-person"
+      ],
+      "source": "internal-reviewed-catalog",
+      "reviewStatus": "reviewed",
+      "reviewedAt": "2026-09-01",
+      "enabled": true
+    },
+    {
+      "id": "fact.history.myth-person.11xtevw",
+      "kind": "history.myth-person",
+      "fields": {
+        "id": "history.myth-person.07",
+        "prompt": "偷食仙药奔月的神话人物",
+        "answer": "嫦娥",
+        "wrong": [
+          "盘古",
+          "女娲",
+          "夸父"
+        ]
+      },
+      "tags": [
+        "history",
+        "history-myth-person"
+      ],
+      "source": "internal-reviewed-catalog",
+      "reviewStatus": "reviewed",
+      "reviewedAt": "2026-09-01",
+      "enabled": true
+    },
+    {
+      "id": "fact.history.myth-person.13vqmqp",
+      "kind": "history.myth-person",
+      "fields": {
+        "id": "history.myth-person.08",
+        "prompt": "治水三过家门不入的神话人物",
+        "answer": "大禹",
+        "wrong": [
+          "盘古",
+          "女娲",
+          "夸父"
+        ]
+      },
+      "tags": [
+        "history",
+        "history-myth-person"
+      ],
+      "source": "internal-reviewed-catalog",
+      "reviewStatus": "reviewed",
+      "reviewedAt": "2026-09-01",
+      "enabled": true
+    },
+    {
       "id": "fact.history.chronology.0y3csl3",
       "kind": "history.chronology",
       "fields": {
@@ -10413,6 +10462,182 @@
       "tags": [
         "history",
         "history-person-event"
+      ],
+      "source": "internal-reviewed-catalog",
+      "reviewStatus": "reviewed",
+      "reviewedAt": "2026-09-01",
+      "enabled": true
+    },
+    {
+      "id": "fact.history.allusion-person.08a0dvz",
+      "kind": "history.allusion-person",
+      "fields": {
+        "id": "history.allusion-person.01",
+        "prompt": "典故“卧薪尝胆”对应的人物",
+        "answer": "勾践",
+        "wrong": [
+          "廉颇",
+          "蔺相如",
+          "赵括"
+        ]
+      },
+      "tags": [
+        "history",
+        "history-allusion-person"
+      ],
+      "source": "internal-reviewed-catalog",
+      "reviewStatus": "reviewed",
+      "reviewedAt": "2026-09-01",
+      "enabled": true
+    },
+    {
+      "id": "fact.history.allusion-person.08jzzky",
+      "kind": "history.allusion-person",
+      "fields": {
+        "id": "history.allusion-person.02",
+        "prompt": "典故“负荆请罪”对应的人物",
+        "answer": "廉颇",
+        "wrong": [
+          "勾践",
+          "蔺相如",
+          "赵括"
+        ]
+      },
+      "tags": [
+        "history",
+        "history-allusion-person"
+      ],
+      "source": "internal-reviewed-catalog",
+      "reviewStatus": "reviewed",
+      "reviewedAt": "2026-09-01",
+      "enabled": true
+    },
+    {
+      "id": "fact.history.allusion-person.08tzl9x",
+      "kind": "history.allusion-person",
+      "fields": {
+        "id": "history.allusion-person.03",
+        "prompt": "典故“完璧归赵”对应的人物",
+        "answer": "蔺相如",
+        "wrong": [
+          "勾践",
+          "廉颇",
+          "赵括"
+        ]
+      },
+      "tags": [
+        "history",
+        "history-allusion-person"
+      ],
+      "source": "internal-reviewed-catalog",
+      "reviewStatus": "reviewed",
+      "reviewedAt": "2026-09-01",
+      "enabled": true
+    },
+    {
+      "id": "fact.history.allusion-person.06w2df4",
+      "kind": "history.allusion-person",
+      "fields": {
+        "id": "history.allusion-person.04",
+        "prompt": "典故“纸上谈兵”对应的人物",
+        "answer": "赵括",
+        "wrong": [
+          "勾践",
+          "廉颇",
+          "蔺相如"
+        ]
+      },
+      "tags": [
+        "history",
+        "history-allusion-person"
+      ],
+      "source": "internal-reviewed-catalog",
+      "reviewStatus": "reviewed",
+      "reviewedAt": "2026-09-01",
+      "enabled": true
+    },
+    {
+      "id": "fact.history.allusion-person.0761z43",
+      "kind": "history.allusion-person",
+      "fields": {
+        "id": "history.allusion-person.05",
+        "prompt": "典故“指鹿为马”对应的人物",
+        "answer": "赵高",
+        "wrong": [
+          "勾践",
+          "廉颇",
+          "蔺相如"
+        ]
+      },
+      "tags": [
+        "history",
+        "history-allusion-person"
+      ],
+      "source": "internal-reviewed-catalog",
+      "reviewStatus": "reviewed",
+      "reviewedAt": "2026-09-01",
+      "enabled": true
+    },
+    {
+      "id": "fact.history.allusion-person.07g1kt2",
+      "kind": "history.allusion-person",
+      "fields": {
+        "id": "history.allusion-person.06",
+        "prompt": "典故“闻鸡起舞”对应的人物",
+        "answer": "祖逖",
+        "wrong": [
+          "勾践",
+          "廉颇",
+          "蔺相如"
+        ]
+      },
+      "tags": [
+        "history",
+        "history-allusion-person"
+      ],
+      "source": "internal-reviewed-catalog",
+      "reviewStatus": "reviewed",
+      "reviewedAt": "2026-09-01",
+      "enabled": true
+    },
+    {
+      "id": "fact.history.allusion-person.07q16i1",
+      "kind": "history.allusion-person",
+      "fields": {
+        "id": "history.allusion-person.07",
+        "prompt": "典故“投笔从戎”对应的人物",
+        "answer": "班超",
+        "wrong": [
+          "勾践",
+          "廉颇",
+          "蔺相如"
+        ]
+      },
+      "tags": [
+        "history",
+        "history-allusion-person"
+      ],
+      "source": "internal-reviewed-catalog",
+      "reviewStatus": "reviewed",
+      "reviewedAt": "2026-09-01",
+      "enabled": true
+    },
+    {
+      "id": "fact.history.allusion-person.0a7xlqs",
+      "kind": "history.allusion-person",
+      "fields": {
+        "id": "history.allusion-person.08",
+        "prompt": "典故“凿壁偷光”对应的人物",
+        "answer": "匡衡",
+        "wrong": [
+          "勾践",
+          "廉颇",
+          "蔺相如"
+        ]
+      },
+      "tags": [
+        "history",
+        "history-allusion-person"
       ],
       "source": "internal-reviewed-catalog",
       "reviewStatus": "reviewed",
@@ -13513,6 +13738,174 @@
       "verified": true
     },
     {
+      "theme": "hanzi",
+      "templateId": "hanzi-xiehouyu",
+      "prompt": "“八仙过海”的下半句",
+      "answer": "各显神通",
+      "wrong": [
+        "自身难保",
+        "里外不是人",
+        "尽是书"
+      ],
+      "sourceFactId": "fact.hanzi.xiehouyu.14542ie",
+      "id": "mvp.hanzi.0981",
+      "verified": true
+    },
+    {
+      "theme": "hanzi",
+      "templateId": "hanzi-xiehouyu",
+      "prompt": "“泥菩萨过江”的下半句",
+      "answer": "自身难保",
+      "wrong": [
+        "各显神通",
+        "里外不是人",
+        "尽是书"
+      ],
+      "sourceFactId": "fact.hanzi.xiehouyu.13v4gtf",
+      "id": "mvp.hanzi.0982",
+      "verified": true
+    },
+    {
+      "theme": "hanzi",
+      "templateId": "hanzi-xiehouyu",
+      "prompt": "“猪八戒照镜子”的下半句",
+      "answer": "里外不是人",
+      "wrong": [
+        "各显神通",
+        "自身难保",
+        "尽是书"
+      ],
+      "sourceFactId": "fact.hanzi.xiehouyu.13l4v4g",
+      "id": "mvp.hanzi.0983",
+      "verified": true
+    },
+    {
+      "theme": "hanzi",
+      "templateId": "hanzi-xiehouyu",
+      "prompt": "“孔夫子搬家”的下半句",
+      "answer": "尽是书",
+      "wrong": [
+        "各显神通",
+        "自身难保",
+        "里外不是人"
+      ],
+      "sourceFactId": "fact.hanzi.xiehouyu.15j22z9",
+      "id": "mvp.hanzi.0984",
+      "verified": true
+    },
+    {
+      "theme": "hanzi",
+      "templateId": "hanzi-xiehouyu",
+      "prompt": "“小葱拌豆腐”的下半句",
+      "answer": "一清二白",
+      "wrong": [
+        "各显神通",
+        "自身难保",
+        "里外不是人"
+      ],
+      "sourceFactId": "fact.hanzi.xiehouyu.1592haa",
+      "id": "mvp.hanzi.0985",
+      "verified": true
+    },
+    {
+      "theme": "hanzi",
+      "templateId": "hanzi-xiehouyu",
+      "prompt": "“芝麻开花”的下半句",
+      "answer": "节节高",
+      "wrong": [
+        "各显神通",
+        "自身难保",
+        "里外不是人"
+      ],
+      "sourceFactId": "fact.hanzi.xiehouyu.14z2vlb",
+      "id": "mvp.hanzi.0986",
+      "verified": true
+    },
+    {
+      "theme": "hanzi",
+      "templateId": "hanzi-xiehouyu",
+      "prompt": "“竹篮打水”的下半句",
+      "answer": "一场空",
+      "wrong": [
+        "各显神通",
+        "自身难保",
+        "里外不是人"
+      ],
+      "sourceFactId": "fact.hanzi.xiehouyu.14p39wc",
+      "id": "mvp.hanzi.0987",
+      "verified": true
+    },
+    {
+      "theme": "hanzi",
+      "templateId": "hanzi-xiehouyu",
+      "prompt": "“十五个吊桶打水”的下半句",
+      "answer": "七上八下",
+      "wrong": [
+        "各显神通",
+        "自身难保",
+        "里外不是人"
+      ],
+      "sourceFactId": "fact.hanzi.xiehouyu.16n0hr5",
+      "id": "mvp.hanzi.0988",
+      "verified": true
+    },
+    {
+      "theme": "hanzi",
+      "templateId": "hanzi-xiehouyu",
+      "prompt": "“擀面杖吹火”的下半句",
+      "answer": "一窍不通",
+      "wrong": [
+        "各显神通",
+        "自身难保",
+        "里外不是人"
+      ],
+      "sourceFactId": "fact.hanzi.xiehouyu.16d0w26",
+      "id": "mvp.hanzi.0989",
+      "verified": true
+    },
+    {
+      "theme": "hanzi",
+      "templateId": "hanzi-xiehouyu",
+      "prompt": "“黄鼠狼给鸡拜年”的下半句",
+      "answer": "没安好心",
+      "wrong": [
+        "各显神通",
+        "自身难保",
+        "里外不是人"
+      ],
+      "sourceFactId": "fact.hanzi.xiehouyu.038hrr4",
+      "id": "mvp.hanzi.0990",
+      "verified": true
+    },
+    {
+      "theme": "hanzi",
+      "templateId": "hanzi-xiehouyu",
+      "prompt": "“外甥打灯笼”的下半句",
+      "answer": "照旧",
+      "wrong": [
+        "各显神通",
+        "自身难保",
+        "里外不是人"
+      ],
+      "sourceFactId": "fact.hanzi.xiehouyu.03ihdg3",
+      "id": "mvp.hanzi.0991",
+      "verified": true
+    },
+    {
+      "theme": "hanzi",
+      "templateId": "hanzi-xiehouyu",
+      "prompt": "“和尚打伞”的下半句",
+      "answer": "无法无天",
+      "wrong": [
+        "各显神通",
+        "自身难保",
+        "里外不是人"
+      ],
+      "sourceFactId": "fact.hanzi.xiehouyu.03sgz52",
+      "id": "mvp.hanzi.0992",
+      "verified": true
+    },
+    {
       "theme": "english",
       "templateId": "english-meaning",
       "prompt": "CAT的中文",
@@ -16559,7 +16952,7 @@
         "软体类"
       ],
       "sourceFactId": "fact.knowledge.nature.core.08cgfzf",
-      "id": "mvp.knowledge.0117",
+      "id": "mvp.knowledge.0113",
       "verified": true
     },
     {
@@ -16573,7 +16966,7 @@
         "鸵鸟"
       ],
       "sourceFactId": "fact.knowledge.nature.core.017f1dm",
-      "id": "mvp.knowledge.0118",
+      "id": "mvp.knowledge.0114",
       "verified": true
     },
     {
@@ -16587,7 +16980,7 @@
         "爪鞘"
       ],
       "sourceFactId": "fact.knowledge.nature.core.1ri5qvq",
-      "id": "mvp.knowledge.0119",
+      "id": "mvp.knowledge.0115",
       "verified": true
     },
     {
@@ -16601,7 +16994,7 @@
         "8颗"
       ],
       "sourceFactId": "fact.knowledge.nature.core.1inb5hz",
-      "id": "mvp.knowledge.0120",
+      "id": "mvp.knowledge.0116",
       "verified": true
     },
     {
@@ -16615,7 +17008,7 @@
         "血液"
       ],
       "sourceFactId": "fact.knowledge.nature.core.0av45xl",
-      "id": "mvp.knowledge.0121",
+      "id": "mvp.knowledge.0117",
       "verified": true
     },
     {
@@ -16629,7 +17022,7 @@
         "北半球"
       ],
       "sourceFactId": "fact.knowledge.nature.core.141kauh",
-      "id": "mvp.knowledge.0122",
+      "id": "mvp.knowledge.0118",
       "verified": true
     },
     {
@@ -16643,7 +17036,7 @@
         "仙人掌"
       ],
       "sourceFactId": "fact.knowledge.nature.core.17c9w18",
-      "id": "mvp.knowledge.0123",
+      "id": "mvp.knowledge.0119",
       "verified": true
     },
     {
@@ -16657,7 +17050,7 @@
         "孔雀"
       ],
       "sourceFactId": "fact.knowledge.nature.core.0ogk4po",
-      "id": "mvp.knowledge.0124",
+      "id": "mvp.knowledge.0120",
       "verified": true
     },
     {
@@ -16671,7 +17064,7 @@
         "角质"
       ],
       "sourceFactId": "fact.knowledge.nature.core.0mtryhf",
-      "id": "mvp.knowledge.0125",
+      "id": "mvp.knowledge.0121",
       "verified": true
     },
     {
@@ -16685,7 +17078,7 @@
         "陆龟"
       ],
       "sourceFactId": "fact.knowledge.nature.core.0fml3ii",
-      "id": "mvp.knowledge.0126",
+      "id": "mvp.knowledge.0122",
       "verified": true
     },
     {
@@ -16699,7 +17092,7 @@
         "鸟类"
       ],
       "sourceFactId": "fact.knowledge.nature.core.1wrwhul",
-      "id": "mvp.knowledge.0127",
+      "id": "mvp.knowledge.0123",
       "verified": true
     },
     {
@@ -16713,7 +17106,7 @@
         "哺乳类"
       ],
       "sourceFactId": "fact.knowledge.nature.core.1gvb1x0",
-      "id": "mvp.knowledge.0128",
+      "id": "mvp.knowledge.0124",
       "verified": true
     },
     {
@@ -16727,7 +17120,7 @@
         "王维"
       ],
       "sourceFactId": "fact.knowledge.culture.core.1t979c7",
-      "id": "mvp.knowledge.0233",
+      "id": "mvp.knowledge.0229",
       "verified": true
     },
     {
@@ -16741,7 +17134,7 @@
         "孟浩然"
       ],
       "sourceFactId": "fact.knowledge.culture.core.0c2rmzd",
-      "id": "mvp.knowledge.0234",
+      "id": "mvp.knowledge.0230",
       "verified": true
     },
     {
@@ -16755,7 +17148,7 @@
         "欧阳询"
       ],
       "sourceFactId": "fact.knowledge.culture.core.1dyfjfp",
-      "id": "mvp.knowledge.0235",
+      "id": "mvp.knowledge.0231",
       "verified": true
     },
     {
@@ -16769,7 +17162,7 @@
         "张择端"
       ],
       "sourceFactId": "fact.knowledge.culture.core.1770wbr",
-      "id": "mvp.knowledge.0236",
+      "id": "mvp.knowledge.0232",
       "verified": true
     },
     {
@@ -16783,7 +17176,7 @@
         "沈括"
       ],
       "sourceFactId": "fact.knowledge.culture.core.0v4cugw",
-      "id": "mvp.knowledge.0237",
+      "id": "mvp.knowledge.0233",
       "verified": true
     },
     {
@@ -16797,7 +17190,7 @@
         "扁鹊"
       ],
       "sourceFactId": "fact.knowledge.culture.core.0ph1er6",
-      "id": "mvp.knowledge.0238",
+      "id": "mvp.knowledge.0234",
       "verified": true
     },
     {
@@ -16811,7 +17204,7 @@
         "沈括"
       ],
       "sourceFactId": "fact.knowledge.culture.core.1om3sfx",
-      "id": "mvp.knowledge.0239",
+      "id": "mvp.knowledge.0235",
       "verified": true
     },
     {
@@ -16825,7 +17218,7 @@
         "孙思邈"
       ],
       "sourceFactId": "fact.knowledge.culture.core.000xrvl",
-      "id": "mvp.knowledge.0240",
+      "id": "mvp.knowledge.0236",
       "verified": true
     },
     {
@@ -16839,7 +17232,7 @@
         "郦道元"
       ],
       "sourceFactId": "fact.knowledge.culture.core.193327k",
-      "id": "mvp.knowledge.0241",
+      "id": "mvp.knowledge.0237",
       "verified": true
     },
     {
@@ -16853,7 +17246,7 @@
         "祖冲之"
       ],
       "sourceFactId": "fact.knowledge.culture.core.0zvolez",
-      "id": "mvp.knowledge.0242",
+      "id": "mvp.knowledge.0238",
       "verified": true
     },
     {
@@ -16867,7 +17260,7 @@
         "怀素"
       ],
       "sourceFactId": "fact.knowledge.culture.core.1flmvrp",
-      "id": "mvp.knowledge.0243",
+      "id": "mvp.knowledge.0239",
       "verified": true
     },
     {
@@ -16881,7 +17274,7 @@
         "阎立本"
       ],
       "sourceFactId": "fact.knowledge.culture.core.0iovp9x",
-      "id": "mvp.knowledge.0244",
+      "id": "mvp.knowledge.0240",
       "verified": true
     },
     {
@@ -16895,7 +17288,7 @@
         "聂耳"
       ],
       "sourceFactId": "fact.knowledge.civic.19quj6v",
-      "id": "mvp.knowledge.0349",
+      "id": "mvp.knowledge.0345",
       "verified": true
     },
     {
@@ -16909,7 +17302,7 @@
         "聂耳"
       ],
       "sourceFactId": "fact.knowledge.civic.0j46qpy",
-      "id": "mvp.knowledge.0350",
+      "id": "mvp.knowledge.0346",
       "verified": true
     },
     {
@@ -16923,7 +17316,7 @@
         "聂耳"
       ],
       "sourceFactId": "fact.knowledge.civic.1xz9fuu",
-      "id": "mvp.knowledge.0351",
+      "id": "mvp.knowledge.0347",
       "verified": true
     },
     {
@@ -16937,7 +17330,7 @@
         "天安门"
       ],
       "sourceFactId": "fact.knowledge.civic.0yjd41g",
-      "id": "mvp.knowledge.0352",
+      "id": "mvp.knowledge.0348",
       "verified": true
     },
     {
@@ -16951,7 +17344,7 @@
         "人民"
       ],
       "sourceFactId": "fact.knowledge.civic.0622gap",
-      "id": "mvp.knowledge.0353",
+      "id": "mvp.knowledge.0349",
       "verified": true
     },
     {
@@ -16965,7 +17358,7 @@
         "人民"
       ],
       "sourceFactId": "fact.knowledge.civic.1p6yx8e",
-      "id": "mvp.knowledge.0354",
+      "id": "mvp.knowledge.0350",
       "verified": true
     },
     {
@@ -16979,7 +17372,7 @@
         "人民"
       ],
       "sourceFactId": "fact.knowledge.civic.063xdjv",
-      "id": "mvp.knowledge.0355",
+      "id": "mvp.knowledge.0351",
       "verified": true
     },
     {
@@ -16993,7 +17386,7 @@
         "国务院"
       ],
       "sourceFactId": "fact.knowledge.civic.0irif7z",
-      "id": "mvp.knowledge.0356",
+      "id": "mvp.knowledge.0352",
       "verified": true
     },
     {
@@ -17007,7 +17400,7 @@
         "检察院"
       ],
       "sourceFactId": "fact.knowledge.civic.14f1daq",
-      "id": "mvp.knowledge.0357",
+      "id": "mvp.knowledge.0353",
       "verified": true
     },
     {
@@ -17021,7 +17414,7 @@
         "检察院"
       ],
       "sourceFactId": "fact.knowledge.civic.0x6gr9w",
-      "id": "mvp.knowledge.0358",
+      "id": "mvp.knowledge.0354",
       "verified": true
     },
     {
@@ -17035,7 +17428,7 @@
         "检察院"
       ],
       "sourceFactId": "fact.knowledge.civic.19s415q",
-      "id": "mvp.knowledge.0359",
+      "id": "mvp.knowledge.0355",
       "verified": true
     },
     {
@@ -17049,7 +17442,7 @@
         "法院"
       ],
       "sourceFactId": "fact.knowledge.civic.1gi2sel",
-      "id": "mvp.knowledge.0360",
+      "id": "mvp.knowledge.0356",
       "verified": true
     },
     {
@@ -17063,7 +17456,7 @@
         "北极星"
       ],
       "sourceFactId": "fact.knowledge.astronomy.0q3761l",
-      "id": "mvp.knowledge.0405",
+      "id": "mvp.knowledge.0497",
       "verified": true
     },
     {
@@ -17077,7 +17470,7 @@
         "木星"
       ],
       "sourceFactId": "fact.knowledge.astronomy.1qccr07",
-      "id": "mvp.knowledge.0406",
+      "id": "mvp.knowledge.0498",
       "verified": true
     },
     {
@@ -17091,7 +17484,7 @@
         "土星"
       ],
       "sourceFactId": "fact.knowledge.astronomy.057witp",
-      "id": "mvp.knowledge.0407",
+      "id": "mvp.knowledge.0499",
       "verified": true
     },
     {
@@ -17105,7 +17498,7 @@
         "海王星"
       ],
       "sourceFactId": "fact.knowledge.astronomy.0ot99xi",
-      "id": "mvp.knowledge.0408",
+      "id": "mvp.knowledge.0500",
       "verified": true
     },
     {
@@ -17119,7 +17512,7 @@
         "火星"
       ],
       "sourceFactId": "fact.knowledge.astronomy.0a4rgws",
-      "id": "mvp.knowledge.0409",
+      "id": "mvp.knowledge.0501",
       "verified": true
     },
     {
@@ -17133,7 +17526,7 @@
         "太阳自转"
       ],
       "sourceFactId": "fact.knowledge.astronomy.02lhu8z",
-      "id": "mvp.knowledge.0410",
+      "id": "mvp.knowledge.0502",
       "verified": true
     },
     {
@@ -17147,7 +17540,7 @@
         "太阳公转"
       ],
       "sourceFactId": "fact.knowledge.astronomy.0lwp0dn",
-      "id": "mvp.knowledge.0411",
+      "id": "mvp.knowledge.0503",
       "verified": true
     },
     {
@@ -17161,7 +17554,7 @@
         "猎户座"
       ],
       "sourceFactId": "fact.knowledge.astronomy.15j7e36",
-      "id": "mvp.knowledge.0412",
+      "id": "mvp.knowledge.0504",
       "verified": true
     },
     {
@@ -17175,7 +17568,7 @@
         "海王星"
       ],
       "sourceFactId": "fact.knowledge.astronomy.12uec6x",
-      "id": "mvp.knowledge.0413",
+      "id": "mvp.knowledge.0505",
       "verified": true
     },
     {
@@ -17189,7 +17582,7 @@
         "海王星"
       ],
       "sourceFactId": "fact.knowledge.astronomy.120fj40",
-      "id": "mvp.knowledge.0414",
+      "id": "mvp.knowledge.0506",
       "verified": true
     },
     {
@@ -17203,7 +17596,7 @@
         "海王星"
       ],
       "sourceFactId": "fact.knowledge.astronomy.12af4sz",
-      "id": "mvp.knowledge.0415",
+      "id": "mvp.knowledge.0507",
       "verified": true
     },
     {
@@ -17217,7 +17610,7 @@
         "地球"
       ],
       "sourceFactId": "fact.knowledge.astronomy.13od59u",
-      "id": "mvp.knowledge.0416",
+      "id": "mvp.knowledge.0508",
       "verified": true
     },
     {
@@ -17231,7 +17624,7 @@
         "消化作用"
       ],
       "sourceFactId": "fact.knowledge.biology.0u9ine4",
-      "id": "mvp.knowledge.0435",
+      "id": "mvp.knowledge.0527",
       "verified": true
     },
     {
@@ -17245,7 +17638,7 @@
         "肝"
       ],
       "sourceFactId": "fact.knowledge.biology.0zco5eg",
-      "id": "mvp.knowledge.0436",
+      "id": "mvp.knowledge.0528",
       "verified": true
     },
     {
@@ -17259,7 +17652,7 @@
         "胰腺"
       ],
       "sourceFactId": "fact.knowledge.biology.1tw5y2u",
-      "id": "mvp.knowledge.0437",
+      "id": "mvp.knowledge.0529",
       "verified": true
     },
     {
@@ -17273,7 +17666,7 @@
         "种子"
       ],
       "sourceFactId": "fact.knowledge.biology.0lj4qm5",
-      "id": "mvp.knowledge.0438",
+      "id": "mvp.knowledge.0530",
       "verified": true
     },
     {
@@ -17287,7 +17680,7 @@
         "甲壳"
       ],
       "sourceFactId": "fact.knowledge.biology.1d1xk61",
-      "id": "mvp.knowledge.0439",
+      "id": "mvp.knowledge.0531",
       "verified": true
     },
     {
@@ -17301,7 +17694,7 @@
         "气孔"
       ],
       "sourceFactId": "fact.knowledge.biology.0hzq4hc",
-      "id": "mvp.knowledge.0440",
+      "id": "mvp.knowledge.0532",
       "verified": true
     },
     {
@@ -17315,7 +17708,7 @@
         "低温冰冻"
       ],
       "sourceFactId": "fact.knowledge.biology.1x0o4un",
-      "id": "mvp.knowledge.0441",
+      "id": "mvp.knowledge.0533",
       "verified": true
     },
     {
@@ -17329,7 +17722,7 @@
         "过滤空气"
       ],
       "sourceFactId": "fact.knowledge.biology.0azjqjc",
-      "id": "mvp.knowledge.0442",
+      "id": "mvp.knowledge.0534",
       "verified": true
     },
     {
@@ -17343,7 +17736,7 @@
         "耳"
       ],
       "sourceFactId": "fact.knowledge.biology.199upop",
-      "id": "mvp.knowledge.0443",
+      "id": "mvp.knowledge.0535",
       "verified": true
     },
     {
@@ -17357,7 +17750,7 @@
         "耳"
       ],
       "sourceFactId": "fact.knowledge.biology.18fvwls",
-      "id": "mvp.knowledge.0444",
+      "id": "mvp.knowledge.0536",
       "verified": true
     },
     {
@@ -17371,7 +17764,7 @@
         "耳"
       ],
       "sourceFactId": "fact.knowledge.biology.18pviar",
-      "id": "mvp.knowledge.0445",
+      "id": "mvp.knowledge.0537",
       "verified": true
     },
     {
@@ -17385,7 +17778,7 @@
         "神经细胞"
       ],
       "sourceFactId": "fact.knowledge.biology.1a3tirm",
-      "id": "mvp.knowledge.0446",
+      "id": "mvp.knowledge.0538",
       "verified": true
     },
     {
@@ -17399,7 +17792,7 @@
         "弹力"
       ],
       "sourceFactId": "fact.knowledge.physics.14kl7pe",
-      "id": "mvp.knowledge.0465",
+      "id": "mvp.knowledge.0557",
       "verified": true
     },
     {
@@ -17413,7 +17806,7 @@
         "钢铁"
       ],
       "sourceFactId": "fact.knowledge.physics.1urn1p7",
-      "id": "mvp.knowledge.0466",
+      "id": "mvp.knowledge.0558",
       "verified": true
     },
     {
@@ -17427,7 +17820,7 @@
         "不能反射"
       ],
       "sourceFactId": "fact.knowledge.physics.17c5sg0",
-      "id": "mvp.knowledge.0467",
+      "id": "mvp.knowledge.0559",
       "verified": true
     },
     {
@@ -17441,7 +17834,7 @@
         "摩擦力"
       ],
       "sourceFactId": "fact.knowledge.physics.150izqu",
-      "id": "mvp.knowledge.0468",
+      "id": "mvp.knowledge.0560",
       "verified": true
     },
     {
@@ -17455,7 +17848,7 @@
         "弹力"
       ],
       "sourceFactId": "fact.knowledge.physics.0as93yu",
-      "id": "mvp.knowledge.0469",
+      "id": "mvp.knowledge.0561",
       "verified": true
     },
     {
@@ -17469,7 +17862,7 @@
         "齿轮"
       ],
       "sourceFactId": "fact.knowledge.physics.1debge8",
-      "id": "mvp.knowledge.0470",
+      "id": "mvp.knowledge.0562",
       "verified": true
     },
     {
@@ -17483,7 +17876,7 @@
         "导电"
       ],
       "sourceFactId": "fact.knowledge.physics.0yb7ju1",
-      "id": "mvp.knowledge.0471",
+      "id": "mvp.knowledge.0563",
       "verified": true
     },
     {
@@ -17497,7 +17890,7 @@
         "干木块"
       ],
       "sourceFactId": "fact.knowledge.physics.1n4p7kp",
-      "id": "mvp.knowledge.0472",
+      "id": "mvp.knowledge.0564",
       "verified": true
     },
     {
@@ -17511,7 +17904,7 @@
         "安培"
       ],
       "sourceFactId": "fact.knowledge.physics.0yjblcn",
-      "id": "mvp.knowledge.0473",
+      "id": "mvp.knowledge.0565",
       "verified": true
     },
     {
@@ -17525,7 +17918,7 @@
         "安培"
       ],
       "sourceFactId": "fact.knowledge.physics.0ytb71m",
-      "id": "mvp.knowledge.0474",
+      "id": "mvp.knowledge.0566",
       "verified": true
     },
     {
@@ -17539,7 +17932,7 @@
         "安培"
       ],
       "sourceFactId": "fact.knowledge.physics.0z3asql",
-      "id": "mvp.knowledge.0475",
+      "id": "mvp.knowledge.0567",
       "verified": true
     },
     {
@@ -17553,175 +17946,7 @@
         "米"
       ],
       "sourceFactId": "fact.knowledge.physics.0x5dkvs",
-      "id": "mvp.knowledge.0476",
-      "verified": true
-    },
-    {
-      "theme": "knowledge",
-      "templateId": "knowledge-technology",
-      "prompt": "计算机中负责运算控制的核心部件",
-      "answer": "CPU",
-      "wrong": [
-        "显示器",
-        "键盘",
-        "音箱"
-      ],
-      "sourceFactId": "fact.knowledge.technology.0g45flt",
-      "id": "mvp.knowledge.0495",
-      "verified": true
-    },
-    {
-      "theme": "knowledge",
-      "templateId": "knowledge-technology",
-      "prompt": "二维码主要用于",
-      "answer": "编码和读取信息",
-      "wrong": [
-        "测量温度",
-        "放大声音",
-        "净化空气"
-      ],
-      "sourceFactId": "fact.knowledge.technology.1uondf6",
-      "id": "mvp.knowledge.0496",
-      "verified": true
-    },
-    {
-      "theme": "knowledge",
-      "templateId": "knowledge-technology",
-      "prompt": "手机导航定位常使用",
-      "answer": "卫星定位",
-      "wrong": [
-        "显微镜",
-        "指南针磁化",
-        "声呐捕鱼"
-      ],
-      "sourceFactId": "fact.knowledge.technology.0zdzwbf",
-      "id": "mvp.knowledge.0497",
-      "verified": true
-    },
-    {
-      "theme": "knowledge",
-      "templateId": "knowledge-technology",
-      "prompt": "Wi-Fi主要提供",
-      "answer": "无线网络连接",
-      "wrong": [
-        "食品冷藏",
-        "机械动力",
-        "水质过滤"
-      ],
-      "sourceFactId": "fact.knowledge.technology.1qj0ur4",
-      "id": "mvp.knowledge.0498",
-      "verified": true
-    },
-    {
-      "theme": "knowledge",
-      "templateId": "knowledge-technology",
-      "prompt": "云存储通常把数据保存在",
-      "answer": "远程服务器",
-      "wrong": [
-        "纸张",
-        "电池",
-        "扬声器"
-      ],
-      "sourceFactId": "fact.knowledge.technology.03xymuu",
-      "id": "mvp.knowledge.0499",
-      "verified": true
-    },
-    {
-      "theme": "knowledge",
-      "templateId": "knowledge-technology",
-      "prompt": "更安全的密码做法是",
-      "answer": "使用不同的复杂密码",
-      "wrong": [
-        "所有网站相同",
-        "告诉陌生人",
-        "只用生日"
-      ],
-      "sourceFactId": "fact.knowledge.technology.1brooxc",
-      "id": "mvp.knowledge.0500",
-      "verified": true
-    },
-    {
-      "theme": "knowledge",
-      "templateId": "knowledge-technology",
-      "prompt": "及时安装安全更新有助于",
-      "answer": "修复已知漏洞",
-      "wrong": [
-        "耗尽电池",
-        "删除屏幕",
-        "关闭网络"
-      ],
-      "sourceFactId": "fact.knowledge.technology.0ct95i4",
-      "id": "mvp.knowledge.0501",
-      "verified": true
-    },
-    {
-      "theme": "knowledge",
-      "templateId": "knowledge-technology",
-      "prompt": "定期备份数据主要为了",
-      "answer": "防止意外丢失",
-      "wrong": [
-        "降低音量",
-        "加快充电",
-        "改变颜色"
-      ],
-      "sourceFactId": "fact.knowledge.technology.04173lj",
-      "id": "mvp.knowledge.0502",
-      "verified": true
-    },
-    {
-      "theme": "knowledge",
-      "templateId": "knowledge-technology",
-      "prompt": "RAM主要用于临时存放",
-      "answer": "运行数据",
-      "wrong": [
-        "永久文件",
-        "纸质文档",
-        "声音信号"
-      ],
-      "sourceFactId": "fact.knowledge.technology.0voi28y",
-      "id": "mvp.knowledge.0503",
-      "verified": true
-    },
-    {
-      "theme": "knowledge",
-      "templateId": "knowledge-technology",
-      "prompt": "SSD属于哪类设备",
-      "answer": "存储设备",
-      "wrong": [
-        "输入设备",
-        "输出设备",
-        "通信设备"
-      ],
-      "sourceFactId": "fact.knowledge.technology.0veigjz",
-      "id": "mvp.knowledge.0504",
-      "verified": true
-    },
-    {
-      "theme": "knowledge",
-      "templateId": "knowledge-technology",
-      "prompt": "显示器主要负责",
-      "answer": "输出图像",
-      "wrong": [
-        "管理软硬件资源",
-        "访问网页",
-        "检索网络信息"
-      ],
-      "sourceFactId": "fact.knowledge.technology.0v4iuv0",
-      "id": "mvp.knowledge.0505",
-      "verified": true
-    },
-    {
-      "theme": "knowledge",
-      "templateId": "knowledge-technology",
-      "prompt": "键盘主要属于",
-      "answer": "输入设备",
-      "wrong": [
-        "存储设备",
-        "输出设备",
-        "通信设备"
-      ],
-      "sourceFactId": "fact.knowledge.technology.0uuj961",
-      "id": "mvp.knowledge.0506",
+      "id": "mvp.knowledge.0568",
       "verified": true
     },
     {
@@ -18566,6 +18791,174 @@
     },
     {
       "theme": "history",
+      "templateId": "history-myth-person",
+      "prompt": "开天辟地的神话人物",
+      "answer": "盘古",
+      "wrong": [
+        "女娲",
+        "夸父",
+        "精卫"
+      ],
+      "sourceFactId": "fact.history.myth-person.11du7hy",
+      "id": "mvp.history.0146",
+      "verified": true
+    },
+    {
+      "theme": "history",
+      "templateId": "history-myth-person",
+      "prompt": "炼石补天的神话人物",
+      "answer": "女娲",
+      "wrong": [
+        "盘古",
+        "夸父",
+        "精卫"
+      ],
+      "sourceFactId": "fact.history.myth-person.113ulsz",
+      "id": "mvp.history.0147",
+      "verified": true
+    },
+    {
+      "theme": "history",
+      "templateId": "history-myth-person",
+      "prompt": "抟土造人的神话人物",
+      "answer": "女娲",
+      "wrong": [
+        "盘古",
+        "夸父",
+        "精卫"
+      ],
+      "sourceFactId": "fact.history.myth-person.10tv040",
+      "id": "mvp.history.0148",
+      "verified": true
+    },
+    {
+      "theme": "history",
+      "templateId": "history-myth-person",
+      "prompt": "追逐太阳的神话人物",
+      "answer": "夸父",
+      "wrong": [
+        "盘古",
+        "女娲",
+        "精卫"
+      ],
+      "sourceFactId": "fact.history.myth-person.12rs7yt",
+      "id": "mvp.history.0149",
+      "verified": true
+    },
+    {
+      "theme": "history",
+      "templateId": "history-myth-person",
+      "prompt": "衔石填海的神话人物",
+      "answer": "精卫",
+      "wrong": [
+        "盘古",
+        "女娲",
+        "夸父"
+      ],
+      "sourceFactId": "fact.history.myth-person.12hsm9u",
+      "id": "mvp.history.0150",
+      "verified": true
+    },
+    {
+      "theme": "history",
+      "templateId": "history-myth-person",
+      "prompt": "射落九个太阳的神话人物",
+      "answer": "后羿",
+      "wrong": [
+        "盘古",
+        "女娲",
+        "夸父"
+      ],
+      "sourceFactId": "fact.history.myth-person.127t0kv",
+      "id": "mvp.history.0151",
+      "verified": true
+    },
+    {
+      "theme": "history",
+      "templateId": "history-myth-person",
+      "prompt": "偷食仙药奔月的神话人物",
+      "answer": "嫦娥",
+      "wrong": [
+        "盘古",
+        "女娲",
+        "夸父"
+      ],
+      "sourceFactId": "fact.history.myth-person.11xtevw",
+      "id": "mvp.history.0152",
+      "verified": true
+    },
+    {
+      "theme": "history",
+      "templateId": "history-myth-person",
+      "prompt": "治水三过家门不入的神话人物",
+      "answer": "大禹",
+      "wrong": [
+        "盘古",
+        "女娲",
+        "夸父"
+      ],
+      "sourceFactId": "fact.history.myth-person.13vqmqp",
+      "id": "mvp.history.0153",
+      "verified": true
+    },
+    {
+      "theme": "history",
+      "templateId": "history-myth-person",
+      "prompt": "钻木取火的神话人物",
+      "answer": "燧人氏",
+      "wrong": [
+        "盘古",
+        "女娲",
+        "夸父"
+      ],
+      "sourceFactId": "fact.history.myth-person.13lr11q",
+      "id": "mvp.history.0154",
+      "verified": true
+    },
+    {
+      "theme": "history",
+      "templateId": "history-myth-person",
+      "prompt": "教民结网捕鱼的神话人物",
+      "answer": "伏羲",
+      "wrong": [
+        "盘古",
+        "女娲",
+        "夸父"
+      ],
+      "sourceFactId": "fact.history.myth-person.00h7wqo",
+      "id": "mvp.history.0155",
+      "verified": true
+    },
+    {
+      "theme": "history",
+      "templateId": "history-myth-person",
+      "prompt": "传说中画八卦的神话人物",
+      "answer": "伏羲",
+      "wrong": [
+        "盘古",
+        "女娲",
+        "夸父"
+      ],
+      "sourceFactId": "fact.history.myth-person.00r7ifn",
+      "id": "mvp.history.0156",
+      "verified": true
+    },
+    {
+      "theme": "history",
+      "templateId": "history-myth-person",
+      "prompt": "尝百草辨药性的神话人物",
+      "answer": "神农",
+      "wrong": [
+        "盘古",
+        "女娲",
+        "夸父"
+      ],
+      "sourceFactId": "fact.history.myth-person.011744m",
+      "id": "mvp.history.0157",
+      "verified": true
+    },
+    {
+      "theme": "history",
       "templateId": "history-person-event",
       "prompt": "统一六国并建立秦朝的人物",
       "answer": "秦始皇",
@@ -18575,7 +18968,7 @@
         "宋太祖"
       ],
       "sourceFactId": "fact.history.person-event.0x87w82",
-      "id": "mvp.history.0146",
+      "id": "mvp.history.0178",
       "verified": true
     },
     {
@@ -18589,7 +18982,7 @@
         "鉴真"
       ],
       "sourceFactId": "fact.history.person-event.0kolvyb",
-      "id": "mvp.history.0147",
+      "id": "mvp.history.0179",
       "verified": true
     },
     {
@@ -18603,7 +18996,7 @@
         "曾国藩"
       ],
       "sourceFactId": "fact.history.person-event.1vn7qtj",
-      "id": "mvp.history.0148",
+      "id": "mvp.history.0180",
       "verified": true
     },
     {
@@ -18617,7 +19010,7 @@
         "林则徐"
       ],
       "sourceFactId": "fact.history.person-event.0yjs7gs",
-      "id": "mvp.history.0149",
+      "id": "mvp.history.0181",
       "verified": true
     },
     {
@@ -18631,7 +19024,7 @@
         "陈寿"
       ],
       "sourceFactId": "fact.history.person-event.1nybmwp",
-      "id": "mvp.history.0150",
+      "id": "mvp.history.0182",
       "verified": true
     },
     {
@@ -18645,7 +19038,7 @@
         "孙思邈"
       ],
       "sourceFactId": "fact.history.person-event.12llfr8",
-      "id": "mvp.history.0151",
+      "id": "mvp.history.0183",
       "verified": true
     },
     {
@@ -18659,7 +19052,7 @@
         "祖冲之"
       ],
       "sourceFactId": "fact.history.person-event.1k85huc",
-      "id": "mvp.history.0152",
+      "id": "mvp.history.0184",
       "verified": true
     },
     {
@@ -18673,7 +19066,7 @@
         "玄奘"
       ],
       "sourceFactId": "fact.history.person-event.0t20otd",
-      "id": "mvp.history.0153",
+      "id": "mvp.history.0185",
       "verified": true
     },
     {
@@ -18687,7 +19080,7 @@
         "李冰"
       ],
       "sourceFactId": "fact.history.person-event.00gdkxh",
-      "id": "mvp.history.0154",
+      "id": "mvp.history.0186",
       "verified": true
     },
     {
@@ -18701,7 +19094,7 @@
         "麦哲伦"
       ],
       "sourceFactId": "fact.history.person-event.1ynitto",
-      "id": "mvp.history.0155",
+      "id": "mvp.history.0187",
       "verified": true
     },
     {
@@ -18715,7 +19108,7 @@
         "李冰"
       ],
       "sourceFactId": "fact.history.person-event.1yxifin",
-      "id": "mvp.history.0156",
+      "id": "mvp.history.0188",
       "verified": true
     },
     {
@@ -18729,7 +19122,175 @@
         "麦哲伦"
       ],
       "sourceFactId": "fact.history.person-event.1y3jmfq",
-      "id": "mvp.history.0157",
+      "id": "mvp.history.0189",
+      "verified": true
+    },
+    {
+      "theme": "history",
+      "templateId": "history-allusion-person",
+      "prompt": "典故“卧薪尝胆”对应的人物",
+      "answer": "勾践",
+      "wrong": [
+        "廉颇",
+        "蔺相如",
+        "赵括"
+      ],
+      "sourceFactId": "fact.history.allusion-person.08a0dvz",
+      "id": "mvp.history.0208",
+      "verified": true
+    },
+    {
+      "theme": "history",
+      "templateId": "history-allusion-person",
+      "prompt": "典故“负荆请罪”对应的人物",
+      "answer": "廉颇",
+      "wrong": [
+        "勾践",
+        "蔺相如",
+        "赵括"
+      ],
+      "sourceFactId": "fact.history.allusion-person.08jzzky",
+      "id": "mvp.history.0209",
+      "verified": true
+    },
+    {
+      "theme": "history",
+      "templateId": "history-allusion-person",
+      "prompt": "典故“完璧归赵”对应的人物",
+      "answer": "蔺相如",
+      "wrong": [
+        "勾践",
+        "廉颇",
+        "赵括"
+      ],
+      "sourceFactId": "fact.history.allusion-person.08tzl9x",
+      "id": "mvp.history.0210",
+      "verified": true
+    },
+    {
+      "theme": "history",
+      "templateId": "history-allusion-person",
+      "prompt": "典故“纸上谈兵”对应的人物",
+      "answer": "赵括",
+      "wrong": [
+        "勾践",
+        "廉颇",
+        "蔺相如"
+      ],
+      "sourceFactId": "fact.history.allusion-person.06w2df4",
+      "id": "mvp.history.0211",
+      "verified": true
+    },
+    {
+      "theme": "history",
+      "templateId": "history-allusion-person",
+      "prompt": "典故“指鹿为马”对应的人物",
+      "answer": "赵高",
+      "wrong": [
+        "勾践",
+        "廉颇",
+        "蔺相如"
+      ],
+      "sourceFactId": "fact.history.allusion-person.0761z43",
+      "id": "mvp.history.0212",
+      "verified": true
+    },
+    {
+      "theme": "history",
+      "templateId": "history-allusion-person",
+      "prompt": "典故“闻鸡起舞”对应的人物",
+      "answer": "祖逖",
+      "wrong": [
+        "勾践",
+        "廉颇",
+        "蔺相如"
+      ],
+      "sourceFactId": "fact.history.allusion-person.07g1kt2",
+      "id": "mvp.history.0213",
+      "verified": true
+    },
+    {
+      "theme": "history",
+      "templateId": "history-allusion-person",
+      "prompt": "典故“投笔从戎”对应的人物",
+      "answer": "班超",
+      "wrong": [
+        "勾践",
+        "廉颇",
+        "蔺相如"
+      ],
+      "sourceFactId": "fact.history.allusion-person.07q16i1",
+      "id": "mvp.history.0214",
+      "verified": true
+    },
+    {
+      "theme": "history",
+      "templateId": "history-allusion-person",
+      "prompt": "典故“凿壁偷光”对应的人物",
+      "answer": "匡衡",
+      "wrong": [
+        "勾践",
+        "廉颇",
+        "蔺相如"
+      ],
+      "sourceFactId": "fact.history.allusion-person.0a7xlqs",
+      "id": "mvp.history.0215",
+      "verified": true
+    },
+    {
+      "theme": "history",
+      "templateId": "history-allusion-person",
+      "prompt": "典故“囊萤夜读”对应的人物",
+      "answer": "车胤",
+      "wrong": [
+        "勾践",
+        "廉颇",
+        "蔺相如"
+      ],
+      "sourceFactId": "fact.history.allusion-person.0ahx7fr",
+      "id": "mvp.history.0216",
+      "verified": true
+    },
+    {
+      "theme": "history",
+      "templateId": "history-allusion-person",
+      "prompt": "典故“映雪读书”对应的人物",
+      "answer": "孙康",
+      "wrong": [
+        "勾践",
+        "廉颇",
+        "蔺相如"
+      ],
+      "sourceFactId": "fact.history.allusion-person.09o1jut",
+      "id": "mvp.history.0217",
+      "verified": true
+    },
+    {
+      "theme": "history",
+      "templateId": "history-allusion-person",
+      "prompt": "典故“程门立雪”对应的人物",
+      "answer": "杨时",
+      "wrong": [
+        "勾践",
+        "廉颇",
+        "蔺相如"
+      ],
+      "sourceFactId": "fact.history.allusion-person.09e1y5u",
+      "id": "mvp.history.0218",
+      "verified": true
+    },
+    {
+      "theme": "history",
+      "templateId": "history-allusion-person",
+      "prompt": "典故“草木皆兵”对应的人物",
+      "answer": "苻坚",
+      "wrong": [
+        "勾践",
+        "廉颇",
+        "蔺相如"
+      ],
+      "sourceFactId": "fact.history.allusion-person.0942cgv",
+      "id": "mvp.history.0219",
       "verified": true
     }
   ]

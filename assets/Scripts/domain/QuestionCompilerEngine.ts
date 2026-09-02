@@ -163,6 +163,7 @@ export class QuestionCompilerEngine {
             case 'hanzi-radical': return this.expansionTrivia(template, stage);
             case 'hanzi-homophone': return this.hanziHomophone(template, stage);
             case 'hanzi-compose': return this.expansionTrivia(template, stage);
+            case 'hanzi-xiehouyu': return this.expansionTrivia(template, stage);
             case 'english-meaning': return this.englishMeaning(template, stage);
             case 'english-category': return this.englishCategory(template, stage);
             case 'english-antonym': return this.englishAntonym(template, stage);
@@ -175,7 +176,6 @@ export class QuestionCompilerEngine {
             case 'life-place': return this.expansionTrivia(template, stage);
             case 'life-public-sign': return this.expansionTrivia(template, stage);
             case 'life-safe-behavior': return this.expansionTrivia(template, stage);
-            case 'life-process': return this.expansionOrder(template, stage);
             case 'geography-capital': return this.geographyCapital(template, stage);
             case 'geography-country': return this.geographyCountry(template, stage);
             case 'geography-continent': return this.expansionTrivia(template, stage);
@@ -189,14 +189,15 @@ export class QuestionCompilerEngine {
             case 'knowledge-astronomy': return this.expansionTrivia(template, stage);
             case 'knowledge-biology': return this.expansionTrivia(template, stage);
             case 'knowledge-physics': return this.expansionTrivia(template, stage);
-            case 'knowledge-technology': return this.expansionTrivia(template, stage);
             case 'history-modern-opening': return this.trivia(template, stage, 'history-modern-opening', [...HISTORY_MODERN_OPENING_FACTS, ...EXPANSION_TRIVIA_PACKS['history-modern-opening']!]);
             case 'history-modern-awakening': return this.trivia(template, stage, 'history-modern-awakening', [...HISTORY_MODERN_AWAKENING_FACTS, ...EXPANSION_TRIVIA_PACKS['history-modern-awakening']!]);
             case 'history-modern-resistance': return this.trivia(template, stage, 'history-modern-resistance', [...HISTORY_MODERN_RESISTANCE_FACTS, ...EXPANSION_TRIVIA_PACKS['history-modern-resistance']!]);
             case 'history-ancient': return this.trivia(template, stage, 'history-ancient', [...HISTORY_ANCIENT_FACTS, ...EXPANSION_TRIVIA_PACKS['history-ancient']!]);
             case 'history-myth': return this.trivia(template, stage, 'history-myth', [...HISTORY_MYTH_FACTS, ...EXPANSION_TRIVIA_PACKS['history-myth']!]);
+            case 'history-myth-person': return this.expansionTrivia(template, stage);
             case 'history-chronology': return this.expansionOrder(template, stage);
             case 'history-person-event': return this.expansionTrivia(template, stage);
+            case 'history-allusion-person': return this.expansionTrivia(template, stage);
             default: throw new Error(`Unknown question template: ${String(template.id)}`);
         }
     }
@@ -346,22 +347,25 @@ export class QuestionCompilerEngine {
     }
 
     private mathCompare(template: QuestionTemplate, stage: Stage): QuestionInstance {
-        const count = this.nonBombTargetCount();
-        const values = this.uniqueNumbers(count, 5, 50 + this.difficultyIndex * 25 + stage * 80);
-        const largest = this.difficultyIndex % 2 === 0;
-        const answer = largest ? Math.max(...values) : Math.min(...values);
-        return this.makeChoice(template, largest ? '最大的' : '最小的', answer, values, stage);
+        const count = Math.max(3, this.nonBombTargetCount());
+        const values = this.uniqueNumbers(count, 5, 99);
+        const largest = this.rng.next() < 0.5;
+        const maxRank = Math.min(count - 1, 2 + Math.floor(this.difficultyIndex / 2));
+        const rank = this.rng.int(2, maxRank);
+        const sorted = [...values].sort((a, b) => a - b);
+        const answer = sorted[largest ? sorted.length - rank : rank - 1];
+        const rankLabels = ['', '第一', '第二', '第三', '第四', '第五'];
+        return this.makeChoice(template, `${rankLabels[rank]}${largest ? '大' : '小'}的`, answer, values, stage);
     }
 
     private mathSequence(template: QuestionTemplate, stage: Stage): QuestionInstance {
         if (this.directive.rules.includes('order')) {
             const descending = this.rng.next() < 0.5;
             const expressions = !this.directive.rules.includes('rotate') && this.rng.next() < 0.65;
-            const values = this.uniqueNumbers(this.nonBombTargetCount(), 100, 399 + this.difficultyIndex * 100 + stage * 100);
-            const source = values.map((value, sourceIndex) => ({
-                value,
-                text: expressions ? this.orderExpression(value, sourceIndex) : String(value),
-            }));
+            const count = this.nonBombTargetCount();
+            const source = expressions
+                ? this.orderExpressions(count)
+                : this.uniqueNumbers(count, 20, 89).map((value) => ({ value, text: String(value) }));
             const targets: TargetSpec[] = this.rng.shuffle(source)
                 .map((item, index) => ({ id: `o${index}`, text: item.text, value: item.value }));
             const direction = descending ? -1 : 1;
@@ -372,8 +376,8 @@ export class QuestionCompilerEngine {
                 : `数字${descending ? '降序' : '升序'}`;
             return this.make(template, prompt, targets, ordered, ['order'], stage, ordered);
         }
-        const step = 11 + this.difficultyIndex * 3 + stage * 5;
-        const start = this.rng.int(100, 399 + stage * 100);
+        const step = 3 + this.difficultyIndex + stage * 2;
+        const start = this.rng.int(10, 99 - step * 5);
         const answer = start + step * 3;
         return this.makeChoice(template, `${start},${start + step},${start + step * 2},?`, answer, [answer - step, answer + step, answer + 1, answer - 1, answer + step * 2], stage);
     }
@@ -389,13 +393,34 @@ export class QuestionCompilerEngine {
         return this.pickFact(`mvp-${templateId}-d${this.directive.difficulty}`, pool, (question) => question.id);
     }
 
-    private orderExpression(value: number, index: number): string {
-        if (index % 2 === 0) {
-            const addend = this.rng.int(10, value - 10);
-            return `${value - addend}+${addend}`;
+    private orderExpressions(count: number): Array<{ value: number; text: string }> {
+        const pools: Array<Array<{ value: number; text: string }>> = [[], [], [], []];
+        for (let left = 1; left <= 20; left += 1) for (let right = 1; right <= 20; right += 1) {
+            pools[0].push({ value: left + right, text: `${left}+${right}` });
+            if (left > right) pools[1].push({ value: left - right, text: `${left}-${right}` });
         }
-        const offset = this.rng.int(10, 99);
-        return `${value + offset}-${offset}`;
+        for (let left = 2; left <= 10; left += 1) for (let right = 2; right <= 10; right += 1) {
+            pools[2].push({ value: left * right, text: `${left}×${right}` });
+            if (left % right === 0) pools[3].push({ value: left / right, text: `${left}÷${right}` });
+        }
+        const selected: Array<{ value: number; text: string }> = [];
+        const usedValues = new Set<number>();
+        for (const pool of this.rng.shuffle(pools)) {
+            const candidates = this.rng.shuffle(pool).filter((item) => !usedValues.has(item.value));
+            if (!candidates.length) continue;
+            selected.push(candidates[0]);
+            usedValues.add(candidates[0].value);
+            if (selected.length === count) return selected;
+        }
+        const remaining: Array<{ value: number; text: string }> = [];
+        for (const pool of pools) for (const item of pool) if (!usedValues.has(item.value)) remaining.push(item);
+        for (const item of this.rng.shuffle(remaining)) {
+            if (usedValues.has(item.value)) continue;
+            selected.push(item);
+            usedValues.add(item.value);
+            if (selected.length === count) break;
+        }
+        return selected;
     }
 
     private mathMissing(template: QuestionTemplate, stage: Stage): QuestionInstance {
@@ -662,12 +687,17 @@ export class QuestionCompilerEngine {
     }
 
     private mathFractionCompare(template: QuestionTemplate, stage: Stage): QuestionInstance {
-        const denominator = this.rng.int(4, 8 + this.difficultyIndex + stage);
+        const denominator = this.rng.int(4, 9);
         const left = this.rng.int(1, denominator - 2);
         const right = this.rng.int(left + 1, denominator - 1);
         const larger = `${right}/${denominator}`;
-        return this.makeChoice(template, '选择较大的分数', larger,
-            [`${left}/${denominator}`, `${left}/${denominator + 1}`, `${right - 1}/${denominator + 1}`, `${left + 1}/${denominator + 2}`], stage);
+        const candidates: string[] = [];
+        for (let candidateDenominator = 2; candidateDenominator <= 9; candidateDenominator += 1) {
+            for (let numerator = 1; numerator < candidateDenominator; numerator += 1) {
+                if (numerator / candidateDenominator < right / denominator) candidates.push(`${numerator}/${candidateDenominator}`);
+            }
+        }
+        return this.makeChoice(template, '选择较大的分数', larger, candidates, stage);
     }
 
     private hanziPinyin(template: QuestionTemplate, stage: Stage): QuestionInstance {

@@ -37,7 +37,6 @@ const TYPE_SAFE_DISTRACTORS: Readonly<Record<string, readonly string[]>> = {
     property: ['热胀冷缩', '导电性', '弹性', '磁性'],
     state: ['固体', '液体', '气体', '等离子体'],
     trend: ['变大', '变小', '不变', '先变大后变小'],
-    'device-category': ['输入设备', '输出设备', '存储设备', '通信设备'],
     covering: ['鳞片', '羽毛', '毛发', '甲壳'],
     food: ['乳汁', '植物', '昆虫', '小鱼'],
     organism: ['青蛙', '蜥蜴', '麻雀', '鲫鱼'],
@@ -76,13 +75,7 @@ const TYPE_SAFE_DISTRACTORS: Readonly<Record<string, readonly string[]>> = {
     'physical-quantity': ['距离', '时间', '质量', '温度'],
     'astronomy-property': ['恒星自身发光', '行星自身发光', '恒星围绕行星运行', '二者都不发光'],
     building: ['长城', '故宫', '天坛', '大运河'],
-    'storage-content': ['运行数据', '永久文件', '纸质文档', '声音信号'],
     energy: ['电能', '热能', '机械能', '化学能'],
-    driver: ['电动机', '内燃机', '蒸汽机', '液压泵'],
-    sensor: ['传感器', '显示器', '扬声器', '打印机'],
-    'training-resource': ['数据和算法', '燃料和齿轮', '纸张和油墨', '水和肥料'],
-    manufacturing: ['逐层制造', '整体切削', '手工浇筑', '自然生长'],
-    connection: ['短距离无线连接', '近距离通信', '有线网络连接', '卫星通信连接'],
 };
 
 function relationAnswerGroup(prefix: string, prompt: string, answer: string): string {
@@ -122,7 +115,6 @@ function relationAnswerGroup(prefix: string, prompt: string, answer: string): st
     if (/什么性质/.test(prompt)) return 'property';
     if (/变成/.test(prompt)) return 'state';
     if (/体积通常/.test(prompt)) return 'trend';
-    if (/哪类设备|主要属于/.test(prompt)) return 'device-category';
     if (/身体表面.*覆盖/.test(prompt)) return 'covering';
     if (/为食/.test(prompt)) return 'food';
     if (/典型代表/.test(prompt)) return 'organism';
@@ -155,13 +147,7 @@ function relationAnswerGroup(prefix: string, prompt: string, answer: string): st
     if (/压力大小等于压力除以/.test(prompt)) return 'area';
     if (prefix.includes('history.myth') && /名字/.test(prompt)) return 'myth-person';
     if (/哪处建筑/.test(prompt)) return 'building';
-    if (/临时存放/.test(prompt)) return 'storage-content';
     if (/光能转为/.test(prompt)) return 'energy';
-    if (/什么驱动/.test(prompt)) return 'driver';
-    if (/感知环境.*使用/.test(prompt)) return 'sensor';
-    if (/人工智能训练.*需要/.test(prompt)) return 'training-resource';
-    if (/方式成形/.test(prompt)) return 'manufacturing';
-    if (/什么连接|NFC常用于/.test(prompt)) return 'connection';
     if (/器官|哪个器官|主要场所/.test(prompt)) return 'organ';
     if (/行星|哪个天体|绕什么运行|谁位于日/.test(prompt)) return 'celestial';
     if (/发生地|城市|成立地|地点|陪都|岛屿|位于/.test(prompt) && !prefix.includes('position')) return 'place';
@@ -191,6 +177,28 @@ function relationFacts(prefix: string, rows: readonly (readonly [string, string]
 }
 
 export const EXPANSION_TRIVIA_PACKS: Readonly<Partial<Record<QuestionTemplateId, readonly ExpansionTriviaFact[]>>> = {
+    'hanzi-xiehouyu': relationFacts('hanzi.xiehouyu', [
+        ['“八仙过海”的下半句', '各显神通'], ['“泥菩萨过江”的下半句', '自身难保'],
+        ['“猪八戒照镜子”的下半句', '里外不是人'], ['“孔夫子搬家”的下半句', '尽是书'],
+        ['“小葱拌豆腐”的下半句', '一清二白'], ['“芝麻开花”的下半句', '节节高'],
+        ['“竹篮打水”的下半句', '一场空'], ['“十五个吊桶打水”的下半句', '七上八下'],
+        ['“擀面杖吹火”的下半句', '一窍不通'], ['“黄鼠狼给鸡拜年”的下半句', '没安好心'],
+        ['“外甥打灯笼”的下半句', '照旧'], ['“和尚打伞”的下半句', '无法无天'],
+        ['“哑巴吃黄连”的下半句', '有苦说不出'], ['“老鼠过街”的下半句', '人人喊打'],
+        ['“丈二和尚”的下半句', '摸不着头脑'], ['“狗拿耗子”的下半句', '多管闲事'],
+        ['“骑驴看唱本”的下半句', '走着瞧'], ['“门缝里看人”的下半句', '把人看扁了'],
+        ['“瞎子点灯”的下半句', '白费蜡'], ['“肉包子打狗”的下半句', '有去无回'],
+        ['“猫哭耗子”的下半句', '假慈悲'], ['“井底青蛙”的下半句', '目光短浅'],
+        ['“飞蛾扑火”的下半句', '自取灭亡'], ['“姜太公钓鱼”的下半句', '愿者上钩'],
+        ['“刘备借荆州”的下半句', '有借无还'], ['“徐庶进曹营”的下半句', '一言不发'],
+        ['“张飞穿针”的下半句', '大眼瞪小眼'], ['“关公面前耍大刀”的下半句', '自不量力'],
+        ['“铁打的公鸡”的下半句', '一毛不拔'], ['“热锅上的蚂蚁”的下半句', '团团转'],
+        ['“赶鸭子上架”的下半句', '强人所难'], ['“船到桥头”的下半句', '自然直'],
+        ['“打开天窗”的下半句', '说亮话'], ['“百米赛跑”的下半句', '分秒必争'],
+        ['“茶壶里煮饺子”的下半句', '有货倒不出'], ['“钉头碰钉子”的下半句', '硬碰硬'],
+        ['“秋后的蚂蚱”的下半句', '蹦跶不了几天'], ['“墙上茅草”的下半句', '随风两边倒'],
+        ['“王婆卖瓜”的下半句', '自卖自夸'], ['“隔着门缝吹喇叭”的下半句', '名声在外'],
+    ]),
     'hanzi-radical': [
         { id: 'radical.休', prompt: '“休”的部首', answer: '亻', wrong: ['木', '人', '十'] },
         { id: 'radical.江', prompt: '“江”的部首', answer: '氵', wrong: ['工', '水', '冫'] },
@@ -435,24 +443,6 @@ export const EXPANSION_TRIVIA_PACKS: Readonly<Partial<Record<QuestionTemplateId,
             ['潜水艇改变浮沉主要调节', '自身重力'], ['压力大小等于压力除以', '受力面积'],
         ]),
     ],
-    'knowledge-technology': [
-        { id: 'tech.cpu', prompt: '计算机中负责运算控制的核心部件', answer: 'CPU', wrong: ['显示器', '键盘', '音箱'] },
-        { id: 'tech.qr', prompt: '二维码主要用于', answer: '编码和读取信息', wrong: ['测量温度', '放大声音', '净化空气'] },
-        { id: 'tech.gps', prompt: '手机导航定位常使用', answer: '卫星定位', wrong: ['显微镜', '指南针磁化', '声呐捕鱼'] },
-        { id: 'tech.wifi', prompt: 'Wi-Fi主要提供', answer: '无线网络连接', wrong: ['食品冷藏', '机械动力', '水质过滤'] },
-        { id: 'tech.cloud', prompt: '云存储通常把数据保存在', answer: '远程服务器', wrong: ['纸张', '电池', '扬声器'] },
-        { id: 'tech.password', prompt: '更安全的密码做法是', answer: '使用不同的复杂密码', wrong: ['所有网站相同', '告诉陌生人', '只用生日'] },
-        { id: 'tech.update', prompt: '及时安装安全更新有助于', answer: '修复已知漏洞', wrong: ['耗尽电池', '删除屏幕', '关闭网络'] },
-        { id: 'tech.backup', prompt: '定期备份数据主要为了', answer: '防止意外丢失', wrong: ['降低音量', '加快充电', '改变颜色'] },
-        ...relationFacts('tech.extra', [
-            ['RAM主要用于临时存放', '运行数据'], ['SSD属于哪类设备', '存储设备'], ['显示器主要负责', '输出图像'], ['键盘主要属于', '输入设备'],
-            ['操作系统主要负责', '管理软硬件资源'], ['浏览器主要用于', '访问网页'], ['搜索引擎主要用于', '检索网络信息'], ['电子邮件主要用于', '传递电子信件'],
-            ['蓝牙适合进行什么连接', '短距离无线连接'], ['NFC常用于', '近距离通信'], ['USB接口常用于', '连接设备传输数据'], ['压缩文件主要为了', '减小存储体积'],
-            ['防火墙主要用于', '过滤网络访问'], ['验证码主要用于', '确认操作者身份'], ['双重验证主要提高', '账户安全性'], ['钓鱼网站常伪装成', '可信网站'],
-            ['人工智能训练通常需要', '数据和算法'], ['机器人感知环境常使用', '传感器'], ['太阳能电池板把光能转为', '电能'], ['电动汽车主要由什么驱动', '电动机'],
-            ['3D打印通过什么方式成形', '逐层制造'], ['条形码主要用于', '标识商品信息'],
-        ]),
-    ],
     'history-modern-opening': relationFacts('history.opening.extra', [
         ['《南京条约》签订于哪一年', '1842年'], ['第二次鸦片战争开始于哪一年', '1856年'], ['火烧圆明园发生于哪一年', '1860年'],
         ['洋务运动前期主要口号', '自强'], ['洋务运动后期主要口号', '求富'], ['创办江南制造总局的人物', '李鸿章'],
@@ -484,6 +474,24 @@ export const EXPANSION_TRIVIA_PACKS: Readonly<Partial<Record<QuestionTemplateId,
         ['哪吒使用的兵器之一', '火尖枪'], ['孙悟空的兵器', '金箍棒'], ['二郎神额头上的特征', '第三只眼'], ['牛郎织女相会的日子', '七夕'],
         ['白蛇传中白娘子的名字', '白素贞'], ['孟姜女传说与哪处建筑有关', '长城'],
     ]),
+    'history-myth-person': relationFacts('history.myth-person', [
+        ['开天辟地的神话人物', '盘古'], ['炼石补天的神话人物', '女娲'],
+        ['抟土造人的神话人物', '女娲'], ['追逐太阳的神话人物', '夸父'],
+        ['衔石填海的神话人物', '精卫'], ['射落九个太阳的神话人物', '后羿'],
+        ['偷食仙药奔月的神话人物', '嫦娥'], ['治水三过家门不入的神话人物', '大禹'],
+        ['钻木取火的神话人物', '燧人氏'], ['教民结网捕鱼的神话人物', '伏羲'],
+        ['传说中画八卦的神话人物', '伏羲'], ['尝百草辨药性的神话人物', '神农'],
+        ['失去头颅仍挥舞干戚的神话人物', '刑天'], ['怒触不周山的神话人物', '共工'],
+        ['传说中创造文字的神话人物', '仓颉'], ['传说中教民养蚕的神话人物', '嫘祖'],
+        ['传说中教民种植五谷的神话人物', '后稷'], ['移走太行王屋二山的传说人物', '愚公'],
+        ['在月宫不断砍桂树的神话人物', '吴刚'], ['每年七夕与织女相会的人物', '牛郎'],
+        ['在天河边织造云锦的神话人物', '织女'], ['哭倒长城的传说人物', '孟姜女'],
+        ['水漫金山的传说人物', '白素贞'], ['闹东海后以莲花化身的人物', '哪吒'],
+        ['大闹天宫的神话人物', '孙悟空'], ['拥有第三只眼的神话人物', '二郎神'],
+        ['主持封神的传说人物', '姜子牙'], ['长有风雷双翅的神话人物', '雷震子'],
+        ['盗取息壤治水的神话人物', '鲧'], ['与黄帝大战于涿鹿的神话人物', '蚩尤'],
+        ['在涿鹿之战击败蚩尤的传说人物', '黄帝'], ['传说中掌管火的神话人物', '祝融'],
+    ]),
     'history-person-event': [
         { id: 'person.qin', prompt: '统一六国并建立秦朝的人物', answer: '秦始皇', wrong: ['汉武帝', '唐太宗', '宋太祖'] },
         { id: 'person.zhenghe', prompt: '明代率船队七下西洋的人物', answer: '郑和', wrong: ['张骞', '玄奘', '鉴真'] },
@@ -504,6 +512,28 @@ export const EXPANSION_TRIVIA_PACKS: Readonly<Partial<Record<QuestionTemplateId,
             ['领导美国独立战争的重要人物', '华盛顿'],
         ]),
     ],
+    'history-allusion-person': relationFacts('history.allusion-person', [
+        ['典故“卧薪尝胆”对应的人物', '勾践'], ['典故“负荆请罪”对应的人物', '廉颇'],
+        ['典故“完璧归赵”对应的人物', '蔺相如'], ['典故“纸上谈兵”对应的人物', '赵括'],
+        ['典故“指鹿为马”对应的人物', '赵高'], ['典故“闻鸡起舞”对应的人物', '祖逖'],
+        ['典故“投笔从戎”对应的人物', '班超'], ['典故“凿壁偷光”对应的人物', '匡衡'],
+        ['典故“囊萤夜读”对应的人物', '车胤'], ['典故“映雪读书”对应的人物', '孙康'],
+        ['典故“程门立雪”对应的人物', '杨时'], ['典故“草木皆兵”对应的人物', '苻坚'],
+        ['典故“破釜沉舟”对应的人物', '项羽'], ['典故“三顾茅庐”对应的人物', '刘备'],
+        ['典故“鞠躬尽瘁”对应的人物', '诸葛亮'], ['典故“草船借箭”对应的人物', '诸葛亮'],
+        ['典故“乐不思蜀”对应的人物', '刘禅'], ['典故“七步成诗”对应的人物', '曹植'],
+        ['典故“望梅止渴”对应的人物', '曹操'], ['典故“洛阳纸贵”对应的人物', '左思'],
+        ['典故“东山再起”对应的人物', '谢安'], ['典故“入木三分”对应的人物', '王羲之'],
+        ['典故“画龙点睛”对应的人物', '张僧繇'], ['典故“江郎才尽”对应的人物', '江淹'],
+        ['典故“铁杵成针”对应的人物', '李白'], ['典故“毛遂自荐”对应的人物', '毛遂'],
+        ['典故“一饭千金”对应的人物', '韩信'], ['典故“退避三舍”对应的人物', '晋文公'],
+        ['典故“老马识途”对应的人物', '管仲'], ['典故“围魏救赵”对应的人物', '孙膑'],
+        ['典故“讳疾忌医”对应的人物', '蔡桓公'], ['典故“高山流水”对应的人物', '伯牙'],
+        ['典故“孟母三迁”对应的人物', '孟母'], ['典故“悬梁苦读”对应的人物', '孙敬'],
+        ['典故“锥刺股”对应的人物', '苏秦'], ['典故“精忠报国”对应的人物', '岳飞'],
+        ['典故“金屋藏娇”对应的人物', '汉武帝'], ['典故“不为五斗米折腰”对应的人物', '陶渊明'],
+        ['典故“口蜜腹剑”对应的人物', '李林甫'], ['典故“胯下之辱”对应的人物', '韩信'],
+    ]),
 };
 
 export const EXPANSION_ORDER_PACKS: Readonly<Partial<Record<QuestionTemplateId, readonly OrderedFact[]>>> = {
@@ -538,38 +568,6 @@ export const EXPANSION_ORDER_PACKS: Readonly<Partial<Record<QuestionTemplateId, 
         { id: 'sentence.extra.20', prompt: '组成英语句子', parts: ['THAT', 'BOX', 'IS', 'HEAVY'] },
         { id: 'sentence.extra.21', prompt: '组成英语句子', parts: ['CHILDREN', 'PLAY', 'IN', 'THE', 'PARK'] },
         { id: 'sentence.extra.22', prompt: '组成英语句子', parts: ['STUDENTS', 'READ', 'IN', 'THE', 'LIBRARY'] },
-    ],
-    'life-process': [
-        { id: 'process.handwash', prompt: '洗手', parts: ['打湿双手', '涂洗手液', '揉搓双手', '冲净擦干'] },
-        { id: 'process.toothbrush', prompt: '刷牙', parts: ['挤牙膏', '刷牙齿', '漱口', '清洗牙刷'] },
-        { id: 'process.cook-rice', prompt: '电饭锅煮饭', parts: ['量取大米', '淘米加水', '按煮饭键', '等待煮熟'] },
-        { id: 'process.mail', prompt: '寄快递', parts: ['包装物品', '填写信息', '交给快递员', '查询物流'] },
-        { id: 'process.bus', prompt: '乘公交', parts: ['查看线路', '排队候车', '上车付费', '到站下车'] },
-        { id: 'process.library', prompt: '借书', parts: ['查找图书', '取下图书', '办理借阅', '按期归还'] },
-        { id: 'process.laundry', prompt: '洗衣', parts: ['分类衣物', '放入洗衣机', '启动洗涤', '取出晾晒'] },
-        { id: 'process.recycle', prompt: '扔垃圾', parts: ['确认类别', '找到对应桶', '分类投放', '清洁双手'] },
-        { id: 'process.extra.01', prompt: '泡茶', parts: ['准备茶具', '放入茶叶', '注入热水', '等待冲泡'] },
-        { id: 'process.extra.02', prompt: '整理书包', parts: ['看课程表', '取出书本', '装入书包', '检查文具'] },
-        { id: 'process.extra.03', prompt: '雨天收伞', parts: ['进入避雨处', '抖落雨水', '收拢雨伞', '放入伞架'] },
-        { id: 'process.extra.04', prompt: '网购收货', parts: ['查看物流', '核对包裹', '开箱验货', '确认收货'] },
-        { id: 'process.extra.05', prompt: '乘火车', parts: ['购买车票', '通过安检', '检票进站', '按座乘车'] },
-        { id: 'process.extra.06', prompt: '看病', parts: ['预约挂号', '医生问诊', '检查诊断', '遵医嘱治疗'] },
-        { id: 'process.extra.07', prompt: '做作业', parts: ['准备用品', '阅读题目', '完成作答', '检查订正'] },
-        { id: 'process.extra.08', prompt: '用灭火器', parts: ['提起瓶体', '拔保险销', '对准火根', '压柄喷射'] },
-        { id: 'process.extra.09', prompt: '晨起准备', parts: ['起床穿衣', '刷牙洗脸', '整理床铺', '准备早餐'] },
-        { id: 'process.extra.10', prompt: '晾晒衣物', parts: ['洗净衣物', '取出抖平', '挂上衣架', '放到通风处'] },
-        { id: 'process.extra.11', prompt: '打印文件', parts: ['打开文件', '检查页面', '选择打印机', '确认打印'] },
-        { id: 'process.extra.12', prompt: '用微波炉', parts: ['放入适用容器', '关好炉门', '设置时间', '戴手套取出'] },
-        { id: 'process.extra.13', prompt: '乘电梯', parts: ['按呼梯键', '等待停稳', '先下后上', '按楼层'] },
-        { id: 'process.extra.14', prompt: '种盆栽', parts: ['备好盆土', '放入种子', '覆土浇水', '放到适宜处'] },
-        { id: 'process.extra.15', prompt: '做沙拉', parts: ['清洗食材', '切分食材', '放入容器', '加调料拌匀'] },
-        { id: 'process.extra.16', prompt: '骑共享单车', parts: ['找到车辆', '扫码解锁', '安全骑行', '停车上锁'] },
-        { id: 'process.extra.17', prompt: '入住酒店', parts: ['出示证件', '办理登记', '领取房卡', '找到房间'] },
-        { id: 'process.extra.18', prompt: '超市结账', parts: ['挑选商品', '前往收银台', '核对付款', '取走商品'] },
-        { id: 'process.extra.19', prompt: '处理擦伤', parts: ['清洁双手', '冲洗伤口', '消毒处理', '盖上敷料'] },
-        { id: 'process.extra.20', prompt: 'ATM取款', parts: ['插卡或扫码', '验证身份', '选择金额', '取现金和卡'] },
-        { id: 'process.extra.21', prompt: '整理房间', parts: ['分类物品', '归位收纳', '清扫地面', '开窗通风'] },
-        { id: 'process.extra.22', prompt: '参加考试', parts: ['准备文具', '进入考场', '阅读要求', '答完检查'] },
     ],
     'history-chronology': [
         { id: 'chronology.dynasty-1', prompt: '按朝代先后排序', parts: ['秦', '汉', '唐', '宋'] },

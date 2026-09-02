@@ -26,7 +26,7 @@ import {
 import { showResultOverlay, showTowerResultOverlay } from './ResultOverlay';
 import { ACTIVE_TARGET_SKINS, ALL_TARGET_SKINS, targetShapeForSkin, targetSkinForAnswer, uniqueColorTargetSkins } from './TargetSkinSizing';
 import { applyGameFont, applyGameFontToTree, setGameFontMetrics } from './GameFont';
-import { towerOpeningTextPresentation } from './TargetTypography';
+import { promptTextPresentation, towerOpeningTextPresentation } from './TargetTypography';
 
 const { ccclass } = _decorator;
 const INK = new Color(45,43,39,255), PAPER = new Color(255,250,236,255), RED = new Color(174,69,61,255), GREEN = new Color(109,152,106,255), BLUE = new Color(91,133,156,255), YELLOW = new Color(226,184,67,255);
@@ -116,7 +116,7 @@ export class GameplayMVP extends Component {
     }
     private applyVisibleLayout():void{const background=this.node.getChildByName('Background')?.getComponent(Sprite);if(!background||!this.score)return;const v=view.getVisibleSize();ui(this.node,v.width,v.height);for(const layer of [background.node,this.targets,this.trail.node,this.effects,this.floats])ui(layer,v.width,v.height);this.layoutStaticHud(v.width,v.height);this.layoutHandDrawnChrome(v.width,v.height);this.layoutTowerReadyCard(v.width);}
     private layoutStaticHud(width:number,height:number):void{const y=height/2-150,promptY=y+PROMPT_CONTENT_LIFT;this.score.node.active=false;this.combo.node.active=true;setGameFontMetrics(this.combo,44,53);this.combo.color=INK;this.combo.node.setPosition(-width/2+96,y+3);this.prompt.node.setPosition(0,promptY);this.fitPromptTypography(this.prompt.string);this.ruleBadge?.setPosition(0,promptY-55);this.rule.node.setPosition(0,promptY-55);this.timer.node.setPosition(width/2-TIMER_LABEL_RIGHT_INSET,y+4);this.life.node.active=false;}
-    private fitPromptTypography(value:string):void{const length=[...value.trim()].length,size=length<=4?44:length<=6?38:length<=9?32:26;setGameFontMetrics(this.prompt,size,Math.ceil(size*1.16));this.prompt.enableWrapText=false;this.prompt.overflow=Label.Overflow.SHRINK;ui(this.prompt.node,258,64);}
+    private fitPromptTypography(value:string):void{const presentation=promptTextPresentation(value);setGameFontMetrics(this.prompt,presentation.fontSize,presentation.lineHeight);this.prompt.enableWrapText=false;this.prompt.overflow=Label.Overflow.SHRINK;ui(this.prompt.node,presentation.width,presentation.height);}
     private prepareRuleBadge():void{
         let badge=this.node.getChildByName('RuleBadge')??this.rule.node.getChildByName('Badge');
         if(badge?.parent===this.rule.node){const ruleIndex=this.rule.node.getSiblingIndex();badge.removeFromParent();badge.name='RuleBadge';this.node.addChild(badge);badge.setSiblingIndex(ruleIndex);}

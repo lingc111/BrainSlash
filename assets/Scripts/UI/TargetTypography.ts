@@ -16,6 +16,28 @@ export interface MultilineTextPresentation {
     displaySeconds: number;
 }
 
+export interface PromptTextPresentation {
+    fontSize: number;
+    lineHeight: number;
+    width: number;
+    height: number;
+}
+
+/** Uses the prompt paper's inner width before asking Cocos to shrink long copy. */
+export function promptTextPresentation(value: string): PromptTextPresentation {
+    const length = Array.from(value.trim()).length;
+    const fontSize = length <= 4 ? 44
+        : length <= 6 ? 40
+            : length <= 10 ? 34
+                : length <= 14 ? 30 : 28;
+    return {
+        fontSize,
+        lineHeight: Math.ceil(fontSize * 1.16),
+        width: 350,
+        height: 64,
+    };
+}
+
 /** Fits tower opening copy inside the portrait safe area instead of inheriting the READY label size. */
 export function towerOpeningTextPresentation(
     title: string,

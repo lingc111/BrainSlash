@@ -245,7 +245,7 @@ function makeConfig(
 }
 
 function allThemes(): Readonly<Partial<Record<ThemeId, number>>> {
-    return { math: 3, vision: 3, hanzi: 2, english: 2, life: 1, geography: 1, knowledge: 2, history: 2 };
+    return { math: 3, vision: 3, hanzi: 2, english: 2, life: 1, geography: 1, knowledge: 4, history: 2 };
 }
 
 export function towerTimeBonus(remainingMs: number | undefined): number {

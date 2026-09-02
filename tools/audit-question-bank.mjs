@@ -124,7 +124,15 @@ for (const [index, question] of MVP_QUESTION_INVENTORY.entries()) {
 if (QUESTION_TEMPLATES.some((template) => template.id === 'math-rounding' || template.tags.includes('rounding'))) errors.push('rounding template must not exist');
 if (QUESTION_TEMPLATES.some((template) => template.id === 'english-first-letter')
     || MVP_QUESTION_INVENTORY.some((question) => /首字母/.test(question.prompt))) errors.push('English first-letter questions must not exist');
-if (MVP_QUESTION_INVENTORY.length !== 10_000) errors.push(`MVP inventory must contain exactly 10000 questions, got ${MVP_QUESTION_INVENTORY.length}`);
+if (QUESTION_TEMPLATES.some((template) => template.id === 'life-process' || template.id === 'knowledge-technology')) {
+  errors.push('verbose life processes and technology trivia templates must not exist');
+}
+const computerTerms = /计算机|CPU|RAM|SSD|内存|硬盘|操作系统|浏览器|搜索引擎|Wi-?Fi|云存储|人工智能/;
+if (MVP_QUESTION_INVENTORY.some((question) => question.theme === 'knowledge'
+    && computerTerms.test(`${question.prompt}|${question.answer}|${question.wrong.join('|')}`))) {
+  errors.push('computer trivia remains in the knowledge inventory');
+}
+if (MVP_QUESTION_INVENTORY.length < 10_000) errors.push(`MVP inventory fell below the original 10000-question baseline: ${MVP_QUESTION_INVENTORY.length}`);
 for (const [theme, target] of Object.entries(MVP_THEME_TARGETS)) {
   if (inventoryByTheme[theme] !== target) errors.push(`${theme}: expected ${target} MVP questions, got ${inventoryByTheme[theme]}`);
 }

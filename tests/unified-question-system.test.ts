@@ -96,39 +96,54 @@ test('selected math modes raise arithmetic share while preserving the chosen the
     });
 });
 
-test('short runs surface division at least once every five arithmetic questions', () => {
-    const entry: GameEntryParams = { mode: 'brawl60', seed: 'division-quota', contentVersion: CONTENT_VERSION };
+test('all direct arithmetic templates participate in the same uniform random shuffle', () => {
+    const entry: GameEntryParams = { mode: 'brawl60', seed: 'uniform-arithmetic-random', contentVersion: CONTENT_VERSION };
     const compiler = new QuestionCompiler(new SeededRng(`${entry.seed}:compiler`), GAMEPLAY_CONFIG, entry);
-    let gap = 0;
-    let divisions = 0;
-    for (let index = 0; index < 60; index++) {
+    const expectedTemplateIds = [
+        'math-add', 'math-subtract', 'math-multiply', 'math-property', 'math-divide',
+        'math-mixed', 'math-operator', 'math-digit-reverse', 'math-remainder', 'math-fraction-compare',
+    ];
+    const counts = new Map<string, number>();
+    const multipleDivisors = new Set<string>();
+    for (let index = 0; index < 600; index++) {
         const question = compiler.next({ themes: ['math'], requiredTags: ['arithmetic'], rules: ['standard'],
             difficulty: 3, targetCount: 4, questionTimeMs: 2_600, speed: 1, phase: 'action' }, CONTENT_VERSION);
-        if (question.templateId === 'math-divide') {
-            divisions += 1;
-            gap = 0;
-            assert.ok(question.prompt.text.includes('÷'));
-        } else {
-            gap += 1;
-            assert.ok(gap <= 4, `division absent for ${gap} arithmetic questions`);
+        counts.set(question.templateId, (counts.get(question.templateId) ?? 0) + 1);
+        if (question.templateId === 'math-property') {
+            const divisor = question.prompt.text.match(/^([2357])的倍数$/)?.[1];
+            if (divisor) multipleDivisors.add(divisor);
         }
     }
-    assert.ok(divisions >= 12);
+    assert.deepEqual([...counts.keys()].sort(), [...expectedTemplateIds].sort());
+    for (const templateId of expectedTemplateIds) assert.equal(counts.get(templateId), 60, templateId);
+    assert.deepEqual(multipleDivisors, new Set(['2', '3', '5', '7']));
 });
 
-test('continuous operations occupy about thirty percent of direct arithmetic', () => {
-    const entry: GameEntryParams = { mode: 'brawl60', seed: 'mixed-operation-weight', contentVersion: CONTENT_VERSION };
+test('uniform arithmetic selection keeps generated content constraints intact', () => {
+    const entry: GameEntryParams = { mode: 'brawl60', seed: 'uniform-arithmetic-content', contentVersion: CONTENT_VERSION };
     const compiler = new QuestionCompiler(new SeededRng(`${entry.seed}:compiler`), GAMEPLAY_CONFIG, entry);
     let mixed = 0;
     let operator = 0;
+    let digitReverse = 0;
+    let fraction = 0;
     for (let index = 0; index < 600; index++) {
         const question = compiler.next({ themes: ['math'], requiredTags: ['arithmetic'], rules: ['standard'],
             difficulty: 3, targetCount: 4, questionTimeMs: 2_600, speed: 1, phase: 'action' }, CONTENT_VERSION);
         if (question.templateId === 'math-mixed') mixed += 1;
         if (question.templateId === 'math-operator') operator += 1;
+        if (question.templateId === 'math-digit-reverse') {
+            digitReverse += 1;
+        }
+        if (question.templateId === 'math-fraction-compare') {
+            fraction += 1;
+            assert.ok(question.targets.filter((target) => !target.isBomb)
+                .every((target) => /^[1-9]\/[1-9]$/.test(target.text)), question.targets.map((target) => target.text).join(','));
+        }
     }
-    assert.ok(mixed / 600 >= 0.28 && mixed / 600 <= 0.32, `mixed ratio ${mixed / 600}`);
-    assert.ok(operator >= 60, `operator questions ${operator}`);
+    assert.equal(mixed, 60);
+    assert.equal(operator, 60);
+    assert.equal(digitReverse, 60);
+    assert.equal(fraction, 60);
 });
 
 test('action and climax multiplication division avoid kindergarten-sized operands', () => {
@@ -149,6 +164,27 @@ test('action and climax multiplication division avoid kindergarten-sized operand
         }
         assert.ok(largestOperand >= (difficulty === 3 ? 15 : 20));
     }
+});
+
+test('numeric ranking asks for inner ranks instead of trivial largest or smallest', () => {
+    const entry: GameEntryParams = { mode: 'daily', seed: 'numeric-ranks', contentVersion: CONTENT_VERSION, dailyTheme: 'math' };
+    const compiler = new QuestionCompiler(new SeededRng(`${entry.seed}:compiler`), GAMEPLAY_CONFIG, entry);
+    const prompts = new Set<string>();
+    for (let index = 0; index < 200; index += 1) {
+        const question = compiler.next({ templateIds: ['math-compare'], themes: ['math'], rules: ['standard'],
+            difficulty: 5, targetCount: 5, questionTimeMs: 2_600, speed: 1, phase: 'climax' }, CONTENT_VERSION);
+        prompts.add(question.prompt.text);
+        assert.ok(!['最大的', '最小的'].includes(question.prompt.text));
+        const values = question.targets.filter((target) => !target.isBomb).map((target) => Number(target.value)).sort((a, b) => a - b);
+        assert.ok(values.every((value) => value >= 0 && value <= 99));
+        const rankText = question.prompt.text.match(/^(第二|第三|第四)(大|小)的$/)!;
+        const rank = ({ 第二: 2, 第三: 3, 第四: 4 } as const)[rankText[1] as '第二' | '第三' | '第四'];
+        const expected = rankText[2] === '大' ? values[values.length - rank] : values[rank - 1];
+        const correct = question.targets.find((target) => question.baseCorrectTargetIds.includes(target.id))!;
+        assert.equal(Number(correct.value), expected);
+    }
+    assert.ok(['第二大的', '第二小的', '第三大的', '第三小的', '第四大的', '第四小的']
+        .every((prompt) => prompts.has(prompt)), Array.from(prompts).join(','));
 });
 
 test('direction questions use readable text arrows instead of emoji arrows', () => {
@@ -200,18 +236,27 @@ test('multiple questions expose 2 3 5 and 7 across the other middle and high dif
     }
 });
 
-test('ordinary brawl keeps reverse near one eighth of generated rules', () => {
+test('ordinary brawl keeps standalone reverse between five and seven point five percent', () => {
     const entry: GameEntryParams = { mode: 'brawl60', seed: 'lower-reverse-frequency', contentVersion: CONTENT_VERSION };
     const director = new ModeQuestionDirector(new SeededRng(`${entry.seed}:director`), entry,
         new Set(['standard', 'reverse', 'rotate', 'multi', 'order', 'bomb']));
-    let reversed = 0;
+    let standaloneReverse = 0;
+    let compoundReverse = 0;
     const elapsed = [15_000, 30_000, 50_000];
     for (let index = 0; index < 6_000; index++) {
-        if (director.next(elapsed[index % elapsed.length]).rules.includes('reverse')) reversed += 1;
+        const rules = director.next(elapsed[index % elapsed.length]).rules;
+        if (rules.length === 1 && rules[0] === 'reverse') standaloneReverse += 1;
+        else if (rules.includes('reverse')) compoundReverse += 1;
     }
-    const ratio = reversed / 6_000;
-    assert.ok(ratio >= 0.08, `reverse frequency unexpectedly low: ${ratio}`);
-    assert.ok(ratio < 0.16, `reverse frequency too high: ${ratio}`);
+    const standaloneRatio = standaloneReverse / 6_000;
+    const compoundRatio = compoundReverse / 6_000;
+    const totalRatio = standaloneRatio + compoundRatio;
+    assert.ok(standaloneRatio >= 0.05, `standalone reverse frequency unexpectedly low: ${standaloneRatio}`);
+    assert.ok(standaloneRatio <= 0.075, `standalone reverse frequency too high: ${standaloneRatio}`);
+    assert.ok(compoundRatio >= 0.025, `compound reverse frequency unexpectedly low: ${compoundRatio}`);
+    assert.ok(compoundRatio <= 0.035, `compound reverse frequency too high: ${compoundRatio}`);
+    assert.ok(totalRatio >= 0.07, `total reverse frequency unexpectedly low: ${totalRatio}`);
+    assert.ok(totalRatio <= 0.10, `total reverse frequency too high: ${totalRatio}`);
 });
 
 test('compound math order questions vary direction and content without losing rotation', () => {
@@ -225,8 +270,90 @@ test('compound math order questions vary direction and content without losing ro
         assert.deepEqual(question.activeRules, ['order', 'rotate']);
         assert.deepEqual(validateQuestion(question, evaluateRules(question)), []);
         assert.ok(question.targets.filter((target) => !target.isBomb).every((target) => Array.from(target.text).length <= 3));
+        assert.ok(question.targets.filter((target) => !target.isBomb)
+            .flatMap((target) => target.text.match(/\d+/g) ?? [])
+            .every((value) => Number(value) <= 99));
     }
     assert.deepEqual([...prompts].sort(), ['数字升序', '数字降序'].sort());
+    const entry: GameEntryParams = { mode: 'daily', seed: 'two-digit-sequences', contentVersion: CONTENT_VERSION, dailyTheme: 'math' };
+    const compiler = new QuestionCompiler(new SeededRng(`${entry.seed}:compiler`), GAMEPLAY_CONFIG, entry);
+    for (let index = 0; index < 80; index += 1) {
+        const question = compiler.next({ templateIds: ['math-sequence'], themes: ['math'], rules: ['standard'],
+            difficulty: 5, targetCount: 4, questionTimeMs: 2_600, speed: 1, phase: 'climax' }, CONTENT_VERSION);
+        const values = `${question.prompt.text}|${question.targets.map((target) => target.text).join('|')}`.match(/\d+/g)?.map(Number) ?? [];
+        assert.ok(values.length > 0 && values.every((value) => value <= 99), values.join(','));
+    }
+});
+
+test('result-order expressions keep add/sub operands within 20 and multiply/divide within 10', () => {
+    const entry: GameEntryParams = { mode: 'daily', seed: 'bounded-order-expressions', contentVersion: CONTENT_VERSION, dailyTheme: 'math' };
+    const compiler = new QuestionCompiler(new SeededRng(`${entry.seed}:compiler`), GAMEPLAY_CONFIG, entry);
+    const operators = new Set<string>();
+    let expressionQuestions = 0;
+    for (let index = 0; index < 240; index += 1) {
+        const question = compiler.next({ templateIds: ['math-sequence'], themes: ['math'], rules: ['order'],
+            difficulty: 5, targetCount: 5, questionTimeMs: 2_600, speed: 1, phase: 'climax' }, CONTENT_VERSION);
+        if (!question.prompt.text.startsWith('按结果')) continue;
+        expressionQuestions += 1;
+        for (const target of question.targets.filter((item) => !item.isBomb)) {
+            const match = target.text.match(/^(\d+)([+\-×÷])(\d+)$/)!;
+            assert.ok(match, target.text);
+            const left = Number(match[1]);
+            const operator = match[2];
+            const right = Number(match[3]);
+            operators.add(operator);
+            const limit = operator === '+' || operator === '-' ? 20 : 10;
+            assert.ok(left <= limit && right <= limit, target.text);
+            const result = operator === '+' ? left + right : operator === '-' ? left - right
+                : operator === '×' ? left * right : left / right;
+            assert.equal(result, target.value, target.text);
+        }
+        assert.deepEqual(validateQuestion(question, evaluateRules(question)), []);
+    }
+    assert.ok(expressionQuestions >= 120, `too few expression questions: ${expressionQuestions}`);
+    assert.deepEqual(operators, new Set(['+', '-', '×', '÷']));
+});
+
+test('knowledge templates are uniformly randomized and contain no computer trivia', () => {
+    const entry: GameEntryParams = { mode: 'daily', seed: 'civic-density', contentVersion: CONTENT_VERSION, dailyTheme: 'knowledge' };
+    const director = new ModeQuestionDirector(new SeededRng(`${entry.seed}:director`), entry);
+    const compiler = new QuestionCompiler(new SeededRng(`${entry.seed}:compiler`), GAMEPLAY_CONFIG, entry);
+    let civic = 0;
+    const computerTerms = /计算机|CPU|RAM|SSD|内存|硬盘|操作系统|浏览器|搜索引擎|Wi-?Fi|云存储|人工智能/;
+    for (let index = 0; index < 700; index += 1) {
+        const question = compiler.next(director.next((index * 997) % 60_000), CONTENT_VERSION);
+        if (question.templateId === 'knowledge-civic') civic += 1;
+        assert.ok(!computerTerms.test(`${question.prompt.text}|${question.targets.map((target) => target.text).join('|')}`));
+    }
+    const ratio = civic / 700;
+    assert.ok(ratio >= 0.12 && ratio <= 0.17, `unexpected civic ratio: ${ratio}`);
+});
+
+test('new language and history templates join uniform selection and raise myth-person coverage', () => {
+    const historyEntry: GameEntryParams = { mode: 'daily', seed: 'history-person-expansion', contentVersion: CONTENT_VERSION, dailyTheme: 'history' };
+    const historyCompiler = new QuestionCompiler(new SeededRng(`${historyEntry.seed}:compiler`), GAMEPLAY_CONFIG, historyEntry);
+    const historyCounts = new Map<string, number>();
+    for (let index = 0; index < 800; index += 1) {
+        const question = historyCompiler.next({ themes: ['history'], rules: ['standard'], difficulty: 3,
+            targetCount: 4, questionTimeMs: 2_600, speed: 1, phase: 'action' }, CONTENT_VERSION);
+        historyCounts.set(question.templateId, (historyCounts.get(question.templateId) ?? 0) + 1);
+        assert.deepEqual(validateQuestion(question, evaluateRules(question)), []);
+    }
+    assert.equal(historyCounts.get('history-myth'), 100);
+    assert.equal(historyCounts.get('history-myth-person'), 100);
+    assert.equal(historyCounts.get('history-allusion-person'), 100);
+    assert.equal(((historyCounts.get('history-myth') ?? 0) + (historyCounts.get('history-myth-person') ?? 0)) / 800, 0.25);
+
+    const hanziEntry: GameEntryParams = { mode: 'daily', seed: 'xiehouyu-expansion', contentVersion: CONTENT_VERSION, dailyTheme: 'hanzi' };
+    const hanziCompiler = new QuestionCompiler(new SeededRng(`${hanziEntry.seed}:compiler`), GAMEPLAY_CONFIG, hanziEntry);
+    let xiehouyu = 0;
+    for (let index = 0; index < 900; index += 1) {
+        const question = hanziCompiler.next({ themes: ['hanzi'], rules: ['standard'], difficulty: 3,
+            targetCount: 4, questionTimeMs: 2_600, speed: 1, phase: 'action' }, CONTENT_VERSION);
+        if (question.templateId === 'hanzi-xiehouyu') xiehouyu += 1;
+        assert.deepEqual(validateQuestion(question, evaluateRules(question)), []);
+    }
+    assert.equal(xiehouyu, 100);
 });
 
 test('tower compound rules never silently degrade and rotated order alternates content families', () => {

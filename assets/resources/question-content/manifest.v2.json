@@ -1,23 +1,23 @@
 {
   "schemaVersion": 2,
-  "contentVersion": "2.3.3-question-quality",
+  "contentVersion": "2.3.11-balanced-compound-reverse",
   "bundle": "question-content",
   "bundles": [
     {
       "kind": "production",
       "file": "question-content.v2.json",
-      "sha256": "c20a3fb1883858404bdddd3e6888766b33fe7be43ba3d0c6cdd6d5224d30231a",
-      "templateCount": 67,
-      "factCount": 1979,
-      "questionCount": 10000
+      "sha256": "8b8c4e3df3fd69ff0d59bd37cf78317aaf4b6289bfb19a6f76e333055333a81e",
+      "templateCount": 68,
+      "factCount": 2123,
+      "questionCount": 11000
     },
     {
       "kind": "fallback",
       "file": "question-content.fallback.v2.json",
-      "sha256": "ba97b3f0c70435eefed139470fff5008046a62b89c2302f4336de0d119437be5",
-      "templateCount": 67,
-      "factCount": 360,
-      "questionCount": 564
+      "sha256": "fa3721eac335334a2cbf814f19b2391a7ccc14f612492ae5f0765353975d74df",
+      "templateCount": 68,
+      "factCount": 368,
+      "questionCount": 588
     }
   ]
 }

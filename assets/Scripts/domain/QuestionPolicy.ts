@@ -53,30 +53,30 @@ export const BRAWL_PHASES: readonly BrawlPhaseSettings[] = [
     {
         id: 'action', startMs: 10_000, endMs: 25_000, difficultyStage: 1,
         targetCount: 4, questionTimeMs: 2_600, speed: 0.95,
-        themeWeights: { math: 1, vision: 4, hanzi: 3, english: 2, life: 2, geography: 2, knowledge: 4, history: 2 },
+        themeWeights: { math: 1, vision: 4, hanzi: 3, english: 2, life: 2, geography: 2, knowledge: 8, history: 2 },
         ruleSequence: [
             ['multi'], ['bomb'], ['standard'], ['order'], ['bomb'], ['reverse'], ['rotate'],
-            ['standard'], ['bomb'], ['standard'],
+            ['standard'], ['bomb'], ['standard'], ['standard'], ['standard'],
         ],
     },
     {
         id: 'twist', startMs: 25_000, endMs: 45_000, difficultyStage: 2,
         targetCount: 5, questionTimeMs: 2_250, speed: 1.15,
-        themeWeights: { math: 1, vision: 4, hanzi: 3, english: 3, life: 3, geography: 3, knowledge: 4, history: 3 },
+        themeWeights: { math: 1, vision: 4, hanzi: 3, english: 3, life: 3, geography: 3, knowledge: 8, history: 3 },
         ruleSequence: [
             ['rotate'], ['standard'], ['multi'], ['standard'], ['bomb'], ['order'], ['bomb'], ['reverse'],
-            ['standard'], ['bomb'], ['standard'],
+            ['standard'], ['bomb'], ['standard'], ['standard'], ['standard'],
         ],
     },
     {
         id: 'climax', startMs: 45_000, endMs: 60_001, difficultyStage: 2,
         targetCount: 5, questionTimeMs: 1_850, speed: 1.38,
-        themeWeights: { math: 1, vision: 4, hanzi: 3, english: 3, life: 3, geography: 3, knowledge: 4, history: 3 },
+        themeWeights: { math: 1, vision: 4, hanzi: 3, english: 3, life: 3, geography: 3, knowledge: 8, history: 3 },
         ruleSequence: [
-            ['bomb', 'multi'], ['bomb', 'reverse'], ['bomb', 'order'], ['bomb', 'rotate'],
+            ['bomb', 'multi'], ['bomb'], ['bomb', 'order'], ['bomb', 'rotate'],
             ['multi', 'reverse'], ['multi', 'rotate'], ['order', 'rotate'],
             ['standard'], ['rotate'], ['bomb'], ['bomb', 'rotate'],
-            ['standard'], ['bomb'], ['standard'], ['bomb'],
+            ['standard'], ['bomb'], ['standard'], ['bomb'], ['multi', 'reverse'],
         ],
     },
 ];

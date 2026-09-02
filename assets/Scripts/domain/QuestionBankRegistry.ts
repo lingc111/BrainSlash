@@ -63,6 +63,7 @@ const RAW_QUESTION_BANK_PACKS: readonly RawQuestionBankPack[] = [
     { id: 'hanzi.poetry', label: '诗句填空', theme: 'hanzi', storage: 'curated', templateIds: ['hanzi-poetry'], rawRecords: POETRY_FACTS },
     { id: 'hanzi.radical', label: '汉字部首', theme: 'hanzi', storage: 'relationship', templateIds: ['hanzi-radical'], rawRecords: EXPANSION_TRIVIA_PACKS['hanzi-radical']! },
     { id: 'hanzi.compose', label: '汉字组成', theme: 'hanzi', storage: 'relationship', templateIds: ['hanzi-compose'], rawRecords: EXPANSION_TRIVIA_PACKS['hanzi-compose']! },
+    { id: 'hanzi.xiehouyu', label: '歇后语', theme: 'hanzi', storage: 'curated', templateIds: ['hanzi-xiehouyu'], rawRecords: EXPANSION_TRIVIA_PACKS['hanzi-xiehouyu']! },
     { id: 'english.words', label: '英语词汇', theme: 'english', storage: 'curated', templateIds: ['english-meaning', 'english-category', 'english-length', 'english-missing-letter'], rawRecords: ENGLISH_WORDS },
     { id: 'english.words.extra', label: '英语词汇扩展', theme: 'english', storage: 'curated', templateIds: ['english-meaning', 'english-category', 'english-length', 'english-missing-letter'], rawRecords: ENGLISH_EXTRA_WORDS },
     { id: 'english.antonyms', label: '英语反义词', theme: 'english', storage: 'relationship', templateIds: ['english-antonym'], rawRecords: ENGLISH_ANTONYMS },
@@ -72,7 +73,6 @@ const RAW_QUESTION_BANK_PACKS: readonly RawQuestionBankPack[] = [
     { id: 'life.places', label: '生活场所', theme: 'life', storage: 'relationship', templateIds: ['life-place'], rawRecords: EXPANSION_TRIVIA_PACKS['life-place']! },
     { id: 'life.signs', label: '公共标志', theme: 'life', storage: 'curated', templateIds: ['life-public-sign'], rawRecords: EXPANSION_TRIVIA_PACKS['life-public-sign']! },
     { id: 'life.safety', label: '安全行为', theme: 'life', storage: 'curated', templateIds: ['life-safe-behavior'], rawRecords: EXPANSION_TRIVIA_PACKS['life-safe-behavior']! },
-    { id: 'life.process', label: '生活流程', theme: 'life', storage: 'curated', templateIds: ['life-process'], rawRecords: EXPANSION_ORDER_PACKS['life-process']! },
     { id: 'geography.world', label: '国家与首都', theme: 'geography', storage: 'relationship', templateIds: ['geography-capital', 'geography-country'], rawRecords: GEOGRAPHY_FACTS },
     { id: 'geography.continent', label: '国家与洲', theme: 'geography', storage: 'relationship', templateIds: ['geography-continent'], rawRecords: EXPANSION_TRIVIA_PACKS['geography-continent']! },
     { id: 'geography.landmark', label: '世界地标', theme: 'geography', storage: 'relationship', templateIds: ['geography-landmark'], rawRecords: EXPANSION_TRIVIA_PACKS['geography-landmark']! },
@@ -88,7 +88,6 @@ const RAW_QUESTION_BANK_PACKS: readonly RawQuestionBankPack[] = [
     { id: 'knowledge.astronomy', label: '天文常识', theme: 'knowledge', storage: 'curated', templateIds: ['knowledge-astronomy'], rawRecords: EXPANSION_TRIVIA_PACKS['knowledge-astronomy']! },
     { id: 'knowledge.biology', label: '生物常识', theme: 'knowledge', storage: 'curated', templateIds: ['knowledge-biology'], rawRecords: EXPANSION_TRIVIA_PACKS['knowledge-biology']! },
     { id: 'knowledge.physics', label: '物理常识', theme: 'knowledge', storage: 'curated', templateIds: ['knowledge-physics'], rawRecords: EXPANSION_TRIVIA_PACKS['knowledge-physics']! },
-    { id: 'knowledge.technology', label: '科技常识', theme: 'knowledge', storage: 'curated', templateIds: ['knowledge-technology'], rawRecords: EXPANSION_TRIVIA_PACKS['knowledge-technology']! },
     { id: 'history.opening', label: '近代开端', theme: 'history', storage: 'curated', templateIds: ['history-modern-opening'], rawRecords: HISTORY_MODERN_OPENING_FACTS },
     { id: 'history.opening.extra', label: '近代开端扩展', theme: 'history', storage: 'curated', templateIds: ['history-modern-opening'], rawRecords: EXPANSION_TRIVIA_PACKS['history-modern-opening']! },
     { id: 'history.awakening', label: '近代觉醒', theme: 'history', storage: 'curated', templateIds: ['history-modern-awakening'], rawRecords: HISTORY_MODERN_AWAKENING_FACTS },
@@ -99,8 +98,10 @@ const RAW_QUESTION_BANK_PACKS: readonly RawQuestionBankPack[] = [
     { id: 'history.ancient.extra', label: '古代常识扩展', theme: 'history', storage: 'curated', templateIds: ['history-ancient'], rawRecords: EXPANSION_TRIVIA_PACKS['history-ancient']! },
     { id: 'history.myth', label: '神话常识', theme: 'history', storage: 'curated', templateIds: ['history-myth'], rawRecords: HISTORY_MYTH_FACTS },
     { id: 'history.myth.extra', label: '神话常识扩展', theme: 'history', storage: 'curated', templateIds: ['history-myth'], rawRecords: EXPANSION_TRIVIA_PACKS['history-myth']! },
+    { id: 'history.myth-person', label: '神话人物事迹', theme: 'history', storage: 'relationship', templateIds: ['history-myth-person'], rawRecords: EXPANSION_TRIVIA_PACKS['history-myth-person']! },
     { id: 'history.chronology', label: '历史时序', theme: 'history', storage: 'curated', templateIds: ['history-chronology'], rawRecords: EXPANSION_ORDER_PACKS['history-chronology']! },
     { id: 'history.person-event', label: '历史人物事件', theme: 'history', storage: 'relationship', templateIds: ['history-person-event'], rawRecords: EXPANSION_TRIVIA_PACKS['history-person-event']! },
+    { id: 'history.allusion-person', label: '历史典故人物', theme: 'history', storage: 'relationship', templateIds: ['history-allusion-person'], rawRecords: EXPANSION_TRIVIA_PACKS['history-allusion-person']! },
 ];
 
 const REVIEW = { source: 'internal-reviewed-catalog', status: 'reviewed', reviewedAt: '2026-09-01' } as const;

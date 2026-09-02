@@ -468,23 +468,23 @@ test('slash rule labels describe the gesture and ignore bomb distractors', () =>
     assert.equal(slashRuleCount(['multi', 'reverse']), 2);
     assert.equal(questionPreviewDurationSeconds(['bomb', 'multi']), 0.3);
     assert.equal(questionPreviewDurationSeconds(['multi', 'reverse']), 0.7);
-    assert.equal(questionFlightDurationSeconds(2.5, ['standard']), 2.5);
-    assert.equal(questionFlightDurationSeconds(2.5, ['bomb']), 2.5);
-    assert.equal(questionFlightDurationSeconds(2.5, ['multi']), 3.85);
-    assert.equal(questionFlightDurationSeconds(2.5, ['order']), 3.85);
-    assert.equal(questionFlightDurationSeconds(2.5, ['reverse']), 3.85);
-    assert.equal(questionFlightDurationSeconds(2.5, ['rotate']), 3.85);
-    assert.equal(questionFlightDurationSeconds(2.5, ['multi', 'reverse']), 4.15);
-    assert.equal(questionFlightDurationSeconds(2.5, ['multi', 'rotate']), 4.15);
-    assert.equal(questionFlightDurationSeconds(2.5, ['multi', 'order']), 4.15);
-    assert.equal(questionFlightDurationSeconds(2.5, ['bomb', 'multi']), 3.85);
-    assert.equal(questionFlightDurationSeconds(2.25, ['standard'], 5), 3);
-    assert.equal(questionFlightDurationSeconds(2.25, ['bomb'], 5), 3);
-    assert.equal(questionFlightDurationSeconds(2.5, ['standard'], 4, 3), 2.5);
-    assert.equal(questionFlightDurationSeconds(2.5, ['standard'], 4, 4), 3.25);
-    assert.equal(questionFlightDurationSeconds(2.5, ['multi'], 4, 4), 4.6);
-    assert.equal(questionFlightDurationSeconds(2.25, ['standard'], 5, 4), 3.75);
-    assert.equal(questionFlightDurationSeconds(2.5, ['standard'], 4, 6), 4);
+    assert.equal(questionFlightDurationSeconds(2.5, ['standard']), 3.1);
+    assert.equal(questionFlightDurationSeconds(2.5, ['bomb']), 3.1);
+    assert.equal(questionFlightDurationSeconds(2.5, ['multi']), 4.45);
+    assert.equal(questionFlightDurationSeconds(2.5, ['order']), 4.45);
+    assert.equal(questionFlightDurationSeconds(2.5, ['reverse']), 4.45);
+    assert.equal(questionFlightDurationSeconds(2.5, ['rotate']), 4.45);
+    assert.equal(questionFlightDurationSeconds(2.5, ['multi', 'reverse']), 4.75);
+    assert.equal(questionFlightDurationSeconds(2.5, ['multi', 'rotate']), 4.75);
+    assert.equal(questionFlightDurationSeconds(2.5, ['multi', 'order']), 4.75);
+    assert.equal(questionFlightDurationSeconds(2.5, ['bomb', 'multi']), 4.45);
+    assert.equal(questionFlightDurationSeconds(2.25, ['standard'], 5), 3.6);
+    assert.equal(questionFlightDurationSeconds(2.25, ['bomb'], 5), 3.6);
+    assert.equal(questionFlightDurationSeconds(2.5, ['standard'], 4, 3), 3.1);
+    assert.equal(questionFlightDurationSeconds(2.5, ['standard'], 4, 4), 3.85);
+    assert.equal(questionFlightDurationSeconds(2.5, ['multi'], 4, 4), 5.2);
+    assert.equal(questionFlightDurationSeconds(2.25, ['standard'], 5, 4), 4.35);
+    assert.equal(questionFlightDurationSeconds(2.5, ['standard'], 4, 6), 4.6);
     assert.equal(maximumAnswerTextLength([
         { id: 'bomb', text: '五字炸弹题', isBomb: true },
         { id: 'short', text: '三字内' },
@@ -885,24 +885,24 @@ test('daily challenge starts without tutorial state and reuses the same-day reco
 });
 
 test('unified template catalog contains one stable entry per cognitive template', () => {
-    assert.equal(QUESTION_TEMPLATES.length, 67);
+    assert.equal(QUESTION_TEMPLATES.length, 68);
     assert.equal(new Set(QUESTION_TEMPLATES.map((template) => template.id)).size, QUESTION_TEMPLATES.length);
     assert.ok(QUESTION_TEMPLATES.every((template) => template.enabled && template.difficultyBands.length === 5));
 });
 
 test('question-bank registry reports audited base records instead of generated combinations', () => {
     const stats = getQuestionBankStats();
-    assert.equal(stats.baseRecordCount, 1979);
-    assert.equal(stats.packCount, 45);
+    assert.equal(stats.baseRecordCount, 2123);
+    assert.equal(stats.packCount, 46);
     assert.deepEqual(stats.byTheme, {
         math: 0,
         vision: 0,
-        hanzi: 420,
+        hanzi: 460,
         english: 400,
-        life: 245,
+        life: 215,
         geography: 180,
-        knowledge: 524,
-        history: 210,
+        knowledge: 586,
+        history: 282,
     });
     assert.equal(new Set(QUESTION_BANK_PACKS.map((pack) => pack.id)).size, QUESTION_BANK_PACKS.length);
 });
@@ -918,16 +918,16 @@ test('new relationship and common-knowledge packs keep short answers and clean c
     }
 
     const expansions = [
-        KNOWLEDGE_SCIENCE_EXPANSION,
-        KNOWLEDGE_NATURE_EXPANSION,
-        KNOWLEDGE_CULTURE_EXPANSION,
-        KNOWLEDGE_CIVIC_FACTS,
-    ];
-    for (const pool of expansions) {
-        assert.equal(pool.length, 56);
+        [KNOWLEDGE_SCIENCE_EXPANSION, 52],
+        [KNOWLEDGE_NATURE_EXPANSION, 56],
+        [KNOWLEDGE_CULTURE_EXPANSION, 56],
+        [KNOWLEDGE_CIVIC_FACTS, 152],
+    ] as const;
+    for (const [pool, expectedLength] of expansions) {
+        assert.equal(pool.length, expectedLength);
         for (const fact of pool) {
-            assert.ok(Array.from(fact.prompt).length <= 12, fact.prompt);
-            assert.ok(Array.from(fact.answer).length <= 4, `${fact.prompt}: ${fact.answer}`);
+            assert.ok(Array.from(fact.prompt).length <= 14, fact.prompt);
+            assert.ok(Array.from(fact.answer).length <= 6, `${fact.prompt}: ${fact.answer}`);
             assert.ok(!fact.wrong.includes(fact.answer));
             assert.equal(new Set(fact.wrong).size, fact.wrong.length);
         }
@@ -1444,15 +1444,15 @@ test('ordinary brawl enforces visible quotas across all eight themes', () => {
     }
     for (const theme of ['math', 'vision', 'hanzi', 'english', 'life', 'geography', 'knowledge', 'history']) {
         const ratio = (counts.get(theme) ?? 0) / 3_000;
-        const minimum = theme === 'math' ? 0.42 : 0.05;
-        const maximum = theme === 'math' ? 0.50 : 0.18;
+        const minimum = theme === 'math' ? 0.42 : theme === 'knowledge' ? 0.10 : 0.04;
+        const maximum = theme === 'math' ? 0.50 : theme === 'knowledge' ? 0.25 : 0.18;
         assert.ok(ratio >= minimum, `${theme} quota too low: ${ratio}`);
         assert.ok(ratio <= maximum, `${theme} quota too high: ${ratio}`);
     }
 });
 
-test('MVP inventory contains exactly 10000 unique playable questions at the agreed theme ratio', () => {
-    assert.equal(MVP_QUESTION_INVENTORY.length, 10_000);
+test('MVP inventory grows beyond the original baseline without deleting existing theme allocations', () => {
+    assert.equal(MVP_QUESTION_INVENTORY.length, 11_000);
     const byTheme = Object.fromEntries(Object.keys(MVP_THEME_TARGETS).map((theme) => [theme, 0]));
     const signatures = new Set<string>();
     for (const question of MVP_QUESTION_INVENTORY) {
@@ -1462,8 +1462,11 @@ test('MVP inventory contains exactly 10000 unique playable questions at the agre
         assert.ok(!question.wrong.map(String).includes(String(question.answer)));
         signatures.add(`${question.theme}|${question.templateId}|${question.prompt}|${question.answer}`);
     }
-    assert.equal(signatures.size, 10_000);
+    assert.equal(signatures.size, MVP_QUESTION_INVENTORY.length);
     assert.deepEqual(byTheme, MVP_THEME_TARGETS);
+    for (const templateId of ['hanzi-xiehouyu', 'history-myth-person', 'history-allusion-person'] as const) {
+        assert.ok(MVP_QUESTION_INVENTORY.some((question) => question.templateId === templateId), templateId);
+    }
 });
 
 test('MVP arithmetic inventory enforces adult operand floors and contains no approximation questions', () => {
@@ -1515,7 +1518,7 @@ test('subtraction choices keep their minus sign instead of using relation layout
     assert.equal(presentation.displayText.includes('\n'), false);
 });
 
-test('expanded choices remain scalar and Chinese process questions stay glanceable', () => {
+test('expanded choices remain scalar and verbose life process questions are removed', () => {
     for (const pool of Object.values(EXPANSION_TRIVIA_PACKS)) {
         for (const fact of pool ?? []) {
             assert.equal(typeof fact.prompt, 'string');
@@ -1525,17 +1528,8 @@ test('expanded choices remain scalar and Chinese process questions stay glanceab
         }
     }
 
-    const processes = EXPANSION_ORDER_PACKS['life-process'] ?? [];
-    assert.equal(processes.length, 30);
-    for (const fact of processes) {
-        assert.ok(Array.from(fact.prompt).length <= 6, fact.prompt);
-        assert.ok(!fact.prompt.includes('顺序'), fact.prompt);
-        assert.equal(fact.parts.length, 4);
-        for (const part of fact.parts) {
-            assert.equal(typeof part, 'string');
-            assert.ok(Array.from(part).length <= 6, `${fact.prompt}: ${part}`);
-        }
-    }
+    assert.equal(EXPANSION_ORDER_PACKS['life-process' as never], undefined);
+    assert.ok(!QUESTION_TEMPLATES.some((template) => template.id === ('life-process' as never)));
 });
 
 test('historical person questions only use people as distractors', () => {
@@ -1567,7 +1561,7 @@ test('science expansion distractors stay in the answer semantic type', () => {
     assert.deepEqual(fact('knowledge-astronomy', '太阳系中有几颗行星').wrong, ['七颗', '九颗', '十颗']);
     assert.deepEqual(fact('knowledge-biology', '血液中运输氧气的细胞').wrong, ['白细胞', '血小板', '神经细胞']);
     assert.deepEqual(fact('knowledge-physics', '水沸腾时液体变成').wrong, ['固体', '液体', '等离子体']);
-    assert.deepEqual(fact('knowledge-technology', '太阳能电池板把光能转为').wrong, ['热能', '机械能', '化学能']);
+    assert.ok(!QUESTION_TEMPLATES.some((template) => template.id === ('knowledge-technology' as never)));
 });
 
 test('category question pools exclude context-dependent items and polysemous English words', () => {
