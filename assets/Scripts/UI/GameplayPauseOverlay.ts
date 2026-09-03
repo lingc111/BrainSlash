@@ -20,7 +20,9 @@ export function showGameplayPauseOverlay(parent: Node, actions: GameplayPauseAct
     overlay.addComponent(BlockInputEvents);
 
     const shade = overlay.addComponent(Graphics);
-    shade.fillColor = new Color(25, 23, 21, 248);
+    // Use a fully opaque warm-black cover: gameplay text and answer silhouettes must
+    // not remain readable on devices where translucent UI blending is especially clear.
+    shade.fillColor = new Color(25, 23, 21, 255);
     shade.rect(-visible.width / 2, -visible.height / 2, visible.width, visible.height);
     shade.fill();
 
@@ -39,7 +41,7 @@ export function showGameplayPauseOverlay(parent: Node, actions: GameplayPauseAct
     paper.stroke();
 
     makeLabel(card, 'Title', '游戏暂停', 48, INK, 460).node.setPosition(0, 145);
-    makeLabel(card, 'Detail', '题目与计时已冻结', 24, BLUE, 440).node.setPosition(0, 82);
+    makeLabel(card, 'Detail', '题目与答案已隐藏，计时已冻结', 24, BLUE, 440).node.setPosition(0, 82);
     makeActionButton(card, '继续游戏', -25, true, actions.continueGame);
     makeActionButton(card, '返回首页', -145, false, actions.home);
     return overlay;
