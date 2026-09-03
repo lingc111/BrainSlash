@@ -43,8 +43,10 @@ export function applyGameFont(label: Label): Label {
 }
 
 /** Covers labels serialized in scenes as well as labels created by scripts. */
-export function applyGameFontToTree(root: Node): void {
-    for (const label of root.getComponentsInChildren(Label)) applyGameFont(label);
+export function applyGameFontToTree(root: Node, shouldApply: (label: Label) => boolean = () => true): void {
+    for (const label of root.getComponentsInChildren(Label)) {
+        if (shouldApply(label)) applyGameFont(label);
+    }
 }
 
 function loadGameFont(): void {
