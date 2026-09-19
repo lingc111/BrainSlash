@@ -264,6 +264,40 @@ export class PlatformService {
         return typeof this.wx?.getOpenDataContext === 'function';
     }
 
+    /** Inspect the context already acquired by Cocos; do not create or resize another canvas. */
+    public reportLeaderboardCanvas(stage: 'ready' | 'failed', component: unknown, error?: unknown): void {
+        const report: Record<string, unknown> = { stage, time: new Date().toISOString() };
+        const describe = (value: unknown): string => {
+            try {
+                const e = value as { name?: string; message?: string; stack?: string };
+                return `${e?.name ?? 'Error'}: ${e?.message ?? String(value)}\n${e?.stack ?? ''}`;
+            } catch { return 'Unreadable error'; }
+        };
+        if (error !== undefined) report.error = describe(error);
+        try {
+            const context = (component as { _openDataContext?: { canvas?: { width?: number; height?: number } } } | null)?._openDataContext;
+            report.contextPresent = Boolean(context);
+            const canvas = context?.canvas;
+            report.canvasPresent = Boolean(canvas);
+            if (canvas) { report.width = canvas.width; report.height = canvas.height; }
+        } catch (inspectionError) { report.canvasInspectionError = describe(inspectionError); }
+        try {
+            const wxApi = this.wx as unknown as {
+                getSystemInfoSync?: () => Record<string, unknown>;
+                getAccountInfoSync?: () => { miniProgram?: { envVersion?: string; version?: string } };
+            };
+            const info = wxApi?.getSystemInfoSync?.();
+            for (const key of ['SDKVersion', 'version', 'platform', 'system', 'model']) report[key] = info?.[key];
+            report.miniProgram = wxApi?.getAccountInfoSync?.().miniProgram;
+        } catch (inspectionError) { report.environmentInspectionError = describe(inspectionError); }
+        // Serialize explicitly: vConsole exports can otherwise omit Error.message.
+        const text = JSON.stringify(report);
+        console.log(`[LeaderboardCanvas] ${text}`);
+        if (stage === 'failed') {
+            try { this.wx?.setStorageSync?.('brain-slash.leaderboard-diagnostic.v1', text); } catch { /* Diagnostics must not block UI. */ }
+        }
+    }
+
     public postLeaderboardMessage(message: unknown): void {
         try {
             const wxApi = this.wx;

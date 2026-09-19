@@ -6,35 +6,61 @@ import { stripTypeScriptTypes } from 'node:module';
 
 interface PendingRequest { success(result: unknown): void; fail(error?: unknown): void }
 
-test('open-data canvas initialization failure cleans up the node and leaves local ranking visible', () => {
+test('open-data canvas initialization failure cleans up and shows unavailable instead of fictional ranks', () => {
     // Execute the production setup method without requiring the Cocos renderer.
     const source = readFileSync('assets/Scripts/UI/home/RankingPage.ts', 'utf8');
     const start = source.indexOf('    private setupOpenDataLeaderboard(');
     const end = source.indexOf('    private refreshOpenDataLeaderboard(', start);
     const script = stripTypeScriptTypes(`class Harness { ${source.slice(start, end)} }; new Harness()`);
-    for (const fail of [true, false]) {
+    for (const scenario of ['unsupported', 'throws', 'ready']) {
+        const supported = scenario !== 'unsupported';
+        const fail = scenario !== 'ready';
         const calls: string[] = [];
         const component = { fps: 60 };
         const node = {
             active: true,
             addComponent() { if (fail) throw new Error('sharedCanvas width failed'); return component; },
+            getComponent() { return component; },
             removeFromParent() { calls.push('detach'); },
             destroy() { calls.push('destroy'); },
         };
         const harness = vm.runInNewContext(script, {
-            EDITOR: false, AppRuntime: { platform: { supportsFriendLeaderboard: () => true } },
+            EDITOR: false, AppRuntime: { platform: { supportsFriendLeaderboard: () => supported, reportLeaderboardCanvas() {} } },
             C: { designWidth: 941 }, SubContextView: class {},
             console: { error() { calls.push('error'); } },
         });
         harness.makeNode = () => node;
-        harness.localDataNodes = [{ active: true }];
+        const local = { active: true };
+        const board = { children: [local] };
+        const messages: string[] = [];
+        harness.label = (_parent: unknown, _name: string, text: string) => messages.push(text);
+        harness.localDataNodes = [local];
         harness.openDataView = null;
-        assert.doesNotThrow(() => harness.setupOpenDataLeaderboard({}));
-        assert.equal(harness.localDataNodes[0].active, fail);
+        assert.doesNotThrow(() => harness.setupOpenDataLeaderboard(board));
+        assert.equal(harness.localDataNodes[0].active, false);
         assert.equal(harness.openDataView, fail ? null : node);
-        assert.equal(node.active, !fail);
-        assert.deepEqual(calls, fail ? ['detach', 'destroy', 'error'] : []);
+        assert.equal(node.active, scenario !== 'throws');
+        assert.deepEqual(calls, scenario === 'throws' ? ['detach', 'destroy'] : []);
+        assert.deepEqual(messages, fail ? ['好友排行榜暂时无法加载', '你可以返回首页继续游戏'] : []);
+        assert.equal(Boolean(harness.openDataFailed), fail);
         if (!fail) assert.equal(component.fps, 10);
+    }
+});
+
+test('runtime ranking refresh never generates preview scores even without a working open-data view', () => {
+    const source = readFileSync('assets/Scripts/UI/home/RankingPage.ts', 'utf8');
+    const start = source.indexOf('    private refreshScores():');
+    const end = source.indexOf('    private scoreText(', start);
+    const script = stripTypeScriptTypes(`class Harness { ${source.slice(start, end)} }; new Harness()`);
+    for (const failed of [true, false]) {
+        const harness = vm.runInNewContext(script, {
+            EDITOR: false,
+            AppRuntime: { save: { snapshot() { throw new Error('Must not build a local runtime leaderboard'); } } },
+            createLocalLeaderboard() { throw new Error('Must not generate fictional rivals'); },
+        });
+        harness.openDataFailed = failed;
+        harness.openDataView = null;
+        assert.doesNotThrow(() => harness.refreshScores());
     }
 });
 

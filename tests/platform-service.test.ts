@@ -2,6 +2,28 @@ import assert from 'node:assert/strict';
 import test from 'node:test';
 import { PlatformService } from '../assets/Scripts/infrastructure/PlatformService.ts';
 
+test('canvas diagnostics preserve error text and distinguish absent canvas from failed dimension writes', () => {
+    const saved: string[] = [];
+    (globalThis as { wx?: unknown }).wx = {
+        getSystemInfoSync: () => ({ SDKVersion: '3.17.3', platform: 'ios' }),
+        setStorageSync: (_key: string, value: string) => saved.push(value),
+    };
+    try {
+        const platform = new PlatformService();
+        const error = new TypeError('Cannot set properties of undefined (setting width)');
+        platform.reportLeaderboardCanvas('failed', { _openDataContext: {} }, error);
+        const missing = JSON.parse(saved[0]);
+        assert.equal(missing.canvasPresent, false);
+        assert.equal(missing.SDKVersion, '3.17.3');
+        assert.match(missing.error, /TypeError: Cannot set properties/);
+        platform.reportLeaderboardCanvas('failed', {
+            _openDataContext: { canvas: { width: 640, height: 960 } },
+        }, new Error('width setter rejected'));
+        assert.equal(JSON.parse(saved[1]).canvasPresent, true);
+        assert.equal(JSON.parse(saved[1]).width, 640);
+    } finally { delete (globalThis as { wx?: unknown }).wx; }
+});
+
 test('WeChat leaderboard upload uses stable cloud keys and compact values', async () => {
     let uploaded: Array<{ key: string; value: string }> = [];
     (globalThis as { wx?: unknown }).wx = {

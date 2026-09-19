@@ -48,6 +48,7 @@ export class RankingPage extends Component {
     private selfDetailLabel: Label | null = null;
     private removeProfileListener: (() => void) | null = null;
     private openDataView: Node | null = null;
+    private openDataFailed = false;
     private readonly localDataNodes: Node[] = [];
     private readonly avatarRequests = new Map<Node, string>();
 
@@ -195,7 +196,13 @@ export class RankingPage extends Component {
     }
 
     private setupOpenDataLeaderboard(parent: Node): void {
-        if (EDITOR || !AppRuntime.platform.supportsFriendLeaderboard()) return;
+        if (EDITOR) return;
+        this.localDataNodes.forEach((node) => { node.active = false; });
+        if (!AppRuntime.platform.supportsFriendLeaderboard()) {
+            AppRuntime.platform.reportLeaderboardCanvas('failed', null, new Error('wx.getOpenDataContext is unavailable'));
+            this.showLeaderboardUnavailable(parent);
+            return;
+        }
         // Shift the shared-canvas node down while its drawing coordinates are
         // compensated upwards in openDataContext. Screen positions stay fixed,
         // but the self avatar gains room below the former clipping boundary.
@@ -203,7 +210,9 @@ export class RankingPage extends Component {
         try {
             const view = viewNode.addComponent(SubContextView);
             view.fps = 10;
+            AppRuntime.platform.reportLeaderboardCanvas('ready', view);
         } catch (error) {
+            AppRuntime.platform.reportLeaderboardCanvas('failed', viewNode.getComponent(SubContextView), error);
             // addComponent runs onLoad synchronously on this active node.
             // Some WeChat runtimes fail when SubContextView initializes its
             // shared canvas. Remove the partially attached component's node
@@ -211,7 +220,7 @@ export class RankingPage extends Component {
             viewNode.active = false;
             viewNode.removeFromParent();
             viewNode.destroy();
-            console.error('[Ranking] Open-data canvas initialization failed; using local leaderboard', error);
+            this.showLeaderboardUnavailable(parent);
             return;
         }
         this.openDataView = viewNode;
@@ -219,6 +228,14 @@ export class RankingPage extends Component {
         // onEnable owns the initial request. Scheduling a second request here
         // created two concurrent cloud reads on first entry and allowed a later
         // transient empty response to supersede the valid one.
+    }
+
+    private showLeaderboardUnavailable(parent: Node): void {
+        this.openDataFailed = true;
+        // Never substitute fictional preview rivals for the real friend list.
+        for (const child of parent.children) child.active = false;
+        this.label(parent, 'LeaderboardUnavailable', '好友排行榜暂时无法加载', 0, 100, 780, 80, 32, C.ink);
+        this.label(parent, 'LeaderboardUnavailableHint', '你可以返回首页继续游戏', 0, 20, 780, 60, 24, C.inkSoft);
     }
 
     private refreshOpenDataLeaderboard(refreshCloudData = true): void {
@@ -243,6 +260,8 @@ export class RankingPage extends Component {
     }
 
     private refreshScores(): void {
+        // Real players receive scores only from the WeChat open-data canvas.
+        if (!EDITOR || this.openDataFailed) return;
         const save = EDITOR ? null : AppRuntime.save.snapshot();
         const trialAnswered = save?.leaderboard.trialAnsweredCount ?? 0;
         const snapshot = createLocalLeaderboard(this.mode, {
