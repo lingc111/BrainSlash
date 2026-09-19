@@ -42,7 +42,7 @@
       "type": "none"
     },
     "background": {
-      "image": "project://settings/splash.png",
+      "image": "project://settings/new splash.png",
       "type": "custom"
     }
   }

@@ -146,6 +146,7 @@ export class HomeController extends Component {
             this.applyLayout();
             return;
         }
+        this.showPage('home');
         screen.on('window-resize', this.handleResize, this);
         this.applyLayout();
         this.scheduleOnce(this.applyLayout, 0);
@@ -283,8 +284,11 @@ export class HomeController extends Component {
         this.eventArea = this.buildEvents(this.safeArea);
         this.rankProgress = this.buildRankProgress(this.safeArea);
         this.rankingPage = this.makeNode(this.safeArea, 'RankingPage', 0, 0, C.designWidth, 1450);
-        this.rankingPage.addComponent(RankingPage);
+        // A newly-created node is active by default. Deactivate it before the
+        // component is attached so RankingPage.onEnable cannot briefly publish
+        // the WeChat shared canvas while Home is the selected page.
         this.rankingPage.active = false;
+        this.rankingPage.addComponent(RankingPage);
         this.bottomNavigation = this.buildBottomNavigation(this.safeArea);
 
         this.applyLayout();
@@ -504,6 +508,12 @@ export class HomeController extends Component {
             if (section?.isValid) section.active = showHome;
         }
         if (this.rankingPage?.isValid) this.rankingPage.active = !showHome;
+        this.setSelectedNavigation(showHome ? 0 : 2);
+        // Clear the shared canvas even when the ranking node was already
+        // inactive and therefore does not receive another onDisable callback.
+        if (showHome && !EDITOR) {
+            AppRuntime.platform.postLeaderboardMessage({ type: 'brainSlashLeaderboard', action: 'hide' });
+        }
     }
 
     private applyLayout = (): void => {

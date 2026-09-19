@@ -74,6 +74,14 @@ export class RankingPage extends Component {
         }
     }
 
+    protected onDisable(): void {
+        // SubContextView uses WeChat's persistent shared canvas. Hiding this
+        // Cocos node does not reliably clear that canvas on every device, so
+        // explicitly stop and clear the open-data renderer whenever the user
+        // leaves the ranking page.
+        if (!EDITOR) AppRuntime.platform.postLeaderboardMessage({ type: 'brainSlashLeaderboard', action: 'hide' });
+    }
+
     public selectMode(mode: LeaderboardMode): void {
         if (this.mode === mode) return;
         this.mode = mode;
@@ -192,8 +200,20 @@ export class RankingPage extends Component {
         // compensated upwards in openDataContext. Screen positions stay fixed,
         // but the self avatar gains room below the former clipping boundary.
         const viewNode = this.makeNode(parent, 'WechatFriendLeaderboard', 0, -20, C.designWidth, 1450);
-        const view = viewNode.addComponent(SubContextView);
-        view.fps = 10;
+        try {
+            const view = viewNode.addComponent(SubContextView);
+            view.fps = 10;
+        } catch (error) {
+            // addComponent runs onLoad synchronously on this active node.
+            // Some WeChat runtimes fail when SubContextView initializes its
+            // shared canvas. Remove the partially attached component's node
+            // before returning so it cannot keep updating or receive events.
+            viewNode.active = false;
+            viewNode.removeFromParent();
+            viewNode.destroy();
+            console.error('[Ranking] Open-data canvas initialization failed; using local leaderboard', error);
+            return;
+        }
         this.openDataView = viewNode;
         this.localDataNodes.forEach((node) => { node.active = false; });
         // onEnable owns the initial request. Scheduling a second request here

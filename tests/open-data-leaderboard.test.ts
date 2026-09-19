@@ -2,8 +2,41 @@ import assert from 'node:assert/strict';
 import { readFileSync, statSync } from 'node:fs';
 import test from 'node:test';
 import vm from 'node:vm';
+import { stripTypeScriptTypes } from 'node:module';
 
 interface PendingRequest { success(result: unknown): void; fail(error?: unknown): void }
+
+test('open-data canvas initialization failure cleans up the node and leaves local ranking visible', () => {
+    // Execute the production setup method without requiring the Cocos renderer.
+    const source = readFileSync('assets/Scripts/UI/home/RankingPage.ts', 'utf8');
+    const start = source.indexOf('    private setupOpenDataLeaderboard(');
+    const end = source.indexOf('    private refreshOpenDataLeaderboard(', start);
+    const script = stripTypeScriptTypes(`class Harness { ${source.slice(start, end)} }; new Harness()`);
+    for (const fail of [true, false]) {
+        const calls: string[] = [];
+        const component = { fps: 60 };
+        const node = {
+            active: true,
+            addComponent() { if (fail) throw new Error('sharedCanvas width failed'); return component; },
+            removeFromParent() { calls.push('detach'); },
+            destroy() { calls.push('destroy'); },
+        };
+        const harness = vm.runInNewContext(script, {
+            EDITOR: false, AppRuntime: { platform: { supportsFriendLeaderboard: () => true } },
+            C: { designWidth: 941 }, SubContextView: class {},
+            console: { error() { calls.push('error'); } },
+        });
+        harness.makeNode = () => node;
+        harness.localDataNodes = [{ active: true }];
+        harness.openDataView = null;
+        assert.doesNotThrow(() => harness.setupOpenDataLeaderboard({}));
+        assert.equal(harness.localDataNodes[0].active, fail);
+        assert.equal(harness.openDataView, fail ? null : node);
+        assert.equal(node.active, !fail);
+        assert.deepEqual(calls, fail ? ['detach', 'destroy', 'error'] : []);
+        if (!fail) assert.equal(component.fps, 10);
+    }
+});
 
 function createHarness() {
     const friendRequests: PendingRequest[] = [];
@@ -113,4 +146,19 @@ test('open-data leaderboard loads the compact rank font but keeps arbitrary nick
     assert.match(h.fontRuns.find((run) => run.text === '综合 200')?.font ?? '', /BrainSlashRank/);
     assert.doesNotMatch(h.fontRuns.find((run) => run.text === '玩家🎮')?.font ?? '', /BrainSlashRank/);
     assert.ok(statSync('build-templates/wechatgame/openDataContext/fonts/jiangxi-rank.ttf').size < 100_000);
+});
+
+test('home keeps the WeChat leaderboard inactive until selected and clears it on disable', () => {
+    const homeSource = readFileSync('assets/Scripts/UI/home/HomeController.ts', 'utf8');
+    const rankingSource = readFileSync('assets/Scripts/UI/home/RankingPage.ts', 'utf8');
+    const createAt = homeSource.indexOf("this.rankingPage = this.makeNode(this.safeArea, 'RankingPage'");
+    const deactivateAt = homeSource.indexOf('this.rankingPage.active = false;', createAt);
+    const attachAt = homeSource.indexOf('this.rankingPage.addComponent(RankingPage);', createAt);
+
+    assert.ok(createAt >= 0, 'ranking page creation is missing');
+    assert.ok(deactivateAt > createAt && deactivateAt < attachAt,
+        'ranking page must be inactive before its component can run onEnable');
+    assert.match(rankingSource,
+        /protected onDisable\(\): void \{[\s\S]*?brainSlashLeaderboard'[\s\S]*?action: 'hide'/,
+        'disabling the ranking page must clear the persistent WeChat shared canvas');
 });
